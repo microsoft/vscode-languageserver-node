@@ -1,0 +1,18 @@
+###############################################################################################
+#  Copyright (c) Microsoft Corporation. All rights reserved.
+#  Licensed under the MIT License. See License.txt in the project root for license information.
+###############################################################################################
+parameters:
+- name: package
+  type: string
+- name: quality
+  type: string
+
+steps:
+  - ${{ if eq(parameters.quality, 'latest') }}:
+    - task: Npm@1
+      inputs:
+        command: custom
+        customCommand: dist-tag add $(SetPackageSpec.PACKAGE_SPEC) next
+        customEndpoint: NPM (vscode-bot)
+      displayName: npm dist-tag

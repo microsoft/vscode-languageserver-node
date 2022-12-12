@@ -7,12 +7,18 @@ import * as code from 'vscode';
 import * as proto from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
+import * as async from './utils/async';
+
 import ProtocolCompletionItem from './protocolCompletionItem';
 import ProtocolCodeLens from './protocolCodeLens';
 import ProtocolDocumentLink from './protocolDocumentLink';
-import { MarkdownString } from 'vscode';
 import ProtocolCodeAction from './protocolCodeAction';
 import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
+import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
+import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
+import WorkspaceSymbol from './protocolWorkspaceSymbol';
+import ProtocolInlayHint from './protocolInlayHint';
+
 
 interface InsertReplaceRange {
 	inserting: code.Range;
@@ -26,9 +32,17 @@ namespace InsertReplaceRange {
 	}
 }
 
+export interface FileFormattingOptions {
+	trimTrailingWhitespace?: boolean;
+	trimFinalNewlines?: boolean;
+	insertFinalNewline?: boolean;
+}
+
 export interface Converter {
 
 	asUri(uri: code.Uri): string;
+
+	asTextDocumentItem(textDocument: code.TextDocument): proto.TextDocumentItem;
 
 	asTextDocumentIdentifier(textDocument: code.TextDocument): proto.TextDocumentIdentifier;
 
@@ -44,38 +58,46 @@ export interface Converter {
 	asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent?: boolean): proto.DidSaveTextDocumentParams;
 	asWillSaveTextDocumentParams(event: code.TextDocumentWillSaveEvent): proto.WillSaveTextDocumentParams;
 
+	asDidCreateFilesParams(event: code.FileCreateEvent): proto.CreateFilesParams;
+	asDidRenameFilesParams(event: code.FileRenameEvent): proto.RenameFilesParams;
+	asDidDeleteFilesParams(event: code.FileDeleteEvent): proto.DeleteFilesParams;
+	asWillCreateFilesParams(event: code.FileCreateEvent): proto.CreateFilesParams;
+	asWillRenameFilesParams(event: code.FileRenameEvent): proto.RenameFilesParams;
+	asWillDeleteFilesParams(event: code.FileDeleteEvent): proto.DeleteFilesParams;
+
 	asTextDocumentPositionParams(textDocument: code.TextDocument, position: code.Position): proto.TextDocumentPositionParams;
 
-	asCompletionParams(textDocument: code.TextDocument, position: code.Position, context: code.CompletionContext): proto.CompletionParams
+	asCompletionParams(textDocument: code.TextDocument, position: code.Position, context: code.CompletionContext): proto.CompletionParams;
 
 	asSignatureHelpParams(textDocument: code.TextDocument, position: code.Position, context: code.SignatureHelpContext): proto.SignatureHelpParams;
 
 	asWorkerPosition(position: code.Position): proto.Position;
 
-	asPosition(value: code.Position): proto.Position;
-	asPosition(value: undefined): undefined;
 	asPosition(value: null): null;
+	asPosition(value: undefined): undefined;
+	asPosition(value: code.Position): proto.Position;
 	asPosition(value: code.Position | undefined | null): proto.Position | undefined | null;
 
-	asPositions(value: code.Position[]): proto.Position[];
+	asPositions(value: readonly code.Position[], token?: code.CancellationToken): Promise<proto.Position[]>;
 
-	asRange(value: code.Range): proto.Range;
-	asRange(value: undefined): undefined;
 	asRange(value: null): null;
+	asRange(value: undefined): undefined;
+	asRange(value: code.Range): proto.Range;
 	asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
 
-	asLocation(value: code.Location): proto.Location;
-	asLocation(value: undefined): undefined;
 	asLocation(value: null): null;
+	asLocation(value: undefined): undefined;
+	asLocation(value: code.Location): proto.Location;
 	asLocation(value: code.Location | undefined | null): proto.Location | undefined | null;
 
 	asDiagnosticSeverity(value: code.DiagnosticSeverity): number;
 	asDiagnosticTag(value: code.DiagnosticTag): number | undefined;
 
 	asDiagnostic(item: code.Diagnostic): proto.Diagnostic;
-	asDiagnostics(items: code.Diagnostic[]): proto.Diagnostic[];
 
-	asCompletionItem(item: code.CompletionItem): proto.CompletionItem;
+	asDiagnostics(items: code.Diagnostic[], token?: code.CancellationToken): Promise<proto.Diagnostic[]>;
+
+	asCompletionItem(item: code.CompletionItem, labelDetailsSupport?: boolean): proto.CompletionItem;
 
 	asSymbolKind(item: code.SymbolKind): proto.SymbolKind;
 
@@ -84,17 +106,19 @@ export interface Converter {
 
 	asTextEdit(edit: code.TextEdit): proto.TextEdit;
 
-	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams;
+	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean }): proto.ReferenceParams;
 
-	asCodeAction(item: code.CodeAction): proto.CodeAction;
+	asCodeAction(item: code.CodeAction, token?: code.CancellationToken): Promise<proto.CodeAction>;
 
-	asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext;
+	asCodeActionContext(context: code.CodeActionContext, token?: code.CancellationToken): Promise<proto.CodeActionContext>;
+
+	asInlineValueContext(context: code.InlineValueContext): proto.InlineValueContext;
 
 	asCommand(item: code.Command): proto.Command;
 
 	asCodeLens(item: code.CodeLens): proto.CodeLens;
 
-	asFormattingOptions(item: code.FormattingOptions): proto.FormattingOptions;
+	asFormattingOptions(options: code.FormattingOptions, fileOptions: FileFormattingOptions): proto.FormattingOptions;
 
 	asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams;
 
@@ -105,6 +129,12 @@ export interface Converter {
 	asDocumentLinkParams(textDocument: code.TextDocument): proto.DocumentLinkParams;
 
 	asCallHierarchyItem(value: code.CallHierarchyItem): proto.CallHierarchyItem;
+
+	asTypeHierarchyItem(value: code.TypeHierarchyItem): proto.TypeHierarchyItem;
+
+	asWorkspaceSymbol(item: code.SymbolInformation): proto.WorkspaceSymbol;
+
+	asInlayHint(value: code.InlayHint): proto.InlayHint;
 }
 
 export interface URIConverter {
@@ -127,6 +157,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
+	function asTextDocumentItem(textDocument: code.TextDocument): proto.TextDocumentItem {
+		return {
+			uri: _uriConverter(textDocument.uri),
+			languageId: textDocument.languageId,
+			version: textDocument.version,
+			text: textDocument.getText()
+		};
+	}
+
 	function asVersionedTextDocumentIdentifier(textDocument: code.TextDocument): proto.VersionedTextDocumentIdentifier {
 		return {
 			uri: _uriConverter(textDocument.uri),
@@ -136,12 +175,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams {
 		return {
-			textDocument: {
-				uri: _uriConverter(textDocument.uri),
-				languageId: textDocument.languageId,
-				version: textDocument.version,
-				text: textDocument.getText()
-			}
+			textDocument: asTextDocumentItem(textDocument)
 		};
 	}
 
@@ -200,7 +234,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent: boolean = false): proto.DidSaveTextDocumentParams {
 		let result: proto.DidSaveTextDocumentParams = {
-			textDocument: asVersionedTextDocumentIdentifier(textDocument)
+			textDocument: asTextDocumentIdentifier(textDocument)
 		};
 		if (includeContent) {
 			result.text = textDocument.getText();
@@ -224,6 +258,56 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return {
 			textDocument: asTextDocumentIdentifier(event.document),
 			reason: asTextDocumentSaveReason(event.reason)
+		};
+	}
+
+	function asDidCreateFilesParams(event: code.FileCreateEvent): proto.CreateFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
+		};
+	}
+
+	function asDidRenameFilesParams(event: code.FileRenameEvent): proto.RenameFilesParams {
+		return {
+			files: event.files.map((file) => ({
+				oldUri: _uriConverter(file.oldUri),
+				newUri: _uriConverter(file.newUri),
+			})),
+		};
+	}
+
+	function asDidDeleteFilesParams(event: code.FileDeleteEvent): proto.DeleteFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
+		};
+	}
+
+	function asWillCreateFilesParams(event: code.FileWillCreateEvent): proto.CreateFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
+		};
+	}
+
+	function asWillRenameFilesParams(event: code.FileWillRenameEvent): proto.RenameFilesParams {
+		return {
+			files: event.files.map((file) => ({
+				oldUri: _uriConverter(file.oldUri),
+				newUri: _uriConverter(file.newUri),
+			})),
+		};
+	}
+
+	function asWillDeleteFilesParams(event: code.FileWillDeleteEvent): proto.DeleteFilesParams {
+		return {
+			files: event.files.map((fileUri) => ({
+				uri: _uriConverter(fileUri),
+			})),
 		};
 	}
 
@@ -320,23 +404,19 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return { line: position.line, character: position.character };
 	}
 
-	function asPosition(value: code.Position): proto.Position;
-	function asPosition(value: undefined): undefined;
 	function asPosition(value: null): null;
+	function asPosition(value: undefined): undefined;
+	function asPosition(value: code.Position): proto.Position;
 	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null;
 	function asPosition(value: code.Position | undefined | null): proto.Position | undefined | null {
 		if (value === undefined || value === null) {
 			return value;
 		}
-		return { line: value.line, character: value.character };
+		return { line: value.line > proto.uinteger.MAX_VALUE ? proto.uinteger.MAX_VALUE : value.line, character: value.character > proto.uinteger.MAX_VALUE ? proto.uinteger.MAX_VALUE : value.character };
 	}
 
-	function asPositions(value: code.Position[]): proto.Position[] {
-		let result: proto.Position[] = [];
-		for (let elem of value) {
-			result.push(asPosition(elem));
-		}
-		return result;
+	function asPositions(value: readonly code.Position[], token?: code.CancellationToken): Promise<proto.Position[]> {
+		return async.map(value, (asPosition as (item: code.Position) => proto.Position), token);
 	}
 
 	function asRange(value: code.Range): proto.Range;
@@ -412,7 +492,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asRelatedInformation);
 	}
 
-	function asDiagnosticCode(value: number | string | { value: string | number; target: code.Uri; } | undefined | null): number | string | DiagnosticCode | undefined {
+	function asDiagnosticCode(value: number | string | { value: string | number; target: code.Uri } | undefined | null): number | string | DiagnosticCode | undefined {
 		if (value === undefined || value === null) {
 			return undefined;
 		}
@@ -446,21 +526,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asDiagnostics(items: ReadonlyArray<code.Diagnostic>): proto.Diagnostic[] {
+	function asDiagnostics(items: ReadonlyArray<code.Diagnostic>, token?: code.CancellationToken): Promise<proto.Diagnostic[]> {
 		if (items === undefined || items === null) {
 			return items;
 		}
-		return items.map(asDiagnostic);
+		return async.map(items, asDiagnostic, token);
 	}
 
-	function asDocumentation(format: string, documentation: string | MarkdownString): string | proto.MarkupContent {
+	function asDocumentation(format: string, documentation: string | code.MarkdownString): string | proto.MarkupContent {
 		switch (format) {
 			case '$string':
 				return documentation as string;
 			case proto.MarkupKind.PlainText:
 				return { kind: format, value: documentation as string };
 			case proto.MarkupKind.Markdown:
-				return { kind: format, value: (documentation as MarkdownString).value };
+				return { kind: format, value: (documentation as code.MarkdownString).value };
 			default:
 				return `Unsupported Markup content received. Kind is: ${format}`;
 		}
@@ -495,8 +575,21 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return value + 1 as proto.CompletionItemKind;
 	}
 
-	function asCompletionItem(item: code.CompletionItem): proto.CompletionItem {
-		let result: proto.CompletionItem = { label: item.label };
+	function asCompletionItem(item: code.CompletionItem, labelDetailsSupport: boolean = false): proto.CompletionItem {
+		let label: string;
+		let labelDetails: proto.CompletionItemLabelDetails | undefined;
+		if (Is.string(item.label)) {
+			label = item.label;
+		} else {
+			label = item.label.label;
+			if (labelDetailsSupport && (item.label.detail !== undefined || item.label.description !== undefined)) {
+				labelDetails = { detail: item.label.detail, description: item.label.description };
+			}
+		}
+		let result: proto.CompletionItem = { label: label };
+		if (labelDetails !== undefined) {
+			result.labelDetails = labelDetails;
+		}
 		let protocolItem = item instanceof ProtocolCompletionItem ? item as ProtocolCompletionItem : undefined;
 		if (item.detail) { result.detail = item.detail; }
 		// We only send items back we created. So this can't be something else than
@@ -532,9 +625,15 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 				}
 				result.deprecated = protocolItem.deprecated;
 			}
+			if (protocolItem.insertTextMode !== undefined) {
+				result.insertTextMode = protocolItem.insertTextMode;
+			}
 		}
 		if (tags !== undefined && tags.length > 0) {
 			result.tags = tags;
+		}
+		if (result.insertTextMode === undefined && item.keepWhitespace === true) {
+			result.insertTextMode = proto.InsertTextMode.adjustIndentation;
 		}
 		return result;
 	}
@@ -599,7 +698,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asSymbolTag);
 	}
 
-	function asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean; }): proto.ReferenceParams {
+	function asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean }): proto.ReferenceParams {
 		return {
 			textDocument: asTextDocumentIdentifier(textDocument),
 			position: asWorkerPosition(position),
@@ -607,13 +706,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 	}
 
-	function asCodeAction(item: code.CodeAction): proto.CodeAction {
+	async function asCodeAction(item: code.CodeAction, token?: code.CancellationToken): Promise<proto.CodeAction> {
 		let result = proto.CodeAction.create(item.title);
 		if (item instanceof ProtocolCodeAction && item.data !== undefined) {
 			result.data = item.data;
 		}
 		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
-		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnostics(item.diagnostics); }
+		if (item.diagnostics !== undefined) { result.diagnostics = await asDiagnostics(item.diagnostics, token); }
 		if (item.edit !== undefined) { throw new Error (`VS Code code actions can only be converted to a protocol code action without an edit.`); }
 		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
@@ -621,15 +720,26 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asCodeActionContext(context: code.CodeActionContext): proto.CodeActionContext {
+	async function asCodeActionContext(context: code.CodeActionContext, token?: code.CancellationToken): Promise<proto.CodeActionContext> {
 		if (context === undefined || context === null) {
 			return context;
 		}
 		let only: proto.CodeActionKind[] | undefined;
-		if(context.only && Is.string(context.only.value)) {
+		if (context.only && Is.string(context.only.value)) {
 			only = [context.only.value];
 		}
-		return proto.CodeActionContext.create(asDiagnostics(context.diagnostics), only);
+		return proto.CodeActionContext.create(await asDiagnostics(context.diagnostics, token), only, asCodeActionTriggerKind(context.triggerKind));
+	}
+
+	function asCodeActionTriggerKind(kind: code.CodeActionTriggerKind): proto.CodeActionTriggerKind | undefined {
+		switch (kind) {
+			case code.CodeActionTriggerKind.Invoke:
+				return proto.CodeActionTriggerKind.Invoked;
+			case code.CodeActionTriggerKind.Automatic:
+				return proto.CodeActionTriggerKind.Automatic;
+			default:
+				return undefined;
+		}
 	}
 
 	function asCodeActionKind(item: code.CodeActionKind | null | undefined): proto.CodeActionKind | undefined {
@@ -639,6 +749,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return item.value;
 	}
 
+	function asInlineValueContext(context: code.InlineValueContext): proto.InlineValueContext {
+		if (context === undefined || context === null) {
+			return context;
+		}
+		return proto.InlineValueContext.create(context.frameId, asRange(context.stoppedLocation));
+	}
 
 	function asCommand(item: code.Command): proto.Command {
 		let result = proto.Command.create(item.title, item.command);
@@ -655,8 +771,18 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
-	function asFormattingOptions(item: code.FormattingOptions): proto.FormattingOptions {
-		return { tabSize: item.tabSize, insertSpaces: item.insertSpaces };
+	function asFormattingOptions(options: code.FormattingOptions, fileOptions: FileFormattingOptions): proto.FormattingOptions {
+		const result: proto.FormattingOptions = { tabSize: options.tabSize, insertSpaces: options.insertSpaces };
+		if (fileOptions.trimTrailingWhitespace) {
+			result.trimTrailingWhitespace = true;
+		}
+		if (fileOptions.trimFinalNewlines) {
+			result.trimFinalNewlines = true;
+		}
+		if (fileOptions.insertFinalNewline) {
+			result.insertFinalNewline = true;
+		}
+		return result;
 	}
 
 	function asDocumentSymbolParams(textDocument: code.TextDocument): proto.DocumentSymbolParams {
@@ -698,18 +824,88 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		};
 		if (value.detail !== undefined && value.detail.length > 0) { result.detail = value.detail; }
 		if (value.tags !== undefined) { result.tags = asSymbolTags(value.tags); }
+		if (value instanceof ProtocolCallHierarchyItem && value.data !== undefined) {
+			result.data = value.data;
+		}
+		return result;
+	}
+
+	function asTypeHierarchyItem(value: code.TypeHierarchyItem): proto.TypeHierarchyItem {
+		const result: proto.TypeHierarchyItem = {
+			name: value.name,
+			kind: asSymbolKind(value.kind),
+			uri: asUri(value.uri),
+			range: asRange(value.range),
+			selectionRange: asRange(value.selectionRange),
+		};
+		if (value.detail !== undefined && value.detail.length > 0) { result.detail = value.detail; }
+		if (value.tags !== undefined) { result.tags = asSymbolTags(value.tags); }
+		if (value instanceof ProtocolTypeHierarchyItem && value.data !== undefined) {
+			result.data = value.data;
+		}
+		return result;
+	}
+
+	function asWorkspaceSymbol(item: code.SymbolInformation): proto.WorkspaceSymbol {
+		const result: proto.WorkspaceSymbol = item instanceof WorkspaceSymbol
+			? { name: item.name, kind: asSymbolKind(item.kind), location: item.hasRange ? asLocation(item.location) : { uri: _uriConverter(item.location.uri) }, data: item.data }
+			: { name: item.name, kind: asSymbolKind(item.kind), location: asLocation(item.location) };
+		if (item.tags !== undefined) { result.tags = asSymbolTags(item.tags); }
+		if (item.containerName !== '') { result.containerName = item.containerName; }
+		return result;
+	}
+
+	function asInlayHint(item: code.InlayHint): proto.InlayHint {
+		const label = typeof item.label === 'string'
+			? item.label
+			: item.label.map(asInlayHintLabelPart);
+		const result = proto.InlayHint.create(asPosition(item.position), label);
+		if (item.kind !== undefined) { result.kind = item.kind; }
+		if (item.textEdits !== undefined) { result.textEdits = asTextEdits(item.textEdits); }
+		if (item.tooltip !== undefined) { result.tooltip = asTooltip(item.tooltip); }
+		if (item.paddingLeft !== undefined) { result.paddingLeft = item.paddingLeft; }
+		if (item.paddingRight !== undefined) { result.paddingRight = item.paddingRight; }
+		if (item instanceof ProtocolInlayHint && item.data !== undefined) {
+			result.data = item.data;
+		}
+		return result;
+	}
+
+	function asInlayHintLabelPart(item: code.InlayHintLabelPart): proto.InlayHintLabelPart {
+		const result = proto.InlayHintLabelPart.create(item.value);
+		if (item.location !== undefined) { result.location = asLocation(item.location); }
+		if (item.command !== undefined) { result.command = asCommand(item.command); }
+		if (item.tooltip !== undefined) { result.tooltip = asTooltip(item.tooltip); }
+		return result;
+	}
+
+	function asTooltip(value: string | code.MarkdownString): string | proto.MarkupContent {
+		if (typeof value === 'string') {
+			return value;
+		}
+		const result: proto.MarkupContent = {
+			kind: proto.MarkupKind.Markdown,
+			value: value.value
+		};
 		return result;
 	}
 
 	return {
 		asUri,
 		asTextDocumentIdentifier,
+		asTextDocumentItem,
 		asVersionedTextDocumentIdentifier,
 		asOpenTextDocumentParams,
 		asChangeTextDocumentParams,
 		asCloseTextDocumentParams,
 		asSaveTextDocumentParams,
 		asWillSaveTextDocumentParams,
+		asDidCreateFilesParams,
+		asDidRenameFilesParams,
+		asDidDeleteFilesParams,
+		asWillCreateFilesParams,
+		asWillRenameFilesParams,
+		asWillDeleteFilesParams,
 		asTextDocumentPositionParams,
 		asCompletionParams,
 		asSignatureHelpParams,
@@ -730,6 +926,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asReferenceParams,
 		asCodeAction,
 		asCodeActionContext,
+		asInlineValueContext,
 		asCommand,
 		asCodeLens,
 		asFormattingOptions,
@@ -737,6 +934,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCodeLensParams,
 		asDocumentLink,
 		asDocumentLinkParams,
-		asCallHierarchyItem
+		asCallHierarchyItem,
+		asTypeHierarchyItem,
+		asInlayHint,
+		asWorkspaceSymbol
 	};
 }

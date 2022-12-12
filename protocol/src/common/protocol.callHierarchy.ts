@@ -1,13 +1,13 @@
 /* --------------------------------------------------------------------------------------------
- * Copyright (c) TypeFox and others. All rights reserved.
+ * Copyright (c) TypeFox, Microsoft and others. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
 import { RequestHandler } from 'vscode-jsonrpc';
 import { CallHierarchyItem, CallHierarchyIncomingCall, CallHierarchyOutgoingCall } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
-import {
+import { MessageDirection, ProtocolRequestType } from './messages';
+import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams,
 	WorkDoneProgressParams, WorkDoneProgressOptions
 } from './protocol';
@@ -50,12 +50,13 @@ export interface CallHierarchyPrepareParams extends TextDocumentPositionParams, 
 
 /**
  * A request to result a `CallHierarchyItem` in a document at a given position.
- * Can be used as an input to a incoming or outgoing call hierarchy.
+ * Can be used as an input to an incoming or outgoing call hierarchy.
  *
  * @since 3.16.0
  */
 export namespace CallHierarchyPrepareRequest {
 	export const method: 'textDocument/prepareCallHierarchy' = 'textDocument/prepareCallHierarchy';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CallHierarchyPrepareParams, CallHierarchyItem[] | null, never, void, CallHierarchyRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void>;
 }
@@ -76,6 +77,7 @@ export interface CallHierarchyIncomingCallsParams extends WorkDoneProgressParams
  */
 export namespace CallHierarchyIncomingCallsRequest {
 	export const method: 'callHierarchy/incomingCalls' = 'callHierarchy/incomingCalls';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, CallHierarchyIncomingCall[], void, void>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void>;
 }
@@ -96,6 +98,7 @@ export interface CallHierarchyOutgoingCallsParams extends WorkDoneProgressParams
  */
 export namespace CallHierarchyOutgoingCallsRequest {
 	export const method: 'callHierarchy/outgoingCalls' = 'callHierarchy/outgoingCalls';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, CallHierarchyOutgoingCall[], void, void>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, void>;
 }

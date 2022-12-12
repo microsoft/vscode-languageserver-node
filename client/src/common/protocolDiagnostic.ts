@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
+import { LSPAny } from 'vscode-languageserver-protocol';
 import * as Is from './utils/is';
 
 /**
@@ -16,7 +17,7 @@ export interface DiagnosticCode {
 }
 
 export namespace DiagnosticCode {
-	export function is(value: string | number | DiagnosticCode | undefined | null): value is DiagnosticCode {
+	export function is(value: any): value is DiagnosticCode {
 		const candidate: DiagnosticCode = value as DiagnosticCode;
 		return candidate !== undefined && candidate !== null && (Is.number(candidate.value) || Is.string(candidate.value)) && Is.string(candidate.target);
 	}
@@ -24,10 +25,10 @@ export namespace DiagnosticCode {
 
 export class ProtocolDiagnostic extends vscode.Diagnostic {
 
-	public readonly data: unknown | undefined;
+	public readonly data: LSPAny | undefined;
 	public hasDiagnosticCode: boolean;
 
-	constructor(range: vscode.Range, message: string, severity: vscode.DiagnosticSeverity, data: unknown | undefined) {
+	constructor(range: vscode.Range, message: string, severity: vscode.DiagnosticSeverity, data: LSPAny | undefined) {
 		super(range, message, severity);
 		this.data = data;
 		this.hasDiagnosticCode = false;

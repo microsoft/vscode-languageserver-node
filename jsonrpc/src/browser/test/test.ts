@@ -5,8 +5,9 @@
 
 import * as assert from 'assert';
 
-import { RequestMessage, ResponseMessage } from '../../common/api';
-import { BrowserMessageReader, BrowserMessageWriter } from '../main';
+import { CancellationTokenSource, RequestMessage, RequestType0, ResponseMessage } from '../../common/api';
+import { SharedArrayReceiverStrategy, SharedArraySenderStrategy } from '../../common/sharedArrayCancellation';
+import { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from '../main';
 import RIL from '../ril';
 
 function assertDefined<T>(value: T | undefined | null): asserts value is T {
@@ -28,7 +29,7 @@ suite('Browser IPC Reader / Writer', () => {
 			id: 1,
 			method: 'example'
 		};
-		writer.write(request);
+		void writer.write(request);
 	});
 
 	test('MessageBuffer Simple', () => {
@@ -37,10 +38,10 @@ suite('Browser IPC Reader / Writer', () => {
 		const encoder: TextEncoder = new TextEncoder();
 		buffer.append(encoder.encode('Content-Length: 43\r\n\r\n'));
 		buffer.append(encoder.encode('{"jsonrpc":"2.0","id":1,"method":"example"}'));
-		const headers = buffer.tryReadHeaders();
+		const headers = buffer.tryReadHeaders(true);
 		assertDefined(headers);
 		assert.strictEqual(headers.size, 1);
-		assert.strictEqual(headers.get('Content-Length'), '43');
+		assert.strictEqual(headers.get('content-length'), '43');
 		const decoder = new TextDecoder('utf-8');
 		const content = JSON.parse(decoder.decode(buffer.tryReadBody(43)));
 		assert.strictEqual(content.id, 1);
@@ -74,7 +75,7 @@ suite('Browser IPC Reader / Writer', () => {
 				buffer.append(payload.slice(sent, sent + piece));
 				sent = sent + piece;
 			}
-			const headers = buffer.tryReadHeaders();
+			const headers = buffer.tryReadHeaders(false);
 			assertDefined(headers);
 			assert.strictEqual(headers.size, 1);
 			const length = parseInt(headers.get('Content-Length')!);
@@ -89,5 +90,21 @@ suite('Browser IPC Reader / Writer', () => {
 				assert.strictEqual(item.label, `label${i}`);
 			}
 		}
+	});
+
+	test('Cancellation via SharedArrayBuffer', async () => {
+		debugger;
+		const worker = new Worker('/jsonrpc/dist/cancelWorker.js');
+		const reader = new BrowserMessageReader(worker);
+		const writer = new BrowserMessageWriter(worker);
+
+		const type = new RequestType0<boolean, void>('test/handleCancel');
+		const connection = createMessageConnection(reader, writer, undefined, { cancellationStrategy: { sender: new SharedArraySenderStrategy(), receiver: new SharedArrayReceiverStrategy() } });
+		connection.listen();
+		const tokenSource = new CancellationTokenSource();
+		const promise = connection.sendRequest(type, tokenSource.token);
+		tokenSource.cancel();
+		const result = await promise;
+		assert.ok(result, 'Cancellation failed');
 	});
 });

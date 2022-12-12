@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict';
 
 import {
 	ConfigurationItem, ConfigurationParams, ConfigurationRequest
@@ -37,7 +36,11 @@ export const ConfigurationFeature: Feature<_RemoteWorkspace, Configuration> = (B
 				items: Array.isArray(arg) ? arg : [arg]
 			};
 			return this.connection.sendRequest(ConfigurationRequest.type, params).then((result) => {
-				return Array.isArray(arg) ? result : result[0];
+				if (Array.isArray(result)) {
+					return Array.isArray(arg) ? result : result[0];
+				} else {
+					return Array.isArray(arg) ? [] : null;
+				}
 			});
 		}
 	};

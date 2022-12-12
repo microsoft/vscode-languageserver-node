@@ -3,11 +3,13 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
-import { TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions } from './protocol';
+import { MessageDirection, ProtocolRequestType } from './messages';
+import type {
+	TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions
+} from './protocol';
 
 //---- Client capability ----
 
@@ -29,7 +31,7 @@ export interface DocumentColorRegistrationOptions extends TextDocumentRegistrati
 //---- Color Symbol Provider ---------------------------
 
 /**
- * Parameters for a [DocumentColorRequest](#DocumentColorRequest).
+ * Parameters for a {@link DocumentColorRequest}.
  */
 export interface DocumentColorParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -40,20 +42,19 @@ export interface DocumentColorParams extends WorkDoneProgressParams, PartialResu
 
 /**
  * A request to list all color symbols found in a given text document. The request's
- * parameter is of type [DocumentColorParams](#DocumentColorParams) the
- * response is of type [ColorInformation[]](#ColorInformation) or a Thenable
+ * parameter is of type {@link DocumentColorParams} the
+ * response is of type {@link ColorInformation ColorInformation[]} or a Thenable
  * that resolves to such.
  */
 export namespace DocumentColorRequest {
 	export const method: 'textDocument/documentColor' = 'textDocument/documentColor';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentColorParams, ColorInformation[], ColorInformation[], void, DocumentColorRegistrationOptions>(method);
-	/** @deprecated Use DocumentColorRequest.type */
-	export const resultType = new ProgressType<ColorInformation[]>();
 	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
 }
 
 /**
- * Parameters for a [ColorPresentationRequest](#ColorPresentationRequest).
+ * Parameters for a {@link ColorPresentationRequest}.
  */
 export interface ColorPresentationParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -64,7 +65,7 @@ export interface ColorPresentationParams extends WorkDoneProgressParams, Partial
 	/**
 	 * The color to request presentations for.
 	 */
-	color: Color
+	color: Color;
 
 	/**
 	 * The range where the color would be inserted. Serves as a context.
@@ -74,11 +75,13 @@ export interface ColorPresentationParams extends WorkDoneProgressParams, Partial
 
 /**
  * A request to list all presentation for a color. The request's
- * parameter is of type [ColorPresentationParams](#ColorPresentationParams) the
- * response is of type [ColorInformation[]](#ColorInformation) or a Thenable
+ * parameter is of type {@link ColorPresentationParams} the
+ * response is of type {@link ColorInformation ColorInformation[]} or a Thenable
  * that resolves to such.
  */
 export namespace ColorPresentationRequest {
-	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>('textDocument/colorPresentation');
+	export const method: 'textDocument/colorPresentation' = 'textDocument/colorPresentation';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<ColorPresentationParams, ColorPresentation[], void>;
 }

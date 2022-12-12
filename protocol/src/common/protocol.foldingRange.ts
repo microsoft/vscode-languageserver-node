@@ -3,33 +3,69 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
-import { TextDocumentIdentifier } from 'vscode-languageserver-types';
+import { RequestHandler } from 'vscode-jsonrpc';
+import { TextDocumentIdentifier, uinteger, FoldingRange, FoldingRangeKind } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
-import {
+import { MessageDirection, ProtocolRequestType } from './messages';
+import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions
 } from './protocol';
 
 // ---- capabilities
 
 export interface FoldingRangeClientCapabilities {
+
 	/**
-	 * Whether implementation supports dynamic registration for folding range providers. If this is set to `true`
-	 * the client supports the new `FoldingRangeRegistrationOptions` return value for the corresponding server
-	 * capability as well.
+	 * Whether implementation supports dynamic registration for folding range
+	 * providers. If this is set to `true` the client supports the new
+	 * `FoldingRangeRegistrationOptions` return value for the corresponding
+	 * server capability as well.
 	 */
 	dynamicRegistration?: boolean;
+
 	/**
-	 * The maximum number of folding ranges that the client prefers to receive per document. The value serves as a
-	 * hint, servers are free to follow the limit.
+	 * The maximum number of folding ranges that the client prefers to receive
+	 * per document. The value serves as a hint, servers are free to follow the
+	 * limit.
 	 */
-	rangeLimit?: number;
+	rangeLimit?: uinteger;
+
 	/**
-	 * If set, the client signals that it only supports folding complete lines. If set, client will
-	 * ignore specified `startCharacter` and `endCharacter` properties in a FoldingRange.
+	 * If set, the client signals that it only supports folding complete lines.
+	 * If set, client will ignore specified `startCharacter` and `endCharacter`
+	 * properties in a FoldingRange.
 	 */
 	lineFoldingOnly?: boolean;
+
+	/**
+	 * Specific options for the folding range kind.
+	 *
+	 * @since 3.17.0
+	 */
+	foldingRangeKind?: {
+		/**
+		 * The folding range kind values the client supports. When this
+		 * property exists the client also guarantees that it will
+		 * handle values outside its set gracefully and falls back
+		 * to a default value when unknown.
+		 */
+		valueSet?: FoldingRangeKind[];
+	};
+
+	/**
+	 * Specific options for the folding range.
+	 *
+	 * @since 3.17.0
+	 */
+	foldingRange?: {
+		/**
+		* If set, the client signals that it supports setting collapsedText on
+		* folding ranges to display custom labels instead of the default text.
+		*
+		* @since 3.17.0
+		*/
+		collapsedText?: boolean;
+	};
 }
 
 export interface FoldingRangeOptions extends WorkDoneProgressOptions {
@@ -39,58 +75,7 @@ export interface FoldingRangeRegistrationOptions extends TextDocumentRegistratio
 }
 
 /**
- * Enum of known range kinds
- */
-export enum FoldingRangeKind {
-	/**
-	 * Folding range for a comment
-	 */
-	Comment = 'comment',
-	/**
-	 * Folding range for a imports or includes
-	 */
-	Imports = 'imports',
-	/**
-	 * Folding range for a region (e.g. `#region`)
-	 */
-	Region = 'region'
-}
-
-/**
- * Represents a folding range.
- */
-export interface FoldingRange {
-
-	/**
-	 * The zero-based line number from where the folded range starts.
-	 */
-	startLine: number;
-
-	/**
-	 * The zero-based character offset from where the folded range starts. If not defined, defaults to the length of the start line.
-	 */
-	startCharacter?: number;
-
-	/**
-	 * The zero-based line number where the folded range ends.
-	 */
-	endLine: number;
-
-	/**
-	 * The zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line.
-	 */
-	endCharacter?: number;
-
-	/**
-	 * Describes the kind of the folding range such as `comment' or 'region'. The kind
-	 * is used to categorize folding ranges and used by commands like 'Fold all comments'. See
-	 * [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds.
-	 */
-	kind?: string;
-}
-
-/**
- * Parameters for a [FoldingRangeRequest](#FoldingRangeRequest).
+ * Parameters for a {@link FoldingRangeRequest}.
  */
 export interface FoldingRangeParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -101,14 +86,13 @@ export interface FoldingRangeParams extends WorkDoneProgressParams, PartialResul
 
 /**
  * A request to provide folding ranges in a document. The request's
- * parameter is of type [FoldingRangeParams](#FoldingRangeParams), the
- * response is of type [FoldingRangeList](#FoldingRangeList) or a Thenable
+ * parameter is of type {@link FoldingRangeParams}, the
+ * response is of type {@link FoldingRangeList} or a Thenable
  * that resolves to such.
  */
 export namespace FoldingRangeRequest {
 	export const method: 'textDocument/foldingRange' = 'textDocument/foldingRange';
-	export const type = new ProtocolRequestType<FoldingRangeParams, FoldingRange[] | null, FoldingRange[], any, FoldingRangeRegistrationOptions>(method);
-	/** @deprecated Use FoldingRangeRequest.type */
-	export const resultType = new ProgressType<FoldingRange[]>();
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<FoldingRangeParams, FoldingRange[] | null, FoldingRange[], void, FoldingRangeRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<FoldingRangeParams, FoldingRange[] | null, void>;
 }

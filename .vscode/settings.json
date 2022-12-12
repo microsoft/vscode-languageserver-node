@@ -1,10 +1,17 @@
 // Place your settings in this file to overwrite default and user settings.
 {
 	"editor.insertSpaces": false,
-
+	"[markdown][typescript]": {
+		"editor.rulers": [
+			80
+		]
+	},
 	"files.eol": "\n",
 	"files.trimTrailingWhitespace": true,
 
+	"task.allowAutomaticTasks": "on",
+
+	"typescript.tsc.autoDetect": "off",
 	"typescript.tsdk": "./node_modules/typescript/lib",
 	"typescript.tsserver.trace": "off",
 	"typescript.format.insertSpaceAfterCommaDelimiter": true,
@@ -20,29 +27,79 @@
 
 	"javascript.validate.enable": false,
 
-	"tslint.enable": false,
+	"git.branchProtection": [
+		"main"
+	],
+	"git.branchProtectionPrompt": "alwaysCommitToNewBranch",
+
+	"eslint.format.enable": true,
 	"eslint.enable": true,
 	"eslint.validate": [
 		"typescript"
 	],
+	"eslint.useESLintClass": true,
 	"eslint.workingDirectories": [
+		"./textDocument",
 		"./types",
 		"./jsonrpc",
 		"./protocol",
 		"./server",
 		"./client",
-		"./client-node-tests"
-	],
-	"typescript.tsc.autoDetect": "off",
-	"spellright.language": [
-		"en"
-	],
-	"spellright.documentTypes": [
-		"markdown",
-		"latex",
-		"plaintext"
+		"./client-node-tests",
+		"./testbed",
+		"./tools",
+		"./tsconfig-gen"
 	],
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": true
-	}
+	},
+	"mochaExplorer.files": [
+		"textDocument/lib/umd/test/*.js",
+		"types/lib/umd/test/*.js",
+		"jsonrpc/lib/common/test/*.js",
+		"jsonrpc/lib/node/test/*.js",
+		"protocol/lib/node/test/*.js",
+		"server/lib/*/test/*.js"
+	],
+	"mochaExplorer.ui": "tdd",
+	"mochaExplorer.require": "source-map-support/register",
+	"cSpell.words": [
+		"ASAR",
+		"asColorInformations",
+		"asParameterInformations",
+		"asSignatureInformations",
+		"asSymbolInformations",
+		"clazz",
+		"diagnostic's",
+		"evaluatable",
+		"hover's",
+		"ipynb",
+		"lsclient",
+		"LSIF",
+		"lsptests",
+		"msgpack",
+		"noext",
+		"plugable",
+		"postpublish",
+		"preversion",
+		"quickfix",
+		"refactorings",
+		"retriggerRequest",
+		"serializable",
+		"splitted",
+		"Struct",
+		"supertypes",
+		"Suspendible",
+		"Suspensible",
+		"tsbuild",
+		"uinteger",
+		"Undispatched",
+		"unregisteration",
+		"unregisterations",
+		"Unregistration",
+		"unregistrations",
+		"vsdiag",
+		"whitespaces",
+		"XCOPY"
+	]
 }

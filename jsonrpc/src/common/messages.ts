@@ -30,7 +30,7 @@ export interface RequestMessage extends Message {
 	/**
 	 * The method's params.
 	 */
-	params?: any[] | object
+	params?: any[] | object;
 }
 
 /**
@@ -38,11 +38,11 @@ export interface RequestMessage extends Message {
  */
 export namespace ErrorCodes {
 	// Defined by JSON RPC
-	export const ParseError: number = -32700;
-	export const InvalidRequest: number = -32600;
-	export const MethodNotFound: number = -32601;
-	export const InvalidParams: number = -32602;
-	export const InternalError: number = -32603;
+	export const ParseError: -32700 = -32700;
+	export const InvalidRequest: -32600 = -32600;
+	export const MethodNotFound: -32601 = -32601;
+	export const InvalidParams: -32602 = -32602;
+	export const InternalError: -32603 = -32603;
 
 	/**
 	 * This is the start range of JSON RPC reserved error codes.
@@ -53,15 +53,37 @@ export namespace ErrorCodes {
 	 *
 	 * @since 3.16.0
 	*/
-	export const jsonrpcReservedErrorRangeStart: number = -32099;
+	export const jsonrpcReservedErrorRangeStart: -32099 = -32099;
 	/** @deprecated use  jsonrpcReservedErrorRangeStart */
-	export const serverErrorStart: number = jsonrpcReservedErrorRangeStart;
+	export const serverErrorStart: -32099 = /* jsonrpcReservedErrorRangeStart */ -32099;
 
-	export const MessageWriteError: number = -32099;
-	export const MessageReadError: number = -32098;
+	/**
+	 * An error occurred when write a message to the transport layer.
+	 */
+	export const MessageWriteError: -32099 = -32099;
 
-	export const ServerNotInitialized: number = -32002;
-	export const UnknownErrorCode: number = -32001;
+	/**
+	 * An error occurred when reading a message from the transport layer.
+	 */
+	export const MessageReadError: -32098 = -32098;
+
+	/**
+	 * The connection got disposed or lost and all pending responses got
+	 * rejected.
+	 */
+	export const PendingResponseRejected: -32097 = -32097;
+
+	/**
+	 * The connection is inactive and a use of it failed.
+	 */
+	export const ConnectionInactive: -32096 = -32096;
+
+	/**
+	 * Error code indicating that a server received a notification or
+	 * request before the server has received the `initialize` request.
+	 */
+	export const ServerNotInitialized: -32002 = -32002;
+	export const UnknownErrorCode: -32001 = -32001;
 
 	/**
 	 * This is the end range of JSON RPC reserved error codes.
@@ -69,19 +91,21 @@ export namespace ErrorCodes {
 	 *
 	 * @since 3.16.0
 	*/
-	export const jsonrpcReservedErrorRangeEnd = -32000;
+	export const jsonrpcReservedErrorRangeEnd: -32000 = -32000;
 	/** @deprecated use  jsonrpcReservedErrorRangeEnd */
-	export const serverErrorEnd: number = jsonrpcReservedErrorRangeEnd;
+	export const serverErrorEnd: -32000 = /* jsonrpcReservedErrorRangeEnd */ -32000;
 }
+type integer = number;
+export type ErrorCodes= integer;
 
-export interface ResponseErrorLiteral<D> {
+export interface ResponseErrorLiteral<D = void> {
 	/**
-	 * A number indicating the error type that occured.
+	 * A number indicating the error type that occurred.
 	 */
 	code: number;
 
 	/**
-	 * A string providing a short decription of the error.
+	 * A string providing a short description of the error.
 	 */
 	message: string;
 
@@ -96,7 +120,7 @@ export interface ResponseErrorLiteral<D> {
  * An error object return in a response in case a request
  * has failed.
  */
-export class ResponseError<D> extends Error {
+export class ResponseError<D = void> extends Error {
 
 	public readonly code: number;
 	public readonly data: D | undefined;
@@ -109,11 +133,14 @@ export class ResponseError<D> extends Error {
 	}
 
 	public toJson(): ResponseErrorLiteral<D> {
-		return {
+		const result: ResponseErrorLiteral<D> = {
 			code: this.code,
-			message: this.message,
-			data: this.data,
+			message: this.message
 		};
+		if (this.data !== undefined) {
+			result.data = this.data;
+		}
+		return result;
 	}
 }
 
@@ -200,15 +227,13 @@ export interface MessageSignature {
  * An abstract implementation of a MessageType.
  */
 export abstract class AbstractMessageSignature implements MessageSignature {
-	constructor(private _method: string, private _numberOfParams: number) {
-	}
 
-	get method(): string {
-		return this._method;
-	}
+	public readonly method: string;
+	public readonly numberOfParams: number;
 
-	get numberOfParams(): number {
-		return this._numberOfParams;
+	constructor(method: string, numberOfParams: number) {
+		this.method = method;
+		this.numberOfParams = numberOfParams;
 	}
 
 	get parameterStructures(): ParameterStructures {
@@ -225,26 +250,22 @@ export interface _EM {
 
 /**
  * Classes to type request response pairs
- *
- * The type parameter RO will be removed in the next major version
- * of the JSON RPC library since it is a LSP concept and doesn't
- * belong here. For now it is tagged as default never.
  */
-export class RequestType0<R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType0<R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [R, E, RO, _EM];
+	public readonly _: [R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 0);
 	}
 }
 
-export class RequestType<P, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType<P, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P, R, E, RO, _EM];
+	public readonly _: [P, R, E, _EM] | undefined;
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
@@ -254,11 +275,11 @@ export class RequestType<P, R, E, RO = never> extends AbstractMessageSignature {
 	}
 }
 
-export class RequestType1<P1, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType1<P1, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, R, E, RO, _EM];
+	public readonly _: [P1, R, E, _EM] | undefined;
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
@@ -268,81 +289,81 @@ export class RequestType1<P1, R, E, RO = never> extends AbstractMessageSignature
 	}
 }
 
-export class RequestType2<P1, P2, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType2<P1, P2, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, R, E, RO, _EM];
+	public readonly _: [P1, P2, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 2);
 	}
 }
 
-export class RequestType3<P1, P2, P3, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType3<P1, P2, P3, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, R, E, RO, _EM];
+	public readonly _: [P1, P2, P3, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 3);
 	}
 }
 
-export class RequestType4<P1, P2, P3, P4, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType4<P1, P2, P3, P4, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, R, E, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 4);
 	}
 }
 
-export class RequestType5<P1, P2, P3, P4, P5, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType5<P1, P2, P3, P4, P5, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, R, E, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 5);
 	}
 }
 
-export class RequestType6<P1, P2, P3, P4, P5, P6, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType6<P1, P2, P3, P4, P5, P6, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, R, E, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 6);
 	}
 }
 
-export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, R, E, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 7);
 	}
 }
 
-export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, P8, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 8);
 	}
 }
 
-export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO = never> extends AbstractMessageSignature {
+export class RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 9);
 	}
@@ -360,22 +381,16 @@ export interface NotificationMessage extends Message {
 	/**
 	 * The notification's params.
 	 */
-	params?: [] | object
+	params?: any[] | object;
 }
 
-/**
- * The type parameter RO will be removed in the next major version
- * of the JSON RPC library since it is a LSP concept and doesn't
- * belong here. For now it is tagged as default never.
- */
-export class NotificationType<P, RO = never> extends AbstractMessageSignature {
+export class NotificationType<P> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P, RO, _EM];
+	public readonly _: [P, _EM] | undefined;
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
-		this._ = undefined;
 	}
 
 	get parameterStructures(): ParameterStructures {
@@ -383,21 +398,21 @@ export class NotificationType<P, RO = never> extends AbstractMessageSignature {
 	}
 }
 
-export class NotificationType0<RO = never> extends AbstractMessageSignature {
+export class NotificationType0 extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [RO, _EM];
+	public readonly _: [_EM] | undefined;
 	constructor(method: string) {
 		super(method, 0);
 	}
 }
 
-export class NotificationType1<P1, RO = never> extends AbstractMessageSignature {
+export class NotificationType1<P1> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, RO, _EM];
+	public readonly _: [P1, _EM] | undefined;
 	constructor(method: string, private _parameterStructures: ParameterStructures = ParameterStructures.auto) {
 		super(method, 1);
 	}
@@ -407,106 +422,108 @@ export class NotificationType1<P1, RO = never> extends AbstractMessageSignature 
 	}
 }
 
-export class NotificationType2<P1, P2, RO = never> extends AbstractMessageSignature {
+export class NotificationType2<P1, P2> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, RO, _EM];
+	public readonly _: [P1, P2, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 2);
 	}
 }
 
-export class NotificationType3<P1, P2, P3, RO = never> extends AbstractMessageSignature {
+export class NotificationType3<P1, P2, P3> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, RO, _EM];
+	public readonly _: [P1, P2, P3, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 3);
 	}
 }
 
-export class NotificationType4<P1, P2, P3, P4, RO = never> extends AbstractMessageSignature {
+export class NotificationType4<P1, P2, P3, P4> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 4);
 	}
 }
 
-export class NotificationType5<P1, P2, P3, P4, P5, RO = never> extends AbstractMessageSignature {
+export class NotificationType5<P1, P2, P3, P4, P5> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 5);
 	}
 }
 
-export class NotificationType6<P1, P2, P3, P4, P5, P6, RO = never> extends AbstractMessageSignature {
+export class NotificationType6<P1, P2, P3, P4, P5, P6> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 6);
 	}
 }
 
-export class NotificationType7<P1, P2, P3, P4, P5, P6, P7, RO = never> extends AbstractMessageSignature {
+export class NotificationType7<P1, P2, P3, P4, P5, P6, P7> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 7);
 	}
 }
 
-export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8, RO = never> extends AbstractMessageSignature {
+export class NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, P8, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 8);
 	}
 }
 
-export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, RO = never> extends AbstractMessageSignature {
+export class NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9> extends AbstractMessageSignature {
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
-	public readonly _?: [P1, P2, P3, P4, P5, P6, P7, P8, P9, RO, _EM];
+	public readonly _: [P1, P2, P3, P4, P5, P6, P7, P8, P9, _EM] | undefined;
 	constructor(method: string) {
 		super(method, 9);
 	}
 }
 
-/**
- * Tests if the given message is a request message
- */
-export function isRequestMessage(message: Message | undefined): message is RequestMessage {
-	const candidate = <RequestMessage>message;
-	return candidate && is.string(candidate.method) && (is.string(candidate.id) || is.number(candidate.id));
-}
+export namespace Message {
+	/**
+ 	 * Tests if the given message is a request message
+ 	 */
+	export function isRequest(message: Message | undefined): message is RequestMessage {
+		const candidate = <RequestMessage>message;
+		return candidate && is.string(candidate.method) && (is.string(candidate.id) || is.number(candidate.id));
+	}
 
-/**
- * Tests if the given message is a notification message
- */
-export function isNotificationMessage(message: Message | undefined): message is NotificationMessage {
-	const candidate = <NotificationMessage>message;
-	return candidate && is.string(candidate.method) && (<any>message).id === void 0;
-}
+	/**
+ 	 * Tests if the given message is a notification message
+ 	 */
+	export function isNotification(message: Message | undefined): message is NotificationMessage {
+		const candidate = <NotificationMessage>message;
+		return candidate && is.string(candidate.method) && (<any>message).id === void 0;
+	}
 
-/**
- * Tests if the given message is a response message
- */
-export function isResponseMessage(message: Message | undefined): message is ResponseMessage {
-	const candidate = <ResponseMessage>message;
-	return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id) || candidate.id === null);
+	/**
+ 	 * Tests if the given message is a response message
+ 	 */
+	export function isResponse(message: Message | undefined): message is ResponseMessage {
+		const candidate = <ResponseMessage>message;
+		return candidate && (candidate.result !== void 0 || !!candidate.error) && (is.string(candidate.id) || is.number(candidate.id) || candidate.id === null);
+	}
 }

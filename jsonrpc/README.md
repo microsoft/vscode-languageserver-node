@@ -11,7 +11,7 @@ a client and a server. Below an example how to setup a JSON-RPC connection. Firs
 
 ```ts
 import * as cp from 'child_process';
-import * as rpc from 'vscode-jsonrpc';
+import * as rpc from 'vscode-jsonrpc/node';
 
 let childProcess = cp.spawn(...);
 
@@ -30,7 +30,7 @@ connection.sendNotification(notification, 'Hello World');
 The server side looks very symmetrical:
 
 ```ts
-import * as rpc from 'vscode-jsonrpc';
+import * as rpc from 'vscode-jsonrpc/node';
 
 
 let connection = rpc.createMessageConnection(

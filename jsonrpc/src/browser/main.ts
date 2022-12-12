@@ -15,23 +15,19 @@ import {
 
 export * from '../common/api';
 
-export class BrowserMessageReader extends AbstractMessageReader {
+export class BrowserMessageReader extends AbstractMessageReader implements MessageReader {
 
 	private _onData: Emitter<Message>;
 	private _messageListener: (event: MessageEvent) => void;
 
-	public constructor(context: Worker | DedicatedWorkerGlobalScope) {
+	public constructor(port: MessagePort | Worker | DedicatedWorkerGlobalScope) {
 		super();
 		this._onData = new Emitter<Message>();
 		this._messageListener = (event: MessageEvent) => {
 			this._onData.fire(event.data);
 		};
-		context.addEventListener('error', (event) => this.fireError(event));
-		if (context instanceof Worker) {
-			context.addEventListener('message', this._messageListener);
-		} else {
-			context.addEventListener('message', this._messageListener);
-		}
+		port.addEventListener('error', (event) => this.fireError(event));
+		port.onmessage = this._messageListener;
 	}
 
 	public listen(callback: DataCallback): Disposable {
@@ -39,19 +35,19 @@ export class BrowserMessageReader extends AbstractMessageReader {
 	}
 }
 
-export class BrowserMessageWriter extends AbstractMessageWriter {
+export class BrowserMessageWriter extends AbstractMessageWriter implements MessageWriter {
 
 	private errorCount: number;
 
-	public constructor(private context: Worker | DedicatedWorkerGlobalScope) {
+	public constructor(private port: MessagePort | Worker | DedicatedWorkerGlobalScope) {
 		super();
 		this.errorCount = 0;
-		context.addEventListener('error', (event) => this.fireError(event));
+		port.addEventListener('error', (event) => this.fireError(event));
 	}
 
 	public write(msg: Message): Promise<void> {
 		try {
-			this.context.postMessage(msg);
+			this.port.postMessage(msg);
 			return Promise.resolve();
 		} catch (error) {
 			this.handleError(error, msg);
@@ -62,6 +58,9 @@ export class BrowserMessageWriter extends AbstractMessageWriter {
 	private handleError(error: any, msg: Message): void {
 		this.errorCount++;
 		this.fireError(error, msg, this.errorCount);
+	}
+
+	public end(): void {
 	}
 }
 

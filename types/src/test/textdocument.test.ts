@@ -66,7 +66,6 @@ suite('Text Document Lines Model Validator', () => {
 		var str = '12345\n12345\n12345';
 		var lm = newDocument(str);
 		assert.equal(lm.getText(), str);
-		assert.equal(lm.getText(Range.create(-1, 0, 0, 5)), '12345');
 		assert.equal(lm.getText(Range.create(0, 0, 0, 5)), '12345');
 		assert.equal(lm.getText(Range.create(0, 4, 1, 1)), '5\n1');
 		assert.equal(lm.getText(Range.create(0, 4, 2, 1)), '5\n12345\n1');

@@ -3,12 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import RAL from '../common/ral';
-import { Disposable } from '../common/disposable';
-import { Message } from '../common/messages';
-import { Emitter } from '../common/events';
-import { ContentTypeEncoderOptions, ContentTypeDecoderOptions } from '../common/encoding';
-import { AbstractMessageBuffer } from '../common/messageBuffer';
+import {
+	RAL, Disposable, Message, Emitter, ContentTypeEncoderOptions, ContentTypeDecoderOptions, AbstractMessageBuffer
+} from '../common/api';
+
 
 class MessageBuffer extends AbstractMessageBuffer {
 
@@ -61,6 +59,8 @@ class ReadableStreamWrapper implements RAL.ReadableStream {
 			const blob = event.data as Blob;
 			blob.arrayBuffer().then((buffer) => {
 				this._onData.fire(new Uint8Array(buffer));
+			}, () => {
+				RAL().console.error(`Converting blob to array buffer failed.`);
 			});
 		};
 		this.socket.addEventListener('message', this._messageListener);
@@ -109,7 +109,7 @@ class WritableStreamWrapper implements RAL.WritableStream {
 	public write(data: Uint8Array | string, encoding?: RAL.MessageBufferEncoding): Promise<void> {
 		if (typeof data === 'string') {
 			if (encoding !== undefined && encoding !== 'utf-8') {
-				throw new Error(`In a Browser environments only utf-8 text encding is supported. But got encoding: ${encoding}`);
+				throw new Error(`In a Browser environments only utf-8 text encoding is supported. But got encoding: ${encoding}`);
 			}
 			this.socket.send(data);
 		} else {
@@ -127,7 +127,7 @@ interface RIL extends RAL {
 	readonly stream: {
 		readonly asReadableStream: (stream: WebSocket) => RAL.ReadableStream;
 		readonly asWritableStream: (stream: WebSocket) => RAL.WritableStream;
-	}
+	};
 }
 
 const _textEncoder = new TextEncoder();
@@ -140,7 +140,7 @@ const _ril: RIL = Object.freeze<RIL>({
 			name: 'application/json',
 			encode: (msg: Message, options: ContentTypeEncoderOptions): Promise<Uint8Array> => {
 				if (options.charset !== 'utf-8') {
-					throw new Error(`In a Browser environments only utf-8 text encding is supported. But got encoding: ${options.charset}`);
+					throw new Error(`In a Browser environments only utf-8 text encoding is supported. But got encoding: ${options.charset}`);
 				}
 				return Promise.resolve(_textEncoder.encode(JSON.stringify(msg, undefined, 0)));
 			}
@@ -161,18 +161,18 @@ const _ril: RIL = Object.freeze<RIL>({
 	}),
 	console: console,
 	timer: Object.freeze({
-		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): RAL.TimeoutHandle {
-			return setTimeout(callback, ms, ...args) as unknown as RAL.TimeoutHandle;
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+			const handle = setTimeout(callback, ms, ...args);
+			return { dispose: () => clearTimeout(handle) };
 		},
-		clearTimeout(handle: RAL.TimeoutHandle): void {
-			clearTimeout(handle as unknown as number);
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable {
+			const handle = setTimeout(callback, 0, ...args);
+			return { dispose: () => clearTimeout(handle) };
 		},
-		setImmediate(callback: (...args: any[]) => void, ...args: any[]): RAL.ImmediateHandle {
-			return setTimeout(callback, 0, ...args) as unknown as RAL.ImmediateHandle;
+		setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+			const handle =  setInterval(callback, ms, ...args);
+			return { dispose: () => clearInterval(handle) };
 		},
-		clearImmediate(handle: RAL.ImmediateHandle): void {
-			clearTimeout(handle as unknown as number);
-		}
 	})
 });
 

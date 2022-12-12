@@ -1,0 +1,37 @@
+{
+	"name": "@vscode/tsconfig-gen",
+	"description": "Tool to generate tsconfig files from a higher level description",
+	"version": "0.1.0",
+	"author": "Microsoft Corporation",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
+		"directory": "tsconfig-gen"
+	},
+	"bugs": {
+		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
+	},
+	"main": "./lib/main.js",
+	"typings": "./lib/main.d.ts",
+	"bin": {
+		"tsconfig-gen": "./bin/tsconfig-gen"
+	},
+	"dependencies": {
+		"yargs": "^17.6.2"
+	},
+	"devDependencies": {
+		"@types/yargs": "^17.0.13"
+	},
+	"scripts": {
+		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepack": "git clean -xfd . && npm install && npm run all",
+		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
+		"clean": "node ../node_modules/rimraf/bin.js lib",
+		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
+		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
+		"all": "npm run compile && npm run lint",
+		"compile:publish": "node ../build/bin/tsc -b ./tsconfig.publish.json",
+		"all:publish": "git clean -xfd . && npm install && npm run compile:publish && npm run lint"
+	}
+}

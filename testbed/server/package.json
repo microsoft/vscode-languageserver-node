@@ -6,6 +6,9 @@
 	"engines": {
 		"node": "*"
 	},
+	"dependencies": {
+		"vscode-uri": "^3.0.1"
+	},
 	"scripts": {
 		"compile": "tsc -b ./tsconfig.json",
 		"watch": "tsc --watch -b ./tsconfig.json"

@@ -1,14 +1,30 @@
 {
-	"extends": "../../tsconfig.base.json",
-	"compilerOptions": {
-		"tsBuildInfoFile":"../../lib/common/compile.tsbuildInfo",
-		"rootDir": ".",
-		"outDir": "../../lib/common"
-	},
-	"include": [
-		"."
-	],
-	"exclude": [
-		"test"
-	]
+    "compilerOptions": {
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "rootDir": ".",
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es2020",
+        "lib": [
+            "es2020"
+        ],
+        "outDir": "../../lib/common",
+        "tsBuildInfoFile": "../../lib/common/compile.tsbuildInfo",
+        "incremental": true,
+        "composite": true
+    },
+    "include": [
+        "."
+    ],
+    "exclude": [
+        "test"
+    ]
 }

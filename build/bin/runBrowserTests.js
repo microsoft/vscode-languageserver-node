@@ -3,6 +3,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+'use strict';
+//@ts-check
 
 const path = require('path');
 const url = require('url');
@@ -66,7 +68,14 @@ class EchoRunner extends events.EventEmitter {
 async function runTests(location) {
 	return new Promise((resolve, reject) => {
 		const root = path.join(__dirname, '..', '..');
-		const server = httpServer.createServer({ root: root, showDir: true, });
+		const server = httpServer.createServer({
+			root: root, showDir: true,
+			cors: true,
+			headers: {
+				'Cross-Origin-Opener-Policy': 'same-origin',
+				'Cross-Origin-Embedder-Policy': 'require-corp'
+			}
+		});
 		server.listen(8080, '127.0.0.1', async () => {
 			let failCount = 0;
 			const browser = await playwright['chromium'].launch({ headless: true, devtools: false });

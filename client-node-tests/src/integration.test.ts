@@ -6,8 +6,66 @@
 
 import * as assert from 'assert';
 import * as path from 'path';
-import * as lsclient from 'vscode-languageclient/node';
 import * as vscode from 'vscode';
+import * as lsclient from 'vscode-languageclient/node';
+import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
+import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/diagnostic';
+import { LanguageClient } from 'vscode-languageclient/node';
+
+namespace GotNotifiedRequest {
+	export const method: 'testing/gotNotified' = 'testing/gotNotified';
+	export const type = new lsclient.RequestType<string, boolean, void>(method);
+}
+
+async function revertAllDirty(): Promise<void> {
+	return vscode.commands.executeCommand('_workbench.revertAllDirty');
+}
+
+function positionEqual(pos: vscode.Position, l: number, c: number): void {
+	assert.strictEqual(pos.line, l);
+	assert.strictEqual(pos.character, c);
+}
+
+
+function rangeEqual(range: vscode.Range, sl: number, sc: number, el: number, ec: number): void {
+	assert.strictEqual(range.start.line, sl);
+	assert.strictEqual(range.start.character, sc);
+	assert.strictEqual(range.end.line, el);
+	assert.strictEqual(range.end.character, ec);
+}
+
+function colorEqual(color: vscode.Color, red: number, green: number, blue: number, alpha: number): void {
+	assert.strictEqual(color.red, red);
+	assert.strictEqual(color.green, green);
+	assert.strictEqual(color.blue, blue);
+	assert.strictEqual(color.alpha, alpha);
+}
+
+function uriEqual(actual: vscode.Uri, expected: vscode.Uri): void {
+	assert.strictEqual(actual.toString(), expected.toString());
+}
+
+function isArray<T>(value: Array<T> | undefined | null, clazz: any = undefined, length: number = 1): asserts value is Array<T> {
+	assert.ok(Array.isArray(value), `value is array`);
+	assert.strictEqual(value!.length, length, 'value has given length');
+	if (clazz !== undefined && length > 0) {
+		assert.ok(value![0] instanceof clazz);
+	}
+}
+
+function isDefined<T>(value: T | undefined | null): asserts value is Exclude<T, undefined | null> {
+	if (value === undefined || value === null) {
+		throw new Error(`Value is null or undefined`);
+	}
+}
+
+function isInstanceOf<T>(value: T, clazz: any): asserts value is Exclude<T, undefined | null> {
+	assert.ok(value instanceof clazz);
+}
+
+function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport): asserts value is vsdiag.FullDocumentDiagnosticReport {
+	assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
+}
 
 suite('Client integration', () => {
 
@@ -18,45 +76,14 @@ suite('Client integration', () => {
 	let tokenSource!: vscode.CancellationTokenSource;
 	const position: vscode.Position = new vscode.Position(1, 1);
 	const range: vscode.Range = new vscode.Range(1, 1, 1, 2);
-
-	function rangeEqual(range: vscode.Range, sl: number, sc: number, el: number, ec: number): void {
-		assert.strictEqual(range.start.line, sl);
-		assert.strictEqual(range.start.character, sc);
-		assert.strictEqual(range.end.line, el);
-		assert.strictEqual(range.end.character, ec);
-	}
-
-	function colorEqual(color: vscode.Color, red: number, green: number, blue: number, alpha: number): void {
-		assert.strictEqual(color.red, red);
-		assert.strictEqual(color.green, green);
-		assert.strictEqual(color.blue, blue);
-		assert.strictEqual(color.alpha, alpha);
-	}
-
-	function uriEqual(actual: vscode.Uri, expected: vscode.Uri): void {
-		assert.strictEqual(actual.toString(), expected.toString());
-	}
-
-	function isArray<T>(value: Array<T> | undefined | null, clazz: any, length: number = 1): asserts value is Array<T> {
-		assert.ok(Array.isArray(value), `value is array`);
-		assert.strictEqual(value!.length, length, 'value has given length');
-		if (length > 0) {
-			assert.ok(value![0] instanceof clazz);
-		}
-	}
-
-	function isDefined<T>(value: T | undefined | null): asserts value is Exclude<T, undefined | null> {
-		if (value === undefined || value === null) {
-			throw new Error(`Value is null or undefined`);
-		}
-	}
-
-	function isInstanceOf<T>(value: T, clazz: any): asserts value is Exclude<T, undefined | null> {
-		assert.ok(value instanceof clazz);
-	}
+	const fsProvider = new MemoryFileSystemProvider();
+	let contentProviderDisposable!: vscode.Disposable;
+	let fsProviderDisposable!: vscode.Disposable;
 
 	suiteSetup(async () => {
-		vscode.workspace.registerTextDocumentContentProvider('lsptests', {
+		fsProviderDisposable = vscode.workspace.registerFileSystemProvider(fsProvider.scheme, fsProvider);
+
+		contentProviderDisposable = vscode.workspace.registerTextDocumentContentProvider('lsptests', {
 			provideTextDocumentContent: (_uri: vscode.Uri) => {
 				return [
 					'REM @ECHO OFF',
@@ -64,7 +91,7 @@ suite('Client integration', () => {
 					'REM This is the location of the files that you want to sort',
 					'FOR %%f IN (*.doc *.txt) DO XCOPY c:\source\"%%f" c:\text /m /y',
 					'REM This moves any files with a .doc or',
-					'REM .txt extension from c:\source to c:\textkkk',
+					'REM .txt extension from c:\source to c:\text',
 					'REM %%f is a variable',
 					'FOR %%f IN (*.jpg *.png *.bmp) DO XCOPY C:\source\"%%f" c:\images /m /y',
 					'REM This moves any files with a .jpg, .png,',
@@ -73,7 +100,7 @@ suite('Client integration', () => {
 			}
 		});
 
-		uri = vscode.Uri.parse('lsptests://localhist/test.bat');
+		uri = vscode.Uri.parse('lsptests://localhost/test.bat');
 		document = await vscode.workspace.openTextDocument(uri);
 
 		tokenSource = new vscode.CancellationTokenSource();
@@ -87,15 +114,18 @@ suite('Client integration', () => {
 
 		middleware = {};
 		const clientOptions: lsclient.LanguageClientOptions = {
-			documentSelector, synchronize: {}, initializationOptions: {}, middleware
+			documentSelector, synchronize: {}, initializationOptions: {}, middleware,
+			workspaceFolder: { index: 0, name: 'test_folder', uri: vscode.Uri.parse(`${fsProvider.scheme}:///`) },
 		};
 
 		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
-		client.start();
-		await client.onReady();
+		client.registerProposedFeatures();
+		await client.start();
 	});
 
 	suiteTeardown(async () => {
+		fsProviderDisposable.dispose();
+		contentProviderDisposable.dispose();
 		await client.stop();
 	});
 
@@ -112,7 +142,9 @@ suite('Client integration', () => {
 				},
 				referencesProvider: true,
 				documentHighlightProvider: true,
-				codeActionProvider: true,
+				codeActionProvider: {
+					resolveProvider: true
+				},
 				documentFormattingProvider: true,
 				documentRangeFormattingProvider: true,
 				documentOnTypeFormattingProvider: {
@@ -124,11 +156,16 @@ suite('Client integration', () => {
 				documentLinkProvider: {
 					resolveProvider: true
 				},
+				documentSymbolProvider: true,
 				colorProvider: true,
 				declarationProvider: true,
 				foldingRangeProvider: true,
 				implementationProvider: true,
 				selectionRangeProvider: true,
+				inlineValueProvider: {},
+				inlayHintProvider: {
+					resolveProvider: true
+				},
 				typeDefinitionProvider: true,
 				callHierarchyProvider: true,
 				semanticTokensProvider: {
@@ -140,6 +177,53 @@ suite('Client integration', () => {
 					full: {
 						delta: true
 					}
+				},
+				workspace: {
+					fileOperations: {
+						didCreate: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
+						didRename: {
+							filters: [
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } },
+								// Additionally, to ensure we detect file types correctly, subscribe to only files in
+								// this folder.
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/only-files/**/*', matches: 'file' } },
+							]
+						},
+						didDelete:
+						{
+							filters: [
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/deleted-static/**{/,/*.txt}' } },
+								// Additionally, to ensure we detect file types correctly, subscribe to only files in
+								// this folder.
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/only-files/**/*', matches: 'file' } },
+							]
+						},
+						willCreate: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
+						willRename: {
+							filters: [
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/', matches: 'folder' } },
+								{ scheme: fsProvider.scheme, pattern: { glob: '**/renamed-static/**/*.txt', matches: 'file' } }
+							]
+						},
+						willDelete: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
+					},
+				},
+				linkedEditingRangeProvider: true,
+				diagnosticProvider: {
+					identifier: 'da348dc5-c30a-4515-9d98-31ff3be38d14',
+					interFileDependencies: true,
+					workspaceDiagnostics: true
+				},
+				typeHierarchyProvider: true,
+				workspaceSymbolProvider: {
+					resolveProvider: true
+				},
+				notebookDocumentSync: {
+					notebookSelector: [{
+						notebook: { notebookType: 'jupyter-notebook' },
+						cells: [{ language: 'python' }]
+					}]
 				}
 			},
 			customResults: {
@@ -226,7 +310,8 @@ suite('Client integration', () => {
 			{
 				isRetrigger: false,
 				triggerKind: lsclient.SignatureHelpTriggerKind.Invoked,
-				triggerCharacter: ':'
+				triggerCharacter: ':',
+				activeSignatureHelp: undefined
 			}
 		);
 
@@ -253,7 +338,8 @@ suite('Client integration', () => {
 			{
 				isRetrigger: false,
 				triggerKind: lsclient.SignatureHelpTriggerKind.Invoked,
-				triggerCharacter: ':'
+				triggerCharacter: ':',
+				activeSignatureHelp: undefined
 			}
 		);
 		middleware.provideSignatureHelp = undefined;
@@ -269,8 +355,8 @@ suite('Client integration', () => {
 
 		isArray(result, vscode.Location, 2);
 		for (let i = 0; i < result.length; i++) {
-			const location = result[i];
-			rangeEqual(location.range, i, i, i ,i);
+			const location: vscode.Location = result[i];
+			rangeEqual(location.range, i, i, i, i);
 			assert.strictEqual(location.uri.toString(), document.uri.toString());
 		}
 
@@ -311,7 +397,9 @@ suite('Client integration', () => {
 		const provider = client.getFeature(lsclient.CodeActionRequest.method).getProvider(document);
 		isDefined(provider);
 		const result = (await provider.provideCodeActions(document, range, {
-			diagnostics: []
+			diagnostics: [],
+			triggerKind: vscode.CodeActionTriggerKind.Invoke,
+			only: undefined
 		}, tokenSource.token)) as vscode.CodeAction[];
 
 		isArray(result, vscode.CodeAction);
@@ -320,15 +408,64 @@ suite('Client integration', () => {
 		assert.strictEqual(action.command?.title, 'title');
 		assert.strictEqual(action.command?.command, 'id');
 
+		const resolved = (await provider.resolveCodeAction!(result[0], tokenSource.token));
+		assert.strictEqual(resolved?.title, 'resolved');
+
 		let middlewareCalled: boolean = false;
 		middleware.provideCodeActions = (d, r, c, t, n) => {
 			middlewareCalled = true;
 			return n(d, r, c, t);
 		};
 
-		await provider.provideCodeActions(document, range, { diagnostics: [] }, tokenSource.token);
+		await provider.provideCodeActions(document, range, { diagnostics: [], triggerKind: vscode.CodeActionTriggerKind.Invoke, only: undefined }, tokenSource.token);
 		middleware.provideCodeActions = undefined;
 		assert.ok(middlewareCalled);
+
+		middlewareCalled = false;
+		middleware.resolveCodeAction = (c, t, n) => {
+			middlewareCalled = true;
+			return n(c, t);
+		};
+		await provider.resolveCodeAction!(result[0], tokenSource.token);
+		middleware.resolveCodeAction = undefined;
+		assert.ok(middlewareCalled);
+	});
+
+	test('Progress', async () => {
+		const progressToken = 'TEST-PROGRESS-TOKEN';
+		const middlewareEvents: Array<lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd> = [];
+		let currentProgressResolver: (value: unknown) => void | undefined;
+
+		// Set up middleware that calls the current resolve function when it gets its 'end' progress event.
+		middleware.handleWorkDoneProgress = (token: lsclient.ProgressToken, params, next) => {
+			if (token === progressToken) {
+				middlewareEvents.push(params);
+				if (params.kind === 'end') {
+					setImmediate(currentProgressResolver);
+				}
+			}
+			return next(token, params);
+		};
+
+		// Trigger multiple sample progress events.
+		for (let i = 0; i < 2; i++) {
+			await new Promise<unknown>((resolve) => {
+				currentProgressResolver = resolve;
+				void client.sendRequest(
+					new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
+					{},
+					tokenSource.token,
+				);
+			});
+		}
+
+		middleware.handleWorkDoneProgress = undefined;
+
+		// Ensure all events were handled.
+		assert.deepStrictEqual(
+			middlewareEvents.map((p) => p.kind),
+			['begin', 'report', 'end', 'begin', 'report', 'end'],
+		);
 	});
 
 	test('Document Formatting', async () => {
@@ -451,6 +588,29 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, 2);
 	});
 
+	test('Document Symbol', async () => {
+		const provider = client.getFeature(lsclient.DocumentSymbolRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = await provider.provideDocumentSymbols(document, tokenSource.token);
+		const item = result ? result[0] : undefined;
+		isDefined(item);
+		const documentSymbol: vscode.DocumentSymbol = item as vscode.DocumentSymbol;
+		isInstanceOf(documentSymbol, vscode.DocumentSymbol);
+
+		assert.equal(documentSymbol.name, 'name');
+		rangeEqual(documentSymbol.range, 1, 1, 3, 1);
+		rangeEqual(documentSymbol.selectionRange, 2, 1, 2, 3);
+
+		let middlewareCalled: boolean = false;
+		middleware.provideDocumentSymbols = (d, t, n) => {
+			middlewareCalled = true;
+			return n(d, t);
+		};
+		await provider.provideDocumentSymbols(document, tokenSource.token);
+		middleware.provideDocumentSymbols = undefined;
+		assert.ok(middlewareCalled);
+	});
+
 	test('Document Color', async () => {
 		const provider = client.getFeature(lsclient.DocumentColorRequest.method).getProvider(document);
 		isDefined(provider);
@@ -470,7 +630,7 @@ suite('Client integration', () => {
 		await provider.provideDocumentColors(document, tokenSource.token);
 		middleware.provideDocumentColors = undefined;
 
-		const presentations = await provider.provideColorPresentations(color.color, { document, range}, tokenSource.token);
+		const presentations = await provider.provideColorPresentations(color.color, { document, range }, tokenSource.token);
 
 		isArray(presentations, vscode.ColorPresentation);
 		const presentation = presentations[0];
@@ -480,7 +640,7 @@ suite('Client integration', () => {
 			middlewareCalled++;
 			return n(c, x, t);
 		};
-		await provider.provideColorPresentations(color.color, { document, range}, tokenSource.token);
+		await provider.provideColorPresentations(color.color, { document, range }, tokenSource.token);
 		middleware.provideColorPresentations = undefined;
 		assert.strictEqual(middlewareCalled, 2);
 	});
@@ -561,7 +721,7 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
-	test('Type Definition', async() => {
+	test('Type Definition', async () => {
 		const provider = client.getFeature(lsclient.TypeDefinitionRequest.method).getProvider(document);
 		isDefined(provider);
 		const result = (await provider.provideTypeDefinition(document, position, tokenSource.token)) as vscode.Location;
@@ -611,16 +771,383 @@ suite('Client integration', () => {
 		const outgoing = (await provider.provideCallHierarchyOutgoingCalls(item, tokenSource.token)) as vscode.CallHierarchyOutgoingCall[];
 		isArray(outgoing, vscode.CallHierarchyOutgoingCall, 1);
 		middlewareCalled = false;
-		middleware.provideCallHierarchyOutgingCalls = (i, t, n) => {
+		middleware.provideCallHierarchyOutgoingCalls = (i, t, n) => {
 			middlewareCalled = true;
 			return n(i, t);
 		};
 		await provider.provideCallHierarchyOutgoingCalls(item, tokenSource.token);
-		middleware.provideCallHierarchyOutgingCalls = undefined;
+		middleware.provideCallHierarchyOutgoingCalls = undefined;
 		assert.strictEqual(middlewareCalled, true);
 	});
+
+	suite('File Operations', () => {
+		const referenceFileUri = vscode.Uri.parse('/dummy-edit');
+		function ensureReferenceEdit(edits: vscode.WorkspaceEdit, type: string, expectedLines: string[]) {
+			// Ensure the edits are as expected.
+			assert.strictEqual(edits.size, 1);
+			assert.strictEqual(edits.has(referenceFileUri), true);
+			const edit = edits.get(referenceFileUri);
+			assert.strictEqual(edit.length, 1);
+			assert.strictEqual(edit[0].newText.trim(), `${type}:\n${expectedLines.join('\n')}`.trim());
+		}
+
+		async function ensureNotificationReceived(type: string, params: any) {
+			const result = await client.sendRequest(
+				new lsclient.ProtocolRequestType<any, any, never, any, any>('testing/lastFileOperationRequest'),
+				{},
+				tokenSource.token,
+			);
+			assert.deepStrictEqual(result, {
+				type,
+				params
+			});
+		}
+
+		const toWorkspaceUri = (relative: string) => vscode.Uri.parse(`${fsProvider.scheme}:///${relative}`);
+
+		const createFiles = [
+			'my/file.txt',
+			'my/file.js',
+			'my/folder/',
+			// Static registration for tests is [operation]-static and *.txt
+			'my/created-static/file.txt',
+			'my/created-static/file.js',
+			'my/created-static/folder/',
+			// Dynamic registration for tests is [operation]-dynamic and *.js
+			'my/created-dynamic/file.txt',
+			'my/created-dynamic/file.js',
+			'my/created-dynamic/folder/',
+		].map(toWorkspaceUri);
+
+		const renameFiles = [
+			['my/file.txt', 'my-new/file.txt'],
+			['my/file.js', 'my-new/file.js'],
+			['my/folder/', 'my-new/folder/'],
+			// Static registration for tests is [operation]-static and *.txt
+			['my/renamed-static/file.txt', 'my-new/renamed-static/file.txt'],
+			['my/renamed-static/file.js', 'my-new/renamed-static/file.js'],
+			['my/renamed-static/folder/', 'my-new/renamed-static/folder/'],
+			// Dynamic registration for tests is [operation]-dynamic and *.js
+			['my/renamed-dynamic/file.txt', 'my-new/renamed-dynamic/file.txt'],
+			['my/renamed-dynamic/file.js', 'my-new/renamed-dynamic/file.js'],
+			['my/renamed-dynamic/folder/', 'my-new/renamed-dynamic/folder/'],
+			// Special folder that's in something we only watch for files.
+			['my/only-files/folder/', 'my-new/only-files/folder/'],
+		].map(([o, n]) => ({ oldUri: toWorkspaceUri(o), newUri: toWorkspaceUri(n) }));
+
+		const deleteFiles = [
+			'my/file.txt',
+			'my/file.js',
+			'my/folder/',
+			'my/folder.js/',
+			// Static registration for tests is [operation]-static and *.txt
+			'my/deleted-static/file.txt',
+			'my/deleted-static/file.js',
+			'my/deleted-static/folder/',
+			// Dynamic registration for tests is [operation]-dynamic and *.js
+			'my/deleted-dynamic/file.txt',
+			'my/deleted-dynamic/file.js',
+			'my/deleted-dynamic/folder/',
+			// Special folder that's in something we only watch for files.
+			'my/only-files/folder/',
+		].map(toWorkspaceUri);
+
+		test('Will Create Files', async () => {
+			const feature = client.getFeature(lsclient.WillCreateFilesRequest.method);
+			isDefined(feature);
+
+			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				await feature.send({ files: createFiles, waitUntil: resolve, token: tokenSource.token });
+				// If feature.send didn't call waitUntil synchronously then something went wrong.
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
+			});
+
+			// Send the event and ensure the server responds with an edit referencing the
+			// correct files.
+			let edits = await sendCreateRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL CREATE',
+				[
+					toWorkspaceUri('my/created-static/file.txt').toString(),
+					toWorkspaceUri('my/created-static/folder/').toString(),
+					toWorkspaceUri('my/created-dynamic/file.js').toString(),
+					toWorkspaceUri('my/created-dynamic/folder/').toString(),
+				],
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.willCreateFiles = (event, next) => next({
+				...event,
+				files: event.files.filter((f) => !f.path.endsWith('/')),
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			edits = await sendCreateRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL CREATE',
+				[
+					toWorkspaceUri('my/created-static/file.txt').toString(),
+					toWorkspaceUri('my/created-dynamic/file.js').toString(),
+				],
+			);
+
+			middleware.workspace.willCreateFiles = undefined;
+		});
+
+		test('Did Create Files', async () => {
+			const feature = client.getFeature(lsclient.DidCreateFilesNotification.method);
+			isDefined(feature);
+
+			// Send the event and ensure the server reports the notification was sent.
+			await feature.send({ files: createFiles });
+			await ensureNotificationReceived(
+				'create',
+				{
+					files: [
+						{ uri: toWorkspaceUri('my/created-static/file.txt').toString() },
+						{ uri: toWorkspaceUri('my/created-static/folder/').toString() },
+						{ uri: toWorkspaceUri('my/created-dynamic/file.js').toString() },
+						{ uri: toWorkspaceUri('my/created-dynamic/folder/').toString() },
+					],
+				},
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.didCreateFiles = (event, next) => next({
+				files: event.files.filter((f) => !f.path.endsWith('/')),
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			await feature.send({ files: createFiles });
+			await ensureNotificationReceived(
+				'create',
+				{
+					files: [
+						{ uri: toWorkspaceUri('my/created-static/file.txt').toString() },
+						{ uri: toWorkspaceUri('my/created-dynamic/file.js').toString() },
+					],
+				},
+			);
+
+			middleware.workspace.didCreateFiles = undefined;
+		});
+
+		test('Will Rename Files', async () => {
+			const feature = client.getFeature(lsclient.WillRenameFilesRequest.method);
+			isDefined(feature);
+
+			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				await feature.send({ files: renameFiles, waitUntil: resolve, token: tokenSource.token });
+				// If feature.send didn't call waitUntil synchronously then something went wrong.
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
+			});
+
+			// Send the event and ensure the server responds with an edit referencing the
+			// correct files.
+			let edits = await sendRenameRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL RENAME',
+				[
+					`${toWorkspaceUri('my/renamed-static/file.txt')} -> ${toWorkspaceUri('my-new/renamed-static/file.txt')}`,
+					`${toWorkspaceUri('my/renamed-static/folder/')} -> ${toWorkspaceUri('my-new/renamed-static/folder/')}`,
+					`${toWorkspaceUri('my/renamed-dynamic/file.js')} -> ${toWorkspaceUri('my-new/renamed-dynamic/file.js')}`,
+					`${toWorkspaceUri('my/renamed-dynamic/folder/')} -> ${toWorkspaceUri('my-new/renamed-dynamic/folder/')}`,
+				],
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.willRenameFiles = (event, next) => next({
+				...event,
+				files: event.files.filter((f) => !f.oldUri.path.endsWith('/')),
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			edits = await sendRenameRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL RENAME',
+				[
+					`${toWorkspaceUri('my/renamed-static/file.txt')} -> ${toWorkspaceUri('my-new/renamed-static/file.txt')}`,
+					`${toWorkspaceUri('my/renamed-dynamic/file.js')} -> ${toWorkspaceUri('my-new/renamed-dynamic/file.js')}`,
+				],
+			);
+
+			middleware.workspace.willRenameFiles = undefined;
+		});
+
+		test('Did Rename Files', async () => {
+			const feature = client.getFeature(lsclient.DidRenameFilesNotification.method);
+			isDefined(feature);
+
+			// DidRename relies on WillRename firing first and the items existing on disk in their correct locations
+			// so that the type of the items can be checked and stashed before they're actually renamed.
+			await createTestItems(renameFiles.map((f) => f.oldUri));
+			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				const featureWithWillRename = feature as any as { willRename(e: vscode.FileWillRenameEvent): void };
+				featureWithWillRename.willRename({ files: renameFiles, waitUntil: resolve, token: tokenSource.token });
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
+			});
+			// Ensure they don't exist on disk when DidRename fires. In reality they would be
+			// renamed away, but deleting them is good enough for the test, the requirement is
+			// just that they don't exist in the old locations to verify the types were stashed
+			// during WillRename.
+			await deleteTestItems(renameFiles.map((f) => f.oldUri));
+
+			// Send the event and ensure the server reports the notification was sent.
+			await feature.send({ files: renameFiles });
+			await ensureNotificationReceived(
+				'rename',
+				{
+					files: [
+						{ oldUri: toWorkspaceUri('my/renamed-static/file.txt').toString(), newUri: toWorkspaceUri('my-new/renamed-static/file.txt').toString() },
+						{ oldUri: toWorkspaceUri('my/renamed-static/folder/').toString(), newUri: toWorkspaceUri('my-new/renamed-static/folder/').toString() },
+						{ oldUri: toWorkspaceUri('my/renamed-dynamic/file.js').toString(), newUri: toWorkspaceUri('my-new/renamed-dynamic/file.js').toString() },
+						{ oldUri: toWorkspaceUri('my/renamed-dynamic/folder/').toString(), newUri: toWorkspaceUri('my-new/renamed-dynamic/folder/').toString() },
+					],
+				},
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.didRenameFiles = (event, next) => next({
+				files: event.files.filter((f) => !f.oldUri.path.endsWith('/')),
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			await feature.send({ files: renameFiles });
+			await ensureNotificationReceived(
+				'rename',
+				{
+					files: [
+						{ oldUri: toWorkspaceUri('my/renamed-static/file.txt').toString(), newUri: toWorkspaceUri('my-new/renamed-static/file.txt').toString() },
+						{ oldUri: toWorkspaceUri('my/renamed-dynamic/file.js').toString(), newUri: toWorkspaceUri('my-new/renamed-dynamic/file.js').toString() },
+					],
+				},
+			);
+
+			middleware.workspace.didRenameFiles = undefined;
+		});
+
+		test('Will Delete Files', async () => {
+			const feature = client.getFeature(lsclient.WillDeleteFilesRequest.method);
+			isDefined(feature);
+
+			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				await feature.send({ files: deleteFiles, waitUntil: resolve, token: tokenSource.token });
+				// If feature.send didn't call waitUntil synchronously then something went wrong.
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
+			});
+
+			// Send the event and ensure the server responds with an edit referencing the
+			// correct files.
+			let edits = await sendDeleteRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL DELETE',
+				[
+					toWorkspaceUri('my/deleted-static/file.txt').toString(),
+					toWorkspaceUri('my/deleted-static/folder/').toString(),
+					toWorkspaceUri('my/deleted-dynamic/file.js').toString(),
+					toWorkspaceUri('my/deleted-dynamic/folder/').toString(),
+				],
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.willDeleteFiles = (event, next) => next({
+				...event,
+				files: event.files.filter((f) => !f.path.endsWith('/')),
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			edits = await sendDeleteRequest();
+			ensureReferenceEdit(
+				edits,
+				'WILL DELETE',
+				[
+					toWorkspaceUri('my/deleted-static/file.txt').toString(),
+					toWorkspaceUri('my/deleted-dynamic/file.js').toString(),
+				],
+			);
+
+			middleware.workspace.willDeleteFiles = undefined;
+		});
+
+		test('Did Delete Files', async () => {
+			const feature = client.getFeature(lsclient.DidDeleteFilesNotification.method);
+			isDefined(feature);
+
+			// DidDelete relies on WillDelete firing first and the items actually existing on disk
+			// so that the type of the items can be checked and stashed before they're actually deleted.
+			await createTestItems(deleteFiles);
+			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
+				const featureWithWillDelete = feature as any as { willDelete(e: vscode.FileWillDeleteEvent): void };
+				featureWithWillDelete.willDelete({ files: deleteFiles, waitUntil: resolve, token: tokenSource.token });
+				reject(new Error('Feature unexpectedly did not call waitUntil synchronously'));
+			});
+			await deleteTestItems(deleteFiles);
+
+			// Send the event and ensure the server reports the notification was sent.
+			await feature.send({ files: deleteFiles });
+			await ensureNotificationReceived(
+				'delete',
+				{
+					files: [
+						{ uri: toWorkspaceUri('my/deleted-static/file.txt').toString() },
+						{ uri: toWorkspaceUri('my/deleted-static/folder/').toString() },
+						{ uri: toWorkspaceUri('my/deleted-dynamic/file.js').toString() },
+						{ uri: toWorkspaceUri('my/deleted-dynamic/folder/').toString() },
+					],
+				},
+			);
+
+			// Add middleware that strips out any folders.
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.didDeleteFiles = (event, next) => next({
+				files: event.files.filter((f) => !f.path.endsWith('/')),
+			});
+
+			// Ensure we get the same results minus the folders that the middleware removed.
+			await feature.send({ files: deleteFiles });
+			await ensureNotificationReceived(
+				'delete',
+				{
+					files: [
+						{ uri: toWorkspaceUri('my/deleted-static/file.txt').toString() },
+						{ uri: toWorkspaceUri('my/deleted-dynamic/file.js').toString() },
+					],
+				},
+			);
+
+			middleware.workspace.didDeleteFiles = undefined;
+		});
+
+		async function createTestItems(items: vscode.Uri[]): Promise<void> {
+			for (const item of items) {
+				if (item.path.endsWith('/')) {
+					await fsProvider.createDirectory(item);
+				}
+				else {
+					await fsProvider.writeFile(item, new Uint8Array(), { create: true, overwrite: false });
+				}
+			}
+		}
+
+		async function deleteTestItems(items: vscode.Uri[]): Promise<void> {
+			for (const item of items) {
+				await fsProvider.delete(item, { recursive: true });
+			}
+		}
+	});
+
 	test('Semantic Tokens', async () => {
-		const provider = client.getFeature(lsclient.SemanticTokensRequest.method).getProvider(document);
+		const provider = client.getFeature(lsclient.SemanticTokensRegistrationType.method).getProvider(document);
 		const rangeProvider = provider?.range;
 		isDefined(rangeProvider);
 		const rangeResult = (await rangeProvider.provideDocumentRangeSemanticTokens(document, range, tokenSource.token)) as vscode.SemanticTokens;
@@ -657,5 +1184,662 @@ suite('Client integration', () => {
 		await fullProvider.provideDocumentSemanticTokensEdits!(document, '2', tokenSource.token);
 		middleware.provideDocumentSemanticTokensEdits = undefined;
 		assert.strictEqual(middlewareCalled, true);
+	});
+	test('Linked Editing Ranges', async () => {
+		const provider = client.getFeature(lsclient.LinkedEditingRangeRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = (await provider.provideLinkedEditingRanges(document, position, tokenSource.token)) as vscode.LinkedEditingRanges;
+
+		isInstanceOf(result, vscode.LinkedEditingRanges);
+		isArray(result.ranges, vscode.Range, 1);
+		rangeEqual(result.ranges[0], 1, 1, 1, 1);
+
+		let middlewareCalled: boolean = false;
+		middleware.provideLinkedEditingRange = (document, position, token, next) => {
+			middlewareCalled = true;
+			return next(document, position, token);
+		};
+		await provider.provideLinkedEditingRanges(document, position, tokenSource.token);
+		middleware.provideTypeDefinition = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Document diagnostic pull', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		const result: vsdiag.DocumentDiagnosticReport | undefined | null = (await provider.diagnostics.provideDiagnostics(document, undefined, tokenSource.token));
+		isDefined(result);
+		isFullDocumentDiagnosticReport(result);
+		isArray(result.items, undefined, 1);
+		const diag = result.items[0];
+		rangeEqual(diag.range, 1, 1, 1, 1);
+		assert.strictEqual(diag.message, 'diagnostic');
+
+		let middlewareCalled: boolean = false;
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = (document, previousResultId, token, next) => {
+			middlewareCalled = true;
+			return next(document, previousResultId, token);
+		};
+		await provider.diagnostics.provideDiagnostics(document, undefined, tokenSource.token);
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Workspace diagnostic pull', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
+		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, (result) => {
+			isDefined(result);
+			isArray(result.items, undefined, 1);
+		});
+
+		let middlewareCalled: boolean = false;
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = (resultIds, token, reporter, next) => {
+			middlewareCalled = true;
+			return next(resultIds, token, reporter);
+		};
+		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, () => {});
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Type Hierarchy', async () => {
+		const provider = client.getFeature(lsclient.TypeHierarchyPrepareRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = (await provider.prepareTypeHierarchy(document, position, tokenSource.token)) as vscode.TypeHierarchyItem[];
+
+		isArray(result, vscode.TypeHierarchyItem, 1);
+		const item = result[0];
+
+		let middlewareCalled: boolean = false;
+		middleware.prepareTypeHierarchy = (d, p, t, n) => {
+			middlewareCalled = true;
+			return n(d, p, t);
+		};
+		await provider.prepareTypeHierarchy(document, position, tokenSource.token);
+		middleware.prepareTypeHierarchy = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const incoming = (await provider.provideTypeHierarchySupertypes(item, tokenSource.token)) as vscode.TypeHierarchyItem[];
+		isArray(incoming, vscode.TypeHierarchyItem, 1);
+		middlewareCalled = false;
+		middleware.provideTypeHierarchySupertypes = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideTypeHierarchySupertypes(item, tokenSource.token);
+		middleware.provideTypeHierarchySupertypes = undefined;
+		assert.strictEqual(middlewareCalled, true);
+
+		const outgoing = (await provider.provideTypeHierarchySubtypes(item, tokenSource.token)) as vscode.TypeHierarchyItem[];
+		isArray(outgoing, vscode.TypeHierarchyItem, 1);
+		middlewareCalled = false;
+		middleware.provideTypeHierarchySubtypes = (i, t, n) => {
+			middlewareCalled = true;
+			return n(i, t);
+		};
+		await provider.provideTypeHierarchySubtypes(item, tokenSource.token);
+		middleware.provideTypeHierarchySubtypes = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Inline Values', async () => {
+		const providerData = client.getFeature(lsclient.InlineValueRequest.method).getProvider(document);
+		isDefined(providerData);
+		const provider = providerData.provider;
+		const results = (await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token));
+
+		isArray(results, undefined, 3);
+
+		for (const r of results) {
+			rangeEqual(r.range, 1, 2, 3, 4);
+		}
+
+		assert.ok(results[0] instanceof vscode.InlineValueText);
+		assert.strictEqual((results[0] as vscode.InlineValueText).text, 'text');
+
+		assert.ok(results[1] instanceof vscode.InlineValueVariableLookup);
+		assert.strictEqual((results[1] as vscode.InlineValueVariableLookup).variableName, 'variableName');
+
+		assert.ok(results[2] instanceof vscode.InlineValueEvaluatableExpression);
+		assert.strictEqual((results[2] as vscode.InlineValueEvaluatableExpression).expression, 'expression');
+
+		let middlewareCalled: boolean = false;
+		middleware.provideInlineValues = (d, r, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, r, c, t);
+		};
+		await provider.provideInlineValues(document, range, { frameId: 1, stoppedLocation: range }, tokenSource.token);
+		middleware.provideInlineValues = undefined;
+		assert.strictEqual(middlewareCalled, true);
+	});
+
+	test('Inlay Hints', async () => {
+		const providerData = client.getFeature(lsclient.InlayHintRequest.method).getProvider(document);
+		isDefined(providerData);
+		const provider = providerData.provider;
+		const results = (await provider.provideInlayHints(document, range, tokenSource.token));
+
+		isArray(results, undefined, 2);
+
+		const hint = results[0];
+		positionEqual(hint.position, 1, 1);
+		assert.strictEqual(hint.kind, vscode.InlayHintKind.Type);
+		const label = hint.label;
+		isArray(label as [], vscode.InlayHintLabelPart, 1);
+		assert.strictEqual((label as vscode.InlayHintLabelPart[])[0].value, 'type');
+
+		let middlewareCalled: boolean = false;
+		middleware.provideInlayHints = (d, r, t, n) => {
+			middlewareCalled = true;
+			return n(d, r, t);
+		};
+		await provider.provideInlayHints(document, range, tokenSource.token);
+		middleware.provideInlayHints = undefined;
+		assert.strictEqual(middlewareCalled, true);
+		assert.ok(typeof provider.resolveInlayHint === 'function');
+
+		const resolvedHint = await provider.resolveInlayHint!(hint, tokenSource.token);
+		assert.strictEqual((resolvedHint?.label as vscode.InlayHintLabelPart[])[0].tooltip, 'tooltip');
+	});
+
+	test('Workspace symbols', async () => {
+		const providers = client.getFeature(lsclient.WorkspaceSymbolRequest.method).getProviders();
+		isDefined(providers);
+		assert.strictEqual(providers.length, 1);
+		const provider = providers[0];
+		const results = await provider.provideWorkspaceSymbols('', tokenSource.token);
+		isArray(results, undefined, 1);
+
+		assert.strictEqual(results.length, 1);
+		rangeEqual(results[0].location.range, 0, 0, 0, 0);
+
+		const symbol = await provider.resolveWorkspaceSymbol!(results[0], tokenSource.token);
+		isDefined(symbol);
+		rangeEqual(symbol.location.range, 1, 2, 3, 4);
+	});
+});
+
+function createNotebookData(): vscode.NotebookData {
+	return new vscode.NotebookData(
+		[
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, '# This program prints Hello, world!' , 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'print(\'Hello, world!\')', 'python')
+		],
+	);
+}
+
+suite('Full notebook tests', () => {
+
+	const documentSelector: lsclient.DocumentSelector = [{ language: 'python' }];
+
+	function createClient(): lsclient.LanguageClient {
+		const serverModule = path.join(__dirname, './servers/fullNotebookServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+		};
+
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector,
+			synchronize: {},
+			initializationOptions: {},
+			middleware: {},
+		};
+		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
+
+		const result = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		result.registerProposedFeatures();
+		return result;
+	}
+
+	let client: lsclient.LanguageClient;
+
+	suiteSetup(async () => {
+		client = createClient();
+		await client.start();
+	});
+
+	suiteTeardown(async () => {
+		await client.stop();
+	});
+
+	test('Notebook document: open', async (): Promise<void> => {
+		let textDocumentMiddlewareCalled: boolean = false;
+		client.middleware.didOpen = (e, n) => {
+			textDocumentMiddlewareCalled = true;
+			return n(e);
+		};
+		let middlewareCalled: boolean = false;
+		client.middleware.notebooks = {
+			didOpen: (nd, nc, n) => {
+				middlewareCalled = true;
+				return n(nd, nc);
+			}
+		};
+		await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		assert.strictEqual(textDocumentMiddlewareCalled, false);
+		client.middleware.didOpen = undefined;
+		assert.strictEqual(middlewareCalled, true);
+		client.middleware.notebooks = undefined;
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidOpenNotebookDocumentNotification.method);
+		assert.strictEqual(notified, true);
+		await revertAllDirty();
+	});
+
+	test('Notebook document: change', async (): Promise<void> => {
+		let textDocumentMiddlewareCalled: boolean = false;
+		client.middleware.didChange = (e, n) => {
+			textDocumentMiddlewareCalled = true;
+			return n(e);
+		};
+		let middlewareCalled: boolean = false;
+		client.middleware.notebooks = {
+			didChange: (ne, n) => {
+				middlewareCalled = true;
+				return n(ne);
+			}
+		};
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const textDocument = notebookDocument.getCells()[0].document;
+		const edit = new vscode.WorkspaceEdit;
+		edit.insert(textDocument.uri, new vscode.Position(0,0), 'REM a comment\n');
+		await vscode.workspace.applyEdit(edit);
+		assert.strictEqual(textDocumentMiddlewareCalled, false, 'text document middleware called');
+		client.middleware.didChange = undefined;
+		assert.strictEqual(middlewareCalled, true, 'notebook middleware called');
+		client.middleware.notebooks = undefined;
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		assert.strictEqual(notified, true);
+		await revertAllDirty();
+	});
+
+	test('Notebook document: getProvider', async (): Promise<void> => {
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const feature = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method);
+		const provider = feature?.getProvider(notebookDocument.getCells()[0]);
+		isDefined(provider);
+		await provider.sendDidCloseNotebookDocument(notebookDocument);
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidCloseNotebookDocumentNotification.method);
+		assert.strictEqual(notified, true);
+		await revertAllDirty();
+	});
+});
+
+suite('Simple notebook tests', () => {
+
+	const documentSelector: lsclient.DocumentSelector = [{ language: 'python', notebook: '*' }];
+
+	function createClient(): lsclient.LanguageClient {
+		const serverModule = path.join(__dirname, './servers/simpleNotebookServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+		};
+
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector,
+			synchronize: {},
+			initializationOptions: {},
+			middleware: {},
+		};
+		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
+
+		const result = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		result.registerProposedFeatures();
+		return result;
+	}
+
+	let client: lsclient.LanguageClient;
+
+	suiteSetup(async () => {
+		client = createClient();
+		await client.start();
+	});
+
+	suiteTeardown(async () => {
+		await client.stop();
+	});
+
+	test('Notebook document: open', async (): Promise<void> => {
+		let textDocumentMiddlewareCalled: boolean = false;
+		client.middleware.didOpen = (e, n) => {
+			textDocumentMiddlewareCalled = true;
+			return n(e);
+		};
+		let notebookMiddlewareCalled: boolean = false;
+		client.middleware.notebooks = {
+			didOpen: (nd, nc, n) => {
+				notebookMiddlewareCalled = true;
+				return n(nd, nc);
+			}
+		};
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		assert.ok(notebookDocument !== undefined && notebookDocument.cellCount === 2, 'Notebook document created successful');
+		assert.strictEqual(textDocumentMiddlewareCalled, true, 'text document middleware called');
+		client.middleware.didOpen = undefined;
+		assert.strictEqual(notebookMiddlewareCalled, false, 'notebook middleware called');
+		client.middleware.notebooks = undefined;
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidOpenTextDocumentNotification.method);
+		assert.strictEqual(notified, true, 'notification arrived on server');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: change', async (): Promise<void> => {
+		let textDocumentMiddlewareCalled: boolean = false;
+		client.middleware.didChange = (e, n) => {
+			textDocumentMiddlewareCalled = true;
+			return n(e);
+		};
+		let notebookMiddlewareCalled: boolean = false;
+		client.middleware.notebooks = {
+			didChange: (ne, n) => {
+				notebookMiddlewareCalled = true;
+				return n(ne);
+			}
+		};
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const textDocument = notebookDocument.getCells()[0].document;
+		const edit = new vscode.WorkspaceEdit;
+		edit.insert(textDocument.uri, new vscode.Position(0,0), '# Another comment\n');
+		await vscode.workspace.applyEdit(edit);
+		assert.strictEqual(textDocumentMiddlewareCalled, true, 'text document middleware called');
+		client.middleware.didChange = undefined;
+		assert.strictEqual(notebookMiddlewareCalled, false, 'notebook middleware called');
+		client.middleware.notebooks = undefined;
+		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidChangeTextDocumentNotification.method);
+		assert.strictEqual(notified, true, 'notification arrived on server');
+		await revertAllDirty();
+	});
+});
+
+namespace CrashNotification {
+	export const type = new lsclient.NotificationType0('test/crash');
+}
+
+class CrashClient extends lsclient.LanguageClient {
+
+	private resolve: (() => void) | undefined;
+	public onCrash: Promise<void>;
+
+	constructor(id: string, name: string, serverOptions: lsclient.ServerOptions, clientOptions: lsclient.LanguageClientOptions) {
+		super(id, name, serverOptions, clientOptions);
+		this.onCrash = new Promise((resolve) => {
+			this.resolve = resolve;
+		});
+	}
+
+	protected handleConnectionClosed(): void {
+		super.handleConnectionClosed();
+		this.resolve!();
+	}
+}
+
+suite('Server tests', () => {
+	test('Stop fails if server crashes after shutdown request', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await client.start();
+
+		await assert.rejects(async () => {
+			await client.stop();
+		}, /Pending response rejected since connection got disposed/);
+		assert.strictEqual(client.needsStart(), true);
+		assert.strictEqual(client.needsStop(), false);
+
+		// Stopping again should be a no-op.
+		await client.stop();
+		assert.strictEqual(client.needsStart(), true);
+		assert.strictEqual(client.needsStop(), false);
+	});
+
+	test('Stop fails if server shutdown request times out', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/timeoutOnShutdownServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await client.start();
+
+		await assert.rejects(async () => {
+			await client.stop(100);
+		}, /Stopping the server timed out/);
+	});
+
+	test('Server can\'t be stopped right after start', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/startStopServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		void client.start();
+		await assert.rejects(async () => {
+			await client.stop();
+		}, /Client is not running and can't be stopped/);
+
+		await client.start();
+		await client.stop();
+	});
+
+	test('Test state change events', async() => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let state: lsclient.State | undefined;
+		client.onDidChangeState(event => {
+			state = event.newState;
+		});
+		await client.start();
+		assert.strictEqual(state, lsclient.State.Running, 'First start');
+
+		await client.stop();
+		assert.strictEqual(state, lsclient.State.Stopped, 'First stop');
+
+		await client.start();
+		assert.strictEqual(state, lsclient.State.Running, 'Second start');
+
+		await client.stop();
+		assert.strictEqual(state, lsclient.State.Stopped, 'Second stop');
+	});
+
+	test('Test state change events on crash', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/crashServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		let states: lsclient.State[] = [];
+		client.onDidChangeState(event => {
+			states.push(event.newState);
+		});
+		await client.start();
+		assert.strictEqual(states.length, 2, 'First start');
+		assert.strictEqual(states[0], lsclient.State.Starting);
+		assert.strictEqual(states[1], lsclient.State.Running);
+
+		states = [];
+		await client.sendNotification(CrashNotification.type);
+		await client.onCrash;
+
+		await client.start();
+		assert.strictEqual(states.length, 3, 'Restart after crash');
+		assert.strictEqual(states[0], lsclient.State.Stopped);
+		assert.strictEqual(states[1], lsclient.State.Starting);
+		assert.strictEqual(states[2], lsclient.State.Running);
+
+		states = [];
+		await client.stop();
+		assert.strictEqual(states.length, 1, 'After stop');
+		assert.strictEqual(states[0], lsclient.State.Stopped);
+	});
+});
+
+suite('Server activation', () => {
+
+	const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/test.bat');
+	const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }];
+	const position: vscode.Position = new vscode.Position(1, 1);
+	let contentProviderDisposable!: vscode.Disposable;
+
+	suiteSetup(async () => {
+		contentProviderDisposable = vscode.workspace.registerTextDocumentContentProvider('lsptests', {
+			provideTextDocumentContent: (_uri: vscode.Uri) => {
+				return [
+					'REM @ECHO OFF'
+				].join('\n');
+			}
+		});
+
+	});
+
+	suiteTeardown(async () => {
+		contentProviderDisposable.dispose();
+	});
+
+	function createClient(): lsclient.LanguageClient {
+		const serverModule = path.join(__dirname, './servers/customServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+		};
+
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector,
+			synchronize: {},
+			initializationOptions: {},
+			middleware: {},
+		};
+		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
+
+		const result = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		result.registerProposedFeatures();
+		return result;
+	}
+
+	test('Start server on request', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		const result: number = await client.sendRequest('request', { value: 10 });
+		assert.strictEqual(client.state, lsclient.State.Running);
+		assert.strictEqual(result, 11);
+		await client.stop();
+	});
+
+	test('Start server fails on request when stopped once', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		const result: number = await client.sendRequest('request', { value: 10 });
+		assert.strictEqual(client.state, lsclient.State.Running);
+		assert.strictEqual(result, 11);
+		await client.stop();
+		await assert.rejects(async () => {
+			await client.sendRequest('request', { value: 10 });
+		}, /Client is not running/);
+	});
+
+	test('Start server on notification', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		await client.sendNotification('notification');
+		assert.strictEqual(client.state, lsclient.State.Running);
+		await client.stop();
+	});
+
+	test('Start server fails on notification when stopped once', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		await client.sendNotification('notification');
+		assert.strictEqual(client.state, lsclient.State.Running);
+		await client.stop();
+		await assert.rejects(async () => {
+			await client.sendNotification('notification');
+		}, /Client is not running/);
+	});
+
+	test('Add pending request handler', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		let requestReceived: boolean = false;
+		client.onRequest('request', () => {
+			requestReceived = true;
+		});
+		await client.sendRequest('triggerRequest');
+		assert.strictEqual(requestReceived, true);
+		await client.stop();
+	});
+
+	test('Add pending notification handler', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		let notificationReceived: boolean = false;
+		client.onNotification('notification', () => {
+			notificationReceived = true;
+		});
+		await client.sendRequest('triggerNotification');
+		assert.strictEqual(notificationReceived, true);
+		await client.stop();
+	});
+
+	test('Starting disposed server fails', async () => {
+		const client = createClient();
+		await client.start();
+		await client.dispose();
+		await assert.rejects(async () => {
+			await client.start();
+		}, /Client got disposed and can't be restarted./);
+	});
+
+	async function checkServerStart(client: LanguageClient, disposable: vscode.Disposable): Promise<void> {
+		return new Promise((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error(`Server didn't start in 1000 ms.`));
+			}, 1000);
+			client.onDidChangeState((event) => {
+				if (event.newState === lsclient.State.Running) {
+					clearTimeout(timeout);
+					disposable.dispose();
+					resolve();
+				}
+			});
+		});
+	}
+
+	test('Start server on document open', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/documentOpenTest.bat');
+		const started = checkServerStart(client, vscode.workspace.onDidOpenTextDocument((document) => {
+			if (vscode.languages.match([{ language: 'bat', scheme: 'lsptests', pattern: uri.fsPath }], document)) {
+				void client.start();
+			}
+		}));
+		await vscode.workspace.openTextDocument(uri);
+		await started;
+		await client.stop();
+	});
+
+	test('Start server on language feature', async () => {
+		const client = createClient();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+		const started = checkServerStart(client, vscode.languages.registerDeclarationProvider(documentSelector, {
+			provideDeclaration: async () => {
+				await client.start();
+				return undefined;
+			}
+		}));
+		await vscode.commands.executeCommand('vscode.executeDeclarationProvider', uri, position);
+		await started;
+		await client.stop();
 	});
 });

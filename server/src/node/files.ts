@@ -43,7 +43,7 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 		c: string;
 		s?: boolean;
 		a?: any;
-		r?: any
+		r?: any;
 	}
 
 	const nodePathKey: string = 'NODE_PATH';

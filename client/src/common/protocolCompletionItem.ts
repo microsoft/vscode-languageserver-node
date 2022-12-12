@@ -13,8 +13,9 @@ export default class ProtocolCompletionItem extends code.CompletionItem {
 	public documentationFormat: string | undefined;
 	public originalItemKind: proto.CompletionItemKind | undefined;
 	public deprecated: boolean | undefined;
+	public insertTextMode: proto.InsertTextMode | undefined;
 
-	constructor(label: string) {
+	constructor(label: string | code.CompletionItemLabel) {
 		super(label);
 	}
 }

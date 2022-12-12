@@ -4,23 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { NotificationHandler, RequestHandler, ProgressType, ProgressToken } from 'vscode-jsonrpc';
+import { uinteger } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType, ProtocolNotificationType } from './messages';
-
-export interface WorkDoneProgressClientCapabilities {
-	/**
-	 * Window specific client capabilities.
-	 */
-	window?: {
-		/**
-		 * Whether client supports server initiated progress using the
-		 * `window/workDoneProgress/create` request.
-		 *
-		 * Since 3.15.0
-		 */
-		workDoneProgress?: boolean;
-	}
-}
+import { MessageDirection, ProtocolRequestType, ProtocolNotificationType } from './messages';
 
 export interface WorkDoneProgressBegin {
 
@@ -56,9 +42,9 @@ export interface WorkDoneProgressBegin {
 	 * to ignore the `percentage` value in subsequent in report notifications.
 	 *
 	 * The value should be steadily rising. Clients are free to ignore values
-	 * that are not following this rule.
+	 * that are not following this rule. The value range is [0, 100].
 	 */
-	percentage?: number;
+	percentage?: uinteger;
 }
 
 export interface WorkDoneProgressReport {
@@ -88,9 +74,9 @@ export interface WorkDoneProgressReport {
 	 * to ignore the `percentage` value in subsequent in report notifications.
 	 *
 	 * The value should be steadily rising. Clients are free to ignore values
-	 * that are not following this rule.
+	 * that are not following this rule. The value range is [0, 100]
 	 */
-	percentage?: number;
+	percentage?: uinteger;
 }
 
 export interface WorkDoneProgressEnd {
@@ -106,6 +92,10 @@ export interface WorkDoneProgressEnd {
 
 export namespace WorkDoneProgress {
 	export const type = new ProgressType<WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd>();
+
+	export function is(value: ProgressType<any>): value is typeof type {
+		return value === type;
+	}
 }
 
 export interface WorkDoneProgressCreateParams  {
@@ -120,7 +110,9 @@ export interface WorkDoneProgressCreateParams  {
  * reporting from the server.
  */
 export namespace WorkDoneProgressCreateRequest {
-	export const type = new ProtocolRequestType<WorkDoneProgressCreateParams, void, never, void, void>('window/workDoneProgress/create');
+	export const method: 'window/workDoneProgress/create' = 'window/workDoneProgress/create';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType<WorkDoneProgressCreateParams, void, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<WorkDoneProgressCreateParams, void, void>;
 }
 
@@ -136,6 +128,8 @@ export interface WorkDoneProgressCancelParams {
  * initiated on the server side.
  */
 export namespace WorkDoneProgressCancelNotification {
-	export const type = new ProtocolNotificationType<WorkDoneProgressCancelParams, void>('window/workDoneProgress/cancel');
+	export const method: 'window/workDoneProgress/cancel' = 'window/workDoneProgress/cancel';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolNotificationType<WorkDoneProgressCancelParams, void>(method);
 	export type HandlerSignature = NotificationHandler<WorkDoneProgressCancelParams>;
 }

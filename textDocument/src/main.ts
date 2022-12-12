@@ -28,13 +28,13 @@ export interface Position {
 	line: number;
 
 	/**
-	 * Character offset on a line in a document (zero-based). Assuming that the line is
-	 * represented as a string, the `character` value represents the gap between the
-	 * `character` and `character + 1`.
+	 * Character offset on a line in a document (zero-based).
+	 *
+	 * The meaning of this offset is determined by the negotiated
+	 * `PositionEncodingKind`.
 	 *
 	 * If the character value is greater than the line length it defaults back to the
 	 * line length.
-	 * If a line number is negative, it defaults to 0.
 	 */
 	character: number;
 }
@@ -54,7 +54,7 @@ export interface Position {
  */
 export interface Range {
 	/**
-	 * The range's start position
+	 * The range's start position.
 	 */
 	start: Position;
 
@@ -145,8 +145,8 @@ export interface TextDocument {
 	 *
 	 * @param range (optional) An range within the document to return.
 	 * If no range is passed, the full content is returned.
-	 * Invalid range positions are adjusted as described in [Position.line](#Position.line)
-	 * and [Position.character](#Position.character).
+	 * Invalid range positions are adjusted as described in {@link Position.line}
+	 * and {@link Position.character}.
 	 * If the start range position is greater than the end range position,
 	 * then the effect of getText is as if the two positions were swapped.
 
@@ -159,14 +159,20 @@ export interface TextDocument {
 	 * Converts a zero-based offset to a position.
 	 *
 	 * @param offset A zero-based offset.
-	 * @return A valid [position](#Position).
+	 * @return A valid {@link Position position}.
+	 * @example The text document "ab\ncd" produces:
+	 * * position { line: 0, character: 0 } for `offset` 0.
+	 * * position { line: 0, character: 1 } for `offset` 1.
+	 * * position { line: 0, character: 2 } for `offset` 2.
+	 * * position { line: 1, character: 0 } for `offset` 3.
+	 * * position { line: 1, character: 1 } for `offset` 4.
 	 */
 	positionAt(offset: number): Position;
 
 	/**
 	 * Converts the position to a zero-based offset.
-	 * Invalid positions are adjusted as described in [Position.line](#Position.line)
-	 * and [Position.character](#Position.character).
+	 * Invalid positions are adjusted as described in {@link Position.line}
+	 * and {@link Position.character}.
 	 *
 	 * @param position A position.
 	 * @return A valid zero-based offset.
@@ -306,15 +312,15 @@ class FullTextDocument implements TextDocument {
 		return this.getLineOffsets().length;
 	}
 
-	private static isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string; } {
-		let candidate: { range: Range; rangeLength?: number; text: string; } = event as any;
+	private static isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string } {
+		let candidate: { range: Range; rangeLength?: number; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range !== undefined &&
 			(candidate.rangeLength === undefined || typeof candidate.rangeLength === 'number');
 	}
 
-	private static isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
-		let candidate: { range?: Range; rangeLength?: number; text: string; } = event as any;
+	private static isFull(event: TextDocumentContentChangeEvent): event is { text: string } {
+		let candidate: { range?: Range; rangeLength?: number; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range === undefined && candidate.rangeLength === undefined;
 	}
@@ -334,10 +340,11 @@ export namespace TextDocument {
 	}
 
 	/**
-	 * Updates a TextDocument by modifing its content.
+	 * Updates a TextDocument by modifying its content.
 	 *
 	 * @param document the document to update. Only documents created by TextDocument.create are valid inputs.
 	 * @param changes the changes to apply to the document.
+	 * @param version the changes version for the document.
 	 * @returns The updated TextDocument. Note: That's the same document instance passed in as first parameter.
 	 *
 	 */

@@ -10,64 +10,65 @@ import {
 	SelectionRangeParams, SelectionRangeRequest, SelectionRangeOptions, SelectionRangeRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient  } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = Object.create(null) as any;
-	}
-	return target[key];
-}
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideSelectionRangeSignature {
-	(this: void, document: TextDocument, positions: VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[]>;
+	(this: void, document: TextDocument, positions: readonly VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[]>;
 }
 
 export interface SelectionRangeProviderMiddleware {
-	provideSelectionRanges?: (this: void, document: TextDocument, positions: VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[]>;
+	provideSelectionRanges?: (this: void, document: TextDocument, positions: readonly VPosition[], token: CancellationToken, next: ProvideSelectionRangeSignature) => ProviderResult<VSelectionRange[]>;
 }
 
-export class SelectionRangeFeature extends TextDocumentFeature<boolean | SelectionRangeOptions, SelectionRangeRegistrationOptions, SelectionRangeProvider> {
-	constructor(client: BaseLanguageClient) {
+export class SelectionRangeFeature extends TextDocumentLanguageFeature<boolean | SelectionRangeOptions, SelectionRangeRegistrationOptions, SelectionRangeProvider, SelectionRangeProviderMiddleware> {
+
+	constructor(client: FeatureClient<SelectionRangeProviderMiddleware>) {
 		super(client, SelectionRangeRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		let capability = ensure(ensure(capabilites, 'textDocument')!, 'selectionRange')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		const capability = ensure(ensure(capabilities, 'textDocument')!, 'selectionRange')!;
 		capability.dynamicRegistration = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let [id, options] = this.getRegistration(documentSelector, capabilities.selectionRangeProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.selectionRangeProvider);
 		if (!id || !options) {
 			return;
 		}
-		this.register(this.messages, { id: id, registerOptions: options });
+		this.register({ id: id, registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: SelectionRangeRegistrationOptions): [Disposable, SelectionRangeProvider] {
+		const selector = options.documentSelector!;
 		const provider: SelectionRangeProvider = {
 			provideSelectionRanges: (document, positions, token) => {
 				const client = this._client;
-				const provideSelectionRanges: ProvideSelectionRangeSignature = (document, positions, token) => {
+				const provideSelectionRanges: ProvideSelectionRangeSignature = async (document, positions, token) => {
 					const requestParams: SelectionRangeParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-						positions: client.code2ProtocolConverter.asPositions(positions)
+						positions: await client.code2ProtocolConverter.asPositions(positions, token)
 					};
-					return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then(
-						(ranges) => client.protocol2CodeConverter.asSelectionRanges(ranges),
-						(error: any) => {
-							return client.handleFailedRequest(SelectionRangeRequest.type, error, null);
+					return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then((ranges) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asSelectionRanges(ranges, token);
+					}, (error: any) => {
+						return client.handleFailedRequest(SelectionRangeRequest.type, token, error, null);
+					});
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.provideSelectionRanges
 					? middleware.provideSelectionRanges(document, positions, token, provideSelectionRanges)
 					: provideSelectionRanges(document, positions, token);
 
 			}
 		};
-		return [Languages.registerSelectionRangeProvider(options.documentSelector!, provider), provider];
+		return [this.registerProvider(selector, provider), provider];
+	}
+
+	private registerProvider(selector: DocumentSelector, provider: SelectionRangeProvider): Disposable {
+		return Languages.registerSelectionRangeProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider);
 	}
 }

@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "7.0.0-next.7",
+	"version": "8.1.0-next.3",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -20,16 +20,23 @@
 	"bin": {
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
 	},
+	"devDependencies": {
+		"vscode-languageserver-textdocument": "1.0.8"
+	},
 	"dependencies": {
-		"vscode-languageserver-protocol": "3.16.0-next.7"
+		"vscode-languageserver-protocol": "3.17.3-next.3"
 	},
 	"scripts": {
-		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && npm run compile && npm test",
-		"postpublish": "node ../build/npm/post-publish.js",
+		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepack": "npm run all:publish",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
-		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
+		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
+		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "node ../node_modules/mocha/bin/_mocha",
+		"all": "npm run clean && npm run compile && npm run lint && npm test",
+		"compile:publish": "node ../build/bin/tsc -b ./tsconfig.publish.json",
+		"all:publish": "git clean -xfd . && npm install && npm run compile:publish && npm run lint && npm test",
 		"preversion": "npm test"
 	}
 }

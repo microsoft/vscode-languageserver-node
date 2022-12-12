@@ -7,7 +7,7 @@ import * as assert from 'assert';
 import * as zlib from 'zlib';
 import * as msgpack from 'msgpack-lite';
 
-import { Message, RequestMessage, isRequestMessage } from '../../common/messages';
+import { Message, RequestMessage } from '../../common/messages';
 import { ContentEncoder, ContentDecoder, Encodings, FunctionContentTypeEncoder, FunctionContentTypeDecoder  } from '../../common/encoding';
 import { StreamMessageWriter, StreamMessageReader } from '../../node/main';
 import RIL from '../ril';
@@ -109,8 +109,8 @@ suite('Messages', () => {
 		const readable = new Readable();
 		new StreamMessageReader(readable).listen((msg: Message) => {
 			const message: RequestMessage = msg as RequestMessage;
-			assert.equal(message.id, 1);
-			assert.equal(message.method, 'example');
+			assert.strictEqual(message.id, 1);
+			assert.strictEqual(message.method, 'example');
 			done();
 		});
 		readable.push('Content-Length: 43\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}');
@@ -119,14 +119,15 @@ suite('Messages', () => {
 
 	test('Read partial', (done) => {
 		const readable = new Readable();
+		readable._read = function () {};
 		const reader = new StreamMessageReader(readable);
 		reader.partialMessageTimeout = 100;
 		const partOne = 'Content-Length: 43\r\n\r\n';
 		const partTwo = '{"jsonrpc":"2.0","id":1,"method":"example"}';
 		reader.listen((msg: Message) => {
 			const message: RequestMessage = msg as RequestMessage;
-			assert.equal(message.id, 1);
-			assert.equal(message.method, 'example');
+			assert.strictEqual(message.id, 1);
+			assert.strictEqual(message.method, 'example');
 			setTimeout(() => {
 				done();
 			}, 200);
@@ -165,7 +166,7 @@ suite('Messages', () => {
 			id: 1,
 			method: 'example'
 		};
-		writer.write(request).then(() => {
+		void writer.write(request).then(() => {
 			writable.end();
 			assertDefined(writable.data);
 
@@ -177,7 +178,7 @@ suite('Messages', () => {
 			});
 
 			reader.listen((message) => {
-				if (!isRequestMessage(message)) {
+				if (!Message.isRequest(message)) {
 					throw new Error(`No request message`);
 				}
 				assert.equal(message.id, 1);
@@ -196,11 +197,11 @@ suite('Messages', () => {
 			contentDecoder: gzipDecoder
 		});
 		reader.listen((message: Message) => {
-			if (!isRequestMessage(message)) {
+			if (!Message.isRequest(message)) {
 				throw new Error(`No request message`);
 			}
-			assert.equal(message.id, 1);
-			assert.equal(message.method, 'example');
+			assert.strictEqual(message.id, 1);
+			assert.strictEqual(message.method, 'example');
 			done();
 		});
 		const payload = Buffer.concat([
@@ -253,7 +254,7 @@ suite('Messages', () => {
 		await new Promise<void>((resolve, reject) => {
 			try {
 				reader.listen((message) => {
-					if (!isRequestMessage(message)) {
+					if (!Message.isRequest(message)) {
 						throw reject(new Error(`No request message`));
 					}
 					assert.strictEqual(message.id, 1);
@@ -272,10 +273,10 @@ suite('Messages', () => {
 		const buffer = RIL().messageBuffer.create('utf-8');
 		buffer.append(Buffer.from('Content-Length: 43\r\n\r\n', 'ascii'));
 		buffer.append(Buffer.from('{"jsonrpc":"2.0","id":1,"method":"example"}', 'utf8'));
-		const headers = buffer.tryReadHeaders();
+		const headers = buffer.tryReadHeaders(true);
 		assertDefined(headers);
 		assert.strictEqual(headers.size, 1);
-		assert.strictEqual(headers.get('Content-Length'), '43');
+		assert.strictEqual(headers.get('content-length'), '43');
 		const content = JSON.parse((buffer.tryReadBody(43) as Buffer).toString('utf8'));
 		assert.strictEqual(content.id, 1);
 		assert.strictEqual(content.method, 'example');
@@ -305,7 +306,7 @@ suite('Messages', () => {
 				buffer.append(payload.slice(sent, sent + piece));
 				sent = sent + piece;
 			}
-			const headers = buffer.tryReadHeaders();
+			const headers = buffer.tryReadHeaders(false);
 			assertDefined(headers);
 			assert.strictEqual(headers.size, 1);
 			const length = parseInt(headers.get('Content-Length')!);

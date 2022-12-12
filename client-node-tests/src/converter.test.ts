@@ -5,18 +5,19 @@
 
 import { strictEqual, deepEqual, ok } from 'assert';
 
-import * as proto from 'vscode-languageserver-protocol';
+import * as proto from 'vscode-languageclient';
 import * as codeConverter from 'vscode-languageclient/lib/common/codeConverter';
 import * as protocolConverter from 'vscode-languageclient/lib/common/protocolConverter';
 import ProtocolCompletionItem from 'vscode-languageclient/lib/common/protocolCompletionItem';
+import ProtocolInlayHint from 'vscode-languageclient/lib/common/protocolInlayHint';
 import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/lib/common/protocolDiagnostic';
 import * as Is from 'vscode-languageclient/lib/common/utils/is';
+import * as async from 'vscode-languageclient/lib/common/utils/async';
 
 import * as vscode from 'vscode';
-import { CompletionItemTag, SymbolTag } from 'vscode-languageserver-protocol';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
-const p2c: protocolConverter.Converter = protocolConverter.createConverter(undefined, false);
+const p2c: protocolConverter.Converter = protocolConverter.createConverter(undefined, false, false);
 
 interface InsertReplaceRange {
 	inserting: vscode.Range;
@@ -36,7 +37,7 @@ function assertDefined<T>(value: T | undefined | null): asserts value is T {
 
 interface ComplexCode {
 	value: string | number;
-	target: vscode.Uri
+	target: vscode.Uri;
 }
 
 function assertComplexCode(value: undefined | number | string | ComplexCode ): asserts value is ComplexCode {
@@ -75,6 +76,68 @@ function assertDiagnosticCode(value: string | number | DiagnosticCode | undefine
 	}
 }
 
+suite('Async Array', () => {
+
+	suiteSetup(() => {
+		async.setTestMode();
+	});
+
+	suiteTeardown(() => {
+		async.clearTestMode();
+	});
+
+	test('map', async() => {
+		const ranges: proto.Range[] = new Array(10000);
+		for (let i = 0; i < ranges.length; i++) {
+			ranges[i] = proto.Range.create(i, i, i, i);
+		}
+		let yielded = 0;
+		const converted = await async.map(ranges, p2c.asRange, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
+		ok(yielded > 0);
+		strictEqual(converted.length, ranges.length);
+		for (let i = 0; i < converted.length; i++) {
+			ok(converted[i] instanceof vscode.Range);
+			strictEqual(converted[i]?.start.line, i);
+		}
+	}).timeout(5000);
+
+	test('map async', async() => {
+		const ranges: proto.Range[] = new Array(5000);
+		for (let i = 0; i < ranges.length; i++) {
+			ranges[i] = proto.Range.create(i, i, i, i);
+		}
+		let yielded = 0;
+		const converted = await async.mapAsync(ranges, (item): Promise<vscode.Range> => {
+			return new Promise((resolve) => {
+				proto.RAL().timer.setImmediate(() => {
+					resolve(p2c.asRange(item));
+				});
+			});
+		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
+		ok(yielded > 0);
+		strictEqual(converted.length, ranges.length);
+		for (let i = 0; i < converted.length; i++) {
+			ok(converted[i] instanceof vscode.Range);
+			strictEqual(converted[i]?.start.line, i);
+		}
+	}).timeout(5000);
+
+	test('forEach', async() => {
+		const ranges: proto.Range[] = new Array(7500);
+		for (let i = 0; i < ranges.length; i++) {
+			ranges[i] = proto.Range.create(i + 1, 0, i + 2, 1);
+		}
+		let sum: number = 0;
+		let yielded = 0;
+		await async.forEach(ranges, (item) => {
+			const codeRange = p2c.asRange(item);
+			sum += codeRange.start.line;
+		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
+		ok(yielded > 0);
+		strictEqual(sum, 28128750);
+	}).timeout(5000);
+});
+
 suite('Protocol Converter', () => {
 
 	function rangeEqual(actual: vscode.Range, expected: proto.Range): void;
@@ -86,7 +149,14 @@ suite('Protocol Converter', () => {
 		strictEqual(actual.end.character, expected.end.character);
 	}
 
-	function competionEditEqual(text: string, range: vscode.Range | InsertReplaceRange, expected: proto.TextEdit | proto.InsertReplaceEdit): void {
+	function positionEqual(actual: vscode.Position, expected: proto.Position): void;
+	function positionEqual(actual: proto.Position, expected: vscode.Position): void;
+	function positionEqual(actual: vscode.Position | proto.Position, expected: vscode.Position | proto.Position): void {
+		strictEqual(actual.line, expected.line);
+		strictEqual(actual.character, expected.character);
+	}
+
+	function completionEditEqual(text: string, range: vscode.Range | InsertReplaceRange, expected: proto.TextEdit | proto.InsertReplaceEdit): void {
 		strictEqual(text, expected.newText);
 		if (InsertReplaceRange.is(range)) {
 			ok(proto.InsertReplaceEdit.is(expected));
@@ -97,9 +167,9 @@ suite('Protocol Converter', () => {
 	}
 
 	test('Position Converter', () => {
-		let position: proto.Position = { line: 1, character: 2 };
+		const position: proto.Position = { line: 1, character: 2 };
 
-		let result = p2c.asPosition(position);
+		const result = p2c.asPosition(position);
 		strictEqual(result.line, position.line);
 		strictEqual(result.character, position.character);
 
@@ -108,10 +178,10 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Range Converter', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
 
-		let result = p2c.asRange({ start, end });
+		const result = p2c.asRange({ start, end });
 		strictEqual(result.start.line, start.line);
 		strictEqual(result.start.character, start.character);
 		strictEqual(result.end.line, end.line);
@@ -133,11 +203,11 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asDiagnosticTag(proto.DiagnosticTag.Deprecated), vscode.DiagnosticTag.Deprecated);
 	});
 
-	test('Diagnostic', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
+	test('Diagnostic', async () => {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
 		const location: proto.Location = proto.Location.create('file://localhost/folder/file', proto.Range.create(0, 1, 2, 3));
-		let diagnostic: proto.Diagnostic = {
+		const diagnostic: proto.Diagnostic = {
 			range: { start, end },
 			message: 'error',
 			severity: proto.DiagnosticSeverity.Error,
@@ -149,8 +219,8 @@ suite('Protocol Converter', () => {
 			]
 		};
 
-		let result = p2c.asDiagnostic(diagnostic);
-		let range = result.range;
+		const result = p2c.asDiagnostic(diagnostic);
+		const range = result.range;
 		strictEqual(range.start.line, start.line);
 		strictEqual(range.start.character, start.character);
 		strictEqual(range.end.line, end.line);
@@ -167,13 +237,13 @@ suite('Protocol Converter', () => {
 		strictEqual(result.relatedInformation![0].location.uri.toString(), 'file://localhost/folder/file');
 		strictEqual(result.relatedInformation![0].location.range.end.character, 3);
 
-		ok(p2c.asDiagnostics([diagnostic]).every(value => value instanceof vscode.Diagnostic));
+		ok((await p2c.asDiagnostics([diagnostic])).every(value => value instanceof vscode.Diagnostic));
 	});
 
 	test('Diagnostic - Complex Code', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let diagnostic: proto.Diagnostic = {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const diagnostic: proto.Diagnostic = {
 			range: { start, end },
 			message: 'error',
 			severity: proto.DiagnosticSeverity.Error,
@@ -184,7 +254,7 @@ suite('Protocol Converter', () => {
 			source: 'source',
 		};
 
-		let result = p2c.asDiagnostic(diagnostic);
+		const result = p2c.asDiagnostic(diagnostic);
 		assertDefined(result.code);
 		assertComplexCode(result.code);
 		strictEqual(result.code.value, 99);
@@ -192,9 +262,9 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Diagnostic - Complex Code - Deprecated', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let diagnostic: proto.Diagnostic = {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const diagnostic: proto.Diagnostic = {
 			range: { start, end },
 			message: 'error',
 			severity: proto.DiagnosticSeverity.Error,
@@ -202,7 +272,7 @@ suite('Protocol Converter', () => {
 			source: 'source',
 		};
 
-		let result = p2c.asDiagnostic(diagnostic);
+		const result = p2c.asDiagnostic(diagnostic);
 		assertDefined(result.code);
 		assertComplexCode(result.code);
 		strictEqual(result.code.value, 99);
@@ -213,7 +283,7 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asHover(undefined), undefined);
 		strictEqual(p2c.asHover(null), undefined);
 
-		let hover: proto.Hover = {
+		const hover: proto.Hover = {
 			contents: 'hover'
 		};
 
@@ -228,14 +298,14 @@ suite('Protocol Converter', () => {
 			end: { line: 8, character: 9 }
 		};
 		result = p2c.asHover(hover);
-		let range = result.range!;
+		const range = result.range!;
 		strictEqual(range.start.line, hover.range.start.line);
 		strictEqual(range.start.character, hover.range.start.character);
 		strictEqual(range.end.line, hover.range.end.line);
 		strictEqual(range.end.character, hover.range.end.character);
 
 		/*
-		let multisegmentHover: proto.Hover = {
+		const multiSegmentHover: proto.Hover = {
 			contents:{
 				kind: MarkupKind.Markdown,
 				value:`First Section
@@ -245,7 +315,7 @@ suite('Protocol Converter', () => {
 				Third Section`
 			}
 		}
-		result = p2c.asHover(multisegmentHover);
+		result = p2c.asHover(multiSegmentHover);
 		strictEqual(result.contents.length, 3);
 		strictEqual((result.contents[0] as vscode.MarkdownString).value, 'First Section');
 		strictEqual((result.contents[1] as vscode.MarkdownString).value, 'Second Section');
@@ -260,9 +330,9 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Text Edit Insert', () => {
-		let edit: proto.TextEdit = proto.TextEdit.insert({ line: 1, character: 2 }, 'insert');
-		let result = p2c.asTextEdit(edit);
-		let range = result.range;
+		const edit: proto.TextEdit = proto.TextEdit.insert({ line: 1, character: 2 }, 'insert');
+		const result = p2c.asTextEdit(edit);
+		const range = result.range;
 		strictEqual(range.start.line, edit.range.start.line);
 		strictEqual(range.start.character, edit.range.start.character);
 		strictEqual(range.end.line, edit.range.end.line);
@@ -271,15 +341,15 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Text Edit Replace', () => {
-		let edit: proto.TextEdit = proto.TextEdit.replace(
+		const edit: proto.TextEdit = proto.TextEdit.replace(
 			{
 				start: { line: 1, character: 2 },
 				end: { line: 8, character: 9 }
 			},
 			'insert');
 
-		let result = p2c.asTextEdit(edit);
-		let range = result.range;
+		const result = p2c.asTextEdit(edit);
+		const range = result.range;
 		strictEqual(range.start.line, edit.range.start.line);
 		strictEqual(range.start.character, edit.range.start.character);
 		strictEqual(range.end.line, edit.range.end.line);
@@ -288,14 +358,14 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Text Edit Delete', () => {
-		let edit: proto.TextEdit = proto.TextEdit.del(
+		const edit: proto.TextEdit = proto.TextEdit.del(
 			{
 				start: { line: 1, character: 2 },
 				end: { line: 8, character: 9 }
 			});
 
-		let result = p2c.asTextEdit(edit);
-		let range = result.range;
+		const result = p2c.asTextEdit(edit);
+		const range = result.range;
 		strictEqual(range.start.line, edit.range.start.line);
 		strictEqual(range.start.character, edit.range.start.character);
 		strictEqual(range.end.line, edit.range.end.line);
@@ -303,25 +373,25 @@ suite('Protocol Converter', () => {
 		strictEqual(result.newText, edit.newText);
 	});
 
-	test('Text Edits', () => {
-		let edit: proto.TextEdit = proto.TextEdit.del(
+	test('Text Edits', async () => {
+		const edit: proto.TextEdit = proto.TextEdit.del(
 			{
 				start: { line: 1, character: 2 },
 				end: { line: 8, character: 9 }
 			});
-		ok(p2c.asTextEdits([edit]).every(elem => elem instanceof vscode.TextEdit));
+		ok((await p2c.asTextEdits([edit])).every(elem => elem instanceof vscode.TextEdit));
 
-		strictEqual(p2c.asTextEdits(undefined), undefined);
-		strictEqual(p2c.asTextEdits(null), undefined);
-		deepEqual(p2c.asTextEdits([]), []);
+		strictEqual(await p2c.asTextEdits(undefined), undefined);
+		strictEqual(await p2c.asTextEdits(null), undefined);
+		deepEqual(await p2c.asTextEdits([]), []);
 	});
 
 	test('Completion Item', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item'
 		};
 
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.detail, undefined);
 		strictEqual(result.documentation, undefined);
@@ -335,32 +405,32 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Completion Item - Deprecated boolean', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			deprecated: true
 		};
 
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
-		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+		strictEqual(result.tags![0], proto.CompletionItemTag.Deprecated);
 	});
 
 	test('Completion Item - Deprecated tag', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			tags: [proto.CompletionItemTag.Deprecated]
 		};
 
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
-		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+		strictEqual(result.tags![0], proto.CompletionItemTag.Deprecated);
 	});
 
-	test('Completion Item - Full', () => {
-		let command = proto.Command.create('title', 'commandId');
+	test('Completion Item - Full', async () => {
+		const command = proto.Command.create('title', 'commandId');
 		command.arguments = ['args'];
 
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			detail: 'detail',
 			documentation: 'doc',
@@ -372,10 +442,11 @@ suite('Protocol Converter', () => {
 			data: 'data',
 			additionalTextEdits: [proto.TextEdit.insert({ line: 1, character: 2 }, 'insert')],
 			command: command,
+			commitCharacters: ['.'],
 			tags: [proto.CompletionItemTag.Deprecated]
 		};
 
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.detail, completionItem.detail);
 		strictEqual(result.documentation, completionItem.documentation);
@@ -388,52 +459,54 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command!.title, command.title);
 		strictEqual(result.command!.command, command.command);
 		strictEqual(result.command!.arguments, command.arguments);
-		strictEqual(result.tags![0], CompletionItemTag.Deprecated);
+		strictEqual(result.tags![0], proto.CompletionItemTag.Deprecated);
+		strictEqual(result.commitCharacters!.length, 1);
+		strictEqual(result.commitCharacters![0], '.');
 		ok(result.additionalTextEdits![0] instanceof vscode.TextEdit);
 
-		let completionResult = p2c.asCompletionResult([completionItem]);
+		const completionResult = await p2c.asCompletionResult([completionItem]);
 		ok(completionResult.every(value => value instanceof vscode.CompletionItem));
 	});
 
 	test('Completion Item - Preserve Insert Text', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			insertText: 'insert'
 		};
 
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.insertText, 'insert');
-		let back = c2p.asCompletionItem(result);
+		const back = c2p.asCompletionItem(result);
 		strictEqual(back.insertText, 'insert');
 	});
 
 	test('Completion Item - Snippet String', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			insertText: '${value}',
 			insertTextFormat: proto.InsertTextFormat.Snippet
 		};
 
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		ok(result.insertText instanceof vscode.SnippetString);
 		strictEqual((<vscode.SnippetString>result.insertText).value, '${value}');
 		strictEqual(result.range, undefined);
 		strictEqual(result.textEdit, undefined);
 
-		let back = c2p.asCompletionItem(result);
+		const back = c2p.asCompletionItem(result);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.Snippet);
 		strictEqual(back.insertText, '${value}');
 	});
 
 	test('Completion Item - Text Edit', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			textEdit: proto.TextEdit.insert({ line: 1, character: 2 }, 'insert')
 		};
 
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.textEdit, undefined);
 		strictEqual(result.insertText, 'insert');
@@ -441,7 +514,7 @@ suite('Protocol Converter', () => {
 		assertTextEdit(completionItem.textEdit);
 		rangeEqual(result.range, completionItem.textEdit.range);
 
-		let back = c2p.asCompletionItem(result);
+		const back = c2p.asCompletionItem(result);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.PlainText);
 		strictEqual(back.insertText, undefined);
 		assertTextEdit(back.textEdit);
@@ -450,20 +523,20 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Completion Item - Insert / Replace Edit', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			textEdit: proto.InsertReplaceEdit.create('text', proto.Range.create(0,0,0,0), proto.Range.create(0, 0, 0, 2))
 		};
 
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.textEdit, undefined);
 		strictEqual(result.insertText, 'text');
 		assertInsertReplaceRange(result.range);
 		assertInsertReplaceEdit(completionItem.textEdit);
-		competionEditEqual(result.insertText as string, result.range, completionItem.textEdit);
+		completionEditEqual(result.insertText as string, result.range, completionItem.textEdit);
 
-		let back = c2p.asCompletionItem(result);
+		const back = c2p.asCompletionItem(result);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.PlainText);
 		strictEqual(back.insertText, undefined);
 		assertInsertReplaceEdit(back.textEdit);
@@ -474,13 +547,13 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Completion Item - Text Edit Snippet String', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			textEdit: proto.TextEdit.insert({ line: 1, character: 2 }, '${insert}'),
 			insertTextFormat: proto.InsertTextFormat.Snippet
 		};
 
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.label, completionItem.label);
 		strictEqual(result.textEdit, undefined);
 		ok(result.insertText instanceof vscode.SnippetString && result.insertText.value === '${insert}');
@@ -488,7 +561,7 @@ suite('Protocol Converter', () => {
 		assertTextEdit(completionItem.textEdit);
 		rangeEqual(result.range, completionItem.textEdit.range);
 
-		let back = c2p.asCompletionItem(result);
+		const back = c2p.asCompletionItem(result);
 		strictEqual(back.insertText, undefined);
 		strictEqual(back.insertTextFormat, proto.InsertTextFormat.Snippet);
 		assertTextEdit(back.textEdit);
@@ -497,131 +570,297 @@ suite('Protocol Converter', () => {
 	});
 
 	test('Completion Item - Preserve Data', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			data: 'data'
 		};
 
-		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		const result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		strictEqual(result.data, completionItem.data);
 	});
 
 	test('Completion Item - Preserve Data === 0', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			data: 0
 		};
 
-		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		const result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		strictEqual(result.data, completionItem.data);
 	});
 
 	test('Completion Item - Preserve Data === false', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			data: false
 		};
 
-		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		const result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		strictEqual(result.data, completionItem.data);
 	});
 
 	test('Completion Item - Preserve Data === ""', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			data: ''
 		};
 
-		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		const result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		strictEqual(result.data, completionItem.data);
 	});
 
 	test('Completion Item - Preserve deprecated', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			deprecated: true
 		};
 
-		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		const result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		strictEqual(result.deprecated, true);
 		strictEqual(result.tags, undefined);
 	});
 
 	test('Completion Item - Preserve tag', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			tags: [proto.CompletionItemTag.Deprecated]
 		};
 
-		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		const result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		strictEqual(result.deprecated, undefined);
 		strictEqual(result.tags![0], proto.CompletionItemTag.Deprecated);
 	});
 
 	test('Completion Item - Documentation as string', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			documentation: 'doc'
 		};
-		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		const result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		ok(Is.string(result.documentation) && result.documentation === 'doc');
 	});
 
 	test('Completion Item - Documentation as PlainText', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			documentation: {
 				kind: proto.MarkupKind.PlainText,
 				value: 'doc'
 			}
 		};
-		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		const result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		strictEqual((result.documentation as proto.MarkupContent).kind, proto.MarkupKind.PlainText);
 		strictEqual((result.documentation as proto.MarkupContent).value, 'doc');
 	});
 
 	test('Completion Item - Documentation as Markdown', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			documentation: {
 				kind: proto.MarkupKind.Markdown,
 				value: '# Header'
 			}
 		};
-		let result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
+		const result = c2p.asCompletionItem(p2c.asCompletionItem(completionItem));
 		strictEqual((result.documentation as proto.MarkupContent).kind, proto.MarkupKind.Markdown);
 		strictEqual((result.documentation as proto.MarkupContent).value, '# Header');
 	});
 
 	test('Completion Item - Kind Outside', () => {
-		let completionItem: proto.CompletionItem = {
+		const completionItem: proto.CompletionItem = {
 			label: 'item',
 			kind: Number.MAX_VALUE as any
 		};
-		let result = p2c.asCompletionItem(completionItem);
+		const result = p2c.asCompletionItem(completionItem);
 		strictEqual(result.kind, vscode.CompletionItemKind.Text);
 
-		let back = c2p.asCompletionItem(result);
+		const back = c2p.asCompletionItem(result);
 		strictEqual(back.kind, Number.MAX_VALUE);
 	});
 
-	test('Completion Result', () => {
-		let completionResult: proto.CompletionList = {
+	test('Completion Item - InsertTextMode.asIs', () => {
+		const completionItem: proto.CompletionItem = {
+			label: 'item',
+			kind: Number.MAX_VALUE as any,
+			insertTextMode: proto.InsertTextMode.asIs
+		};
+		const result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.kind, vscode.CompletionItemKind.Text);
+		strictEqual(result.keepWhitespace, true);
+
+		const back = c2p.asCompletionItem(result);
+		strictEqual(back.kind, Number.MAX_VALUE);
+		strictEqual(back.insertTextMode, proto.InsertTextMode.asIs);
+	});
+
+	test('Completion Item - InsertTextMode.adjustIndentation', () => {
+		const completionItem: proto.CompletionItem = {
+			label: 'item',
+			kind: Number.MAX_VALUE as any,
+			insertTextMode: proto.InsertTextMode.adjustIndentation
+		};
+		const result = p2c.asCompletionItem(completionItem);
+		strictEqual(result.kind, vscode.CompletionItemKind.Text);
+		strictEqual(result.keepWhitespace, undefined);
+
+		const back = c2p.asCompletionItem(result);
+		strictEqual(back.kind, Number.MAX_VALUE);
+		strictEqual(back.insertTextMode, proto.InsertTextMode.adjustIndentation);
+	});
+
+	test('Completion Item - Label Details', () => {
+		const completionItem: proto.CompletionItem = {
+			label: 'name',
+			labelDetails: { detail: 'detail', description: 'description' }
+		};
+		const result = p2c.asCompletionItem(completionItem);
+		ok(typeof result.label !== 'string');
+		const label: vscode.CompletionItemLabel = result.label as vscode.CompletionItemLabel;
+		strictEqual(label.label, 'name');
+		strictEqual(label.detail, 'detail');
+		strictEqual(label.description, 'description');
+
+		const back = c2p.asCompletionItem(result, true);
+		strictEqual(proto.CompletionItemLabelDetails.is(back.labelDetails), true);
+		strictEqual(back.labelDetails?.detail, 'detail');
+		strictEqual(back.labelDetails?.description, 'description');
+
+		const back2 = c2p.asCompletionItem(result, false);
+		strictEqual(back2.labelDetails, undefined);
+		strictEqual(back2.label, 'name');
+	});
+
+	test('Completion Item - default commit characters', () => {
+		const completionItem: proto.CompletionItem = {
+			label: 'name'
+		};
+		let result = p2c.asCompletionItem(completionItem, ['.']);
+		strictEqual(result.commitCharacters!.length, 1);
+		strictEqual(result.commitCharacters![0], '.');
+
+		completionItem.commitCharacters = [':'];
+		result = p2c.asCompletionItem(completionItem, ['.']);
+		strictEqual(result.commitCharacters!.length, 1);
+		strictEqual(result.commitCharacters![0], ':');
+	});
+
+	test('Completion Result', async () => {
+		const completionResult: proto.CompletionList = {
 			isIncomplete: true,
 			items: [{ label: 'item', data: 'data' }]
 		};
-		let result = p2c.asCompletionResult(completionResult);
+		const result = await p2c.asCompletionResult(completionResult);
 		strictEqual(result.isIncomplete, completionResult.isIncomplete);
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');
 
-		strictEqual(p2c.asCompletionResult(undefined), undefined);
-		strictEqual(p2c.asCompletionResult(null), undefined);
-		deepEqual(p2c.asCompletionResult([]), []);
+		strictEqual(await p2c.asCompletionResult(undefined), undefined);
+		strictEqual(await p2c.asCompletionResult(null), undefined);
+		deepEqual(await p2c.asCompletionResult([]), []);
 	});
 
-	test('Parameter Information', () => {
-		let parameterInfo: proto.ParameterInformation = {
+	test('Completion Result - edit range', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults:  { editRange: proto.Range.create(1,2,3,4) },
+			items: [{ label: 'item', data: 'data' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		rangeEqual(result.items[0].range as vscode.Range, completionResult.itemDefaults?.editRange as proto.Range);
+	});
+
+	test('Completion Result - edit range with textEditText', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults:  { editRange: proto.Range.create(1,2,3,4) },
+			items: [{ label: 'item', textEditText: 'text', data: 'data' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		strictEqual(result.items[0].insertText, 'text');
+		rangeEqual(result.items[0].range as vscode.Range, completionResult.itemDefaults?.editRange as proto.Range);
+	});
+
+	test('Completion Result - insert / replace range', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { editRange: { insert: proto.Range.create(1,1,1,1), replace: proto.Range.create(1,2,3,4) } },
+			items: [{ label: 'item', data: 'data' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		const range = result.items[0].range;
+		rangeEqual((range as { inserting: vscode.Range }).inserting, (completionResult.itemDefaults?.editRange as { insert: proto.Range}).insert);
+		rangeEqual((range as { replacing: vscode.Range }).replacing, (completionResult.itemDefaults?.editRange as { replace: proto.Range}).replace);
+	});
+
+	test('Completion Result - insert / replace range with textEditText', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { editRange: { insert: proto.Range.create(1,1,1,1), replace: proto.Range.create(1,2,3,4) } },
+			items: [{ label: 'item', textEditText: 'text', data: 'data' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		strictEqual(result.items[0].insertText, 'text');
+		const range = result.items[0].range;
+		rangeEqual((range as { inserting: vscode.Range }).inserting, (completionResult.itemDefaults?.editRange as { insert: proto.Range}).insert);
+		rangeEqual((range as { replacing: vscode.Range }).replacing, (completionResult.itemDefaults?.editRange as { replace: proto.Range}).replace);
+	});
+
+	test('Completion Result - commit characters', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { commitCharacters: ['.', ',']},
+			items: [{ label: 'item', data: 'data' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		const commitCharacters = result.items[0].commitCharacters!;
+		strictEqual(commitCharacters?.length, 2);
+		strictEqual(commitCharacters[0], '.');
+		strictEqual(commitCharacters[1], ',');
+	});
+
+	test('Completion Result - insert text mode', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { insertTextMode: proto.InsertTextMode.asIs },
+			items: [{ label: 'item', data: 'data' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		strictEqual(result.items[0].keepWhitespace, true);
+	});
+
+	test('Completion Result - insert text format', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: true,
+			itemDefaults: { insertTextFormat: proto.InsertTextFormat.Snippet },
+			items: [{ label: 'item', insertText: '${value}', data: 'data' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		strictEqual(result.isIncomplete, completionResult.isIncomplete);
+		strictEqual(result.items.length, 1);
+		strictEqual(result.items[0].label, 'item');
+		ok(result.items[0].insertText instanceof vscode.SnippetString);
+	});
+
+	test('Parameter Information', async () => {
+		const parameterInfo: proto.ParameterInformation = {
 			label: 'label'
 		};
 
@@ -634,90 +873,90 @@ suite('Protocol Converter', () => {
 		strictEqual(result.label, parameterInfo.label);
 		strictEqual(result.documentation, parameterInfo.documentation);
 
-		ok(p2c.asParameterInformations([parameterInfo]).every(value => value instanceof vscode.ParameterInformation));
+		ok((await p2c.asParameterInformations([parameterInfo])).every(value => value instanceof vscode.ParameterInformation));
 	});
 
-	test('Signature Information', () => {
-		let signatureInfo: proto.SignatureInformation = {
+	test('Signature Information', async () => {
+		const signatureInfo: proto.SignatureInformation = {
 			label: 'label'
 		};
 
-		let result = p2c.asSignatureInformation(signatureInfo);
+		let result = await p2c.asSignatureInformation(signatureInfo);
 		strictEqual(result.label, signatureInfo.label);
 		strictEqual(result.documentation, undefined);
 		deepEqual(result.parameters, []);
 
 		signatureInfo.documentation = 'documentation';
 		signatureInfo.parameters = [{ label: 'label' }];
-		result = p2c.asSignatureInformation(signatureInfo);
+		result = await p2c.asSignatureInformation(signatureInfo);
 		strictEqual(result.label, signatureInfo.label);
 		strictEqual(result.documentation, signatureInfo.documentation);
 		ok(result.parameters.every(value => value instanceof vscode.ParameterInformation));
 
-		ok(p2c.asSignatureInformations([signatureInfo]).every(value => value instanceof vscode.SignatureInformation));
+		ok((await p2c.asSignatureInformations([signatureInfo])).every(value => value instanceof vscode.SignatureInformation));
 	});
 
-	test('Signature Help', () => {
-		let signatureHelp: proto.SignatureHelp = {
+	test('Signature Help', async () => {
+		const signatureHelp: proto.SignatureHelp = {
 			signatures: [
 				{ label: 'label' }
 			],
-			activeSignature: null,
-			activeParameter: null
+			activeSignature: undefined,
+			activeParameter: undefined
 		};
 
-		let result = p2c.asSignatureHelp(signatureHelp);
+		let result = await p2c.asSignatureHelp(signatureHelp);
 		ok(result.signatures.every(value => value instanceof vscode.SignatureInformation));
 		strictEqual(result.activeSignature, 0);
 		strictEqual(result.activeParameter, 0);
 
 		signatureHelp.activeSignature = 1;
 		signatureHelp.activeParameter = 2;
-		result = p2c.asSignatureHelp(signatureHelp);
+		result = await p2c.asSignatureHelp(signatureHelp);
 		ok(result.signatures.every(value => value instanceof vscode.SignatureInformation));
 		strictEqual(result.activeSignature, 1);
 		strictEqual(result.activeParameter, 2);
 
-		strictEqual(p2c.asSignatureHelp(undefined), undefined);
-		strictEqual(p2c.asSignatureHelp(null), undefined);
+		strictEqual(await p2c.asSignatureHelp(undefined), undefined);
+		strictEqual(await p2c.asSignatureHelp(null), undefined);
 	});
 
-	test('Location', () => {
+	test('Location', async () => {
 		strictEqual(p2c.asLocation(undefined), undefined);
 		strictEqual(p2c.asLocation(null), undefined);
 
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let location: proto.Location = {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const location: proto.Location = {
 			uri: 'file://localhost/folder/file',
 			range: { start, end }
 		};
 
-		let result = p2c.asLocation(location);
+		const result = p2c.asLocation(location);
 		ok(result.uri instanceof vscode.Uri);
 		ok(result.range instanceof vscode.Range);
 
-		ok(p2c.asReferences([location]).every(value => value instanceof vscode.Location));
+		ok((await p2c.asReferences([location])).every(value => value instanceof vscode.Location));
 	});
 
-	test('Definition', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let location: proto.Location = {
+	test('Definition', async () => {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const location: proto.Location = {
 			uri: 'file://localhost/folder/file',
 			range: { start, end }
 		};
 
-		let single = <vscode.Location>p2c.asDefinitionResult(location);
+		const single = <vscode.Location> await p2c.asDefinitionResult(location);
 		ok(single.uri instanceof vscode.Uri);
 		ok(single.range instanceof vscode.Range);
 
-		let array = <vscode.Location[]>p2c.asDefinitionResult([location]);
+		const array = <vscode.Location[]> await p2c.asDefinitionResult([location]);
 		ok(array.every(value => value instanceof vscode.Location));
 
-		strictEqual(p2c.asDefinitionResult(undefined), undefined);
-		strictEqual(p2c.asDefinitionResult(null), undefined);
-		deepEqual(p2c.asDefinitionResult([]), []);
+		strictEqual(await p2c.asDefinitionResult(undefined), undefined);
+		strictEqual(await p2c.asDefinitionResult(null), undefined);
+		deepEqual(await p2c.asDefinitionResult([]), []);
 	});
 
 	test('Document Highlight Kind', () => {
@@ -726,10 +965,10 @@ suite('Protocol Converter', () => {
 		strictEqual(p2c.asDocumentHighlightKind(<any>proto.DocumentHighlightKind.Write), vscode.DocumentHighlightKind.Write);
 	});
 
-	test('Document Highlight', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let documentHighlight = proto.DocumentHighlight.create(
+	test('Document Highlight', async () => {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const documentHighlight = proto.DocumentHighlight.create(
 			{ start, end }
 		);
 
@@ -742,41 +981,41 @@ suite('Protocol Converter', () => {
 		ok(result.range instanceof vscode.Range);
 		strictEqual(result.kind, vscode.DocumentHighlightKind.Write);
 
-		ok(p2c.asDocumentHighlights([documentHighlight]).every(value => value instanceof vscode.DocumentHighlight));
-		strictEqual(p2c.asDocumentHighlights(undefined), undefined);
-		strictEqual(p2c.asDocumentHighlights(null), undefined);
-		deepEqual(p2c.asDocumentHighlights([]), []);
+		ok((await p2c.asDocumentHighlights([documentHighlight])).every(value => value instanceof vscode.DocumentHighlight));
+		strictEqual(await p2c.asDocumentHighlights(undefined), undefined);
+		strictEqual(await p2c.asDocumentHighlights(null), undefined);
+		deepEqual(await p2c.asDocumentHighlights([]), []);
 	});
 
-	test('Document Links', () => {
-		let location = 'file:///foo/bar';
-		let tooltip = 'tooltip';
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let documentLink = proto.DocumentLink.create(
+	test('Document Links', async () => {
+		const location = 'file:///foo/bar';
+		const tooltip = 'tooltip';
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const documentLink = proto.DocumentLink.create(
 			{ start, end }, location
 		);
 		documentLink.tooltip = tooltip;
 
-		let result = p2c.asDocumentLink(documentLink);
+		const result = p2c.asDocumentLink(documentLink);
 		ok(result.range instanceof vscode.Range);
 		strictEqual(result.target!.toString(), location);
 		strictEqual(result.tooltip, tooltip);
 
-		ok(p2c.asDocumentLinks([documentLink]).every(value => value instanceof vscode.DocumentLink));
-		strictEqual(p2c.asDocumentLinks(undefined), undefined);
-		strictEqual(p2c.asDocumentLinks(null), undefined);
-		deepEqual(p2c.asDocumentLinks([]), []);
+		ok((await p2c.asDocumentLinks([documentLink])).every(value => value instanceof vscode.DocumentLink));
+		strictEqual(await p2c.asDocumentLinks(undefined), undefined);
+		strictEqual(await p2c.asDocumentLinks(null), undefined);
+		deepEqual(await p2c.asDocumentLinks([]), []);
 	});
 
-	test('SymbolInformation', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let location: proto.Location = {
+	test('SymbolInformation', async () => {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const location: proto.Location = {
 			uri: 'file://localhost/folder/file',
 			range: { start, end }
 		};
-		let symbolInformation: proto.SymbolInformation = {
+		const symbolInformation: proto.SymbolInformation = {
 			name: 'name',
 			kind: proto.SymbolKind.Array,
 			tags: [proto.SymbolTag.Deprecated],
@@ -786,7 +1025,7 @@ suite('Protocol Converter', () => {
 		let result = p2c.asSymbolInformation(symbolInformation);
 		strictEqual(result.name, symbolInformation.name);
 		strictEqual(result.kind, vscode.SymbolKind.Array);
-		strictEqual(result.containerName, undefined);
+		strictEqual(result.containerName, '');
 		assertDefined(result.tags);
 		strictEqual(result.tags.length, 1);
 		strictEqual(result.tags[0], vscode.SymbolTag.Deprecated);
@@ -796,68 +1035,88 @@ suite('Protocol Converter', () => {
 		result = p2c.asSymbolInformation(symbolInformation);
 		strictEqual(result.containerName, symbolInformation.containerName);
 
-		ok(p2c.asSymbolInformations([symbolInformation]).every(value => value instanceof vscode.SymbolInformation));
-		strictEqual(p2c.asSymbolInformations(undefined), undefined);
-		strictEqual(p2c.asSymbolInformations(null), undefined);
-		deepEqual(p2c.asSymbolInformations([]), []);
+		ok((await p2c.asSymbolInformations([symbolInformation])).every(value => value instanceof vscode.SymbolInformation));
+		strictEqual(await p2c.asSymbolInformations(undefined), undefined);
+		strictEqual(await p2c.asSymbolInformations(null), undefined);
+		deepEqual(await p2c.asSymbolInformations([]), []);
+	});
+
+	test('WorkspaceSymbol', () => {
+		const workspaceSymbol: proto.WorkspaceSymbol = {
+			name: 'name',
+			kind: proto.SymbolKind.Array,
+			location: { uri: 'file://localhost/folder/file' },
+			data: 'data'
+		};
+
+		const result = p2c.asSymbolInformation(workspaceSymbol);
+		strictEqual(result.name, workspaceSymbol.name);
+		strictEqual(result.kind, vscode.SymbolKind.Array);
+		ok(result.location instanceof vscode.Location);
+		rangeEqual(result.location.range, new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)));
+
+		const back = c2p.asWorkspaceSymbol(result);
+		strictEqual(back.data, 'data');
+		strictEqual(back.location.uri, workspaceSymbol.location.uri);
+		strictEqual((back.location as { range?: proto.Range }).range, undefined);
 	});
 
 	test('SymbolInformation Tag outside', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let location: proto.Location = {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const location: proto.Location = {
 			uri: 'file://localhost/folder/file',
 			range: { start, end }
 		};
-		let symbolInformation: proto.SymbolInformation = {
+		const symbolInformation: proto.SymbolInformation = {
 			name: 'name',
 			kind: proto.SymbolKind.Array,
-			tags: [Number.MAX_VALUE as SymbolTag],
+			tags: [Number.MAX_VALUE as proto.SymbolTag],
 			location: location
 		};
-		let result = p2c.asSymbolInformation(symbolInformation);
+		const result = p2c.asSymbolInformation(symbolInformation);
 		strictEqual(result.tags, undefined);
 	});
 
 	test('SymbolInformation deprecated', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let location: proto.Location = {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const location: proto.Location = {
 			uri: 'file://localhost/folder/file',
 			range: { start, end }
 		};
-		let symbolInformation: proto.SymbolInformation = {
+		const symbolInformation: proto.SymbolInformation = {
 			name: 'name',
 			kind: proto.SymbolKind.Array,
 			location: location,
 			deprecated: true
 		};
-		let result = p2c.asSymbolInformation(symbolInformation);
+		const result = p2c.asSymbolInformation(symbolInformation);
 		assertDefined(result.tags);
 		strictEqual(result.tags.length, 1);
 		strictEqual(result.tags[0], vscode.SymbolTag.Deprecated);
 	});
 
 	test('SymbolInformation Kind outside', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let location: proto.Location = {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const location: proto.Location = {
 			uri: 'file://localhost/folder/file',
 			range: { start, end }
 		};
-		let symbolInformation: proto.SymbolInformation = {
+		const symbolInformation: proto.SymbolInformation = {
 			name: 'name',
 			kind: Number.MAX_VALUE as any,
 			location: location
 		};
-		let result = p2c.asSymbolInformation(symbolInformation);
+		const result = p2c.asSymbolInformation(symbolInformation);
 		strictEqual(result.kind, vscode.SymbolKind.Property);
 	});
 
 	test('DocumentSymbol', () => {
-		let start: proto.Position = { line: 1, character: 2 };
-		let end: proto.Position = { line: 8, character: 9 };
-		let documentSymbol: proto.DocumentSymbol = {
+		const start: proto.Position = { line: 1, character: 2 };
+		const end: proto.Position = { line: 8, character: 9 };
+		const documentSymbol: proto.DocumentSymbol = {
 			name: 'name',
 			kind: proto.SymbolKind.Array,
 			tags: [proto.SymbolTag.Deprecated],
@@ -865,7 +1124,7 @@ suite('Protocol Converter', () => {
 			selectionRange: { start, end }
 		};
 		ok(proto.DocumentSymbol.is(documentSymbol));
-		let result = p2c.asDocumentSymbol(documentSymbol);
+		const result = p2c.asDocumentSymbol(documentSymbol);
 		strictEqual(result.name, documentSymbol.name);
 		strictEqual(result.kind, vscode.SymbolKind.Array);
 		strictEqual(result.children.length, 0);
@@ -876,23 +1135,23 @@ suite('Protocol Converter', () => {
 		rangeEqual(result.selectionRange, documentSymbol.selectionRange);
 	});
 
-	test('Command', () => {
-		let command = proto.Command.create('title', 'commandId');
+	test('Command', async () => {
+		const command = proto.Command.create('title', 'commandId');
 		command.arguments = ['args'];
 
-		let result = p2c.asCommand(command);
+		const result = p2c.asCommand(command);
 		strictEqual(result.title, command.title);
 		strictEqual(result.command, command.command);
 		strictEqual(result.arguments, command.arguments);
 
-		ok(p2c.asCommands([command]).every(elem => !!elem.title && !!elem.command));
-		strictEqual(p2c.asCommands(undefined), undefined);
-		strictEqual(p2c.asCommands(null), undefined);
-		deepEqual(p2c.asCommands([]), []);
+		ok((await p2c.asCommands([command])).every(elem => !!elem.title && !!elem.command));
+		strictEqual(await p2c.asCommands(undefined), undefined);
+		strictEqual(await p2c.asCommands(null), undefined);
+		deepEqual(await p2c.asCommands([]), []);
 	});
 
-	test('Code Lens', () => {
-		let codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1, 2, 8, 9), 'data');
+	test('Code Lens', async () => {
+		const codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1, 2, 8, 9), 'data');
 
 		let result = p2c.asCodeLens(codeLens);
 		rangeEqual(result.range, codeLens.range);
@@ -902,28 +1161,28 @@ suite('Protocol Converter', () => {
 		strictEqual(result.command!.title, codeLens.command.title);
 		strictEqual(result.command!.command, codeLens.command.command);
 
-		ok(p2c.asCodeLenses([codeLens]).every(elem => elem instanceof vscode.CodeLens));
-		strictEqual(p2c.asCodeLenses(undefined), undefined);
-		strictEqual(p2c.asCodeLenses(null), undefined);
-		deepEqual(p2c.asCodeLenses([]), []);
+		ok((await p2c.asCodeLenses([codeLens])).every(elem => elem instanceof vscode.CodeLens));
+		strictEqual(await p2c.asCodeLenses(undefined), undefined);
+		strictEqual(await p2c.asCodeLenses(null), undefined);
+		deepEqual(await p2c.asCodeLenses([]), []);
 	});
 
 	test('Code Lens Preserve Data', () => {
-		let codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1, 2, 8, 9), 'data');
-		let result = c2p.asCodeLens(p2c.asCodeLens(codeLens));
+		const codeLens: proto.CodeLens = proto.CodeLens.create(proto.Range.create(1, 2, 8, 9), 'data');
+		const result = c2p.asCodeLens(p2c.asCodeLens(codeLens));
 		strictEqual(result.data, codeLens.data);
 	});
 
-	test('WorkspaceEdit', () => {
-		let workspaceChange = new proto.WorkspaceChange();
-		let uri1 = 'file:///abc.txt';
-		let change1 = workspaceChange.getTextEditChange({ uri: uri1, version: 1 });
+	test('WorkspaceEdit', async () => {
+		const workspaceChange = new proto.WorkspaceChange();
+		const uri1 = 'file:///abc.txt';
+		const change1 = workspaceChange.getTextEditChange({ uri: uri1, version: 1 });
 		change1.insert(proto.Position.create(0, 1), 'insert');
-		let uri2 = 'file:///xyz.txt';
-		let change2 = workspaceChange.getTextEditChange({ uri: uri2, version: 99 });
+		const uri2 = 'file:///xyz.txt';
+		const change2 = workspaceChange.getTextEditChange({ uri: uri2, version: 99 });
 		change2.replace(proto.Range.create(0, 1, 2, 3), 'replace');
 
-		let result = p2c.asWorkspaceEdit(workspaceChange.edit);
+		const result = await p2c.asWorkspaceEdit(workspaceChange.edit);
 		let edits = result.get(vscode.Uri.parse(uri1));
 		strictEqual(edits.length, 1);
 		rangeEqual(edits[0].range, proto.Range.create(0, 1, 0, 1));
@@ -934,17 +1193,55 @@ suite('Protocol Converter', () => {
 		rangeEqual(edits[0].range, proto.Range.create(0, 1, 2, 3));
 		strictEqual(edits[0].newText, 'replace');
 
-		strictEqual(p2c.asWorkspaceEdit(undefined), undefined);
-		strictEqual(p2c.asWorkspaceEdit(null), undefined);
+		strictEqual(await p2c.asWorkspaceEdit(undefined), undefined);
+		strictEqual(await p2c.asWorkspaceEdit(null), undefined);
 	});
 
 	test('Uri Rewrite', () => {
-		let converter = protocolConverter.createConverter((value: string) => {
+		const converter = protocolConverter.createConverter((value: string) => {
 			return vscode.Uri.parse(`${value}.vscode`);
-		}, false);
+		}, false, false);
 
-		let result = converter.asUri('file://localhost/folder/file');
+		const result = converter.asUri('file://localhost/folder/file');
 		strictEqual('file://localhost/folder/file.vscode', result.toString());
+	});
+
+	test('InlineValues', async () => {
+		const items: proto.InlineValue[] = [
+			proto.InlineValueText.create(proto.Range.create(1, 2, 8, 9), 'literalString'),
+			proto.InlineValueVariableLookup.create(proto.Range.create(1, 2, 8, 9), 'varName', false),
+			proto.InlineValueVariableLookup.create(proto.Range.create(1, 2, 8, 9), undefined, true),
+			proto.InlineValueEvaluatableExpression.create(proto.Range.create(1, 2, 8, 9), 'expression'),
+			proto.InlineValueEvaluatableExpression.create(proto.Range.create(1, 2, 8, 9), undefined),
+		];
+
+		const result = await p2c.asInlineValues(items);
+		ok(result.every((r) => r.range instanceof vscode.Range));
+		for (const r of result) {
+			rangeEqual(r.range, proto.Range.create(1, 2, 8, 9));
+		}
+
+		ok(result[0] instanceof vscode.InlineValueText && result[0].text === 'literalString');
+		ok(result[1] instanceof vscode.InlineValueVariableLookup && result[1].variableName === 'varName' && result[1].caseSensitiveLookup === false);
+		ok(result[2] instanceof vscode.InlineValueVariableLookup && result[2].variableName === undefined && result[2].caseSensitiveLookup === true);
+		ok(result[3] instanceof vscode.InlineValueEvaluatableExpression && result[3].expression === 'expression');
+		ok(result[4] instanceof vscode.InlineValueEvaluatableExpression && result[4].expression === undefined);
+	});
+
+	test('InlayHint', async () => {
+		const one: proto.InlayHint = proto.InlayHint.create(proto.Position.create(1,1), 'one', proto.InlayHintKind.Parameter);
+		one.data = '1';
+		const two: proto.InlayHint = proto.InlayHint.create(proto.Position.create(2,2), 'two', proto.InlayHintKind.Type);
+		two.data = '2';
+		const items = [one, two];
+
+		const result = await p2c.asInlayHints(items);
+		ok(result.every(hint => hint instanceof ProtocolInlayHint));
+		for (var i = 0; i < result.length; i++) {
+			positionEqual(result[i].position, items[i].position);
+		}
+		strictEqual((result[0] as ProtocolInlayHint).data, '1');
+		strictEqual((result[1] as ProtocolInlayHint).data, '2');
 	});
 
 	test('Bug #361', () => {
@@ -1000,41 +1297,41 @@ suite('Code Converter', () => {
 	}
 
 	test('Position', () => {
-		let position = new vscode.Position(1, 2);
-		let result = c2p.asPosition(position);
+		const position = new vscode.Position(1, 2);
+		const result = c2p.asPosition(position);
 		positionEqual(result, position);
 	});
 
 	test('Range', () => {
-		let range = new vscode.Range(new vscode.Position(1, 2), new vscode.Position(8, 9));
-		let result = c2p.asRange(range);
+		const range = new vscode.Range(new vscode.Position(1, 2), new vscode.Position(8, 9));
+		const result = c2p.asRange(range);
 		rangeEqual(result, range);
 	});
 
 	test('Text Edit Insert', () => {
-		let insert = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
-		let result = c2p.asTextEdit(insert);
+		const insert = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
+		const result = c2p.asTextEdit(insert);
 		rangeEqual(result.range, insert.range);
 		strictEqual(result.newText, insert.newText);
 	});
 
 	test('Text Edit Replace', () => {
-		let replace = vscode.TextEdit.replace(new vscode.Range(new vscode.Position(1, 2), new vscode.Position(8, 9)), 'insert');
-		let result = c2p.asTextEdit(replace);
+		const replace = vscode.TextEdit.replace(new vscode.Range(new vscode.Position(1, 2), new vscode.Position(8, 9)), 'insert');
+		const result = c2p.asTextEdit(replace);
 		rangeEqual(result.range, replace.range);
 		strictEqual(result.newText, replace.newText);
 	});
 
 	test('Text Edit Delete', () => {
-		let del = vscode.TextEdit.delete(new vscode.Range(new vscode.Position(1, 2), new vscode.Position(8, 9)));
-		let result = c2p.asTextEdit(del);
+		const del = vscode.TextEdit.delete(new vscode.Range(new vscode.Position(1, 2), new vscode.Position(8, 9)));
+		const result = c2p.asTextEdit(del);
 		rangeEqual(result.range, del.range);
 		strictEqual(result.newText, del.newText);
 	});
 
 	test('Completion Item', () => {
-		let item: vscode.CompletionItem = new vscode.CompletionItem('label');
-		let result = c2p.asCompletionItem(<any>item);
+		const item: vscode.CompletionItem = new vscode.CompletionItem('label');
+		const result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.label, item.label);
 		strictEqual(result.detail, undefined);
 		strictEqual(result.documentation, undefined);
@@ -1051,19 +1348,19 @@ suite('Code Converter', () => {
 	});
 
 	test('Completion Item Full', () => {
-		let item: vscode.CompletionItem = new vscode.CompletionItem('label');
+		const item: vscode.CompletionItem = new vscode.CompletionItem('label');
 		item.detail = 'detail';
 		item.documentation = 'documentation';
 		item.filterText = 'filter';
 		item.insertText = 'insert';
 		item.kind = vscode.CompletionItemKind.Interface;
 		item.sortText = 'sort';
-		let edit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
+		const edit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.additionalTextEdits = [edit];
 		item.tags = [vscode.CompletionItemTag.Deprecated];
 		item.command = { title: 'title', command: 'commandId' };
 
-		let result = c2p.asCompletionItem(<any>item);
+		const result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.label, item.label);
 		strictEqual(result.detail, item.detail);
 		strictEqual(result.documentation, item.documentation);
@@ -1078,30 +1375,30 @@ suite('Code Converter', () => {
 	});
 
 	test('Completion Item - insertText', () => {
-		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
+		const item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
 		item.insertText = 'insert';
 		item.fromEdit = false;
 
-		let result = c2p.asCompletionItem(<any>item);
+		const result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.insertText, item.insertText);
 	});
 
 	test('Completion Item - TextEdit', () => {
-		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
+		const item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
 		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.fromEdit = false;
 
-		let result = c2p.asCompletionItem(<any>item);
+		const result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.insertText, item.textEdit.newText);
 	});
 
 	test('Completion Item - Insert Text and Range', () => {
-		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
+		const item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
 		item.insertText = 'insert';
 		item.range = new vscode.Range(1, 2, 1, 2);
 		item.fromEdit = true;
 
-		let result = c2p.asCompletionItem(<any>item);
+		const result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.insertText, undefined);
 		assertTextEdit(result.textEdit);
 		rangeEqual(result.textEdit.range, item.range);
@@ -1109,15 +1406,29 @@ suite('Code Converter', () => {
 	});
 
 	test('Completion Item - TextEdit from Edit', () => {
-		let item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
+		const item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
 		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
 		item.fromEdit = true;
 
-		let result = c2p.asCompletionItem(<any>item);
+		const result = c2p.asCompletionItem(<any>item);
 		strictEqual(result.insertText, undefined);
 		assertTextEdit(result.textEdit);
 		rangeEqual(result.textEdit.range, item.textEdit.range);
 		strictEqual(result.textEdit.newText, item.textEdit.newText);
+	});
+
+	test('Completion Item - Keep whitespace', () => {
+		const item: ProtocolCompletionItem = new ProtocolCompletionItem('label');
+		item.textEdit = vscode.TextEdit.insert(new vscode.Position(1, 2), 'insert');
+		item.fromEdit = true;
+		item.keepWhitespace = true;
+
+		const result = c2p.asCompletionItem(<any>item);
+		strictEqual(result.insertText, undefined);
+		assertTextEdit(result.textEdit);
+		rangeEqual(result.textEdit.range, item.textEdit.range);
+		strictEqual(result.textEdit.newText, item.textEdit.newText);
+		strictEqual(result.insertTextMode, proto.InsertTextMode.adjustIndentation);
 	});
 
 	test('DiagnosticSeverity', () => {
@@ -1132,8 +1443,8 @@ suite('Code Converter', () => {
 		strictEqual(c2p.asDiagnosticTag(<any>vscode.DiagnosticTag.Deprecated), proto.DiagnosticTag.Deprecated);
 	});
 
-	test('Diagnostic', () => {
-		let item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning);
+	test('Diagnostic', async () => {
+		const item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning);
 		item.code = 99;
 		item.source = 'source';
 		item.tags = [vscode.DiagnosticTag.Unnecessary];
@@ -1141,7 +1452,7 @@ suite('Code Converter', () => {
 			new vscode.DiagnosticRelatedInformation(new vscode.Location(vscode.Uri.parse('file://localhost/folder/file'), new vscode.Range(0, 1, 2, 3)), 'related')
 		];
 
-		let result = c2p.asDiagnostic(<any>item);
+		const result = c2p.asDiagnostic(item);
 		rangeEqual(result.range, item.range);
 		strictEqual(result.message, item.message);
 		strictEqual(result.severity, proto.DiagnosticSeverity.Warning);
@@ -1154,14 +1465,14 @@ suite('Code Converter', () => {
 		strictEqual(result.relatedInformation![0].message, 'related');
 		strictEqual(result.relatedInformation![0].location.uri, 'file://localhost/folder/file');
 		strictEqual(result.relatedInformation![0].location.range.end.character, 3);
-		ok(c2p.asDiagnostics(<any>[item]).every(elem => proto.Diagnostic.is(elem)));
+		ok((await c2p.asDiagnostics([item])).every(elem => proto.Diagnostic.is(elem)));
 	});
 
 	test('Diagnostic - Complex Code', () => {
-		let item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning);
+		const item: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning);
 		item.code = { value: 99, target: vscode.Uri.parse('https://code.visualstudio.com/') };
 
-		let result = c2p.asDiagnostic(<any>item);
+		const result = c2p.asDiagnostic(<any>item);
 
 		strictEqual(result.code, 99);
 		strictEqual(result.codeDescription?.href, 'https://code.visualstudio.com/');
@@ -1179,21 +1490,62 @@ suite('Code Converter', () => {
 		strictEqual(result.code.target, 'https://code.visualstudio.com/');
 	});
 
-	test('CodeActionContext', () => {
-		let item: vscode.CodeActionContext = {
-			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)]
+	test('CodeActionContext', async () => {
+		const item: vscode.CodeActionContext = {
+			diagnostics: [new vscode.Diagnostic(new vscode.Range(1, 2, 8, 9), 'message', vscode.DiagnosticSeverity.Warning)],
+			triggerKind: vscode.CodeActionTriggerKind.Invoke,
+			only: undefined
 		};
 
-		let result = c2p.asCodeActionContext(<any>item);
+		const result = await c2p.asCodeActionContext(item);
 		ok(result.diagnostics.every(elem => proto.Diagnostic.is(elem)));
+		strictEqual(result.triggerKind, proto.CodeActionTriggerKind.Invoked);
+	});
+
+	test('CodeActionContext - automatic', async () => {
+		const item: vscode.CodeActionContext = {
+			diagnostics: [],
+			triggerKind: vscode.CodeActionTriggerKind.Automatic,
+			only: undefined
+		};
+
+		const result = await c2p.asCodeActionContext(item);
+		strictEqual(result.triggerKind, proto.CodeActionTriggerKind.Automatic);
 	});
 
 	test('Uri Rewrite', () => {
-		let converter = codeConverter.createConverter((value: vscode.Uri) => {
+		const converter = codeConverter.createConverter((value: vscode.Uri) => {
 			return `${value.toString()}.vscode`;
 		});
 
-		let result = converter.asUri(vscode.Uri.parse('file://localhost/folder/file'));
+		const result = converter.asUri(vscode.Uri.parse('file://localhost/folder/file'));
 		strictEqual('file://localhost/folder/file.vscode', result);
+	});
+
+	test('InlineValueContext', () => {
+		const item: vscode.InlineValueContext = {
+			frameId: 101,
+			stoppedLocation: new vscode.Range(1, 2, 8, 9),
+		};
+
+		const result = c2p.asInlineValueContext(<any>item);
+
+		strictEqual(result.frameId, 101);
+		strictEqual(result.stoppedLocation.start.line, 1);
+		strictEqual(result.stoppedLocation.start.character, 2);
+		strictEqual(result.stoppedLocation.end.line, 8);
+		strictEqual(result.stoppedLocation.end.character, 9);
+	});
+
+	test('InlayHint', () => {
+		const item: ProtocolInlayHint = new ProtocolInlayHint(new vscode.Position(1, 1), 'label', vscode.InlayHintKind.Type);
+		item.data = '1';
+
+		const result = c2p.asInlayHint(item);
+
+		positionEqual(result.position, item.position);
+		strictEqual(result.label, 'label');
+		strictEqual(result.kind, proto.InlayHintKind.Type);
+		strictEqual(result.data, '1');
 	});
 });

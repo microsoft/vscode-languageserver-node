@@ -4,25 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { RequestHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc';
+import { LSPAny } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
-import { PartialResultParams } from './protocol';
+import { MessageDirection, ProtocolRequestType } from './messages';
 
 //---- Get Configuration request ----
-
-export interface ConfigurationClientCapabilities {
-	/**
-	 * The workspace client capabilities
-	 */
-	workspace?: {
-		/**
-		 * The client supports `workspace/configuration` requests.
-		 *
-		 * @since 3.6.0
-		 */
-		configuration?: boolean;
-	}
-}
 
 /**
  * The 'workspace/configuration' request is sent from the server to the client to fetch a certain
@@ -34,9 +20,11 @@ export interface ConfigurationClientCapabilities {
  * change event and empty the cache if such an event is received.
  */
 export namespace ConfigurationRequest {
-	export const type = new ProtocolRequestType<ConfigurationParams & PartialResultParams, any[], never, void, void>('workspace/configuration');
-	export type HandlerSignature = RequestHandler<ConfigurationParams, any[], void>;
-	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<any[], void>;
+	export const method: 'workspace/configuration' = 'workspace/configuration';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType<ConfigurationParams, LSPAny[], never, void, void>(method);
+	export type HandlerSignature = RequestHandler<ConfigurationParams, LSPAny[], void>;
+	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<LSPAny[], void>;
 }
 
 

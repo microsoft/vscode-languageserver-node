@@ -3,16 +3,16 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler } from 'vscode-jsonrpc';
 import { Declaration, DeclarationLink, Location, LocationLink } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
-import {
+import { MessageDirection, ProtocolRequestType } from './messages';
+import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams,
 	WorkDoneProgressOptions
 } from './protocol';
 
-// @ts-ignore: to avoid inlining LocatioLink as dynamic import
+// @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;
 
 /**
@@ -43,15 +43,14 @@ export interface DeclarationParams extends TextDocumentPositionParams, WorkDoneP
 
 /**
  * A request to resolve the type definition locations of a symbol at a given text
- * document position. The request's parameter is of type [TextDocumentPositioParams]
- * (#TextDocumentPositionParams) the response is of type [Declaration](#Declaration)
- * or a typed array of [DeclarationLink](#DeclarationLink) or a Thenable that resolves
+ * document position. The request's parameter is of type [TextDocumentPositionParams]
+ * (#TextDocumentPositionParams) the response is of type {@link Declaration}
+ * or a typed array of {@link DeclarationLink} or a Thenable that resolves
  * to such.
  */
 export namespace DeclarationRequest {
 	export const method: 'textDocument/declaration' = 'textDocument/declaration';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DeclarationParams, Declaration | DeclarationLink[] | null, Location[] | DeclarationLink[], void, DeclarationRegistrationOptions>(method);
-	/** @deprecated Use DeclarationRequest.type */
-	export const resultType = new ProgressType<Location[] | DeclarationLink[]>();
 	export type HandlerSignature = RequestHandler<DeclarationParams, Declaration | DeclarationLink[] | null, void>;
 }

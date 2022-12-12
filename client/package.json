@@ -1,11 +1,11 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "7.0.0-next.9",
+	"version": "8.1.0-next.3",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.46.0"
+		"vscode": "^1.67.0"
 	},
 	"repository": {
 		"type": "git",
@@ -15,29 +15,36 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
+	"enabledApiProposals": [],
 	"main": "./lib/node/main.js",
 	"browser": {
 		"./lib/node/main.js": "./lib/browser/main.js"
 	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
-		"@types/semver": "^6.0.1",
-		"@types/vscode": "1.46.0",
-		"shx": "^0.3.2"
+		"@types/minimatch": "^3.0.5",
+		"@types/semver": "^7.3.10",
+		"@types/vscode": "1.67.0",
+		"shx": "^0.3.4"
 	},
 	"dependencies": {
-		"semver": "^6.3.0",
-		"vscode-languageserver-protocol": "3.16.0-next.7"
+		"minimatch": "^5.1.0",
+		"semver": "^7.3.7",
+		"vscode-languageserver-protocol": "3.17.3-next.3"
 	},
 	"scripts": {
-		"install:dev": "cd src/node && npm install",
-		"prepublishOnly": "git clean -xfd . && npm install && npm run clean && node ./bin/updateVSCode.js && npm run compile && npm test",
-		"postpublish": "node ../build/npm/post-publish.js",
+		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepack": "npm run all:publish",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
 		"compile:clean": "git clean -xfd . && npm install && npm run clean && npm run compile",
-		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
+		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
+		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "cd ../client-node-tests && npm test && cd ../client",
 		"clean": "node ../node_modules/rimraf/bin.js lib",
-		"preversion": "npm test"
+		"all": "npm run clean && npm run compile && npm run lint && npm test",
+		"compile:publish": "node ../build/bin/tsc -b ./tsconfig.publish.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
+		"all:publish": "git clean -xfd . && npm install && npm run updateVSCodeVersion && npm run compile:publish && npm run lint && cd ../client-node-tests && npm run all:publish && cd ..",
+		"preversion": "npm test",
+		"updateVSCodeVersion": "node ./bin/updateVSCode.js"
 	}
 }

@@ -21,7 +21,7 @@ export interface CancellationToken {
 	readonly isCancellationRequested: boolean;
 
 	/**
-	 * An [event](#Event) which fires upon cancellation.
+	 * An {@link Event event} which fires upon cancellation.
 	 */
 	readonly onCancellationRequested: Event<any>;
 }
@@ -48,7 +48,7 @@ export namespace CancellationToken {
 
 const shortcutEvent: Event<any> = Object.freeze(function (callback: Function, context?: any): any {
 	const handle = RAL().timer.setTimeout(callback.bind(context), 0);
-	return { dispose() { RAL().timer.clearTimeout(handle); } };
+	return { dispose() { handle.dispose(); } };
 });
 
 class MutableToken implements CancellationToken {

@@ -7,18 +7,18 @@ import RIL from './ril';
 // Install the node runtime abstract.
 RIL.install();
 
-import RAL from '../common/ral';
-import {
-	AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, ReadableStreamMessageReader, WriteableStreamMessageWriter,
-	MessageWriterOptions, MessageReaderOptions, MessageReader, MessageWriter, NullLogger, ConnectionStrategy, ConnectionOptions,
-	MessageConnection, Logger, createMessageConnection as _createMessageConnection, Disposable
-} from '../common/api';
-
 import * as path from 'path';
 import * as os from 'os';
 import { ChildProcess } from 'child_process';
 import { randomBytes } from 'crypto';
 import { Server, Socket, createServer, createConnection } from 'net';
+import { MessagePort, Worker } from 'worker_threads';
+
+import {
+	RAL, AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, ReadableStreamMessageReader, WriteableStreamMessageWriter,
+	MessageWriterOptions, MessageReaderOptions, MessageReader, MessageWriter, NullLogger, ConnectionStrategy, ConnectionOptions,
+	MessageConnection, Logger, createMessageConnection as _createMessageConnection, Disposable, Emitter
+} from '../common/api';
 
 export * from '../common/api';
 
@@ -40,16 +40,16 @@ export class IPCMessageReader extends AbstractMessageReader {
 	}
 }
 
-export class IPCMessageWriter extends AbstractMessageWriter {
+export class IPCMessageWriter extends AbstractMessageWriter implements MessageWriter {
 
-	private process: NodeJS.Process | ChildProcess;
+	private readonly process: NodeJS.Process | ChildProcess;
 	private errorCount: number;
 
 	public constructor(process: NodeJS.Process | ChildProcess) {
 		super();
 		this.process = process;
 		this.errorCount = 0;
-		let eventEmitter: NodeJS.EventEmitter = this.process;
+		const eventEmitter: NodeJS.EventEmitter = this.process;
 		eventEmitter.on('error', (error: any) => this.fireError(error));
 		eventEmitter.on('close', () => this.fireClose);
 	}
@@ -77,6 +77,60 @@ export class IPCMessageWriter extends AbstractMessageWriter {
 		this.errorCount++;
 		this.fireError(error, msg, this.errorCount);
 	}
+
+	public end(): void {
+	}
+}
+
+export class PortMessageReader extends AbstractMessageReader implements MessageReader {
+
+	private onData: Emitter<Message>;
+
+	public constructor(port: MessagePort | Worker) {
+		super();
+		this.onData = new Emitter<Message>;
+		port.on('close', () => this.fireClose);
+		port.on('error', (error) => this.fireError(error));
+		port.on('message', (message: Message) => {
+			this.onData.fire(message);
+		});
+	}
+
+	public listen(callback: DataCallback): Disposable {
+		return this.onData.event(callback);
+	}
+}
+
+export class PortMessageWriter extends AbstractMessageWriter implements MessageWriter {
+
+	private readonly port: MessagePort | Worker;
+	private errorCount: number;
+
+	public constructor(port: MessagePort | Worker) {
+		super();
+		this.port = port;
+		this.errorCount = 0;
+		port.on('close', () => this.fireClose());
+		port.on('error', (error) => this.fireError(error));
+	}
+
+	public write(msg: Message): Promise<void> {
+		try {
+			this.port.postMessage(msg);
+			return Promise.resolve();
+		} catch (error) {
+			this.handleError(error, msg);
+			return Promise.reject(error);
+		}
+	}
+
+	private handleError(error: any, msg: Message): void {
+		this.errorCount++;
+		this.fireError(error, msg, this.errorCount);
+	}
+
+	public end(): void {
+	}
 }
 
 export class SocketMessageReader extends ReadableStreamMessageReader {
@@ -101,8 +155,8 @@ export class SocketMessageWriter extends WriteableStreamMessageWriter {
 }
 
 export class StreamMessageReader extends ReadableStreamMessageReader {
-	public constructor(readble: NodeJS.ReadableStream, encoding?: RAL.MessageBufferEncoding | MessageReaderOptions) {
-		super(RIL().stream.asReadableStream(readble), encoding);
+	public constructor(readable: NodeJS.ReadableStream, encoding?: RAL.MessageBufferEncoding | MessageReaderOptions) {
+		super(RIL().stream.asReadableStream(readable), encoding);
 	}
 }
 
@@ -208,12 +262,14 @@ export function createServerSocketTransport(port: number, encoding: RAL.MessageB
 	];
 }
 
-function isMessageReader(value: any): value is MessageReader {
-	return value.listen !== undefined && value.read === undefined;
+function isReadableStream(value: any): value is NodeJS.ReadableStream {
+	const candidate: NodeJS.ReadableStream = value;
+	return candidate.read !== undefined && candidate.addListener !== undefined;
 }
 
-function isMessageWriter(value: any): value is MessageWriter {
-	return value.write !== undefined && value.end === undefined;
+function isWritableStream(value: any): value is NodeJS.WritableStream {
+	const candidate: NodeJS.WritableStream = value;
+	return candidate.write !== undefined && candidate.addListener !== undefined;
 }
 
 export function createMessageConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): MessageConnection;
@@ -222,8 +278,8 @@ export function createMessageConnection(input: MessageReader | NodeJS.ReadableSt
 	if (!logger) {
 		logger = NullLogger;
 	}
-	const reader = isMessageReader(input) ? input : new StreamMessageReader(input);
-	const writer = isMessageWriter(output) ? output : new StreamMessageWriter(output);
+	const reader = isReadableStream(input) ? new StreamMessageReader(input) : input;
+	const writer = isWritableStream(output) ? new StreamMessageWriter(output) : output;
 
 	if (ConnectionStrategy.is(options)) {
 		options = { connectionStrategy: options } as ConnectionOptions;

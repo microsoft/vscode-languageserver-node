@@ -19,10 +19,13 @@ interface _MessageBuffer {
 
 	/**
 	 * Tries to read the headers from the buffer
+     *
+	 * @param lowerCaseKeys Whether the keys should be stored lower case. Doing
+	 * so is recommended since HTTP headers are case insensitive.
 	 *
 	 * @returns the header properties or undefined in not enough data can be read.
 	 */
-	tryReadHeaders(): Map<string, string> | undefined;
+	tryReadHeaders(lowerCaseKeys?: boolean): Map<string, string> | undefined;
 
 	/**
 	 * Tries to read the body of the given length.
@@ -54,14 +57,6 @@ interface _WritableStream {
 interface _DuplexStream extends _ReadableStream, _WritableStream {
 }
 
-interface _TimeoutHandle {
-	_timerBrand: undefined;
-}
-
-interface _ImmediateHandle {
-	_immediateBrand: undefined;
-}
-
 interface RAL {
 
 	readonly applicationJson: {
@@ -71,21 +66,20 @@ interface RAL {
 
 	readonly messageBuffer: {
 		create(encoding: RAL.MessageBufferEncoding): RAL.MessageBuffer;
-	}
+	};
 
 	readonly console: {
 	    info(message?: any, ...optionalParams: any[]): void;
 	    log(message?: any, ...optionalParams: any[]): void;
 	    warn(message?: any, ...optionalParams: any[]): void;
 	    error(message?: any, ...optionalParams: any[]): void;
-	}
+	};
 
 	readonly timer: {
-		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): RAL.TimeoutHandle;
-		clearTimeout(handle: RAL.TimeoutHandle): void;
-		setImmediate(callback: (...args: any[]) => void, ...args: any[]): RAL.ImmediateHandle;
-		clearImmediate(handle: RAL.ImmediateHandle): void;
-	}
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable;
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable;
+		setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable;
+	};
 }
 
 let _ral: RAL | undefined;
@@ -103,8 +97,6 @@ namespace RAL {
 	export type ReadableStream = _ReadableStream;
 	export type WritableStream = _WritableStream;
 	export type DuplexStream = _DuplexStream;
-	export type TimeoutHandle = _TimeoutHandle;
-	export type ImmediateHandle = _ImmediateHandle;
 	export function install(ral: RAL): void {
 		if (ral === undefined) {
 			throw new Error(`No runtime abstraction layer provided`);

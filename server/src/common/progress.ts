@@ -154,6 +154,7 @@ export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) =>
 			this._progressSupported = false;
 		}
 		public initialize(capabilities: ClientCapabilities): void {
+			super.initialize(capabilities);
 			if (capabilities?.window?.workDoneProgress === true) {
 				this._progressSupported = true;
 				this.connection.onNotification(WorkDoneProgressCancelNotification.type, (params) => {

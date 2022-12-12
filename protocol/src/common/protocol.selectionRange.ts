@@ -3,11 +3,13 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestHandler, ProgressType } from 'vscode-jsonrpc';
+import { RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Position, SelectionRange } from 'vscode-languageserver-types';
 
-import { ProtocolRequestType } from './messages';
-import { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistrationOptions, WorkDoneProgressParams, PartialResultParams } from './protocol';
+import { MessageDirection, ProtocolRequestType } from './messages';
+import type {
+	TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistrationOptions, WorkDoneProgressParams, PartialResultParams
+} from './protocol';
 
 // ---- capabilities
 
@@ -43,14 +45,13 @@ export interface SelectionRangeParams extends WorkDoneProgressParams, PartialRes
 
 /**
  * A request to provide selection ranges in a document. The request's
- * parameter is of type [SelectionRangeParams](#SelectionRangeParams), the
- * response is of type [SelectionRange[]](#SelectionRange[]) or a Thenable
+ * parameter is of type {@link SelectionRangeParams}, the
+ * response is of type {@link SelectionRange SelectionRange[]} or a Thenable
  * that resolves to such.
  */
 export namespace SelectionRangeRequest {
 	export const method: 'textDocument/selectionRange' = 'textDocument/selectionRange';
-	export const type = new ProtocolRequestType<SelectionRangeParams, SelectionRange[] | null, SelectionRange[], any, SelectionRangeRegistrationOptions>(method);
-	/** @deprecated  Use SelectionRangeRequest.type */
-	export const resultType = new ProgressType<SelectionRange[]>();
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<SelectionRangeParams, SelectionRange[] | null, SelectionRange[], void, SelectionRangeRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<SelectionRangeParams, SelectionRange[] | null, void>;
 }

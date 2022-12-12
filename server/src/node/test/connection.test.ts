@@ -36,7 +36,7 @@ suite('Connection Tests', () => {
 		clientConnection.listen();
 	});
 
-	test('Ensure request parameter passing', async() => {
+	test('Ensure request parameter passing', async () => {
 		let paramsCorrect: boolean = false;
 		serverConnection.onRequest(InitializeRequest.type, (params) => {
 			paramsCorrect = !Array.isArray(params) && params.workDoneToken === 'token';
@@ -67,7 +67,7 @@ suite('Connection Tests', () => {
 		const param: DidChangeConfigurationParams = {
 			settings: {}
 		};
-		clientConnection.sendNotification(DidChangeConfigurationNotification.type, param);
+		void clientConnection.sendNotification(DidChangeConfigurationNotification.type, param);
 	});
 
 	test('Ensure work done converted', (done) => {
@@ -84,7 +84,7 @@ suite('Connection Tests', () => {
 			},
 			workDoneToken: 'xx'
 		};
-		clientConnection.sendRequest(DeclarationRequest.type, params);
+		void clientConnection.sendRequest(DeclarationRequest.type, params);
 	});
 
 	test('Ensure result converted', (done) => {
@@ -101,7 +101,7 @@ suite('Connection Tests', () => {
 			},
 			partialResultToken: 'yy'
 		};
-		clientConnection.sendRequest(DeclarationRequest.type, params);
+		void clientConnection.sendRequest(DeclarationRequest.type, params);
 	});
 
 	test('Report progress test', (done) => {
@@ -130,12 +130,12 @@ suite('Connection Tests', () => {
 					report = true;
 					break;
 				case 'end':
-					assert.ok(begin && report, 'Recevied begin, report and done');
+					assert.ok(begin && report, 'Received begin, report and done');
 					done();
 					break;
 			}
 		});
-		clientConnection.sendRequest(DeclarationRequest.type, params);
+		void clientConnection.sendRequest(DeclarationRequest.type, params);
 	});
 
 	test('Report result test', (done) => {
@@ -168,10 +168,10 @@ suite('Connection Tests', () => {
 			partialResultToken: resultToken
 		};
 		const result: any[] = [];
-		clientConnection.onProgress(DeclarationRequest.resultType, resultToken, (values) => {
+		clientConnection.onProgress(DeclarationRequest.type, resultToken, (values) => {
 			result.push(...values);
 		});
-		clientConnection.sendRequest(DeclarationRequest.type, params).then((values) => {
+		void clientConnection.sendRequest(DeclarationRequest.type, params).then((values) => {
 			assert.ok((result as LocationLink[]).length === 30, 'All partial results received');
 			assert.ok((values as LocationLink[]).length === 0, 'No final values');
 			done();

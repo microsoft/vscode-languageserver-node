@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "incremental": true,
+        "composite": true
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./src/tsconfig.watch.json"
+        },
+        {
+            "path": "./src/test/tsconfig.watch.json"
+        }
+    ]
+}

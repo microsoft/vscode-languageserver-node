@@ -9,14 +9,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DeclarationRequest, DeclarationRegistrationOptions, DeclarationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentFeature, BaseLanguageClient } from './client';
-
-function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
-	if (target[key] === void 0) {
-		target[key] = {} as any;
-	}
-	return target[key];
-}
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideDeclarationSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration>;
@@ -26,14 +19,14 @@ export interface DeclarationMiddleware {
 	provideDeclaration?: (this: void, document: TextDocument, position: VPosition, token: CancellationToken, next: ProvideDeclarationSignature) => ProviderResult<VDeclaration>;
 }
 
-export class DeclarationFeature extends TextDocumentFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions, DeclarationProvider> {
+export class DeclarationFeature extends TextDocumentLanguageFeature<boolean | DeclarationOptions, DeclarationRegistrationOptions, DeclarationProvider, DeclarationMiddleware> {
 
-	constructor(client: BaseLanguageClient) {
+	constructor(client: FeatureClient<DeclarationMiddleware>) {
 		super(client, DeclarationRequest.type);
 	}
 
-	public fillClientCapabilities(capabilites: ClientCapabilities): void {
-		const declarationSupport = ensure(ensure(capabilites, 'textDocument')!, 'declaration')!;
+	public fillClientCapabilities(capabilities: ClientCapabilities): void {
+		const declarationSupport = ensure(ensure(capabilities, 'textDocument')!, 'declaration')!;
 		declarationSupport.dynamicRegistration = true;
 		declarationSupport.linkSupport = true;
 	}
@@ -43,27 +36,34 @@ export class DeclarationFeature extends TextDocumentFeature<boolean | Declaratio
 		if (!id || !options) {
 			return;
 		}
-		this.register(this.messages, { id: id, registerOptions: options });
+		this.register({ id: id, registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DeclarationRegistrationOptions): [Disposable, DeclarationProvider] {
+		const selector = options.documentSelector!;
 		const provider: DeclarationProvider = {
 			provideDeclaration: (document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDeclaration> => {
 				const client = this._client;
 				const provideDeclaration: ProvideDeclarationSignature = (document, position, token) => {
-					return client.sendRequest(DeclarationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then(
-						client.protocol2CodeConverter.asDeclarationResult,
-						(error) => {
-							return client.handleFailedRequest(DeclarationRequest.type, error, null);
+					return client.sendRequest(DeclarationRequest.type, client.code2ProtocolConverter.asTextDocumentPositionParams(document, position), token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
 						}
-					);
+						return client.protocol2CodeConverter.asDeclarationResult(result, token);
+					}, (error) => {
+						return client.handleFailedRequest(DeclarationRequest.type, token, error, null);
+					});
 				};
-				const middleware = client.clientOptions.middleware!;
+				const middleware = client.middleware;
 				return middleware.provideDeclaration
 					? middleware.provideDeclaration(document, position, token, provideDeclaration)
 					: provideDeclaration(document, position, token);
 			}
 		};
-		return [Languages.registerDeclarationProvider(options.documentSelector!, provider), provider];
+		return [this.registerProvider(selector, provider), provider];
+	}
+
+	private registerProvider(selector: DocumentSelector, provider: DeclarationProvider): Disposable {
+		return Languages.registerDeclarationProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider);
 	}
 }

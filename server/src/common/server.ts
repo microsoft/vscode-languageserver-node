@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {
-	CancellationToken, RequestType0, RequestHandler0, RequestType, RequestHandler, GenericRequestHandler, StarRequestHandler, HandlerResult,
-	NotificationType0, NotificationHandler0, NotificationType, NotificationHandler, GenericNotificationHandler, StarNotificationHandler, ProgressType,
+	CancellationToken, ProtocolRequestType0, RequestHandler0, ProtocolRequestType, RequestHandler, GenericRequestHandler, StarRequestHandler, HandlerResult,
+	ProtocolNotificationType0, NotificationHandler0, ProtocolNotificationType, NotificationHandler, GenericNotificationHandler, StarNotificationHandler, ProgressType,
 	Disposable, InitializeParams, InitializeResult, InitializeError, InitializedParams, DidChangeConfigurationParams, DidChangeWatchedFilesParams,
 	DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, WillSaveTextDocumentParams, TextEdit, DidSaveTextDocumentParams,
 	PublishDiagnosticsParams, HoverParams, Hover, CompletionParams, CompletionItem, CompletionList, SignatureHelpParams, SignatureHelp, DeclarationParams,
@@ -14,8 +14,8 @@ import {
 	CodeAction, CodeLensParams, CodeLens, DocumentFormattingParams, DocumentRangeFormattingParams, DocumentOnTypeFormattingParams, RenameParams, WorkspaceEdit,
 	PrepareRenameParams, Range, DocumentLinkParams, DocumentLink, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, FoldingRangeParams,
 	FoldingRange, SelectionRangeParams, SelectionRange, ExecuteCommandParams, MessageActionItem, ClientCapabilities, ServerCapabilities, Logger, ProtocolConnection,
-	MessageType, LogMessageNotification, ShowMessageRequestParams, ShowMessageRequest, TextDocumentSyncKind, TextDocumentContentChangeEvent, TextDocumentSaveReason,
-	Emitter, Event, RegistrationRequest, UnregistrationRequest, UnregistrationParams, MessageSignature, Registration, RegistrationParams, Unregistration,
+	MessageType, LogMessageNotification, ShowMessageRequestParams, ShowMessageRequest, TextDocumentSyncKind,
+	RegistrationRequest, UnregistrationRequest, UnregistrationParams, MessageSignature, Registration, RegistrationParams, Unregistration,
 	ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, ApplyWorkspaceEditRequest, TelemetryEventNotification, Trace, LogTraceNotification, WorkDoneProgressParams,
 	PartialResultParams, ShutdownRequest, CancellationTokenSource, ExitNotification, SetTraceNotification, InitializedNotification, DidChangeConfigurationNotification,
 	DidChangeWatchedFilesNotification, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, WillSaveTextDocumentNotification,
@@ -23,16 +23,27 @@ import {
 	SignatureHelpRequest, DeclarationRequest, DefinitionRequest, TypeDefinitionRequest, ImplementationRequest, ReferencesRequest, DocumentHighlightRequest,
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
-	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError
+	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
+	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, WorkspaceSymbol, WorkspaceSymbolResolveRequest
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
 import * as UUID from './utils/uuid';
 import { WorkDoneProgressReporter, ResultProgressReporter, WindowProgress, ProgressFeature, attachWorkDone, attachPartialResult} from './progress';
 import { Configuration, ConfigurationFeature } from './configuration';
-import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolders';
+import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolder';
 import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
 import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens';
+import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
+import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
+import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
+import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './typeHierarchy';
+import { InlineValueFeatureShape, InlineValueFeature } from './inlineValue';
+import { InlayHintFeatureShape, InlayHintFeature } from './inlayHint';
+import { DiagnosticFeatureShape, DiagnosticFeature } from './diagnostic';
+import { NotebookSyncFeatureShape, NotebookSyncFeature } from './notebook';
+import { MonikerFeature, MonikerFeatureShape } from './moniker';
+import type { ConnectionState } from './textDocuments';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -41,223 +52,8 @@ function null2Undefined<T>(value: T | null): T | undefined {
 	return value;
 }
 
-interface ConnectionState {
-	__textDocumentSync: TextDocumentSyncKind | undefined;
-}
-
-export interface TextDocumentsConfiguration<T> {
-	create(uri: string, languageId: string, version: number, content: string): T;
-	update(document: T, changes: TextDocumentContentChangeEvent[], version: number): T;
-}
-
 /**
- * Event to signal changes to a text document.
- */
-export interface TextDocumentChangeEvent<T> {
-    /**
-     * The document that has changed.
-     */
-	document: T;
-}
-
-/**
- * Event to signal that a document will be saved.
- */
-export interface TextDocumentWillSaveEvent<T> {
-    /**
-     * The document that will be saved
-     */
-	document: T;
-    /**
-     * The reason why save was triggered.
-     */
-	reason: TextDocumentSaveReason;
-}
-
-/**
- * A manager for simple text documents
- */
-export class TextDocuments<T> {
-
-	private _configuration: TextDocumentsConfiguration<T>;
-
-	private _documents: { [uri: string]: T };
-
-	private _onDidChangeContent: Emitter<TextDocumentChangeEvent<T>>;
-	private _onDidOpen: Emitter<TextDocumentChangeEvent<T>>;
-	private _onDidClose: Emitter<TextDocumentChangeEvent<T>>;
-	private _onDidSave: Emitter<TextDocumentChangeEvent<T>>;
-	private _onWillSave: Emitter<TextDocumentWillSaveEvent<T>>;
-	private _willSaveWaitUntil: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void> | undefined;
-
-	/**
-	 * Create a new text document manager.
-	 */
-	public constructor(configuration: TextDocumentsConfiguration<T>) {
-		this._documents = Object.create(null);
-		this._configuration = configuration;
-
-		this._onDidChangeContent = new Emitter<TextDocumentChangeEvent<T>>();
-		this._onDidOpen = new Emitter<TextDocumentChangeEvent<T>>();
-		this._onDidClose = new Emitter<TextDocumentChangeEvent<T>>();
-		this._onDidSave = new Emitter<TextDocumentChangeEvent<T>>();
-		this._onWillSave = new Emitter<TextDocumentWillSaveEvent<T>>();
-	}
-
-	/**
-	 * An event that fires when a text document managed by this manager
-	 * has been opened or the content changes.
-	 */
-	public get onDidChangeContent(): Event<TextDocumentChangeEvent<T>> {
-		return this._onDidChangeContent.event;
-	}
-
-	/**
-	 * An event that fires when a text document managed by this manager
-	 * has been opened.
-	 */
-	public get onDidOpen(): Event<TextDocumentChangeEvent<T>> {
-		return this._onDidOpen.event;
-	}
-
-	/**
-	 * An event that fires when a text document managed by this manager
-	 * will be saved.
-	 */
-	public get onWillSave(): Event<TextDocumentWillSaveEvent<T>> {
-		return this._onWillSave.event;
-	}
-
-	/**
-	 * Sets a handler that will be called if a participant wants to provide
-	 * edits during a text document save.
-	 */
-	public onWillSaveWaitUntil(handler: RequestHandler<TextDocumentWillSaveEvent<T>, TextEdit[], void>) {
-		this._willSaveWaitUntil = handler;
-	}
-
-	/**
-	 * An event that fires when a text document managed by this manager
-	 * has been saved.
-	 */
-	public get onDidSave(): Event<TextDocumentChangeEvent<T>> {
-		return this._onDidSave.event;
-	}
-
-	/**
-	 * An event that fires when a text document managed by this manager
-	 * has been closed.
-	 */
-	public get onDidClose(): Event<TextDocumentChangeEvent<T>> {
-		return this._onDidClose.event;
-	}
-
-	/**
-	 * Returns the document for the given URI. Returns undefined if
-	 * the document is not mananged by this instance.
-	 *
-	 * @param uri The text document's URI to retrieve.
-	 * @return the text document or `undefined`.
-	 */
-	public get(uri: string): T | undefined {
-		return this._documents[uri];
-	}
-
-	/**
-	 * Returns all text documents managed by this instance.
-	 *
-	 * @return all text documents.
-	 */
-	public all(): T[] {
-		return Object.keys(this._documents).map(key => this._documents[key]);
-	}
-
-	/**
-	 * Returns the URIs of all text documents managed by this instance.
-	 *
-	 * @return the URI's of all text documents.
-	 */
-	public keys(): string[] {
-		return Object.keys(this._documents);
-	}
-
-	/**
-	 * Listens for `low level` notification on the given connection to
-	 * update the text documents managed by this instance.
-     *
-	 * Please note that the connection only provides handlers not an event model. Therefore
-	 * listening on a connection will overwrite the following handlers on a connection:
-	 * `onDidOpenTextDocument`, `onDidChangeTextDocument`, `onDidCloseTextDocument`,
-	 * `onWillSaveTextDocument`, `onWillSaveTextDocumentWaitUntil` and `onDidSaveTextDocument`.
-	 *
-	 * Use the correspnding events on the TextDocuments instance instead.
-	 *
-	 * @param connection The connection to listen on.
-	 */
-	public listen(connection: Connection): void {
-
-		(<ConnectionState><any>connection).__textDocumentSync = TextDocumentSyncKind.Full;
-		connection.onDidOpenTextDocument((event: DidOpenTextDocumentParams) => {
-			let td = event.textDocument;
-
-			let document = this._configuration.create(td.uri, td.languageId, td.version, td.text);
-
-			this._documents[td.uri] = document;
-			let toFire = Object.freeze({ document });
-			this._onDidOpen.fire(toFire);
-			this._onDidChangeContent.fire(toFire);
-		});
-		connection.onDidChangeTextDocument((event: DidChangeTextDocumentParams) => {
-			let td = event.textDocument;
-			let changes = event.contentChanges;
-			if (changes.length === 0) {
-				return;
-			}
-
-			let document = this._documents[td.uri];
-
-			const { version } = td;
-			if (version === null || version === undefined) {
-				throw new Error(`Received document change event for ${td.uri} without valid version identifier`);
-			}
-
-			document = this._configuration.update(document, changes, version);
-
-			this._documents[td.uri] = document;
-			this._onDidChangeContent.fire(Object.freeze({ document }));
-		});
-		connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
-			let document = this._documents[event.textDocument.uri];
-			if (document) {
-				delete this._documents[event.textDocument.uri];
-				this._onDidClose.fire(Object.freeze({ document }));
-			}
-		});
-		connection.onWillSaveTextDocument((event: WillSaveTextDocumentParams) => {
-			let document = this._documents[event.textDocument.uri];
-			if (document) {
-				this._onWillSave.fire(Object.freeze({ document, reason: event.reason }));
-			}
-		});
-		connection.onWillSaveTextDocumentWaitUntil((event: WillSaveTextDocumentParams, token: CancellationToken) => {
-			let document = this._documents[event.textDocument.uri];
-			if (document && this._willSaveWaitUntil) {
-				return this._willSaveWaitUntil(Object.freeze({ document, reason: event.reason }), token);
-			} else {
-				return [];
-			}
-		});
-		connection.onDidSaveTextDocument((event: DidSaveTextDocumentParams) => {
-			let document = this._documents[event.textDocument.uri];
-			if (document) {
-				this._onDidSave.fire(Object.freeze({ document }));
-			}
-		});
-	}
-}
-
-/**
- * Helps tracking error message. Equal occurences of the same
+ * Helps tracking error message. Equal occurrences of the same
  * message are only stored once. This class is for example
  * useful if text documents are validated in a loop and equal
  * error message should be folded into one.
@@ -296,22 +92,7 @@ export class ErrorMessageTracker {
 	}
 }
 
-/**
- *
- */
-interface Remote {
-	/**
-	 * Attach the remote to the given connection.
-	 *
-	 * @param connection The connection this remote is operating on.
-	 */
-	attach(connection: Connection): void;
-
-	/**
-	 * The connection this remote is attached to.
-	 */
-	connection: Connection;
-
+export interface FeatureBase {
 	/**
 	 * Called to initialize the remote with the given
 	 * client capabilities
@@ -328,12 +109,26 @@ interface Remote {
 	fillServerCapabilities(capabilities: ServerCapabilities): void;
 }
 
+interface Remote extends FeatureBase {
+	/**
+	 * Attach the remote to the given connection.
+	 *
+	 * @param connection The connection this remote is operating on.
+	 */
+	attach(connection: Connection): void;
+
+	/**
+	 * The connection this remote is attached to.
+	 */
+	connection: Connection;
+}
+
 /**
  * The RemoteConsole interface contains all functions to interact with
- * the tools / clients console or log system. Interally it used `window/logMessage`
+ * the tools / clients console or log system. Internally it used `window/logMessage`
  * notifications.
  */
-export interface RemoteConsole {
+export interface RemoteConsole extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -413,9 +208,11 @@ class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
 		this.send(MessageType.Log, message);
 	}
 
-	private send(type: MessageType, message: string) {
+	private send(type: MessageType, message: string): void {
 		if (this._rawConnection) {
-			this._rawConnection.sendNotification(LogMessageNotification.type, { type, message });
+			this._rawConnection.sendNotification(LogMessageNotification.type, { type, message }).catch(() => {
+				RAL().console.error(`Sending log message failed`);
+			});
 		}
 	}
 }
@@ -424,7 +221,7 @@ class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
  * The RemoteWindow interface contains all functions to interact with
  * the visual window of VS Code.
  */
-export interface _RemoteWindow {
+export interface _RemoteWindow extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -464,7 +261,7 @@ export interface _RemoteWindow {
 	showInformationMessage<T extends MessageActionItem>(message: string, ...actions: T[]): Promise<T | undefined>;
 }
 
-export type RemoteWindow = _RemoteWindow & WindowProgress;
+export type RemoteWindow = _RemoteWindow & WindowProgress & ShowDocumentFeatureShape;
 
 class _RemoteWindowImpl implements _RemoteWindow, Remote {
 
@@ -506,7 +303,11 @@ class _RemoteWindowImpl implements _RemoteWindow, Remote {
 	}
 }
 
-const RemoteWindowImpl: new () => RemoteWindow = ProgressFeature(_RemoteWindowImpl) as (new () => RemoteWindow);
+const RemoteWindowImpl: new () => RemoteWindow = ShowDocumentFeature(ProgressFeature(_RemoteWindowImpl)) as (new () => RemoteWindow);
+
+interface MethodType {
+	method: string;
+}
 
 /**
  * A bulk registration manages n single registration to be able to register
@@ -518,15 +319,23 @@ export interface BulkRegistration {
 	 * @param type the notification type to register for.
 	 * @param registerParams special registration parameters.
 	 */
-	add<RO>(type: NotificationType0<RO>, registerParams: RO): void;
-	add<P, RO>(type: NotificationType<P, RO>, registerParams: RO): void;
+	add<RO>(type: ProtocolNotificationType0<RO>, registerParams: RO): void;
+	add<P, RO>(type: ProtocolNotificationType<P, RO>, registerParams: RO): void;
+
 	/**
 	 * Adds a single registration.
 	 * @param type the request type to register for.
 	 * @param registerParams special registration parameters.
 	 */
-	add<R, E, RO>(type: RequestType0<R, E, RO>, registerParams: RO): void;
-	add<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams: RO): void;
+	add<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, registerParams: RO): void;
+	add<P, PR, R, E, RO>(type: ProtocolRequestType<P, PR, R, E, RO>, registerParams: RO): void;
+
+	/**
+	 * Adds a single registration.
+	 * @param type the notification type to register for.
+	 * @param registerParams special registration parameters.
+	 */
+	add<RO>(type: RegistrationType<RO>, registerParams: RO): void;
 }
 
 export namespace BulkRegistration {
@@ -543,7 +352,7 @@ class BulkRegistrationImpl {
 	private _registrations: Registration[] = [];
 	private _registered: Set<string> = new Set<string>();
 
-	public add<RO>(type: string | MessageSignature, registerOptions?: RO): void {
+	public add<RO>(type: string | MethodType, registerOptions?: RO): void {
 		const method = Is.string(type) ? type : type.method;
 		if (this._registered.has(method)) {
 			throw new Error(`${method} is already added to this registration`);
@@ -611,7 +420,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		let params: UnregistrationParams = {
 			unregisterations: unregistrations
 		};
-		this._connection!.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
+		this._connection!.sendRequest(UnregistrationRequest.type, params).catch(() => {
 			this._connection!.console.info(`Bulk unregistration failed.`);
 		});
 	}
@@ -630,7 +439,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 		this._connection!.sendRequest(UnregistrationRequest.type, params).then(() => {
 			this._unregistrations.delete(method);
 		}, (_error) => {
-			this._connection!.console.info(`Unregistering request handler for ${unregistration.id} failed.`);
+			this._connection!.console.info(`Un-registering request handler for ${unregistration.id} failed.`);
 		});
 		return true;
 	}
@@ -639,49 +448,75 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 /**
  * Interface to register and unregister `listeners` on the client / tools side.
  */
-export interface RemoteClient {
+export interface RemoteClient extends FeatureBase {
+
 	/**
 	 * The connection this remote is attached to.
 	 */
 	connection: Connection;
 
 	/**
-	 * Registers a listener for the given notification.
-	 * @param type the notification type to register for.
-	 * @param registerParams special registration parameters.
-	 * @return a `Disposable` to unregister the listener again.
-	 */
-	register<RO>(type: NotificationType0<RO>, registerParams?: RO): Promise<Disposable>;
-	register<P, RO>(type: NotificationType<P, RO>, registerParams?: RO): Promise<Disposable>;
-
-	/**
-	 * Registers a listener for the given notification.
-	 * @param unregisteration the unregistration to add a corresponding unregister action to.
-	 * @param type the notification type to register for.
-	 * @param registerParams special registration parameters.
-	 * @return the updated unregistration.
-	 */
-	register<RO>(unregisteration: BulkUnregistration, type: NotificationType0<RO>, registerParams?: RO): Promise<BulkUnregistration>;
-	register<P, RO>(unregisteration: BulkUnregistration, type: NotificationType<P, RO>, registerParams?: RO): Promise<BulkUnregistration>;
-
-	/**
 	 * Registers a listener for the given request.
+	 *
 	 * @param type the request type to register for.
 	 * @param registerParams special registration parameters.
 	 * @return a `Disposable` to unregister the listener again.
 	 */
-	register<R, E, RO>(type: RequestType0<R, E, RO>, registerParams?: RO): Promise<Disposable>;
-	register<P, R, E, RO>(type: RequestType<P, R, E, RO>, registerParams?: RO): Promise<Disposable>;
+	register<P, RO>(type: ProtocolNotificationType<P, RO>, registerParams?: RO): Promise<Disposable>;
+	register<RO>(type: ProtocolNotificationType0<RO>, registerParams?: RO): Promise<Disposable>;
 
 	/**
 	 * Registers a listener for the given request.
+	 *
 	 * @param unregisteration the unregistration to add a corresponding unregister action to.
 	 * @param type the request type to register for.
 	 * @param registerParams special registration parameters.
 	 * @return the updated unregistration.
 	 */
-	register<R, E, RO>(unregisteration: BulkUnregistration, type: RequestType0<R, E, RO>, registerParams?: RO): Promise<BulkUnregistration>;
-	register<P, R, E, RO>(unregisteration: BulkUnregistration, type: RequestType<P, R, E, RO>, registerParams?: RO): Promise<BulkUnregistration>;
+	register<P, RO>(unregisteration: BulkUnregistration, type: ProtocolNotificationType<P, RO>, registerParams?: RO): Promise<Disposable>;
+	register<RO>(unregisteration: BulkUnregistration, type: ProtocolNotificationType0<RO>, registerParams?: RO): Promise<Disposable>;
+
+	/**
+	 * Registers a listener for the given request.
+	 *
+	 * @param type the request type to register for.
+	 * @param registerParams special registration parameters.
+	 * @return a `Disposable` to unregister the listener again.
+	 */
+	register<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+	register<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+
+	/**
+	 * Registers a listener for the given request.
+	 *
+	 * @param unregisteration the unregistration to add a corresponding unregister action to.
+	 * @param type the request type to register for.
+	 * @param registerParams special registration parameters.
+	 * @return the updated unregistration.
+	 */
+	register<P, R, PR, E, RO>(unregisteration: BulkUnregistration, type: ProtocolRequestType<P, R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+	register<R, PR, E, RO>(unregisteration: BulkUnregistration, type: ProtocolRequestType0<R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+
+
+	/**
+	 * Registers a listener for the given registration type.
+	 *
+	 * @param type the registration type.
+	 * @param registerParams special registration parameters.
+	 * @return a `Disposable` to unregister the listener again.
+	 */
+	register<RO>(type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
+
+	/**
+	 * Registers a listener for the given registration type.
+	 *
+	 * @param unregisteration the unregistration to add a corresponding unregister action to.
+	 * @param type the registration type.
+	 * @param registerParams special registration parameters.
+	 * @return the updated unregistration.
+	 */
+	register<RO>(unregisteration: BulkUnregistration, type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
+
 	/**
 	 * Registers a set of listeners.
 	 * @param registrations the bulk registration
@@ -711,17 +546,17 @@ class RemoteClientImpl implements RemoteClient, Remote {
 	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
 	}
 
-	public register(typeOrRegistrations: string | MessageSignature | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | MessageSignature | any, registerOptions?: any): Promise<any>  /* Promise<Disposable | BulkUnregistration> */ {
+	public register(typeOrRegistrations: string | MethodType | BulkRegistration | BulkUnregistration, registerOptionsOrType?: string | MethodType | any, registerOptions?: any): Promise<any>  /* Promise<Disposable | BulkUnregistration> */ {
 		if (typeOrRegistrations instanceof BulkRegistrationImpl) {
 			return this.registerMany(typeOrRegistrations);
 		} else if (typeOrRegistrations instanceof BulkUnregistrationImpl) {
-			return this.registerSingle1(<BulkUnregistrationImpl>typeOrRegistrations, <string | MessageSignature>registerOptionsOrType, registerOptions);
+			return this.registerSingle1(<BulkUnregistrationImpl>typeOrRegistrations, <string | MethodType>registerOptionsOrType, registerOptions);
 		} else {
-			return this.registerSingle2(<string | MessageSignature>typeOrRegistrations, registerOptionsOrType);
+			return this.registerSingle2(<string | MethodType>typeOrRegistrations, registerOptionsOrType);
 		}
 	}
 
-	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | MessageSignature, registerOptions: any): Promise<Disposable> {
+	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | MethodType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
@@ -739,7 +574,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 		});
 	}
 
-	private registerSingle2(type: string | MessageSignature, registerOptions: any): Promise<Disposable> {
+	private registerSingle2(type: string | MethodType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
 		let params: RegistrationParams = {
@@ -747,7 +582,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 		};
 		return this.connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
 			return Disposable.create(() => {
-				this.unregisterSingle(id, method);
+				this.unregisterSingle(id, method).catch(() => { this.connection.console.info(`Un-registering capability with id ${id} failed.`); });
 			});
 		}, (_error) => {
 			this.connection.console.info(`Registering request handler for ${method} failed.`);
@@ -760,8 +595,8 @@ class RemoteClientImpl implements RemoteClient, Remote {
 			unregisterations: [{ id, method }]
 		};
 
-		return this.connection.sendRequest(UnregistrationRequest.type, params).then(undefined, (_error) => {
-			this.connection.console.info(`Unregistering request handler for ${id} failed.`);
+		return this.connection.sendRequest(UnregistrationRequest.type, params).catch(() => {
+			this.connection.console.info(`Un-registering request handler for ${id} failed.`);
 		});
 	}
 
@@ -779,7 +614,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 /**
  * Represents the workspace managed by the client.
  */
-export interface _RemoteWorkspace {
+export interface _RemoteWorkspace extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -793,7 +628,7 @@ export interface _RemoteWorkspace {
 	applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Promise<ApplyWorkspaceEditResponse>;
 }
 
-export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders;
+export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders & FileOperationsFeatureShape;
 
 class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 
@@ -829,13 +664,13 @@ class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 	}
 }
 
-const RemoteWorkspaceImpl: new () => RemoteWorkspace = WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl)) as (new () => RemoteWorkspace);
+const RemoteWorkspaceImpl: new () => RemoteWorkspace = FileOperationsFeature(WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl))) as (new () => RemoteWorkspace);
 
 /**
  * Interface to log telemetry events. The events are actually send to the client
  * and the client needs to feed the event into a proper telemetry system.
  */
-export interface Telemetry {
+export interface Telemetry extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -853,7 +688,7 @@ export interface Telemetry {
  * Interface to log traces to the client. The events are sent to the client and the
  * client needs to log the trace events.
  */
-export interface RemoteTracer {
+export interface RemoteTracer extends FeatureBase {
 	/**
 	 * The connection this remote is attached to.
 	 */
@@ -902,6 +737,9 @@ class TracerImpl implements RemoteTracer, Remote {
 		this.connection.sendNotification(LogTraceNotification.type, {
 			message: message,
 			verbose: this._trace === Trace.Verbose ? verbose : undefined
+		}).catch(() => {
+			// Very hard to decide what to do. We tried to send a log
+			// message which failed so we can't simply send another :-(.
 		});
 	}
 }
@@ -931,11 +769,13 @@ class TelemetryImpl implements Telemetry, Remote {
 	}
 
 	public logEvent(data: any): void {
-		this.connection.sendNotification(TelemetryEventNotification.type, data);
+		this.connection.sendNotification(TelemetryEventNotification.type, data).catch(() => {
+			this.connection.console.log(`Sending TelemetryEventNotification failed`);
+		});
 	}
 }
 
-export interface _Languages {
+export interface _Languages extends FeatureBase {
 	connection: Connection;
 	attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgressReporter;
 	attachPartialResultProgress<PR>(type: ProgressType<PR>, params: PartialResultParams): ResultProgressReporter<PR> | undefined;
@@ -974,8 +814,50 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape;
-const LanguagesImpl: new () => Languages = SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & TypeHierarchyFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & DiagnosticFeatureShape & MonikerFeatureShape;
+const LanguagesImpl: new () => Languages = MonikerFeature(DiagnosticFeature(InlayHintFeature(InlineValueFeature(TypeHierarchyFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))))))) as (new () => Languages);
+
+export interface _Notebooks extends FeatureBase {
+	connection: Connection;
+	attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgressReporter;
+	attachPartialResultProgress<PR>(type: ProgressType<PR>, params: PartialResultParams): ResultProgressReporter<PR> | undefined;
+}
+
+export class _NotebooksImpl implements Remote, _Notebooks {
+
+	private _connection: Connection | undefined;
+
+	constructor() {
+	}
+
+	public attach(connection: Connection) {
+		this._connection = connection;
+	}
+
+	public get connection(): Connection {
+		if (!this._connection) {
+			throw new Error('Remote is not attached to a connection yet.');
+		}
+		return this._connection;
+	}
+
+	public initialize(_capabilities: ClientCapabilities): void {
+	}
+
+	public fillServerCapabilities(_capabilities: ServerCapabilities): void {
+	}
+
+	public attachWorkDoneProgress(params: WorkDoneProgressParams): WorkDoneProgressReporter {
+		return attachWorkDone(this.connection, params);
+	}
+
+	public attachPartialResultProgress<PR>(_type: ProgressType<PR>, params: PartialResultParams): ResultProgressReporter<PR> | undefined {
+		return attachPartialResult(this.connection, params);
+	}
+}
+
+export type Notebooks = _Notebooks & NotebookSyncFeatureShape;
+const NotebooksImpl: new () => Notebooks = NotebookSyncFeature(_NotebooksImpl);
 
 /**
  * An empty interface for new proposed API.
@@ -990,7 +872,7 @@ export interface ServerRequestHandler<P, R, PR, E> {
 /**
  * Interface to describe the shape of the server connection.
  */
-export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _> {
+export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _> {
 
 	/**
 	 * Start listening on the input stream for messages to process.
@@ -998,13 +880,15 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	listen(): void;
 
 	/**
-	 * Installs a request handler described by the given [RequestType](#RequestType).
+	 * Installs a request handler described by the given {@link RequestType}.
 	 *
-	 * @param type The [RequestType](#RequestType) describing the request.
+	 * @param type The {@link RequestType} describing the request.
 	 * @param handler The handler to install
 	 */
-	onRequest<R, E, RO>(type: RequestType0<R, E, RO>, handler: RequestHandler0<R, E>): void;
-	onRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, handler: RequestHandler<P, R, E>): void;
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, PR, E, RO>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
 
 	/**
 	 * Installs a request handler for the given method.
@@ -1012,23 +896,25 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param method The method to register a request handler for.
 	 * @param handler The handler to install.
 	 */
-	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): void;
+	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 
 	/**
 	 * Installs a request handler that is invoked if no specific request handler can be found.
 	 *
 	 * @param handler a handler that handles all requests.
 	 */
-	onRequest(handler: StarRequestHandler): void;
+	onRequest(handler: StarRequestHandler): Disposable;
 
 	/**
 	 * Send a request to the client.
 	 *
-	 * @param type The [RequestType](#RequestType) describing the request.
+	 * @param type The {@link RequestType} describing the request.
 	 * @param params The request's parameters.
 	 */
-	sendRequest<R, E, RO>(type: RequestType0<R, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E, RO>(type: RequestType<P, R, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Send a request to the client.
@@ -1040,13 +926,15 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	sendRequest<R>(method: string, params: any, token?: CancellationToken): Promise<R>;
 
 	/**
-	 * Installs a notification handler described by the given [NotificationType](#NotificationType).
+	 * Installs a notification handler described by the given {@link NotificationType}.
 	 *
-	 * @param type The [NotificationType](#NotificationType) describing the notification.
+	 * @param type The {@link NotificationType} describing the notification.
 	 * @param handler The handler to install.
 	 */
-	onNotification<RO>(type: NotificationType0<RO>, handler: NotificationHandler0): void;
-	onNotification<P, RO>(type: NotificationType<P, RO>, handler: NotificationHandler<P>): void;
+	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
 
 	/**
 	 * Installs a notification handler for the given method.
@@ -1054,23 +942,25 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param method The method to register a request handler for.
 	 * @param handler The handler to install.
 	 */
-	onNotification(method: string, handler: GenericNotificationHandler): void;
+	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 
 	/**
 	 * Installs a notification handler that is invoked if no specific notification handler can be found.
 	 *
 	 * @param handler a handler that handles all notifications.
 	 */
-	onNotification(handler: StarNotificationHandler): void;
+	onNotification(handler: StarNotificationHandler): Disposable;
 
 	/**
 	 * Send a notification to the client.
 	 *
-	 * @param type The [NotificationType](#NotificationType) describing the notification.
+	 * @param type The {@link NotificationType} describing the notification.
 	 * @param params The notification's parameters.
 	 */
-	sendNotification<RO>(type: NotificationType0<RO>): void;
-	sendNotification<P, RO>(type: NotificationType<P, RO>, params: P): void;
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params: P): Promise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params: P): Promise<void>;
 
 	/**
 	 * Send a notification to the client.
@@ -1078,7 +968,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param method The method to invoke on the client.
 	 * @param params The notification's parameters.
 	 */
-	sendNotification(method: string, params?: any): void;
+	sendNotification(method: string, params?: any): Promise<void>;
 
 	/**
 	 * Installs a progress handler for a given token.
@@ -1094,35 +984,35 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param token the token to use
 	 * @param value the progress value
 	 */
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): void;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
 
 	/**
 	 * Installs a handler for the initialize request.
 	 *
 	 * @param handler The initialize handler.
 	 */
-	onInitialize(handler: ServerRequestHandler<InitializeParams, InitializeResult, never, InitializeError>): void;
+	onInitialize(handler: ServerRequestHandler<InitializeParams, InitializeResult, never, InitializeError>): Disposable;
 
 	/**
 	 * Installs a handler for the initialized notification.
 	 *
 	 * @param handler The initialized handler.
 	 */
-	onInitialized(handler: NotificationHandler<InitializedParams>): void;
+	onInitialized(handler: NotificationHandler<InitializedParams>): Disposable;
 
 	/**
 	 * Installs a handler for the shutdown request.
 	 *
 	 * @param handler The initialize handler.
 	 */
-	onShutdown(handler: RequestHandler0<void, void>): void;
+	onShutdown(handler: RequestHandler0<void, void>): Disposable;
 
 	/**
 	 * Installs a handler for the exit notification.
 	 *
 	 * @param handler The exit handler.
 	 */
-	onExit(handler: NotificationHandler0): void;
+	onExit(handler: NotificationHandler0): Disposable;
 
 	/**
 	 * A property to provide access to console specific features.
@@ -1161,39 +1051,44 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	languages: Languages & PLanguages;
 
 	/**
+	 * A property to provide access to notebook specific features.
+	 */
+	notebooks: Notebooks & PNotebooks;
+
+	/**
 	 * Installs a handler for the `DidChangeConfiguration` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidChangeConfiguration(handler: NotificationHandler<DidChangeConfigurationParams>): void;
+	onDidChangeConfiguration(handler: NotificationHandler<DidChangeConfigurationParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidChangeWatchedFiles` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidChangeWatchedFiles(handler: NotificationHandler<DidChangeWatchedFilesParams>): void;
+	onDidChangeWatchedFiles(handler: NotificationHandler<DidChangeWatchedFilesParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidOpenTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidOpenTextDocument(handler: NotificationHandler<DidOpenTextDocumentParams>): void;
+	onDidOpenTextDocument(handler: NotificationHandler<DidOpenTextDocumentParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidChangeTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidChangeTextDocument(handler: NotificationHandler<DidChangeTextDocumentParams>): void;
+	onDidChangeTextDocument(handler: NotificationHandler<DidChangeTextDocumentParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidCloseTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): void;
+	onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `WillSaveTextDocument` notification.
@@ -1204,7 +1099,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWillSaveTextDocument(handler: NotificationHandler<WillSaveTextDocumentParams>): void;
+	onWillSaveTextDocument(handler: NotificationHandler<WillSaveTextDocumentParams>): Disposable;
 
 	/**
 	 * Installs a handler for the `WillSaveTextDocumentWaitUntil` request.
@@ -1216,14 +1111,14 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWillSaveTextDocumentWaitUntil(handler: RequestHandler<WillSaveTextDocumentParams, TextEdit[] | undefined | null, void>): void;
+	onWillSaveTextDocumentWaitUntil(handler: RequestHandler<WillSaveTextDocumentParams, TextEdit[] | undefined | null, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `DidSaveTextDocument` notification.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDidSaveTextDocument(handler: NotificationHandler<DidSaveTextDocumentParams>): void;
+	onDidSaveTextDocument(handler: NotificationHandler<DidSaveTextDocumentParams>): Disposable;
 
 	/**
 	 * Sends diagnostics computed for a given document to VSCode to render them in the
@@ -1231,107 +1126,121 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param params The diagnostic parameters.
 	 */
-	sendDiagnostics(params: PublishDiagnosticsParams): void;
+	sendDiagnostics(params: PublishDiagnosticsParams): Promise<void>;
 
 	/**
 	 * Installs a handler for the `Hover` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onHover(handler: ServerRequestHandler<HoverParams, Hover | undefined | null, never, void>): void;
+	onHover(handler: ServerRequestHandler<HoverParams, Hover | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Completion` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletion(handler: ServerRequestHandler<CompletionParams, CompletionItem[] | CompletionList | undefined | null, CompletionItem[], void>): void;
+	onCompletion(handler: ServerRequestHandler<CompletionParams, CompletionItem[] | CompletionList | undefined | null, CompletionItem[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `CompletionResolve` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCompletionResolve(handler: RequestHandler<CompletionItem, CompletionItem, void>): void;
+	onCompletionResolve(handler: RequestHandler<CompletionItem, CompletionItem, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `SignatureHelp` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSignatureHelp(handler: ServerRequestHandler<SignatureHelpParams, SignatureHelp | undefined | null, never, void>): void;
+	onSignatureHelp(handler: ServerRequestHandler<SignatureHelpParams, SignatureHelp | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Declaration` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDeclaration(handler: ServerRequestHandler<DeclarationParams, Declaration | DeclarationLink[] | undefined | null, Location[] | DeclarationLink[], void>): void;
+	onDeclaration(handler: ServerRequestHandler<DeclarationParams, Declaration | DeclarationLink[] | undefined | null, Location[] | DeclarationLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDefinition(handler: ServerRequestHandler<DefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): void;
+	onDefinition(handler: ServerRequestHandler<DefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Type Definition` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onTypeDefinition(handler: ServerRequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): void;
+	onTypeDefinition(handler: ServerRequestHandler<TypeDefinitionParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `Implementation` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onImplementation(handler: ServerRequestHandler<ImplementationParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): void;
+	onImplementation(handler: ServerRequestHandler<ImplementationParams, Definition | DefinitionLink[] | undefined | null, Location[] | DefinitionLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `References` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onReferences(handler: ServerRequestHandler<ReferenceParams, Location[] | undefined | null, Location[], void>): void;
+	onReferences(handler: ServerRequestHandler<ReferenceParams, Location[] | undefined | null, Location[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `DocumentHighlight` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentHighlight(handler: ServerRequestHandler<DocumentHighlightParams, DocumentHighlight[] | undefined | null, DocumentHighlight[], void>): void;
+	onDocumentHighlight(handler: ServerRequestHandler<DocumentHighlightParams, DocumentHighlight[] | undefined | null, DocumentHighlight[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `DocumentSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentSymbol(handler: ServerRequestHandler<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | undefined | null, SymbolInformation[] | DocumentSymbol[], void>): void;
+	onDocumentSymbol(handler: ServerRequestHandler<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | undefined | null, SymbolInformation[] | DocumentSymbol[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the `WorkspaceSymbol` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWorkspaceSymbol(handler: ServerRequestHandler<WorkspaceSymbolParams, SymbolInformation[] | undefined | null, SymbolInformation[], void>): void;
+	onWorkspaceSymbol(handler: ServerRequestHandler<WorkspaceSymbolParams, SymbolInformation[] | WorkspaceSymbol[] | undefined | null, SymbolInformation[], void>): Disposable;
+
+	/**
+	 * Installs a handler for the `WorkspaceSymbol` request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onWorkspaceSymbolResolve(handler: ServerRequestHandler<WorkspaceSymbol, WorkspaceSymbol, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `CodeAction` request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeAction(handler: ServerRequestHandler<CodeActionParams, (Command | CodeAction)[] | undefined | null, (Command | CodeAction)[], void>): void;
+	onCodeAction(handler: ServerRequestHandler<CodeActionParams, (Command | CodeAction)[] | undefined | null, (Command | CodeAction)[], void>): Disposable;
 
 	/**
-	 * Compute a list of [lenses](#CodeLens). This call should return as fast as possible and if
+	 * Installs a handler for the `CodeAction` resolve request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onCodeActionResolve(handler: RequestHandler<CodeAction, CodeAction, void>): Disposable;
+
+	/**
+	 * Compute a list of {@link CodeLens lenses}. This call should return as fast as possible and if
 	 * computing the commands is expensive implementers should only return code lens objects with the
 	 * range set and handle the resolve request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLens(handler: ServerRequestHandler<CodeLensParams, CodeLens[] | undefined | null, CodeLens[], void>): void;
+	onCodeLens(handler: ServerRequestHandler<CodeLensParams, CodeLens[] | undefined | null, CodeLens[], void>): Disposable;
 
 	/**
 	 * This function will be called for each visible code lens, usually when scrolling and after
@@ -1339,91 +1248,91 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onCodeLensResolve(handler: RequestHandler<CodeLens, CodeLens, void>): void;
+	onCodeLensResolve(handler: RequestHandler<CodeLens, CodeLens, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentFormatting(handler: ServerRequestHandler<DocumentFormattingParams, TextEdit[] | undefined | null, never, void>): void;
+	onDocumentFormatting(handler: ServerRequestHandler<DocumentFormattingParams, TextEdit[] | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document range formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentRangeFormatting(handler: ServerRequestHandler<DocumentRangeFormattingParams, TextEdit[] | undefined | null, never, void>): void;
+	onDocumentRangeFormatting(handler: ServerRequestHandler<DocumentRangeFormattingParams, TextEdit[] | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document on type formatting request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[] | undefined | null, void>): void;
+	onDocumentOnTypeFormatting(handler: RequestHandler<DocumentOnTypeFormattingParams, TextEdit[] | undefined | null, void>): Disposable;
 
 	/**
 	 * Installs a handler for the rename request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onRenameRequest(handler: ServerRequestHandler<RenameParams, WorkspaceEdit | undefined | null, never, void>): void;
+	onRenameRequest(handler: ServerRequestHandler<RenameParams, WorkspaceEdit | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Installs a handler for the prepare rename request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onPrepareRename(handler: RequestHandler<PrepareRenameParams, Range | { range: Range, placeholder: string } | undefined | null, void>): void;
+	onPrepareRename(handler: RequestHandler<PrepareRenameParams, Range | { range: Range; placeholder: string } | undefined | null, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document links request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinks(handler: ServerRequestHandler<DocumentLinkParams, DocumentLink[] | undefined | null, DocumentLink[], void>): void;
+	onDocumentLinks(handler: ServerRequestHandler<DocumentLinkParams, DocumentLink[] | undefined | null, DocumentLink[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the document links resolve request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink | undefined | null, void>): void;
+	onDocumentLinkResolve(handler: RequestHandler<DocumentLink, DocumentLink | undefined | null, void>): Disposable;
 
 	/**
 	 * Installs a handler for the document color request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentColor(handler: ServerRequestHandler<DocumentColorParams, ColorInformation[] | undefined | null, ColorInformation[], void>): void;
+	onDocumentColor(handler: ServerRequestHandler<DocumentColorParams, ColorInformation[] | undefined | null, ColorInformation[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the document color request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, ColorPresentation[], void>): void;
+	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, ColorPresentation[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the folding ranges request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onFoldingRanges(handler: ServerRequestHandler<FoldingRangeParams, FoldingRange[] | undefined | null, FoldingRange[], void>): void;
+	onFoldingRanges(handler: ServerRequestHandler<FoldingRangeParams, FoldingRange[] | undefined | null, FoldingRange[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the selection ranges request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onSelectionRanges(handler: ServerRequestHandler<SelectionRangeParams, SelectionRange[] | undefined | null, SelectionRange[], void>): void;
+	onSelectionRanges(handler: ServerRequestHandler<SelectionRangeParams, SelectionRange[] | undefined | null, SelectionRange[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the execute command request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onExecuteCommand(handler: ServerRequestHandler<ExecuteCommandParams, any | undefined | null, never, void>): void;
+	onExecuteCommand(handler: ServerRequestHandler<ExecuteCommandParams, any | undefined | null, never, void>): Disposable;
 
 	/**
 	 * Disposes the connection
@@ -1434,7 +1343,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 export interface Connection extends _Connection {
 }
 
-export interface Feature<B, P> {
+export interface Feature<B extends FeatureBase, P> {
 	(Base: new () => B): new () => B & P;
 }
 
@@ -1483,8 +1392,14 @@ export function combineLanguagesFeatures<O, T>(one: LanguagesFeature<O>, two: La
 		return two(one(Base)) as any;
 	};
 }
+export type NotebooksFeature<P> = Feature<_Notebooks, P>;
+export function combineNotebooksFeatures<O, T>(one: NotebooksFeature<O>, two: NotebooksFeature<T>): NotebooksFeature<O & T> {
+	return function (Base: new () => _Notebooks): new () => _Notebooks & O & T {
+		return two(one(Base)) as any;
+	};
+}
 
-export interface Features<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _> {
+export interface Features<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _> {
 	__brand: 'features';
 	console?: ConsoleFeature<PConsole>;
 	tracer?: TracerFeature<PTracer>;
@@ -1493,12 +1408,13 @@ export interface Features<PConsole = _, PTracer = _, PTelemetry = _, PClient = _
 	window?: WindowFeature<PWindow>;
 	workspace?: WorkspaceFeature<PWorkspace>;
 	languages?: LanguagesFeature<PLanguages>;
+	notebooks?: NotebooksFeature<PNotebooks>;
 }
 
-export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace, TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace>(
-	one: Features<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace>,
-	two: Features<TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace>
-): Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace> {
+export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace, OLanguages, ONotebooks, TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace, TLanguages, TNotebooks>(
+	one: Features<OConsole, OTracer, OTelemetry, OClient, OWindow, OWorkspace, OLanguages, ONotebooks>,
+	two: Features<TConsole, TTracer, TTelemetry, TClient, TWindow, TWorkspace, TLanguages, TNotebooks>
+): Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace, OLanguages & TLanguages, ONotebooks & TNotebooks> {
 	function combine<O, T>(one: O | undefined, two: T | undefined, func: (one: O, two: T) => any): any {
 		if (one && two) {
 			return func(one, two);
@@ -1508,14 +1424,16 @@ export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow,
 			return two;
 		}
 	}
-	let result: Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace> = {
+	let result: Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace, OLanguages & TLanguages, ONotebooks & TNotebooks> = {
 		__brand: 'features',
 		console: combine(one.console, two.console, combineConsoleFeatures),
 		tracer: combine(one.tracer, two.tracer, combineTracerFeatures),
 		telemetry: combine(one.telemetry, two.telemetry, combineTelemetryFeatures),
 		client: combine(one.client, two.client, combineClientFeatures),
 		window: combine(one.window, two.window, combineWindowFeatures),
-		workspace: combine(one.workspace, two.workspace, combineWorkspaceFeatures)
+		workspace: combine(one.workspace, two.workspace, combineWorkspaceFeatures),
+		languages: combine(one.languages, two.languages, combineLanguagesFeatures),
+		notebooks: combine(one.notebooks, two.notebooks, combineNotebooksFeatures)
 	};
 	return result;
 }
@@ -1526,10 +1444,10 @@ export interface WatchDog {
 	exit(code: number): void;
 }
 
-export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _>(
+export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = _, PWindow = _, PWorkspace = _, PLanguages = _, PNotebooks = _>(
 	connectionFactory: (logger: Logger) => ProtocolConnection, watchDog: WatchDog,
-	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages>,
-): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages> {
+	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>,
+): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks> {
 
 	const logger = (factories && factories.console ? new (factories.console(RemoteConsoleImpl))() : new RemoteConsoleImpl()) as RemoteConsoleImpl & PConsole;
 	const connection = connectionFactory(logger);
@@ -1540,7 +1458,8 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 	const remoteWindow = (factories && factories.window ? new (factories.window(RemoteWindowImpl))() : new RemoteWindowImpl()) as Remote & RemoteWindow & PWindow;
 	const workspace = (factories && factories.workspace ? new (factories.workspace(RemoteWorkspaceImpl))() : new RemoteWorkspaceImpl()) as Remote & RemoteWorkspace & PWorkspace;
 	const languages = (factories && factories.languages ? new (factories.languages(LanguagesImpl))() : new LanguagesImpl()) as Remote & Languages & PLanguages;
-	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace, languages];
+	const notebooks = (factories && factories.notebooks ? new (factories.notebooks(NotebooksImpl))(): new NotebooksImpl()) as Remote & Notebooks & PNotebooks;
+	const allRemotes: Remote[] = [logger, tracer, telemetry, client, remoteWindow, workspace, languages, notebooks];
 
 	function asPromise<T>(value: Promise<T>): Promise<T>;
 	function asPromise<T>(value: Thenable<T>): Promise<T>;
@@ -1560,29 +1479,50 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 	let shutdownHandler: RequestHandler0<void, void> | undefined = undefined;
 	let initializeHandler: ServerRequestHandler<InitializeParams, InitializeResult, never, InitializeError> | undefined = undefined;
 	let exitHandler: NotificationHandler0 | undefined = undefined;
-	let protocolConnection: _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages> & ConnectionState = {
+	let protocolConnection: _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks> & ConnectionState = {
 		listen: (): void => connection.listen(),
 
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
-		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): void => (connection as any).onRequest(type, handler),
+		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): Disposable => (connection as any).onRequest(type, handler),
 
-		sendNotification: (type: string | MessageSignature, param?: any): void => {
+		sendNotification: (type: string | MessageSignature, param?: any): Promise<void> => {
 			const method = Is.string(type) ? type : type.method;
 			if (arguments.length === 1) {
-				connection.sendNotification(method);
+				return connection.sendNotification(method);
 			} else {
-				connection.sendNotification(method, param);
+				return connection.sendNotification(method, param);
 			}
 		},
-		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): void => (connection as any).onNotification(type, handler),
+		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => (connection as any).onNotification(type, handler),
 
 		onProgress: connection.onProgress,
 		sendProgress: connection.sendProgress,
 
-		onInitialize: (handler) => initializeHandler = handler,
+		onInitialize: (handler) =>  {
+			initializeHandler = handler;
+			return {
+				dispose: () => {
+					initializeHandler = undefined;
+				}
+			};
+		},
 		onInitialized: (handler) => connection.onNotification(InitializedNotification.type, handler),
-		onShutdown: (handler) => shutdownHandler = handler,
-		onExit: (handler) => exitHandler = handler,
+		onShutdown: (handler) => {
+			shutdownHandler = handler;
+			return {
+				dispose: () => {
+					shutdownHandler = undefined;
+				}
+			};
+		},
+		onExit: (handler) => {
+			exitHandler = handler;
+			return {
+				dispose: () => {
+					exitHandler = undefined;
+				}
+			};
+		},
 
 		get console() { return logger; },
 		get telemetry() { return telemetry; },
@@ -1591,6 +1531,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		get window() { return remoteWindow; },
 		get workspace() { return workspace; },
 		get languages() { return languages; },
+		get notebooks() { return notebooks; },
 
 		onDidChangeConfiguration: (handler) => connection.onNotification(DidChangeConfigurationNotification.type, handler),
 		onDidChangeWatchedFiles: (handler) => connection.onNotification(DidChangeWatchedFilesNotification.type, handler),
@@ -1639,8 +1580,12 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		onWorkspaceSymbol: (handler) => connection.onRequest(WorkspaceSymbolRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
 		}),
+		onWorkspaceSymbolResolve: (handler) => connection.onRequest(WorkspaceSymbolResolveRequest.type, handler),
 		onCodeAction: (handler) => connection.onRequest(CodeActionRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
+		}),
+		onCodeActionResolve: (handler) => connection.onRequest(CodeActionResolveRequest.type, (params, cancel) => {
+			return handler(params, cancel);
 		}),
 		onCodeLens: (handler) => connection.onRequest(CodeLensRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), attachPartialResult(connection, params));
@@ -1733,7 +1678,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		}
 	});
 
-	connection.onRequest<void, void, void>(ShutdownRequest.type, () => {
+	connection.onRequest<void, void, void, unknown>(ShutdownRequest.type, () => {
 		watchDog.shutdownReceived = true;
 		if (shutdownHandler) {
 			return shutdownHandler(new CancellationTokenSource().token);

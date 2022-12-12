@@ -70,7 +70,7 @@
 			"args": ["--timeout", "999999"],
 			"cwd": "${workspaceRoot}/server",
 			"runtimeExecutable": null,
-			"runtimeArgs": [],
+			"runtimeArgs": ["--preserve-symlinks"],
 			"env": { },
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/server/lib/**/*.js"],
@@ -104,6 +104,19 @@
 			"restart": true,
 			"outFiles": ["${workspaceRoot}/testbed/server/out/**/*.js"],
 			"sourceMaps": true
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Meta Model",
+			"cwd": "${workspaceRoot}",
+			"program": "${workspaceFolder}/tools/lib/main.js",
+			"args": [
+				"-p", "./protocol/src/common/tsconfig.json",
+			],
+			"sourceMaps": true,
+			"outFiles": ["${workspaceRoot}/tools/lib/**/*.js"],
+			"preLaunchTask": "npm: watch"
 		}
 	]
 }

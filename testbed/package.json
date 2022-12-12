@@ -6,17 +6,17 @@
 	"engines": {
 		"vscode": "^1.33.0"
 	},
-	"main": "./client/out/extension",
+	"main": "./client/out/extension.js",
 	"activationEvents": [
-		"onLanguage:bat",
-		"onCommand:testbed.helloWorld"
+		"*"
 	],
-	"enableProposedApi": true,
+	"enabledApiProposals": [
+	],
 	"contributes": {
 		"commands": [
 			{
-				"command": "testbed.helloWorld",
-				"title": "Hello World"
+				"command": "testbed.openFile",
+				"title": "Open Test File"
 			}
 		],
 		"configuration": {
@@ -37,6 +37,7 @@
 		}
 	},
 	"scripts": {
+		"postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
 		"compile": "tsc -b",
 		"clean": "tsc -b --clean",
 		"watch": "tsc -b -w"

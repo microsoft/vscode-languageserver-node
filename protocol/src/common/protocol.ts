@@ -3,34 +3,49 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as Is from './utils/is';
+import { ProgressToken, TraceValues } from 'vscode-jsonrpc';
 
-import { ProgressToken, ProgressType } from 'vscode-jsonrpc';
-
-import { ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
+import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
 
 import {
 	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, DocumentUri,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, CompletionItem, CompletionList,
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
-	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag
+	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer,
+	InsertTextMode, LSPAny, WorkspaceSymbol, URI, WorkspaceFolder
 } from 'vscode-languageserver-types';
 
-import { ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions, ImplementationParams } from './protocol.implementation';
-import { TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions, TypeDefinitionParams } from './protocol.typeDefinition';
+import * as Is from './utils/is';
+
 import {
-	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder,
-	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
-} from './protocol.workspaceFolders';
-import { ConfigurationRequest, ConfigurationParams, ConfigurationItem, ConfigurationClientCapabilities } from './protocol.configuration';
+	ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions,
+	ImplementationParams
+} from './protocol.implementation';
+
+import {
+	TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions,
+	TypeDefinitionParams
+} from './protocol.typeDefinition';
+
+import {
+	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams,
+	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersServerCapabilities
+} from './protocol.workspaceFolder';
+
+import {
+	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
+} from './protocol.configuration';
+
 import {
 	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams,
 	DocumentColorClientCapabilities, DocumentColorRegistrationOptions,
 } from './protocol.colorProvider';
+
 import {
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions
 } from './protocol.foldingRange';
+
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationOptions, DeclarationRegistrationOptions, DeclarationParams
 } from './protocol.declaration';
@@ -40,7 +55,7 @@ import {
 } from './protocol.selectionRange';
 
 import {
-	WorkDoneProgressClientCapabilities, WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
+	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
 } from './protocol.progress';
 
@@ -50,10 +65,61 @@ import {
 } from './protocol.callHierarchy';
 
 import {
-	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
-	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities,SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
+	SemanticTokensPartialResult, SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions,
+	SemanticTokensParams, SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
+	SemanticTokensRefreshRequest, SemanticTokensWorkspaceClientCapabilities, SemanticTokensRegistrationType
 } from './protocol.semanticTokens';
+
+import {
+	ShowDocumentParams, ShowDocumentResult, ShowDocumentRequest, ShowDocumentClientCapabilities,
+} from './protocol.showDocument';
+
+import {
+	LinkedEditingRangeClientCapabilities, LinkedEditingRanges, LinkedEditingRangeOptions, LinkedEditingRangeParams, LinkedEditingRangeRegistrationOptions, LinkedEditingRangeRequest
+} from './protocol.linkedEditingRange';
+
+import {
+	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions, FileOperationPatternOptions, FileOperationPatternKind,
+	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
+	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
+	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
+} from './protocol.fileOperations';
+
+import {
+	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest
+} from './protocol.moniker';
+
+import {
+	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest
+} from './protocol.typeHierarchy';
+
+import {
+	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities, InlineValueParams,
+	InlineValueRequest, InlineValueRefreshRequest
+} from './protocol.inlineValue';
+
+import {
+	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
+	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest
+} from './protocol.inlayHint';
+
+import {
+	DiagnosticClientCapabilities, DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams,
+	DocumentDiagnosticReportKind, FullDocumentDiagnosticReport, RelatedFullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport,
+	RelatedUnchangedDocumentDiagnosticReport, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DocumentDiagnosticRequest,
+	PreviousResultId, WorkspaceDiagnosticParams, WorkspaceFullDocumentDiagnosticReport, WorkspaceUnchangedDocumentDiagnosticReport,
+	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, WorkspaceDiagnosticRequest,
+	DiagnosticRefreshRequest, DiagnosticWorkspaceClientCapabilities
+} from './protocol.diagnostic';
+
+import {
+	NotebookDocumentSyncClientCapabilities, NotebookCellKind, ExecutionSummary, NotebookCell, NotebookDocument, NotebookDocumentIdentifier,
+	VersionedNotebookDocumentIdentifier, NotebookDocumentSyncOptions, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType,
+	DidOpenNotebookDocumentParams, DidOpenNotebookDocumentNotification, NotebookCellArrayChange, NotebookDocumentChangeEvent, DidChangeNotebookDocumentParams,
+	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
+	DidCloseNotebookDocumentNotification
+} from './protocol.notebook';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -61,64 +127,166 @@ let __noDynamicImport: LocationLink | undefined;
 
 /**
  * A document filter denotes a document by different properties like
- * the [language](#TextDocument.languageId), the [scheme](#Uri.scheme) of
- * its resource, or a glob-pattern that is applied to the [path](#TextDocument.fileName).
+ * the {@link TextDocument.languageId language}, the {@link Uri.scheme scheme} of
+ * its resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.
  *
  * Glob patterns can have the following syntax:
  * - `*` to match one or more characters in a path segment
  * - `?` to match on one character in a path segment
  * - `**` to match any number of path segments, including none
- * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+ * - `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
  * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
  * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
  *
  * @sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`
  * @sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`
+ *
+ * @since 3.17.0
  */
-export type DocumentFilter = {
+export type TextDocumentFilter = {
 	/** A language id, like `typescript`. */
 	language: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme: string;
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
-	/** A Uri [scheme](#Uri.scheme), like `file` or `untitled`. */
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern: string;
 };
 
 /**
- * The DocumentFilter namespace provides helper functions to work with
- * [DocumentFilter](#DocumentFilter) literals.
+ * The TextDocumentFilter namespace provides helper functions to work with
+ * {@link TextDocumentFilter} literals.
+ *
+ * @since 3.17.0
  */
-export namespace DocumentFilter {
-	export function is(value: any): value is DocumentFilter {
-		const candidate: DocumentFilter = value;
+export namespace TextDocumentFilter {
+	export function is(value: any): value is TextDocumentFilter {
+		const candidate: TextDocumentFilter = value;
 		return Is.string(candidate.language) || Is.string(candidate.scheme) || Is.string(candidate.pattern);
 	}
 }
 
 /**
+ * A notebook document filter denotes a notebook document by
+ * different properties. The properties will be match
+ * against the notebook's URI (same as with documents)
+ *
+ * @since 3.17.0
+ */
+export type NotebookDocumentFilter = {
+	/** The type of the enclosing notebook. */
+	notebookType: string;
+
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	scheme?: string;
+
+	/** A glob pattern. */
+	pattern?: string;
+} | {
+	/** The type of the enclosing notebook. */
+	notebookType?: string;
+
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.*/
+	scheme: string;
+
+	/** A glob pattern. */
+	pattern?: string;
+} | {
+	/** The type of the enclosing notebook. */
+	notebookType?: string;
+
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	scheme?: string;
+
+	/** A glob pattern. */
+	pattern: string;
+};
+
+/**
+ * The NotebookDocumentFilter namespace provides helper functions to work with
+ * {@link NotebookDocumentFilter} literals.
+ *
+ * @since 3.17.0
+ */
+export namespace NotebookDocumentFilter {
+	export function is(value: any): value is NotebookDocumentFilter {
+		const candidate: NotebookDocumentFilter = value;
+		return Is.objectLiteral(candidate) && (Is.string(candidate.notebookType) || Is.string(candidate.scheme) || Is.string(candidate.pattern));
+	}
+}
+
+/**
+ * A notebook cell text document filter denotes a cell text
+ * document by different properties.
+ *
+ * @since 3.17.0
+ */
+export type NotebookCellTextDocumentFilter = {
+	/**
+	 * A filter that matches against the notebook
+	 * containing the notebook cell. If a string
+	 * value is provided it matches against the
+	 * notebook type. '*' matches every notebook.
+	 */
+	notebook: string | NotebookDocumentFilter;
+
+	/**
+	 * A language id like `python`.
+	 *
+	 * Will be matched against the language id of the
+	 * notebook cell document. '*' matches every language.
+	 */
+	language?: string;
+};
+
+/**
+ * The NotebookCellTextDocumentFilter namespace provides helper functions to work with
+ * {@link NotebookCellTextDocumentFilter} literals.
+ *
+ * @since 3.17.0
+ */
+export namespace NotebookCellTextDocumentFilter {
+	export function is(value: any): value is NotebookCellTextDocumentFilter {
+		const candidate: NotebookCellTextDocumentFilter = value;
+		return Is.objectLiteral(candidate)
+			&& (Is.string(candidate.notebook) || NotebookDocumentFilter.is(candidate.notebook))
+			&& (candidate.language === undefined || Is.string(candidate.language));
+	}
+}
+
+/**
+ * A document filter describes a top level text document or
+ * a notebook cell document.
+ *
+ * @since 3.17.0 - proposed support for NotebookCellTextDocumentFilter.
+ */
+export type DocumentFilter = TextDocumentFilter | NotebookCellTextDocumentFilter;
+
+/**
  * A document selector is the combination of one or many document filters.
  *
  * @sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;
+ *
+ * The use of a string as a document filter is deprecated @since 3.16.0.
  */
 export type DocumentSelector = (string | DocumentFilter)[];
 
 /**
  * The DocumentSelector namespace provides helper functions to work with
- * [DocumentSelector](#DocumentSelector)s.
+ * {@link DocumentSelector}s.
  */
 export namespace DocumentSelector {
 	export function is(value: any[] | undefined | null): value is DocumentSelector {
@@ -126,7 +294,7 @@ export namespace DocumentSelector {
 			return false;
 		}
 		for (let elem of value) {
-			if (!Is.string(elem) && !DocumentFilter.is(elem)) {
+			if (!Is.string(elem) && !TextDocumentFilter.is(elem) && !NotebookCellTextDocumentFilter.is(elem)) {
 				return false;
 			}
 		}
@@ -145,14 +313,14 @@ export interface Registration {
 	id: string;
 
 	/**
-	 * The method to register for.
+	 * The method / capability to register for.
 	 */
 	method: string;
 
 	/**
 	 * Options necessary for the registration.
 	 */
-	registerOptions?: any;
+	registerOptions?: LSPAny;
 }
 
 export interface RegistrationParams {
@@ -164,7 +332,9 @@ export interface RegistrationParams {
  * handler on the client side.
  */
 export namespace RegistrationRequest {
-	export const type = new ProtocolRequestType<RegistrationParams, void, never, void, void>('client/registerCapability');
+	export const method: 'client/registerCapability' = 'client/registerCapability';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType<RegistrationParams, void, never, void, void>(method);
 }
 
 /**
@@ -195,7 +365,9 @@ export interface UnregistrationParams {
  * handler on the client side.
  */
 export namespace UnregistrationRequest {
-	export const type = new ProtocolRequestType<UnregistrationParams, void, never, void, void>('client/unregisterCapability');
+	export const method: 'client/unregisterCapability' = 'client/unregisterCapability';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType<UnregistrationParams, void, never, void, void>(method);
 }
 
 export interface WorkDoneProgressParams {
@@ -274,7 +446,7 @@ export namespace FailureHandlingKind {
 	/**
 	 * If the workspace edit contains only textual file changes they are executed transactional.
 	 * If resource changes (create, rename or delete file) are part of the change the failure
-	 * handling startegy is abort.
+	 * handling strategy is abort.
 	 */
 	export const TextOnlyTransactional: FailureHandlingKind = 'textOnlyTransactional';
 
@@ -297,7 +469,7 @@ export interface WorkspaceClientCapabilities {
 	applyEdit?: boolean;
 
 	/**
-	 * Capabilities specific to `WorkspaceEdit`s
+	 * Capabilities specific to `WorkspaceEdit`s.
 	 */
 	workspaceEdit?: WorkspaceEditClientCapabilities;
 
@@ -320,6 +492,67 @@ export interface WorkspaceClientCapabilities {
 	 * Capabilities specific to the `workspace/executeCommand` request.
 	 */
 	executeCommand?: ExecuteCommandClientCapabilities;
+
+	/**
+	 * The client has support for workspace folders.
+	 *
+	 * @since 3.6.0
+	 */
+	workspaceFolders?: boolean;
+
+	/**
+	 * The client supports `workspace/configuration` requests.
+	 *
+	 * @since 3.6.0
+	 */
+	configuration?: boolean;
+
+	/**
+	 * Capabilities specific to the semantic token requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.16.0.
+	 */
+	semanticTokens?: SemanticTokensWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the code lens requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.16.0.
+	 */
+	codeLens?: CodeLensWorkspaceClientCapabilities;
+
+	/**
+	 * The client has support for file notifications/requests for user operations on files.
+	 *
+	 * Since 3.16.0
+	 */
+	fileOperations?: FileOperationClientCapabilities;
+
+	/**
+	 * Capabilities specific to the inline values requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.17.0.
+	 */
+	inlineValue?: InlineValueWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the inlay hint requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.17.0.
+	 */
+	inlayHint?: InlayHintWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the diagnostic requests scoped to the
+	 * workspace.
+	 *
+	 * @since 3.17.0.
+	 */
+	diagnostics?: DiagnosticWorkspaceClientCapabilities;
 }
 
 /**
@@ -333,132 +566,373 @@ export interface TextDocumentClientCapabilities {
 	synchronization?: TextDocumentSyncClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/completion`
+	 * Capabilities specific to the `textDocument/completion` request.
 	 */
 	completion?: CompletionClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/hover`
+	 * Capabilities specific to the `textDocument/hover` request.
 	 */
 	hover?: HoverClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/signatureHelp`
+	 * Capabilities specific to the `textDocument/signatureHelp` request.
 	 */
 	signatureHelp?: SignatureHelpClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/declaration`
+	 * Capabilities specific to the `textDocument/declaration` request.
 	 *
 	 * @since 3.14.0
 	 */
 	declaration?: DeclarationClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/definition`
+	 * Capabilities specific to the `textDocument/definition` request.
 	 */
 	definition?: DefinitionClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/typeDefinition`
+	 * Capabilities specific to the `textDocument/typeDefinition` request.
 	 *
 	 * @since 3.6.0
 	 */
 	typeDefinition?: TypeDefinitionClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/implementation`
+	 * Capabilities specific to the `textDocument/implementation` request.
 	 *
 	 * @since 3.6.0
 	 */
 	implementation?: ImplementationClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/references`
+	 * Capabilities specific to the `textDocument/references` request.
 	 */
 	references?: ReferenceClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/documentHighlight`
+	 * Capabilities specific to the `textDocument/documentHighlight` request.
 	 */
 	documentHighlight?: DocumentHighlightClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/documentSymbol`
+	 * Capabilities specific to the `textDocument/documentSymbol` request.
 	 */
 	documentSymbol?: DocumentSymbolClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/codeAction`
+	 * Capabilities specific to the `textDocument/codeAction` request.
 	 */
 	codeAction?: CodeActionClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/codeLens`
+	 * Capabilities specific to the `textDocument/codeLens` request.
 	 */
 	codeLens?: CodeLensClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/documentLink`
+	 * Capabilities specific to the `textDocument/documentLink` request.
 	 */
 	documentLink?: DocumentLinkClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/documentColor`
+	 * Capabilities specific to the `textDocument/documentColor` and the
+	 * `textDocument/colorPresentation` request.
+	 *
+	 * @since 3.6.0
 	 */
 	colorProvider?: DocumentColorClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/formatting`
+	 * Capabilities specific to the `textDocument/formatting` request.
 	 */
 	formatting?: DocumentFormattingClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/rangeFormatting`
+	 * Capabilities specific to the `textDocument/rangeFormatting` request.
 	 */
 	rangeFormatting?: DocumentRangeFormattingClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/onTypeFormatting`
+	 * Capabilities specific to the `textDocument/onTypeFormatting` request.
 	 */
 	onTypeFormatting?: DocumentOnTypeFormattingClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/rename`
+	 * Capabilities specific to the `textDocument/rename` request.
 	 */
 	rename?: RenameClientCapabilities;
 
 	/**
-	 * Capabilities specific to `textDocument/foldingRange` requests.
+	 * Capabilities specific to the `textDocument/foldingRange` request.
 	 *
 	 * @since 3.10.0
 	 */
 	foldingRange?: FoldingRangeClientCapabilities;
 
 	/**
-	 * Capabilities specific to `textDocument/selectionRange` requests
+	 * Capabilities specific to the `textDocument/selectionRange` request.
 	 *
 	 * @since 3.15.0
 	 */
 	selectionRange?: SelectionRangeClientCapabilities;
 
 	/**
-	 * Capabilities specific to `textDocument/publishDiagnostics`.
+	 * Capabilities specific to the `textDocument/publishDiagnostics` notification.
 	 */
 	publishDiagnostics?: PublishDiagnosticsClientCapabilities;
 
 	/**
-	 * Capabilities specific to the `textDocument/callHierarchy`.
+	 * Capabilities specific to the various call hierarchy requests.
 	 *
 	 * @since 3.16.0
 	 */
 	callHierarchy?: CallHierarchyClientCapabilities;
+
+	/**
+	 * Capabilities specific to the various semantic token request.
+	 *
+	 * @since 3.16.0
+	 */
+	semanticTokens?: SemanticTokensClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/linkedEditingRange` request.
+	 *
+	 * @since 3.16.0
+	 */
+	linkedEditingRange?: LinkedEditingRangeClientCapabilities;
+
+	/**
+	 * Client capabilities specific to the `textDocument/moniker` request.
+	 *
+	 * @since 3.16.0
+	 */
+	moniker?: MonikerClientCapabilities;
+
+	/**
+	 * Capabilities specific to the various type hierarchy requests.
+	 *
+	 * @since 3.17.0
+	 */
+	typeHierarchy?: TypeHierarchyClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/inlineValue` request.
+	 *
+	 * @since 3.17.0
+	 */
+	inlineValue?: InlineValueClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `textDocument/inlayHint` request.
+	 *
+	 * @since 3.17.0
+	 */
+	inlayHint?: InlayHintClientCapabilities;
+
+	/**
+	 * Capabilities specific to the diagnostic pull model.
+	 *
+	 * @since 3.17.0
+	 */
+	diagnostic?: DiagnosticClientCapabilities;
+}
+
+export interface WindowClientCapabilities {
+	/**
+	 * It indicates whether the client supports server initiated
+	 * progress using the `window/workDoneProgress/create` request.
+	 *
+	 * The capability also controls Whether client supports handling
+	 * of progress notifications. If set servers are allowed to report a
+	 * `workDoneProgress` property in the request specific server
+	 * capabilities.
+	 *
+	 * @since 3.15.0
+	 */
+	workDoneProgress?: boolean;
+
+	/**
+	 * Capabilities specific to the showMessage request.
+	 *
+	 * @since 3.16.0
+	 */
+	showMessage?: ShowMessageRequestClientCapabilities;
+
+	/**
+	 * Capabilities specific to the showDocument request.
+	 *
+	 * @since 3.16.0
+	 */
+	showDocument?: ShowDocumentClientCapabilities;
+}
+
+/**
+ * Client capabilities specific to regular expressions.
+ *
+ * @since 3.16.0
+ */
+export interface RegularExpressionsClientCapabilities {
+	/**
+	 * The engine's name.
+	 */
+	engine: string;
+
+	/**
+	 * The engine's version.
+	 */
+	version?: string;
+}
+
+/**
+ * Client capabilities specific to the used markdown parser.
+ *
+ * @since 3.16.0
+ */
+export interface MarkdownClientCapabilities {
+	/**
+	 * The name of the parser.
+	 */
+	parser: string;
+
+	/**
+	 * The version of the parser.
+	 */
+	version?: string;
+
+	/**
+	 * A list of HTML tags that the client allows / supports in
+	 * Markdown.
+	 *
+	 * @since 3.17.0
+	 */
+	allowedTags?: string[];
+}
+
+/**
+ * A set of predefined position encoding kinds.
+ *
+ * @since 3.17.0
+ */
+export namespace PositionEncodingKind {
+
+	/**
+	 * Character offsets count UTF-8 code units.
+	 */
+	export const UTF8: PositionEncodingKind = 'utf-8';
+
+	/**
+	 * Character offsets count UTF-16 code units.
+	 *
+	 * This is the default and must always be supported
+	 * by servers
+	 */
+	export const UTF16: PositionEncodingKind = 'utf-16';
+
+	/**
+	 * Character offsets count UTF-32 code units.
+	 *
+	 * Implementation note: these are the same as Unicode code points,
+	 * so this `PositionEncodingKind` may also be used for an
+	 * encoding-agnostic representation of character offsets.
+	 */
+	export const UTF32: PositionEncodingKind = 'utf-32';
+}
+
+/**
+ * A type indicating how positions are encoded,
+ * specifically what column offsets mean.
+ *
+ * @since 3.17.0
+ */
+export type PositionEncodingKind = string;
+
+
+/**
+ * General client capabilities.
+ *
+ * @since 3.16.0
+ */
+export interface GeneralClientCapabilities {
+	/**
+	 * Client capability that signals how the client
+	 * handles stale requests (e.g. a request
+	 * for which the client will not process the response
+	 * anymore since the information is outdated).
+	 *
+	 * @since 3.17.0
+	 */
+	staleRequestSupport?: {
+		/**
+		 * The client will actively cancel the request.
+		 */
+		cancel: boolean;
+
+		/**
+		 * The list of requests for which the client
+		 * will retry the request if it receives a
+		 * response with error code `ContentModified`
+		 */
+		retryOnContentModified: string[];
+	};
+
+	/**
+	 * Client capabilities specific to regular expressions.
+	 *
+	 * @since 3.16.0
+	 */
+	regularExpressions?: RegularExpressionsClientCapabilities;
+
+	/**
+	 * Client capabilities specific to the client's markdown parser.
+	 *
+	 * @since 3.16.0
+	 */
+	markdown?: MarkdownClientCapabilities;
+
+	/**
+	 * The position encodings supported by the client. Client and server
+	 * have to agree on the same position encoding to ensure that offsets
+	 * (e.g. character position in a line) are interpreted the same on both
+	 * sides.
+	 *
+	 * To keep the protocol backwards compatible the following applies: if
+	 * the value 'utf-16' is missing from the array of position encodings
+	 * servers can assume that the client supports UTF-16. UTF-16 is
+	 * therefore a mandatory encoding.
+	 *
+	 * If omitted it defaults to ['utf-16'].
+	 *
+	 * Implementation considerations: since the conversion from one encoding
+	 * into another requires the content of the file / line the conversion
+	 * is best done where the file is read which is usually on the server
+	 * side.
+	 *
+	 * @since 3.17.0
+	 */
+	positionEncodings?: PositionEncodingKind[];
+}
+
+/**
+ * Capabilities specific to the notebook document support.
+ *
+ * @since 3.17.0
+ */
+export interface NotebookDocumentClientCapabilities {
+	/**
+	 * Capabilities specific to notebook document synchronization
+	 *
+	 * @since 3.17.0
+	 */
+	synchronization: NotebookDocumentSyncClientCapabilities;
 }
 
 /**
  * Defines the capabilities provided by the client.
  */
-export interface _ClientCapabilities {
+export interface ClientCapabilities {
 	/**
 	 * Workspace specific client capabilities.
 	 */
@@ -469,18 +943,30 @@ export interface _ClientCapabilities {
 	 */
 	textDocument?: TextDocumentClientCapabilities;
 
-    /**
-     * Window specific client capabilities.
-     */
-    window?: object;
+	/**
+	 * Capabilities specific to the notebook document support.
+	 *
+	 * @since 3.17.0
+	 */
+	notebookDocument?: NotebookDocumentClientCapabilities;
+
+	/**
+	 * Window specific client capabilities.
+	 */
+	window?: WindowClientCapabilities;
+
+	/**
+	 * General client capabilities.
+	 *
+	 * @since 3.16.0
+	 */
+	general?: GeneralClientCapabilities;
 
 	/**
 	 * Experimental client capabilities.
 	 */
-	experimental?: object;
+	experimental?: LSPAny;
 }
-
-export type ClientCapabilities = _ClientCapabilities & WorkspaceFoldersClientCapabilities & ConfigurationClientCapabilities & WorkDoneProgressClientCapabilities;
 
 /**
  * Static registration options to be returned in the initialize
@@ -496,7 +982,7 @@ export interface StaticRegistrationOptions {
 
 /**
  * The StaticRegistrationOptions namespace provides helper functions to work with
- * [StaticRegistrationOptions](#StaticRegistrationOptions) literals.
+ * {@link StaticRegistrationOptions} literals.
  */
 export namespace StaticRegistrationOptions {
 	export function hasId(value: object): value is { id: string } {
@@ -518,7 +1004,7 @@ export interface TextDocumentRegistrationOptions {
 
 /**
  * The TextDocumentRegistrationOptions namespace provides helper functions to work with
- * [TextDocumentRegistrationOptions](#TextDocumentRegistrationOptions) literals.
+ * {@link TextDocumentRegistrationOptions} literals.
  */
 export namespace TextDocumentRegistrationOptions {
 	export function is(value: any): value is TextDocumentRegistrationOptions {
@@ -543,7 +1029,7 @@ export interface WorkDoneProgressOptions {
 
 /**
  * The WorkDoneProgressOptions namespace provides helper functions to work with
- * [WorkDoneProgressOptions](#WorkDoneProgressOptions) literals.
+ * {@link WorkDoneProgressOptions} literals.
  */
 export namespace WorkDoneProgressOptions {
 	export function is(value: any): value is WorkDoneProgressOptions {
@@ -560,13 +1046,34 @@ export namespace WorkDoneProgressOptions {
  * Defines the capabilities provided by a language
  * server.
  */
-export interface _ServerCapabilities<T = any> {
+export interface ServerCapabilities<T = LSPAny> {
 
 	/**
-	 * Defines how text documents are synced. Is either a detailed structure defining each notification or
-	 * for backwards compatibility the TextDocumentSyncKind number.
+	 * The position encoding the server picked from the encodings offered
+	 * by the client via the client capability `general.positionEncodings`.
+	 *
+	 * If the client didn't provide any position encodings the only valid
+	 * value that a server can return is 'utf-16'.
+	 *
+	 * If omitted it defaults to 'utf-16'.
+	 *
+	 * @since 3.17.0
+	 */
+	positionEncoding?: PositionEncodingKind;
+
+	/**
+	 * Defines how text documents are synced. Is either a detailed structure
+	 * defining each notification or for backwards compatibility the
+	 * TextDocumentSyncKind number.
 	 */
 	textDocumentSync?: TextDocumentSyncOptions | TextDocumentSyncKind;
+
+	/**
+	 * Defines how notebook documents are synced.
+	 *
+	 * @since 3.17.0
+	 */
+	notebookDocumentSync?: NotebookDocumentSyncOptions | NotebookDocumentSyncRegistrationOptions;
 
 	/**
 	 * The server provides completion support.
@@ -683,18 +1190,79 @@ export interface _ServerCapabilities<T = any> {
 	executeCommandProvider?: ExecuteCommandOptions;
 
 	/**
-	 * The server provides Call Hierarchy support.
+	 * The server provides call hierarchy support.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	callHierarchyProvider?: boolean | CallHierarchyOptions | CallHierarchyRegistrationOptions;
 
 	/**
+	 * The server provides linked editing range support.
+	 *
+	 * @since 3.16.0
+	 */
+	linkedEditingRangeProvider?: boolean | LinkedEditingRangeOptions | LinkedEditingRangeRegistrationOptions;
+
+	/**
 	 * The server provides semantic tokens support.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	semanticTokensProvider?: SemanticTokensOptions | SemanticTokensRegistrationOptions;
+
+	/**
+	 * The server provides moniker support.
+	 *
+	 * @since 3.16.0
+	 */
+	monikerProvider?: boolean | MonikerOptions | MonikerRegistrationOptions;
+
+	/**
+	 * The server provides type hierarchy support.
+	 *
+	 * @since 3.17.0
+	 */
+	typeHierarchyProvider?: boolean | TypeHierarchyOptions | TypeHierarchyRegistrationOptions;
+
+	/**
+	 * The server provides inline values.
+	 *
+	 * @since 3.17.0
+	 */
+	inlineValueProvider?: boolean | InlineValueOptions | InlineValueRegistrationOptions;
+
+	/**
+	 * The server provides inlay hints.
+	 *
+	 * @since 3.17.0
+	 */
+	inlayHintProvider?: boolean | InlayHintOptions | InlayHintRegistrationOptions;
+
+	/**
+	 * The server has support for pull model diagnostics.
+	 *
+	 * @since 3.17.0
+	 */
+	diagnosticProvider?: DiagnosticOptions | DiagnosticRegistrationOptions;
+
+	/**
+	 * Workspace specific server capabilities.
+	 */
+	workspace?: {
+		/**
+		 * The server supports workspace folder.
+		 *
+		 * @since 3.6.0
+		 */
+		workspaceFolders?: WorkspaceFoldersServerCapabilities;
+
+		/**
+		* The server is interested in notifications/requests for operations on files.
+		*
+		* @since 3.16.0
+		*/
+		fileOperations?: FileOperationOptions;
+	};
 
 	/**
 	 * Experimental server capabilities.
@@ -702,17 +1270,17 @@ export interface _ServerCapabilities<T = any> {
 	experimental?: T;
 }
 
-export type ServerCapabilities<T = any> = _ServerCapabilities<T> & WorkspaceFoldersServerCapabilities;
-
 /**
  * The initialize request is sent from the client to the server.
  * It is sent once as the request after starting up the server.
- * The requests parameter is of type [InitializeParams](#InitializeParams)
- * the response if of type [InitializeResult](#InitializeResult) of a Thenable that
+ * The requests parameter is of type {@link InitializeParams}
+ * the response if of type {@link InitializeResult} of a Thenable that
  * resolves to such.
  */
 export namespace InitializeRequest {
-	export const type = new ProtocolRequestType<InitializeParams & WorkDoneProgressParams, InitializeResult, never, InitializeError, void>('initialize');
+	export const method: 'initialize' = 'initialize';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<InitializeParams, InitializeResult, never, InitializeError, void>(method);
 }
 
 /**
@@ -722,8 +1290,11 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * The process Id of the parent process that started
 	 * the server.
+	 *
+	 * Is `null` if the process has not been started by another process.
+	 * If the parent process is not alive then the server should exit.
 	 */
-	processId: number | null;
+	processId: integer | null;
 
 	/**
 	 * Information about the client
@@ -741,6 +1312,18 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 		 */
 		version?: string;
 	};
+
+	/**
+	 * The locale the client is currently showing the user interface
+	 * in. This must not necessarily be the locale of the operating
+	 * system.
+	 *
+	 * Uses IETF language tags as the value's syntax
+	 * (See https://en.wikipedia.org/wiki/IETF_language_tag)
+	 *
+	 * @since 3.16.0
+	 */
+	locale?: string;
 
 	/**
 	 * The rootPath of the workspace. Is null
@@ -767,12 +1350,12 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * User provided initialization options.
 	 */
-	initializationOptions?: any;
+	initializationOptions?: LSPAny;
 
 	/**
 	 * The initial trace setting. If omitted trace is disabled ('off').
 	 */
-	trace?: 'off' | 'messages' | 'verbose';
+	trace?: TraceValues;
 }
 
 export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams;
@@ -799,7 +1382,7 @@ export interface InitializeResult<T = any> {
 		name: string;
 
 		/**
-		 * The servers's version as defined by the server.
+		 * The server's version as defined by the server.
 		 */
 		version?: string;
 	};
@@ -807,20 +1390,23 @@ export interface InitializeResult<T = any> {
 	/**
 	 * Custom initialization results.
 	 */
-	[custom: string]: any;
+	[custom: string]: LSPAny | ServerCapabilities<T> | undefined; /** undefined is needed since serverInfo is optional */
 }
 
 /**
- * Known error codes for an `InitializeError`;
+ * Known error codes for an `InitializeErrorCodes`;
  */
-export namespace InitializeError {
+export namespace InitializeErrorCodes {
 	/**
 	 * If the protocol version provided by the client can't be handled by the server.
+	 *
 	 * @deprecated This initialize error got replaced by client capabilities. There is
 	 * no version handshake in version 3.0x
 	 */
-	export const unknownProtocolVersion: number = 1;
+	export const unknownProtocolVersion: 1 = 1;
 }
+
+export type InitializeErrorCodes = 1;
 
 /**
  * The data type of the ResponseError if the
@@ -840,12 +1426,14 @@ export interface InitializedParams {
 }
 
 /**
- * The intialized notification is sent from the client to the
+ * The initialized notification is sent from the client to the
  * server after the client is fully initialized and the server
  * is allowed to send requests from the server to the client.
  */
 export namespace InitializedNotification {
-	export const type = new ProtocolNotificationType<InitializedParams, void>('initialized');
+	export const method: 'initialized' = 'initialized';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolNotificationType<InitializedParams, void>(method);
 }
 
 //---- Shutdown Method ----
@@ -857,7 +1445,9 @@ export namespace InitializedNotification {
  * is the exit event.
  */
 export namespace ShutdownRequest {
-	export const type = new ProtocolRequestType0<void, never, void, void>('shutdown');
+	export const method: 'shutdown' = 'shutdown';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType0<void, never, void, void>(method);
 }
 
 //---- Exit Notification ----
@@ -867,7 +1457,9 @@ export namespace ShutdownRequest {
  * ask the server to exit its process.
  */
 export namespace ExitNotification {
-	export const type = new ProtocolNotificationType0<void>('exit');
+	export const method: 'exit' = 'exit';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolNotificationType0<void>(method);
 }
 
 //---- Configuration notification ----
@@ -885,11 +1477,13 @@ export interface DidChangeConfigurationClientCapabilities {
  * the changed configuration as defined by the language client.
  */
 export namespace DidChangeConfigurationNotification {
-	export const type = new ProtocolNotificationType<DidChangeConfigurationParams, DidChangeConfigurationRegistrationOptions>('workspace/didChangeConfiguration');
+	export const method: 'workspace/didChangeConfiguration' = 'workspace/didChangeConfiguration';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolNotificationType<DidChangeConfigurationParams, DidChangeConfigurationRegistrationOptions>(method);
 }
 
 export interface DidChangeConfigurationRegistrationOptions {
-	section?: string | string[]
+	section?: string | string[];
 }
 
 /**
@@ -899,7 +1493,7 @@ export interface DidChangeConfigurationParams {
 	/**
 	 * The actual changed settings
 	 */
-	settings: any;
+	settings: LSPAny;
 }
 
 //---- Message show and log notifications ----
@@ -938,7 +1532,7 @@ export interface ShowMessageParams {
 	type: MessageType;
 
 	/**
-	 * The actual message
+	 * The actual message.
 	 */
 	message: string;
 }
@@ -948,7 +1542,26 @@ export interface ShowMessageParams {
  * the client to display a particular message in the user interface.
  */
 export namespace ShowMessageNotification {
-	export const type = new ProtocolNotificationType<ShowMessageParams, void>('window/showMessage');
+	export const method: 'window/showMessage' = 'window/showMessage';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolNotificationType<ShowMessageParams, void>(method);
+}
+
+/**
+ * Show message request client capabilities
+ */
+export interface ShowMessageRequestClientCapabilities {
+	/**
+	 * Capabilities specific to the `MessageActionItem` type.
+	 */
+	messageActionItem?: {
+		/**
+		 * Whether the client supports additional attributes which
+		 * are preserved and send back to the server in the
+		 * request's response.
+		 */
+		additionalPropertiesSupport?: boolean;
+	};
 }
 
 export interface MessageActionItem {
@@ -956,6 +1569,13 @@ export interface MessageActionItem {
 	 * A short title like 'Retry', 'Open Log' etc.
 	 */
 	title: string;
+
+	/**
+	 * Additional attributes that the client preserves and
+	 * sends back to the server. This depends on the client
+	 * capability window.messageActionItem.additionalPropertiesSupport
+	 */
+	[key: string]: string | boolean | integer | object;
 }
 
 export interface ShowMessageRequestParams {
@@ -965,7 +1585,7 @@ export interface ShowMessageRequestParams {
 	type: MessageType;
 
 	/**
-	 * The actual message
+	 * The actual message.
 	 */
 	message: string;
 
@@ -980,7 +1600,9 @@ export interface ShowMessageRequestParams {
  * and a set of options actions to the user.
  */
 export namespace ShowMessageRequest {
-	export const type = new ProtocolRequestType<ShowMessageRequestParams, MessageActionItem | null, never, void, void>('window/showMessageRequest');
+	export const method: 'window/showMessageRequest' = 'window/showMessageRequest';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType<ShowMessageRequestParams, MessageActionItem | null, never, void, void>(method);
 }
 
 /**
@@ -988,7 +1610,9 @@ export namespace ShowMessageRequest {
  * the client to log a particular message.
  */
 export namespace LogMessageNotification {
-	export const type = new ProtocolNotificationType<LogMessageParams, void>('window/logMessage');
+	export const method: 'window/logMessage' = 'window/logMessage';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolNotificationType<LogMessageParams, void>(method);
 }
 
 /**
@@ -1001,7 +1625,7 @@ export interface LogMessageParams {
 	type: MessageType;
 
 	/**
-	 * The actual message
+	 * The actual message.
 	 */
 	message: string;
 }
@@ -1013,7 +1637,9 @@ export interface LogMessageParams {
  * the client to log telemetry data.
  */
 export namespace TelemetryEventNotification {
-	export const type = new ProtocolNotificationType<any, void>('telemetry/event');
+	export const method: 'telemetry/event' = 'telemetry/event';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolNotificationType<LSPAny, void>(method);
 }
 
 //---- Text document notifications ----
@@ -1097,7 +1723,7 @@ export interface TextDocumentSyncOptions {
 }
 
 /**
- * The parameters send in a open text document notification
+ * The parameters sent in an open text document notification
  */
 export interface DidOpenTextDocumentParams {
 	/**
@@ -1118,12 +1744,13 @@ export interface DidOpenTextDocumentParams {
  */
 export namespace DidOpenTextDocumentNotification {
 	export const method: 'textDocument/didOpen' = 'textDocument/didOpen';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>(method);
 }
 
 /**
- * An event describing a change to a text document. If range and rangeLength are omitted
- * the new text is considered to be the full content of the document.
+ * An event describing a change to a text document. If only a text is provided
+ * it is considered to be the full content of the document.
  */
 export type TextDocumentContentChangeEvent = {
 	/**
@@ -1136,7 +1763,7 @@ export type TextDocumentContentChangeEvent = {
 	 *
 	 * @deprecated use range instead.
 	 */
-	rangeLength?: number;
+	rangeLength?: uinteger;
 
 	/**
 	 * The new text for the provided range.
@@ -1152,20 +1779,20 @@ export type TextDocumentContentChangeEvent = {
 export namespace TextDocumentContentChangeEvent {
 
 	/**
-	 * Checks whether the information descibes a delta event.
+	 * Checks whether the information describes a delta event.
 	 */
-	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: number; text: string; } {
-		let candidate: { range: Range; rangeLength?: number; text: string; } = event as any;
+	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: uinteger; text: string } {
+		let candidate: { range: Range; rangeLength?: uinteger; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range !== undefined &&
 			(candidate.rangeLength === undefined || typeof candidate.rangeLength === 'number');
 	}
 
 	/**
-	 * Checks whether the information descibes a full replacement event.
+	 * Checks whether the information describes a full replacement event.
 	 */
-	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string; } {
-		let candidate: { range?: Range; rangeLength?: number; text: string; } = event as any;
+	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string } {
+		let candidate: { range?: Range; rangeLength?: uinteger; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range === undefined && candidate.rangeLength === undefined;
 	}
@@ -1191,7 +1818,7 @@ export interface DidChangeTextDocumentParams {
 	 *
 	 * To mirror the content of a document using change events use the following approach:
 	 * - start with the same initial content
-	 * - apply the 'textDocument/didChange' notifications in the order you recevie them.
+	 * - apply the 'textDocument/didChange' notifications in the order you receive them.
 	 * - apply the `TextDocumentContentChangeEvent`s in a single notification in the order
 	 *   you receive them.
 	 */
@@ -1214,11 +1841,12 @@ export interface TextDocumentChangeRegistrationOptions extends TextDocumentRegis
  */
 export namespace DidChangeTextDocumentNotification {
 	export const method: 'textDocument/didChange' = 'textDocument/didChange';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions>(method);
 }
 
 /**
- * The parameters send in a close text document notification
+ * The parameters sent in a close text document notification
  */
 export interface DidCloseTextDocumentParams {
 	/**
@@ -1238,17 +1866,18 @@ export interface DidCloseTextDocumentParams {
  */
 export namespace DidCloseTextDocumentNotification {
 	export const method: 'textDocument/didClose' = 'textDocument/didClose';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>(method);
 }
 
 /**
- * The parameters send in a save text document notification
+ * The parameters sent in a save text document notification
  */
 export interface DidSaveTextDocumentParams {
 	/**
-	 * The document that was closed.
+	 * The document that was saved.
 	 */
-	textDocument: VersionedTextDocumentIdentifier;
+	textDocument: TextDocumentIdentifier;
 
 	/**
 	 * Optional the content when saved. Depends on the includeText value
@@ -1269,6 +1898,7 @@ export interface TextDocumentSaveRegistrationOptions extends TextDocumentRegistr
  */
 export namespace DidSaveTextDocumentNotification {
 	export const method: 'textDocument/didSave' = 'textDocument/didSave';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions>(method);
 }
 
@@ -1297,7 +1927,7 @@ export namespace TextDocumentSaveReason {
 export type TextDocumentSaveReason = 1 | 2 | 3;
 
 /**
- * The parameters send in a will save text document notification.
+ * The parameters sent in a will save text document notification.
  */
 export interface WillSaveTextDocumentParams {
 	/**
@@ -1317,6 +1947,7 @@ export interface WillSaveTextDocumentParams {
  */
 export namespace WillSaveTextDocumentNotification {
 	export const method: 'textDocument/willSave' = 'textDocument/willSave';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<WillSaveTextDocumentParams, TextDocumentRegistrationOptions>(method);
 }
 
@@ -1330,6 +1961,7 @@ export namespace WillSaveTextDocumentNotification {
  */
 export namespace WillSaveTextDocumentWaitUntilRequest {
 	export const method: 'textDocument/willSaveWaitUntil' = 'textDocument/willSaveWaitUntil';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<WillSaveTextDocumentParams, TextEdit[] | null, never, void, TextDocumentRegistrationOptions>(method);
 }
 
@@ -1342,6 +1974,14 @@ export interface DidChangeWatchedFilesClientCapabilities {
 	 * from the server side.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Whether the client has support for {@link  RelativePattern relative pattern}
+	 * or not.
+	 *
+	 * @since 3.17.0
+	 */
+	relativePatternSupport?: boolean;
 }
 
 /**
@@ -1349,7 +1989,9 @@ export interface DidChangeWatchedFilesClientCapabilities {
  * the client detects changes to file watched by the language client.
  */
 export namespace DidChangeWatchedFilesNotification {
-	export const type = new ProtocolNotificationType<DidChangeWatchedFilesParams, DidChangeWatchedFilesRegistrationOptions>('workspace/didChangeWatchedFiles');
+	export const method: 'workspace/didChangeWatchedFiles' = 'workspace/didChangeWatchedFiles';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolNotificationType<DidChangeWatchedFilesParams, DidChangeWatchedFilesRegistrationOptions>(method);
 }
 
 /**
@@ -1406,42 +2048,86 @@ export interface DidChangeWatchedFilesRegistrationOptions {
 	watchers: FileSystemWatcher[];
 }
 
+/**
+ * The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:
+ * - `*` to match one or more characters in a path segment
+ * - `?` to match on one character in a path segment
+ * - `**` to match any number of path segments, including none
+ * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+ * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+ * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+ *
+ * @since 3.17.0
+ */
+export type Pattern = string;
+
+/**
+ * A relative pattern is a helper to construct glob patterns that are matched
+ * relatively to a base URI. The common value for a `baseUri` is a workspace
+ * folder root, but it can be another absolute URI as well.
+ *
+ * @since 3.17.0
+ */
+export interface RelativePattern {
+	/**
+	 * A workspace folder or a base URI to which this pattern will be matched
+	 * against relatively.
+	 */
+	baseUri: WorkspaceFolder | URI;
+
+	/**
+	 * The actual glob pattern;
+	 */
+	pattern: Pattern;
+}
+
+export namespace RelativePattern {
+	export function is(value: any): value is RelativePattern {
+		const candidate: RelativePattern = value;
+		return Is.objectLiteral(candidate) && (URI.is(candidate.baseUri) || WorkspaceFolder.is(candidate.baseUri)) && Is.string(candidate.pattern);
+	}
+}
+
+/**
+ * The glob pattern. Either a string pattern or a relative pattern.
+ *
+ * @since 3.17.0
+ */
+export type GlobPattern = Pattern | RelativePattern;
+
 export interface FileSystemWatcher {
 	/**
-	 * The  glob pattern to watch. Glob patterns can have the following syntax:
-	 * - `*` to match one or more characters in a path segment
-	 * - `?` to match on one character in a path segment
-	 * - `**` to match any number of path segments, including none
-	 * - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
-	 * - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
-	 * - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+	 * The glob pattern to watch. See {@link GlobPattern glob pattern} for more detail.
+	 *
+	 * @since 3.17.0 support for relative patterns.
 	 */
-	globPattern: string;
+	globPattern: GlobPattern;
 
 	/**
 	 * The kind of events of interest. If omitted it defaults
 	 * to WatchKind.Create | WatchKind.Change | WatchKind.Delete
 	 * which is 7.
 	 */
-	kind?: number;
+	kind?: WatchKind;
 }
 
 export namespace WatchKind {
 	/**
 	 * Interested in create events.
 	 */
-	export const Create = 1;
+	export const Create: 1 = 1;
 
 	/**
 	 * Interested in change events
 	 */
-	export const Change = 2;
+	export const Change: 2 = 2;
 
 	/**
 	 * Interested in delete events
 	 */
-	export const Delete = 4;
+	export const Delete: 4 = 4;
 }
+export type WatchKind = uinteger;
 
 //---- Diagnostic notification ----
 
@@ -1469,7 +2155,7 @@ export interface PublishDiagnosticsClientCapabilities {
 
 	/**
 	 * Whether the client interprets the version property of the
-	 * `textDocument/publishDiagnostics` notification`s parameter.
+	 * `textDocument/publishDiagnostics` notification's parameter.
 	 *
 	 * @since 3.15.0
 	 */
@@ -1478,7 +2164,7 @@ export interface PublishDiagnosticsClientCapabilities {
 	/**
 	 * Client supports a codeDescription property
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	codeDescriptionSupport?: boolean;
 
@@ -1487,7 +2173,7 @@ export interface PublishDiagnosticsClientCapabilities {
 	 * preserved between a `textDocument/publishDiagnostics` and
 	 * `textDocument/codeAction` request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	dataSupport?: boolean;
 }
@@ -1506,7 +2192,7 @@ export interface PublishDiagnosticsParams {
 	 *
 	 * @since 3.15.0
 	 */
-	version?: number;
+	version?: integer;
 
 	/**
 	 * An array of diagnostic information items.
@@ -1519,7 +2205,9 @@ export interface PublishDiagnosticsParams {
  * results of validation runs.
  */
 export namespace PublishDiagnosticsNotification {
-	export const type = new ProtocolNotificationType<PublishDiagnosticsParams, void>('textDocument/publishDiagnostics');
+	export const method: 'textDocument/publishDiagnostics' = 'textDocument/publishDiagnostics';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolNotificationType<PublishDiagnosticsParams, void>(method);
 }
 
 //---- Completion Support --------------------------
@@ -1551,10 +2239,10 @@ export interface CompletionClientCapabilities {
 		/**
 		 * Client supports commit characters on a completion item.
 		 */
-		commitCharactersSupport?: boolean
+		commitCharactersSupport?: boolean;
 
 		/**
-		 * Client supports the follow content formats for the documentation
+		 * Client supports the following content formats for the documentation
 		 * property. The order describes the preferred format of the client.
 		 */
 		documentationFormat?: MarkupKind[];
@@ -1581,14 +2269,14 @@ export interface CompletionClientCapabilities {
 			/**
 			 * The tags supported by the client.
 			 */
-			valueSet: CompletionItemTag[]
-		}
+			valueSet: CompletionItemTag[];
+		};
 
 		/**
 		 * Client support insert replace edit to control different behavior if a
 		 * completion item is inserted in the text or should replace text.
 		 *
-		 * @since 3.16.0 - proposed state
+		 * @since 3.16.0
 		 */
 		insertReplaceSupport?: boolean;
 
@@ -1597,7 +2285,7 @@ export interface CompletionClientCapabilities {
 		 * item. Before version 3.16.0 only the predefined properties `documentation`
 		 * and `details` could be resolved lazily.
 		 *
-		 * @since 3.16.0 - proposed state
+		 * @since 3.16.0
 		 */
 		resolveSupport?: {
 			/**
@@ -1605,6 +2293,25 @@ export interface CompletionClientCapabilities {
 			 */
 			properties: string[];
 		};
+
+		/**
+		 * The client supports the `insertTextMode` property on
+		 * a completion item to override the whitespace handling mode
+		 * as defined by the client (see `insertTextMode`).
+		 *
+		 * @since 3.16.0
+		 */
+		insertTextModeSupport?: {
+			valueSet: InsertTextMode[];
+		};
+
+		/**
+		 * The client has support for completion item label
+		 * details (see also `CompletionItemLabelDetails`).
+		 *
+		 * @since 3.17.0
+		 */
+		labelDetailsSupport?: boolean;
 	};
 
 	completionItemKind?: {
@@ -1622,10 +2329,39 @@ export interface CompletionClientCapabilities {
 	};
 
 	/**
+	 * Defines how the client handles whitespace and indentation
+	 * when accepting a completion item that uses multi line
+	 * text in either `insertText` or `textEdit`.
+	 *
+	 * @since 3.17.0
+	 */
+	insertTextMode?: InsertTextMode;
+
+	/**
 	 * The client supports to send additional context information for a
-	 * `textDocument/completion` requestion.
+	 * `textDocument/completion` request.
 	 */
 	contextSupport?: boolean;
+
+	/**
+	 * The client supports the following `CompletionList` specific
+	 * capabilities.
+	 *
+	 * @since 3.17.0
+	 */
+	completionList?: {
+		/**
+		 * The client supports the following itemDefaults on
+		 * a completion list.
+		 *
+		 * The value lists the supported property names of the
+		 * `CompletionList.itemDefaults` object. If omitted
+		 * no properties are supported.
+		 *
+		 * @since 3.17.0
+		 */
+		itemDefaults?: string[];
+	};
 }
 
 /**
@@ -1699,7 +2435,7 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 
 	/**
 	 * The list of all possible characters that commit a completion. This field can be used
-	 * if clients don't support individual commmit characters per completion item. See
+	 * if clients don't support individual commit characters per completion item. See
 	 * `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
 	 *
 	 * If a server provides both `allCommitCharacters` and commit characters on an individual
@@ -1714,39 +2450,56 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 	 * information for a completion item.
 	 */
 	resolveProvider?: boolean;
+
+	/**
+	 * The server supports the following `CompletionItem` specific
+	 * capabilities.
+	 *
+	 * @since 3.17.0
+	 */
+	completionItem?: {
+		/**
+		 * The server has support for completion item label
+		 * details (see also `CompletionItemLabelDetails`) when
+		 * receiving a completion item in a resolve call.
+		 *
+		 * @since 3.17.0
+		 */
+		labelDetailsSupport?: boolean;
+	};
 }
 
 /**
- * Registration options for a [CompletionRequest](#CompletionRequest).
+ * Registration options for a {@link CompletionRequest}.
  */
 export interface CompletionRegistrationOptions extends TextDocumentRegistrationOptions, CompletionOptions {
 }
 
 /**
  * Request to request completion at a given text document position. The request's
- * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response
- * is of type [CompletionItem[]](#CompletionItem) or [CompletionList](#CompletionList)
+ * parameter is of type {@link TextDocumentPosition} the response
+ * is of type {@link CompletionItem CompletionItem[]} or {@link CompletionList}
  * or a Thenable that resolves to such.
  *
- * The request can delay the computation of the [`detail`](#CompletionItem.detail)
- * and [`documentation`](#CompletionItem.documentation) properties to the `completionItem/resolve`
+ * The request can delay the computation of the {@link CompletionItem.detail `detail`}
+ * and {@link CompletionItem.documentation `documentation`} properties to the `completionItem/resolve`
  * request. However, properties that are needed for the initial sorting and filtering, like `sortText`,
  * `filterText`, `insertText`, and `textEdit`, must not be changed during resolve.
  */
 export namespace CompletionRequest {
 	export const method: 'textDocument/completion' = 'textDocument/completion';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CompletionParams, CompletionItem[] | CompletionList | null, CompletionItem[], void, CompletionRegistrationOptions>(method);
-	/** @deprecated Use CompletionRequest.type */
-	export const resultType = new ProgressType<CompletionItem[]>();
 }
 
 /**
  * Request to resolve additional information for a given completion item.The request's
- * parameter is of type [CompletionItem](#CompletionItem) the response
- * is of type [CompletionItem](#CompletionItem) or a Thenable that resolves to such.
+ * parameter is of type {@link CompletionItem} the response
+ * is of type {@link CompletionItem} or a Thenable that resolves to such.
  */
 export namespace CompletionResolveRequest {
 	export const method: 'completionItem/resolve' = 'completionItem/resolve';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CompletionItem, CompletionItem, never, void, void>(method);
 }
 
@@ -1759,7 +2512,7 @@ export interface HoverClientCapabilities {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * Client supports the follow content formats for the content
+	 * Client supports the following content formats for the content
 	 * property. The order describes the preferred format of the client.
 	 */
 	contentFormat?: MarkupKind[];
@@ -1772,31 +2525,32 @@ export interface HoverOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Parameters for a [HoverRequest](#HoverRequest).
+ * Parameters for a {@link HoverRequest}.
  */
 export interface HoverParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 }
 
 /**
- * Registration options for a [HoverRequest](#HoverRequest).
+ * Registration options for a {@link HoverRequest}.
  */
 export interface HoverRegistrationOptions extends TextDocumentRegistrationOptions, HoverOptions {
 }
 
 /**
  * Request to request hover information at a given text document position. The request's
- * parameter is of type [TextDocumentPosition](#TextDocumentPosition) the response is of
- * type [Hover](#Hover) or a Thenable that resolves to such.
+ * parameter is of type {@link TextDocumentPosition} the response is of
+ * type {@link Hover} or a Thenable that resolves to such.
  */
 export namespace HoverRequest {
 	export const method: 'textDocument/hover' = 'textDocument/hover';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<HoverParams, Hover | null, never, void, HoverRegistrationOptions>(method);
 }
 
 //---- SignatureHelp ----------------------------------
 
 /**
- * Client Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+ * Client Capabilities for a {@link SignatureHelpRequest}.
  */
 export interface SignatureHelpClientCapabilities {
 	/**
@@ -1810,7 +2564,7 @@ export interface SignatureHelpClientCapabilities {
 	 */
 	signatureInformation?: {
 		/**
-		 * Client supports the follow content formats for the documentation
+		 * Client supports the following content formats for the documentation
 		 * property. The order describes the preferred format of the client.
 		 */
 		documentationFormat?: MarkupKind[];
@@ -1829,10 +2583,10 @@ export interface SignatureHelpClientCapabilities {
 		};
 
 		/**
-		 * The client support the `activeParameter` property on `SignatureInformation`
+		 * The client supports the `activeParameter` property on `SignatureInformation`
 		 * literal.
 		 *
-		 * @since 3.16.0 - proposed state
+		 * @since 3.16.0
 		 */
 		activeParameterSupport?: boolean;
 	};
@@ -1849,11 +2603,11 @@ export interface SignatureHelpClientCapabilities {
 }
 
 /**
- * Server Capabilities for a [SignatureHelpRequest](#SignatureHelpRequest).
+ * Server Capabilities for a {@link SignatureHelpRequest}.
  */
 export interface SignatureHelpOptions extends WorkDoneProgressOptions {
 	/**
-	 * List of characters that trigger signature help.
+	 * List of characters that trigger signature help automatically.
 	 */
 	triggerCharacters?: string[];
 
@@ -1910,7 +2664,7 @@ export interface SignatureHelpContext {
 	/**
 	 * `true` if signature help was already showing when it was triggered.
 	 *
-	 * Retriggers occur when the signature help is already active and can be caused by actions such as
+	 * Retriggers occurs when the signature help is already active and can be caused by actions such as
 	 * typing a trigger character, a cursor move, or document content changes.
 	 */
 	isRetrigger: boolean;
@@ -1925,7 +2679,7 @@ export interface SignatureHelpContext {
 }
 
 /**
- * Parameters for a [SignatureHelpRequest](#SignatureHelpRequest).
+ * Parameters for a {@link SignatureHelpRequest}.
  */
 export interface SignatureHelpParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 	/**
@@ -1938,20 +2692,21 @@ export interface SignatureHelpParams extends TextDocumentPositionParams, WorkDon
 }
 
 /**
- * Registration options for a [SignatureHelpRequest](#SignatureHelpRequest).
+ * Registration options for a {@link SignatureHelpRequest}.
  */
 export interface SignatureHelpRegistrationOptions extends TextDocumentRegistrationOptions, SignatureHelpOptions {
 }
 
 export namespace SignatureHelpRequest {
 	export const method: 'textDocument/signatureHelp' = 'textDocument/signatureHelp';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<SignatureHelpParams, SignatureHelp | null, never, void, SignatureHelpRegistrationOptions>(method);
 }
 
 //---- Goto Definition -------------------------------------
 
 /**
- * Client Capabilities for a [DefinitionRequest](#DefinitionRequest).
+ * Client Capabilities for a {@link DefinitionRequest}.
  */
 export interface DefinitionClientCapabilities {
 	/**
@@ -1968,19 +2723,19 @@ export interface DefinitionClientCapabilities {
 }
 
 /**
- * Server Capabilities for a [DefinitionRequest](#DefinitionRequest).
+ * Server Capabilities for a {@link DefinitionRequest}.
  */
 export interface DefinitionOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Parameters for a [DefinitionRequest](#DefinitionRequest).
+ * Parameters for a {@link DefinitionRequest}.
  */
 export interface DefinitionParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 
 /**
- * Registration options for a [DefinitionRequest](#DefinitionRequest).
+ * Registration options for a {@link DefinitionRequest}.
  */
 export interface DefinitionRegistrationOptions extends TextDocumentRegistrationOptions, DefinitionOptions {
 }
@@ -1988,21 +2743,20 @@ export interface DefinitionRegistrationOptions extends TextDocumentRegistrationO
 /**
  * A request to resolve the definition location of a symbol at a given text
  * document position. The request's parameter is of type [TextDocumentPosition]
- * (#TextDocumentPosition) the response is of either type [Definition](#Definition)
- * or a typed array of [DefinitionLink](#DefinitionLink) or a Thenable that resolves
+ * (#TextDocumentPosition) the response is of either type {@link Definition}
+ * or a typed array of {@link DefinitionLink} or a Thenable that resolves
  * to such.
  */
 export namespace DefinitionRequest {
 	export const method: 'textDocument/definition' = 'textDocument/definition';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DefinitionParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, DefinitionRegistrationOptions>(method);
-	/** @deprecated Use DefinitionRequest.type */
-	export const resultType = new ProgressType<Location[] | DefinitionLink[]>();
 }
 
 //---- Reference Provider ----------------------------------
 
 /**
- * Client Capabilities for a [ReferencesRequest](#ReferencesRequest).
+ * Client Capabilities for a {@link ReferencesRequest}.
  */
 export interface ReferenceClientCapabilities {
 	/**
@@ -2012,10 +2766,10 @@ export interface ReferenceClientCapabilities {
 }
 
 /**
- * Parameters for a [ReferencesRequest](#ReferencesRequest).
+ * Parameters for a {@link ReferencesRequest}.
  */
 export interface ReferenceParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
-	context: ReferenceContext
+	context: ReferenceContext;
 }
 
 /**
@@ -2025,7 +2779,7 @@ export interface ReferenceOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [ReferencesRequest](#ReferencesRequest).
+ * Registration options for a {@link ReferencesRequest}.
  */
 export interface ReferenceRegistrationOptions extends TextDocumentRegistrationOptions, ReferenceOptions {
 }
@@ -2033,20 +2787,19 @@ export interface ReferenceRegistrationOptions extends TextDocumentRegistrationOp
 /**
  * A request to resolve project-wide references for the symbol denoted
  * by the given text document position. The request's parameter is of
- * type [ReferenceParams](#ReferenceParams) the response is of type
- * [Location[]](#Location) or a Thenable that resolves to such.
+ * type {@link ReferenceParams} the response is of type
+ * {@link Location Location[]} or a Thenable that resolves to such.
  */
 export namespace ReferencesRequest {
 	export const method: 'textDocument/references' = 'textDocument/references';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<ReferenceParams, Location[] | null, Location[], void, ReferenceRegistrationOptions>(method);
-	/** @deprecated Use ReferencesRequest.type */
-	export const resultType = new ProgressType<Location[]>();
 }
 
 //---- Document Highlight ----------------------------------
 
 /**
- * Client Capabilities for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ * Client Capabilities for a {@link DocumentHighlightRequest}.
  */
 export interface DocumentHighlightClientCapabilities {
 	/**
@@ -2056,40 +2809,39 @@ export interface DocumentHighlightClientCapabilities {
 }
 
 /**
- * Parameters for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ * Parameters for a {@link DocumentHighlightRequest}.
  */
 export interface DocumentHighlightParams extends TextDocumentPositionParams, WorkDoneProgressParams, PartialResultParams {
 }
 
 /**
- * Provider options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ * Provider options for a {@link DocumentHighlightRequest}.
  */
 export interface DocumentHighlightOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [DocumentHighlightRequest](#DocumentHighlightRequest).
+ * Registration options for a {@link DocumentHighlightRequest}.
  */
 export interface DocumentHighlightRegistrationOptions extends TextDocumentRegistrationOptions, DocumentHighlightOptions {
 }
 
 /**
- * Request to resolve a [DocumentHighlight](#DocumentHighlight) for a given
+ * Request to resolve a {@link DocumentHighlight} for a given
  * text document position. The request's parameter is of type [TextDocumentPosition]
  * (#TextDocumentPosition) the request response is of type [DocumentHighlight[]]
  * (#DocumentHighlight) or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
 	export const method: 'textDocument/documentHighlight' = 'textDocument/documentHighlight';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentHighlightParams, DocumentHighlight[] | null, DocumentHighlight[], void, DocumentHighlightRegistrationOptions>(method);
-	/** @deprecated Use DocumentHighlightRequest.type */
-	export const resultType = new ProgressType<DocumentHighlight[]>();
 }
 
 //---- Document Symbol Provider ---------------------------
 
 /**
- * Client Capabilities for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ * Client Capabilities for a {@link DocumentSymbolRequest}.
  */
 export interface DocumentSymbolClientCapabilities {
 	/**
@@ -2098,7 +2850,8 @@ export interface DocumentSymbolClientCapabilities {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * Specific capabilities for the `SymbolKind`.
+	 * Specific capabilities for the `SymbolKind` in the
+	 * `textDocument/documentSymbol` request.
 	 */
 	symbolKind?: {
 		/**
@@ -2115,7 +2868,7 @@ export interface DocumentSymbolClientCapabilities {
 	};
 
 	/**
-	 * The client support hierarchical document symbols.
+	 * The client supports hierarchical document symbols.
 	 */
 	hierarchicalDocumentSymbolSupport?: boolean;
 
@@ -2124,14 +2877,14 @@ export interface DocumentSymbolClientCapabilities {
 	 * `DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.
 	 * Clients supporting tags have to handle unknown tags gracefully.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	tagSupport?: {
 		/**
 		 * The tags supported by the client.
 		 */
-		valueSet: SymbolTag[]
-	}
+		valueSet: SymbolTag[];
+	};
 
 	/**
 	 * The client supports an additional label presented in the UI when
@@ -2143,7 +2896,7 @@ export interface DocumentSymbolClientCapabilities {
 }
 
 /**
- * Parameters for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ * Parameters for a {@link DocumentSymbolRequest}.
  */
 export interface DocumentSymbolParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -2153,41 +2906,40 @@ export interface DocumentSymbolParams extends WorkDoneProgressParams, PartialRes
 }
 
 /**
- * Provider options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ * Provider options for a {@link DocumentSymbolRequest}.
  */
 export interface DocumentSymbolOptions extends WorkDoneProgressOptions {
 	/**
 	 * A human-readable string that is shown when multiple outlines trees
 	 * are shown for the same document.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	label?: string;
 }
 
 /**
- * Registration options for a [DocumentSymbolRequest](#DocumentSymbolRequest).
+ * Registration options for a {@link DocumentSymbolRequest}.
  */
 export interface DocumentSymbolRegistrationOptions extends TextDocumentRegistrationOptions, DocumentSymbolOptions {
 }
 
 /**
  * A request to list all symbols found in a given text document. The request's
- * parameter is of type [TextDocumentIdentifier](#TextDocumentIdentifier) the
- * response is of type [SymbolInformation[]](#SymbolInformation) or a Thenable
+ * parameter is of type {@link TextDocumentIdentifier} the
+ * response is of type {@link SymbolInformation SymbolInformation[]} or a Thenable
  * that resolves to such.
  */
 export namespace DocumentSymbolRequest {
 	export const method: 'textDocument/documentSymbol' = 'textDocument/documentSymbol';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, SymbolInformation[] | DocumentSymbol[], void, DocumentSymbolRegistrationOptions>(method);
-	/** @deprecated Use DocumentSymbolRequest.type */
-	export const resultType = new ProgressType<SymbolInformation[] | DocumentSymbol[]>();
 }
 
 //---- Code Action Provider ----------------------------------
 
 /**
- * The Client Capabilities of a [CodeActionRequest](#CodeActionRequest).
+ * The Client Capabilities of a {@link CodeActionRequest}.
  */
 export interface CodeActionClientCapabilities {
 	/**
@@ -2229,7 +2981,7 @@ export interface CodeActionClientCapabilities {
 	/**
 	 * Whether code action supports the `disabled` property.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	disabledSupport?: boolean;
 
@@ -2238,26 +2990,37 @@ export interface CodeActionClientCapabilities {
 	 * preserved between a `textDocument/codeAction` and a
 	 * `codeAction/resolve` request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	dataSupport?: boolean;
 
 	/**
-	 * Whether the client support resolving additional code action
+	 * Whether the client supports resolving additional code action
 	 * properties via a separate `codeAction/resolve` request.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
-	 resolveSupport?: {
-		 /**
-		  * The properties that a client can resolve lazily.
-		  */
-		 properties: string[];
-	 };
+	resolveSupport?: {
+		/**
+		 * The properties that a client can resolve lazily.
+		 */
+		properties: string[];
+	};
+
+	/**
+	 * Whether the client honors the change annotations in
+	 * text edits and resource operations returned via the
+	 * `CodeAction#edit` property by for example presenting
+	 * the workspace edit in the user interface and asking
+	 * for confirmation.
+	 *
+	 * @since 3.16.0
+	 */
+	honorsChangeAnnotations?: boolean;
 }
 
 /**
- * The parameters of a [CodeActionRequest](#CodeActionRequest).
+ * The parameters of a {@link CodeActionRequest}.
  */
 export interface CodeActionParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -2277,7 +3040,7 @@ export interface CodeActionParams extends WorkDoneProgressParams, PartialResultP
 }
 
 /**
- * Provider options for a [CodeActionRequest](#CodeActionRequest).
+ * Provider options for a {@link CodeActionRequest}.
  */
 export interface CodeActionOptions extends WorkDoneProgressOptions {
 	/**
@@ -2298,7 +3061,7 @@ export interface CodeActionOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [CodeActionRequest](#CodeActionRequest).
+ * Registration options for a {@link CodeActionRequest}.
  */
 export interface CodeActionRegistrationOptions extends TextDocumentRegistrationOptions, CodeActionOptions {
 }
@@ -2308,25 +3071,25 @@ export interface CodeActionRegistrationOptions extends TextDocumentRegistrationO
  */
 export namespace CodeActionRequest {
 	export const method: 'textDocument/codeAction' = 'textDocument/codeAction';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CodeActionParams, (Command | CodeAction)[] | null, (Command | CodeAction)[], void, CodeActionRegistrationOptions>(method);
-	/** @deprecated Use CodeActionRequest.type */
-	export const resultType = new ProgressType<(Command | CodeAction)[]>();
 }
 
 /**
  * Request to resolve additional information for a given code action.The request's
- * parameter is of type [CodeAction](#CodeAction) the response
- * is of type [CodeAction](#CodeAction) or a Thenable that resolves to such.
+ * parameter is of type {@link CodeAction} the response
+ * is of type {@link CodeAction} or a Thenable that resolves to such.
  */
 export namespace CodeActionResolveRequest {
 	export const method: 'codeAction/resolve' = 'codeAction/resolve';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CodeAction, CodeAction, never, void, void>(method);
 }
 
 //---- Workspace Symbol Provider ---------------------------
 
 /**
- * Client capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ * Client capabilities for a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolClientCapabilities {
 	/**
@@ -2349,24 +3112,39 @@ export interface WorkspaceSymbolClientCapabilities {
 		 * the initial version of the protocol.
 		 */
 		valueSet?: SymbolKind[];
-	}
+	};
 
 	/**
 	 * The client supports tags on `SymbolInformation`.
 	 * Clients supporting tags have to handle unknown tags gracefully.
 	 *
-	 * @since 3.16.0 - proposed state
+	 * @since 3.16.0
 	 */
 	tagSupport?: {
 		/**
 		 * The tags supported by the client.
 		 */
-		valueSet: SymbolTag[]
-	}
+		valueSet: SymbolTag[];
+	};
+
+	/**
+	 * The client support partial workspace symbols. The client will send the
+	 * request `workspaceSymbol/resolve` to the server to resolve additional
+	 * properties.
+	 *
+	 * @since 3.17.0
+	 */
+	resolveSupport?: {
+		/**
+		 * The properties that a client can resolve lazily. Usually
+		 * `location.range`
+		 */
+		properties: string[];
+	};
 }
 
 /**
- * The parameters of a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ * The parameters of a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -2377,35 +3155,58 @@ export interface WorkspaceSymbolParams extends WorkDoneProgressParams, PartialRe
 }
 
 /**
- * Server capabilities for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ * Server capabilities for a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolOptions extends WorkDoneProgressOptions {
+	/**
+	 * The server provides support to resolve additional
+	 * information for a workspace symbol.
+	 *
+	 * @since 3.17.0
+	 */
+	resolveProvider?: boolean;
 }
 
 
 /**
- * Registration options for a [WorkspaceSymbolRequest](#WorkspaceSymbolRequest).
+ * Registration options for a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolRegistrationOptions extends WorkspaceSymbolOptions {
 }
 
 /**
  * A request to list project-wide symbols matching the query string given
- * by the [WorkspaceSymbolParams](#WorkspaceSymbolParams). The response is
- * of type [SymbolInformation[]](#SymbolInformation) or a Thenable that
+ * by the {@link WorkspaceSymbolParams}. The response is
+ * of type {@link SymbolInformation SymbolInformation[]} or a Thenable that
  * resolves to such.
+ *
+ * @since 3.17.0 - support for WorkspaceSymbol in the returned data. Clients
+ *  need to advertise support for WorkspaceSymbols via the client capability
+ *  `workspace.symbol.resolveSupport`.
+ *
  */
 export namespace WorkspaceSymbolRequest {
 	export const method: 'workspace/symbol' = 'workspace/symbol';
-	export const type = new ProtocolRequestType<WorkspaceSymbolParams, SymbolInformation[] | null, SymbolInformation[], void, WorkspaceSymbolRegistrationOptions>(method);
-	/** @deprecated Use WorkspaceSymbolRequest.type */
-	export const resultType = new ProgressType<SymbolInformation[]>();
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<WorkspaceSymbolParams, SymbolInformation[] | WorkspaceSymbol[] | null, SymbolInformation[] | WorkspaceSymbol[], void, WorkspaceSymbolRegistrationOptions>(method);
+}
+
+/**
+ * A request to resolve the range inside the workspace
+ * symbol's location.
+ *
+ * @since 3.17.0
+ */
+export namespace WorkspaceSymbolResolveRequest {
+	export const method: 'workspaceSymbol/resolve' = 'workspaceSymbol/resolve';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<WorkspaceSymbol, WorkspaceSymbol, never, void, void>(method);
 }
 
 //---- Code Lens Provider -------------------------------------------
 
 /**
- * The client capabilities  of a [CodeLensRequest](#CodeLensRequest).
+ * The client capabilities  of a {@link CodeLensRequest}.
  */
 export interface CodeLensClientCapabilities {
 	/**
@@ -2415,7 +3216,23 @@ export interface CodeLensClientCapabilities {
 }
 
 /**
- * The parameters of a [CodeLensRequest](#CodeLensRequest).
+ * @since 3.16.0
+ */
+export interface CodeLensWorkspaceClientCapabilities {
+	/**
+	 * Whether the client implementation supports a refresh request sent from the
+	 * server to the client.
+	 *
+	 * Note that this event is global and will force the client to refresh all
+	 * code lenses currently shown. It should be used with absolute care and is
+	 * useful for situation where a server for example detect a project wide
+	 * change that requires such a calculation.
+	 */
+	refreshSupport?: boolean;
+}
+
+/**
+ * The parameters of a {@link CodeLensRequest}.
  */
 export interface CodeLensParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -2425,7 +3242,7 @@ export interface CodeLensParams extends WorkDoneProgressParams, PartialResultPar
 }
 
 /**
- * Code Lens provider options of a [CodeLensRequest](#CodeLensRequest).
+ * Code Lens provider options of a {@link CodeLensRequest}.
  */
 export interface CodeLensOptions extends WorkDoneProgressOptions {
 	/**
@@ -2435,7 +3252,7 @@ export interface CodeLensOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [CodeLensRequest](#CodeLensRequest).
+ * Registration options for a {@link CodeLensRequest}.
  */
 export interface CodeLensRegistrationOptions extends TextDocumentRegistrationOptions, CodeLensOptions {
 }
@@ -2444,22 +3261,34 @@ export interface CodeLensRegistrationOptions extends TextDocumentRegistrationOpt
  * A request to provide code lens for the given text document.
  */
 export namespace CodeLensRequest {
-	export const type = new ProtocolRequestType<CodeLensParams, CodeLens[] | null, CodeLens[], void, CodeLensRegistrationOptions>('textDocument/codeLens');
-	/** @deprecated Use CodeLensRequest.type */
-	export const resultType = new ProgressType<CodeLens[]>();
+	export const method: 'textDocument/codeLens' = 'textDocument/codeLens';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<CodeLensParams, CodeLens[] | null, CodeLens[], void, CodeLensRegistrationOptions>(method);
 }
 
 /**
  * A request to resolve a command for a given code lens.
  */
 export namespace CodeLensResolveRequest {
-	export const type = new ProtocolRequestType<CodeLens, CodeLens, never, void, void>('codeLens/resolve');
+	export const method: 'codeLens/resolve' = 'codeLens/resolve';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<CodeLens, CodeLens, never, void, void>(method);
 }
 
+/**
+ * A request to refresh all code actions
+ *
+ * @since 3.16.0
+ */
+export namespace CodeLensRefreshRequest {
+	export const method: `workspace/codeLens/refresh` = `workspace/codeLens/refresh`;
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType0<void, void, void, void>(method);
+}
 //---- Document Links ----------------------------------------------
 
 /**
- * The client capabilities of a [DocumentLinkRequest](#DocumentLinkRequest).
+ * The client capabilities of a {@link DocumentLinkRequest}.
  */
 export interface DocumentLinkClientCapabilities {
 	/**
@@ -2468,7 +3297,7 @@ export interface DocumentLinkClientCapabilities {
 	dynamicRegistration?: boolean;
 
 	/**
-	 * Whether the client support the `tooltip` property on `DocumentLink`.
+	 * Whether the client supports the `tooltip` property on `DocumentLink`.
 	 *
 	 * @since 3.15.0
 	 */
@@ -2476,7 +3305,7 @@ export interface DocumentLinkClientCapabilities {
 }
 
 /**
- * The parameters of a [DocumentLinkRequest](#DocumentLinkRequest).
+ * The parameters of a {@link DocumentLinkRequest}.
  */
 export interface DocumentLinkParams extends WorkDoneProgressParams, PartialResultParams {
 	/**
@@ -2486,7 +3315,7 @@ export interface DocumentLinkParams extends WorkDoneProgressParams, PartialResul
 }
 
 /**
- * Provider options for a [DocumentLinkRequest](#DocumentLinkRequest).
+ * Provider options for a {@link DocumentLinkRequest}.
  */
 export interface DocumentLinkOptions extends WorkDoneProgressOptions {
 	/**
@@ -2496,7 +3325,7 @@ export interface DocumentLinkOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [DocumentLinkRequest](#DocumentLinkRequest).
+ * Registration options for a {@link DocumentLinkRequest}.
  */
 export interface DocumentLinkRegistrationOptions extends TextDocumentRegistrationOptions, DocumentLinkOptions {
 }
@@ -2506,24 +3335,25 @@ export interface DocumentLinkRegistrationOptions extends TextDocumentRegistratio
  */
 export namespace DocumentLinkRequest {
 	export const method: 'textDocument/documentLink' = 'textDocument/documentLink';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentLinkParams, DocumentLink[] | null, DocumentLink[], void, DocumentLinkRegistrationOptions>(method);
-	/** @deprecated Use DocumentLinkRequest.type */
-	export const resultType = new ProgressType<DocumentLink[]>();
 }
 
 /**
  * Request to resolve additional information for a given document link. The request's
- * parameter is of type [DocumentLink](#DocumentLink) the response
- * is of type [DocumentLink](#DocumentLink) or a Thenable that resolves to such.
+ * parameter is of type {@link DocumentLink} the response
+ * is of type {@link DocumentLink} or a Thenable that resolves to such.
  */
 export namespace DocumentLinkResolveRequest {
-	export const type = new ProtocolRequestType<DocumentLink, DocumentLink, never, void, void>('documentLink/resolve');
+	export const method: 'documentLink/resolve' = 'documentLink/resolve';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<DocumentLink, DocumentLink, never, void, void>(method);
 }
 
 //---- Formatting ----------------------------------------------
 
 /**
- * Client capabilities of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ * Client capabilities of a {@link DocumentFormattingRequest}.
  */
 export interface DocumentFormattingClientCapabilities {
 	/**
@@ -2533,7 +3363,7 @@ export interface DocumentFormattingClientCapabilities {
 }
 
 /**
- * The parameters of a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ * The parameters of a {@link DocumentFormattingRequest}.
  */
 export interface DocumentFormattingParams extends WorkDoneProgressParams {
 	/**
@@ -2542,19 +3372,19 @@ export interface DocumentFormattingParams extends WorkDoneProgressParams {
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The format options
+	 * The format options.
 	 */
 	options: FormattingOptions;
 }
 
 /**
- * Provider options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ * Provider options for a {@link DocumentFormattingRequest}.
  */
 export interface DocumentFormattingOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [DocumentFormattingRequest](#DocumentFormattingRequest).
+ * Registration options for a {@link DocumentFormattingRequest}.
  */
 export interface DocumentFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentFormattingOptions {
 }
@@ -2564,11 +3394,12 @@ export interface DocumentFormattingRegistrationOptions extends TextDocumentRegis
  */
 export namespace DocumentFormattingRequest {
 	export const method: 'textDocument/formatting' = 'textDocument/formatting';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentFormattingParams, TextEdit[] | null, never, void, DocumentFormattingRegistrationOptions>(method);
 }
 
 /**
- * Client capabilities of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ * Client capabilities of a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingClientCapabilities {
 	/**
@@ -2578,7 +3409,7 @@ export interface DocumentRangeFormattingClientCapabilities {
 }
 
 /**
- * The parameters of a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ * The parameters of a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 	/**
@@ -2598,13 +3429,13 @@ export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 }
 
 /**
- * Provider options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ * Provider options for a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [DocumentRangeFormattingRequest](#DocumentRangeFormattingRequest).
+ * Registration options for a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentRangeFormattingOptions {
 }
@@ -2614,11 +3445,12 @@ export interface DocumentRangeFormattingRegistrationOptions extends TextDocument
  */
 export namespace DocumentRangeFormattingRequest {
 	export const method: 'textDocument/rangeFormatting' = 'textDocument/rangeFormatting';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentRangeFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
 }
 
 /**
- * Client capabilities of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ * Client capabilities of a {@link DocumentOnTypeFormattingRequest}.
  */
 export interface DocumentOnTypeFormattingClientCapabilities {
 	/**
@@ -2628,36 +3460,42 @@ export interface DocumentOnTypeFormattingClientCapabilities {
 }
 
 /**
- * The parameters of a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ * The parameters of a {@link DocumentOnTypeFormattingRequest}.
  */
 export interface DocumentOnTypeFormattingParams {
+
 	/**
 	 * The document to format.
 	 */
 	textDocument: TextDocumentIdentifier;
 
 	/**
-	 * The position at which this request was send.
+	 * The position around which the on type formatting should happen.
+	 * This is not necessarily the exact position where the character denoted
+	 * by the property `ch` got typed.
 	 */
 	position: Position;
 
 	/**
-	 * The character that has been typed.
+	 * The character that has been typed that triggered the formatting
+	 * on type request. That is not necessarily the last character that
+	 * got inserted into the document since the client could auto insert
+	 * characters as well (e.g. like automatic brace completion).
 	 */
 	ch: string;
 
 	/**
-	 * The format options.
+	 * The formatting options.
 	 */
 	options: FormattingOptions;
 }
 
 /**
- * Provider options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ * Provider options for a {@link DocumentOnTypeFormattingRequest}.
  */
 export interface DocumentOnTypeFormattingOptions {
 	/**
-	 * A character on which formatting should be triggered, like `}`.
+	 * A character on which formatting should be triggered, like `{`.
 	 */
 	firstTriggerCharacter: string;
 
@@ -2668,7 +3506,7 @@ export interface DocumentOnTypeFormattingOptions {
 }
 
 /**
- * Registration options for a [DocumentOnTypeFormattingRequest](#DocumentOnTypeFormattingRequest).
+ * Registration options for a {@link DocumentOnTypeFormattingRequest}.
  */
 export interface DocumentOnTypeFormattingRegistrationOptions extends TextDocumentRegistrationOptions, DocumentOnTypeFormattingOptions {
 }
@@ -2678,10 +3516,21 @@ export interface DocumentOnTypeFormattingRegistrationOptions extends TextDocumen
  */
 export namespace DocumentOnTypeFormattingRequest {
 	export const method: 'textDocument/onTypeFormatting' = 'textDocument/onTypeFormatting';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentOnTypeFormattingParams, TextEdit[] | null, never, void, DocumentOnTypeFormattingRegistrationOptions>(method);
 }
 
 //---- Rename ----------------------------------------------
+
+export namespace PrepareSupportDefaultBehavior {
+	/**
+	 * The client's default behavior is to select the identifier
+	 * according the to language's syntax rule.
+	 */
+	export const Identifier: 1 = 1;
+}
+
+export type PrepareSupportDefaultBehavior = 1;
 
 export interface RenameClientCapabilities {
 	/**
@@ -2693,20 +3542,34 @@ export interface RenameClientCapabilities {
 	 * Client supports testing for validity of rename operations
 	 * before execution.
 	 *
-	 * @since version 3.12.0
+	 * @since 3.12.0
 	 */
 	prepareSupport?: boolean;
 
 	/**
 	 * Client supports the default behavior result.
 	 *
-	 * @since version 3.16.0
+	 * The value indicates the default behavior used by the
+	 * client.
+	 *
+	 * @since 3.16.0
 	 */
-	prepareSupportDefaultBehavior?: boolean;
+	prepareSupportDefaultBehavior?: PrepareSupportDefaultBehavior;
+
+	/**
+	 * Whether the client honors the change annotations in
+	 * text edits and resource operations returned via the
+	 * rename request's workspace edit by for example presenting
+	 * the workspace edit in the user interface and asking
+	 * for confirmation.
+	 *
+	 * @since 3.16.0
+	 */
+	honorsChangeAnnotations?: boolean;
 }
 
 /**
- * The parameters of a [RenameRequest](#RenameRequest).
+ * The parameters of a {@link RenameRequest}.
  */
 export interface RenameParams extends WorkDoneProgressParams {
 	/**
@@ -2721,14 +3584,14 @@ export interface RenameParams extends WorkDoneProgressParams {
 
 	/**
 	 * The new name of the symbol. If the given name is not valid the
-	 * request must return a [ResponseError](#ResponseError) with an
+	 * request must return a {@link ResponseError} with an
 	 * appropriate message set.
 	 */
 	newName: string;
 }
 
 /**
- * Provider options for a [RenameRequest](#RenameRequest).
+ * Provider options for a {@link RenameRequest}.
  */
 export interface RenameOptions extends WorkDoneProgressOptions {
 	/**
@@ -2740,7 +3603,7 @@ export interface RenameOptions extends WorkDoneProgressOptions {
 }
 
 /**
- * Registration options for a [RenameRequest](#RenameRequest).
+ * Registration options for a {@link RenameRequest}.
  */
 export interface RenameRegistrationOptions extends TextDocumentRegistrationOptions, RenameOptions {
 }
@@ -2750,11 +3613,14 @@ export interface RenameRegistrationOptions extends TextDocumentRegistrationOptio
  */
 export namespace RenameRequest {
 	export const method: 'textDocument/rename' = 'textDocument/rename';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<RenameParams, WorkspaceEdit | null, never, void, RenameRegistrationOptions>(method);
 }
 
 export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 }
+
+export type PrepareRenameResult = Range | { range: Range; placeholder: string } | { defaultBehavior: boolean };
 
 /**
  * A request to test and perform the setup necessary for a rename.
@@ -2763,13 +3629,14 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
  */
 export namespace PrepareRenameRequest {
 	export const method: 'textDocument/prepareRename' = 'textDocument/prepareRename';
-	export const type = new ProtocolRequestType<PrepareRenameParams, Range | { range: Range, placeholder: string } | { defaultBehavior: boolean } | null, never, void, void>(method);
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<PrepareRenameParams, PrepareRenameResult | null, never, void, void>(method);
 }
 
 //---- Command Execution -------------------------------------------
 
 /**
- * The client capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ * The client capabilities of a {@link ExecuteCommandRequest}.
  */
 export interface ExecuteCommandClientCapabilities {
 	/**
@@ -2779,7 +3646,7 @@ export interface ExecuteCommandClientCapabilities {
 }
 
 /**
- * The parameters of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ * The parameters of a {@link ExecuteCommandRequest}.
  */
 export interface ExecuteCommandParams extends WorkDoneProgressParams {
 
@@ -2790,21 +3657,21 @@ export interface ExecuteCommandParams extends WorkDoneProgressParams {
 	/**
 	 * Arguments that the command should be invoked with.
 	 */
-	arguments?: any[];
+	arguments?: LSPAny[];
 }
 
 /**
- * The server capabilities of a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ * The server capabilities of a {@link ExecuteCommandRequest}.
  */
 export interface ExecuteCommandOptions extends WorkDoneProgressOptions {
 	/**
 	 * The commands to be executed on the server
 	 */
-	commands: string[]
+	commands: string[];
 }
 
 /**
- * Registration options for a [ExecuteCommandRequest](#ExecuteCommandRequest).
+ * Registration options for a {@link ExecuteCommandRequest}.
  */
 export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions {
 }
@@ -2814,7 +3681,9 @@ export interface ExecuteCommandRegistrationOptions extends ExecuteCommandOptions
  * a workspace edit which the client will apply to the workspace.
  */
 export namespace ExecuteCommandRequest {
-	export const type = new ProtocolRequestType<ExecuteCommandParams, any | null, never, void, ExecuteCommandRegistrationOptions>('workspace/executeCommand');
+	export const method: 'workspace/executeCommand' = 'workspace/executeCommand';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<ExecuteCommandParams, LSPAny | null, never, void, ExecuteCommandRegistrationOptions>(method);
 }
 
 //---- Apply Edit request ----------------------------------------
@@ -2840,6 +3709,32 @@ export interface WorkspaceEditClientCapabilities {
 	 * @since 3.13.0
 	 */
 	failureHandling?: FailureHandlingKind;
+
+	/**
+	 * Whether the client normalizes line endings to the client specific
+	 * setting.
+	 * If set to `true` the client will normalize line ending characters
+	 * in a workspace edit to the client-specified new line
+	 * character.
+	 *
+	 * @since 3.16.0
+	 */
+	normalizesLineEndings?: boolean;
+
+	/**
+	 * Whether the client in general supports change annotations on text edits,
+	 * create file, rename file and delete file changes.
+	 *
+	 * @since 3.16.0
+	 */
+	changeAnnotationSupport?: {
+		/**
+		 * Whether the client groups edits with equal labels into tree nodes,
+		 * for instance all edits labelled with "Changes in Strings" would
+		 * be a tree node.
+		 */
+		groupsOnLabel?: boolean;
+	};
 }
 
 /**
@@ -2860,9 +3755,11 @@ export interface ApplyWorkspaceEditParams {
 }
 
 /**
- * A response returned from the apply workspace edit request.
+ * The result returned from the apply workspace edit request.
+ *
+ * @since 3.17 renamed from ApplyWorkspaceEditResponse
  */
-export interface ApplyWorkspaceEditResponse {
+export interface ApplyWorkspaceEditResult {
 	/**
 	 * Indicates whether the edit was applied or not.
 	 */
@@ -2880,20 +3777,27 @@ export interface ApplyWorkspaceEditResponse {
 	 * contain the index of the change that failed. This property is only available
 	 * if the client signals a `failureHandlingStrategy` in its client capabilities.
 	 */
-	failedChange?: number;
+	failedChange?: uinteger;
 }
+
+/**
+ * @deprecated Use ApplyWorkspaceEditResult instead.
+ */
+export type ApplyWorkspaceEditResponse = ApplyWorkspaceEditResult;
 
 /**
  * A request sent from the server to the client to modified certain resources.
  */
 export namespace ApplyWorkspaceEditRequest {
-	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResponse, never, void, void>('workspace/applyEdit');
+	export const method: 'workspace/applyEdit' = 'workspace/applyEdit';
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, never, void, void>('workspace/applyEdit');
 }
 
 export {
 	ImplementationRequest, ImplementationParams, ImplementationRegistrationOptions, ImplementationOptions,
 	TypeDefinitionRequest, TypeDefinitionParams, TypeDefinitionRegistrationOptions, TypeDefinitionOptions,
-	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFolder, WorkspaceFoldersChangeEvent,
+	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams, DocumentColorRegistrationOptions,
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions,
@@ -2904,10 +3808,44 @@ export {
 	// Call Hierarchy
 	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
 	CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest, CallHierarchyPrepareParams, CallHierarchyPrepareRequest,
-	// Semantic Tokene
-	SemanticTokenTypes, SemanticTokenModifiers, SemanticTokensLegend, SemanticTokens, SemanticTokensPartialResult, SemanticTokensEdit, SemanticTokensDelta,
-	SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
-	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshNotification
+	// Semantic Token
+	SemanticTokensPartialResult, SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions,
+	SemanticTokensParams, SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
+	SemanticTokensRefreshRequest, SemanticTokensRegistrationType,
+	// Show document
+	ShowDocumentParams, ShowDocumentRequest, ShowDocumentResult, ShowDocumentClientCapabilities,
+	// On Type rename
+	LinkedEditingRangeClientCapabilities, LinkedEditingRanges, LinkedEditingRangeOptions, LinkedEditingRangeParams,
+	LinkedEditingRangeRegistrationOptions, LinkedEditingRangeRequest,
+	// File operations
+	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions, FileOperationPatternOptions, FileOperationPatternKind,
+	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
+	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
+	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
+	// Monikers
+	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest,
+	// Type hierarchy
+	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
+	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest,
+	// Inline Values
+	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities, InlineValueParams,
+	InlineValueRequest, InlineValueRefreshRequest,
+	// Inlay Hints
+	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
+	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest,
+	// Diagnostics Pull Model
+	DiagnosticClientCapabilities, DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams,
+	DocumentDiagnosticReportKind, FullDocumentDiagnosticReport, RelatedFullDocumentDiagnosticReport, UnchangedDocumentDiagnosticReport,
+	RelatedUnchangedDocumentDiagnosticReport, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DocumentDiagnosticRequest,
+	PreviousResultId, WorkspaceDiagnosticParams, WorkspaceFullDocumentDiagnosticReport, WorkspaceUnchangedDocumentDiagnosticReport,
+	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, WorkspaceDiagnosticRequest,
+	DiagnosticRefreshRequest,
+	// Notebooks
+	NotebookDocumentSyncClientCapabilities, NotebookCellKind, ExecutionSummary, NotebookCell, NotebookDocument, NotebookDocumentIdentifier,
+	VersionedNotebookDocumentIdentifier, NotebookDocumentSyncOptions, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType,
+	DidOpenNotebookDocumentParams, DidOpenNotebookDocumentNotification, NotebookCellArrayChange, NotebookDocumentChangeEvent, DidChangeNotebookDocumentParams,
+	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
+	DidCloseNotebookDocumentNotification
 };
 
 // To be backwards compatible

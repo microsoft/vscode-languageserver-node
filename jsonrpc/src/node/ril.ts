@@ -3,13 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import RAL from '../common/ral';
 import { TextDecoder } from 'util';
 
-import { Disposable } from '../common/disposable';
-import { Message } from '../common/messages';
-import { ContentTypeEncoderOptions, ContentTypeDecoderOptions } from '../common/encoding';
-import { AbstractMessageBuffer } from '../common/messageBuffer';
+import {
+	RAL, Disposable, Message, ContentTypeEncoderOptions, ContentTypeDecoderOptions, AbstractMessageBuffer
+} from '../common/api';
 
 class MessageBuffer extends AbstractMessageBuffer {
 
@@ -119,7 +117,7 @@ interface RIL extends RAL {
 	readonly stream: {
 		readonly asReadableStream: (stream: NodeJS.ReadableStream) => RAL.ReadableStream;
 		readonly asWritableStream: (stream: NodeJS.WritableStream) => RAL.WritableStream;
-	}
+	};
 }
 
 const _ril: RIL = Object.freeze<RIL>({
@@ -153,22 +151,22 @@ const _ril: RIL = Object.freeze<RIL>({
 		})
 	}),
 	stream: Object.freeze({
-		asReadableStream: (socket: NodeJS.ReadableStream) => new ReadableStreamWrapper(socket),
-		asWritableStream: (socket: NodeJS.WritableStream) => new WritableStreamWrapper(socket)
+		asReadableStream: (stream: NodeJS.ReadableStream) => new ReadableStreamWrapper(stream),
+		asWritableStream: (stream: NodeJS.WritableStream) => new WritableStreamWrapper(stream)
 	}),
 	console: console,
 	timer: Object.freeze({
-		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): RAL.TimeoutHandle {
-			return setTimeout(callback, ms, ...args) as unknown as RAL.TimeoutHandle;
+		setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+			const handle = setTimeout(callback, ms, ...args);
+			return { dispose: () => clearTimeout(handle)};
 		},
-		clearTimeout(handle: RAL.TimeoutHandle): void {
-			clearTimeout(handle as unknown as NodeJS.Timeout);
+		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable {
+			const handle = setImmediate(callback, ...args);
+			return { dispose: () => clearImmediate(handle) };
 		},
-		setImmediate(callback: (...args: any[]) => void, ...args: any[]): RAL.ImmediateHandle {
-			return setImmediate(callback, ...args) as unknown as RAL.ImmediateHandle;
-		},
-		clearImmediate(handle: RAL.ImmediateHandle): void {
-			clearImmediate(handle as unknown as NodeJS.Immediate);
+		setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
+			const handle = setInterval(callback, ms, ...args);
+			return { dispose: () => clearInterval(handle) };
 		}
 	})
 });
