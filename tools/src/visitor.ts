@@ -1262,11 +1262,21 @@ namespace PreDefined {
 		since: '3.17.0'
 	};
 
-	export const LSPObject: Structure = {
-		name: 'LSPObject',
-		properties: [],
-		documentation: 'LSP object definition.\n@since 3.17.0',
-		since: '3.17.0'
+	export const LSPObject: TypeAlias = {
+		'name': 'LSPObject',
+		'type': {
+			'kind': 'map',
+			'key': {
+				'kind': 'base',
+				'name': 'string'
+			},
+			'value': {
+				'kind': 'reference',
+				'name': 'LSPAny'
+			}
+		},
+		'documentation': 'LSP object definition.\n@since 3.17.0',
+		'since': '3.17.0'
 	};
 
 	export const LSPArray: TypeAlias = {

@@ -9591,12 +9591,6 @@
 			"since": "3.17.0"
 		},
 		{
-			"name": "LSPObject",
-			"properties": [],
-			"documentation": "LSP object definition.\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
 			"name": "NotebookCell",
 			"properties": [
 				{
@@ -14107,6 +14101,22 @@
 			},
 			"documentation": "A document filter describes a top level text document or\na notebook cell document.\n\n@since 3.17.0 - proposed support for NotebookCellTextDocumentFilter.",
 			"since": "3.17.0 - proposed support for NotebookCellTextDocumentFilter."
+		},
+		{
+			"name": "LSPObject",
+			"type": {
+				"kind": "map",
+				"key": {
+					"kind": "base",
+					"name": "string"
+				},
+				"value": {
+					"kind": "reference",
+					"name": "LSPAny"
+				}
+			},
+			"documentation": "LSP object definition.\n@since 3.17.0",
+			"since": "3.17.0"
 		},
 		{
 			"name": "GlobPattern",
