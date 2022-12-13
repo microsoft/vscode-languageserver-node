@@ -256,13 +256,19 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		if (event.contentChanges.length === 0) {
 			return;
 		}
+
+		// We need to capture the URI and version here since they might change on the text document
+		// until we reach did `didChange` call since the middleware support async execution.
+		const uri = event.document.uri;
+		const version = event.document.version;
+
 		const promises: Promise<void>[] = [];
 		for (const changeData of this._changeData.values()) {
 			if (Languages.match(changeData.documentSelector, event.document) > 0 && !this._client.hasDedicatedTextSynchronizationFeature(event.document)) {
 				const middleware = this._client.middleware;
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
-						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event);
+						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event, uri, version);
 						await this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
 						this.notificationSent(event.document, DidChangeTextDocumentNotification.type, params);
 					};

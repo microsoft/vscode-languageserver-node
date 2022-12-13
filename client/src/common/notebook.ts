@@ -110,7 +110,7 @@ namespace Converter {
 		}
 		type TextContent = Required<Required<Required<proto.NotebookDocumentChangeEvent>['cells']>['textContent']>[0];
 		export function asTextContentChange(event: vscode.TextDocumentChangeEvent, base: _c2p.Converter): TextContent {
-			const params = base.asChangeTextDocumentParams(event);
+			const params = base.asChangeTextDocumentParams(event, event.document.uri, event.document.version);
 			return { document: params.textDocument, changes: params.contentChanges };
 		}
 		export function asNotebookDocumentChangeEvent(event: VNotebookDocumentChangeEvent, base: _c2p.Converter): proto.NotebookDocumentChangeEvent {
