@@ -11,7 +11,7 @@ import {
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider,
 	OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DeclarationProvider, FoldingRangeProvider, ImplementationProvider,
 	DocumentColorProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider, LinkedEditingRangeProvider, TypeHierarchyProvider, WorkspaceSymbolProvider,
-	ProviderResult, TextEdit as VTextEdit
+	ProviderResult, TextEdit as VTextEdit, LogOutputChannel
 } from 'vscode';
 
 import {
@@ -429,6 +429,11 @@ export namespace MessageTransports {
 	}
 }
 
+function isLogOutputChannel(channel: OutputChannel): channel is LogOutputChannel {
+	const candidate = channel as LogOutputChannel;
+	return candidate.trace !== undefined && candidate.info !== undefined && candidate.warn !== undefined && candidate.error !== undefined;
+}
+
 export abstract class BaseLanguageClient implements FeatureClient<Middleware, LanguageClientOptions> {
 
 	private _id: string;
@@ -560,7 +565,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._tracer = {
 			log: (messageOrDataObject: string | any, data?: string) => {
 				if (Is.string(messageOrDataObject)) {
-					this.logTrace(messageOrDataObject, data);
+					this.trace(messageOrDataObject, data);
 				} else {
 					this.logObjectTrace(messageOrDataObject);
 				}
@@ -605,7 +610,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	public get outputChannel(): OutputChannel {
 		if (!this._outputChannel) {
-			this._outputChannel = Window.createOutputChannel(this._clientOptions.outputChannelName ? this._clientOptions.outputChannelName : this._name);
+			this._outputChannel = Window.createOutputChannel(this._clientOptions.outputChannelName ? this._clientOptions.outputChannelName : this._name, { log:true });
 		}
 		return this._outputChannel;
 	}
@@ -857,6 +862,67 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 	}
 
+	public trace(message: string, data?: any): void {
+		const channel = this.traceOutputChannel;
+		if (isLogOutputChannel(channel)) {
+			channel.trace(data !== null && data !== undefined ? `${message}\n${this.data2String(data)}` : message);
+		} else {
+			// Backwards compatibility since the output channel can be created from the outside.
+			channel.appendLine(`[Trace  - ${(new Date().toLocaleTimeString())}] ${message}`);
+			if (data !== null && data !== undefined) {
+				channel.appendLine(this.data2String(data));
+			}
+		}
+	}
+
+	public info(message: string, data?: any, showNotification: boolean = true): void {
+		const channel = this.outputChannel;
+		if (isLogOutputChannel(channel)) {
+			channel.info(data !== null && data !== undefined ? `${message}\n${this.data2String(data)}` : message);
+		} else {
+			// Backwards compatibility since the output channel can be created from the outside.
+			channel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
+			if (data !== null && data !== undefined) {
+				channel.appendLine(this.data2String(data));
+			}
+		}
+		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
+			this.showNotificationMessage(MessageType.Info, message);
+		}
+	}
+
+	public warn(message: string, data?: any, showNotification: boolean = true): void {
+		const channel = this.outputChannel;
+		if (isLogOutputChannel(channel)) {
+			channel.warn(data !== null && data !== undefined ? `${message}\n${this.data2String(data)}` : message);
+		} else {
+			// Backwards compatibility since the output channel can be created from the outside.
+			channel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
+			if (data !== null && data !== undefined) {
+				channel.appendLine(this.data2String(data));
+			}
+		}
+		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
+			this.showNotificationMessage(MessageType.Warning, message);
+		}
+	}
+
+	public error(message: string, data?: any, showNotification: boolean | 'force' = true): void {
+		const channel = this.outputChannel;
+		if (isLogOutputChannel(channel)) {
+			channel.error(data !== null && data !== undefined ? `${message}\n${this.data2String(data)}` : message);
+		} else {
+			// Backwards compatibility since the output channel can be created from the outside.
+			channel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
+			if (data !== null && data !== undefined) {
+				channel.appendLine(this.data2String(data));
+			}
+		}
+		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error)) {
+			this.showNotificationMessage(MessageType.Error, message);
+		}
+	}
+
 	private data2String(data: Object): string {
 		if (data instanceof ResponseError) {
 			const responseError = data as ResponseError<any>;
@@ -874,33 +940,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return data.toString();
 	}
 
-	public info(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
+	private logObjectTrace(data: any): void {
 		if (data !== null && data !== undefined) {
-			this.outputChannel.appendLine(this.data2String(data));
-		}
-		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
-			this.showNotificationMessage(MessageType.Info, message);
-		}
-	}
-
-	public warn(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data !== null && data !== undefined) {
-			this.outputChannel.appendLine(this.data2String(data));
-		}
-		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
-			this.showNotificationMessage(MessageType.Warning, message);
-		}
-	}
-
-	public error(message: string, data?: any, showNotification: boolean | 'force' = true): void {
-		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data !== null && data !== undefined) {
-			this.outputChannel.appendLine(this.data2String(data));
-		}
-		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error)) {
-			this.showNotificationMessage(MessageType.Error, message);
+			this.trace(JSON.stringify(data));
 		}
 	}
 
@@ -916,24 +958,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				this.outputChannel.show(true);
 			}
 		});
-	}
-
-	private logTrace(message: string, data?: any): void {
-		this.traceOutputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data) {
-			this.traceOutputChannel.appendLine(this.data2String(data));
-		}
-	}
-
-	private logObjectTrace(data: any): void {
-		if (data.isLSPMessage && data.type) {
-			this.traceOutputChannel.append(`[LSP   - ${(new Date().toLocaleTimeString())}] `);
-		} else {
-			this.traceOutputChannel.append(`[Trace - ${(new Date().toLocaleTimeString())}] `);
-		}
-		if (data) {
-			this.traceOutputChannel.appendLine(`${JSON.stringify(data)}`);
-		}
 	}
 
 	public needsStart(): boolean {
