@@ -51,7 +51,7 @@ export interface Converter {
 	asOpenTextDocumentParams(textDocument: code.TextDocument): proto.DidOpenTextDocumentParams;
 
 	asChangeTextDocumentParams(textDocument: code.TextDocument): proto.DidChangeTextDocumentParams;
-	asChangeTextDocumentParams(event: code.TextDocumentChangeEvent): proto.DidChangeTextDocumentParams;
+	asChangeTextDocumentParams(event: code.TextDocumentChangeEvent, uri: code.Uri, version: number): proto.DidChangeTextDocumentParams;
 
 	asCloseTextDocumentParams(textDocument: code.TextDocument): proto.DidCloseTextDocumentParams;
 
@@ -180,36 +180,37 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function isTextDocumentChangeEvent(value: any): value is code.TextDocumentChangeEvent {
-		let candidate = <code.TextDocumentChangeEvent>value;
+		const candidate = value as code.TextDocumentChangeEvent;
 		return !!candidate.document && !!candidate.contentChanges;
 	}
 
 	function isTextDocument(value: any): value is code.TextDocument {
-		let candidate = <code.TextDocument>value;
+		const candidate = value as code.TextDocument;
 		return !!candidate.uri && !!candidate.version;
 	}
 
 	function asChangeTextDocumentParams(textDocument: code.TextDocument): proto.DidChangeTextDocumentParams;
-	function asChangeTextDocumentParams(event: code.TextDocumentChangeEvent): proto.DidChangeTextDocumentParams;
-	function asChangeTextDocumentParams(arg: code.TextDocumentChangeEvent | code.TextDocument): proto.DidChangeTextDocumentParams {
-		if (isTextDocument(arg)) {
-			let result: proto.DidChangeTextDocumentParams = {
+	function asChangeTextDocumentParams(event: code.TextDocumentChangeEvent, uri: code.Uri, version: number): proto.DidChangeTextDocumentParams;
+	function asChangeTextDocumentParams(arg0: code.TextDocumentChangeEvent | code.TextDocument, arg1?: code.Uri, arg2?: number): proto.DidChangeTextDocumentParams {
+		if (isTextDocument(arg0)) {
+			const result: proto.DidChangeTextDocumentParams = {
 				textDocument: {
-					uri: _uriConverter(arg.uri),
-					version: arg.version
+					uri: _uriConverter(arg0.uri),
+					version: arg0.version
 				},
-				contentChanges: [{ text: arg.getText() }]
+				contentChanges: [{ text: arg0.getText() }]
 			};
 			return result;
-		} else if (isTextDocumentChangeEvent(arg)) {
-			let document = arg.document;
-			let result: proto.DidChangeTextDocumentParams = {
+		} else if (isTextDocumentChangeEvent(arg0)) {
+			const uri: code.Uri = arg1!;
+			const version: number = arg2!;
+			const result: proto.DidChangeTextDocumentParams = {
 				textDocument: {
-					uri: _uriConverter(document.uri),
-					version: document.version
+					uri: _uriConverter(uri),
+					version: version
 				},
-				contentChanges: arg.contentChanges.map((change): proto.TextDocumentContentChangeEvent => {
-					let range = change.range;
+				contentChanges: arg0.contentChanges.map((change): proto.TextDocumentContentChangeEvent => {
+					const range = change.range;
 					return {
 						range: {
 							start: { line: range.start.line, character: range.start.character },
