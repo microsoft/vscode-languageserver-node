@@ -220,11 +220,13 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 				}
 				const contentLength = headers.get('content-length');
 				if (!contentLength) {
-					throw new Error('Header must provide a Content-Length property.');
+					this.fireError(new Error('Header must provide a Content-Length property.'));
+					return;
 				}
 				const length = parseInt(contentLength);
 				if (isNaN(length)) {
-					throw new Error('Content-Length value must be a number.');
+					this.fireError(new Error('Content-Length value must be a number.'));
+					return;
 				}
 				this.nextMessageLength = length;
 			}
