@@ -231,9 +231,9 @@ export class LanguageClient extends BaseLanguageClient {
 		}, 2000);
 	}
 
-	protected handleConnectionClosed() {
+	protected handleConnectionClosed(): Promise<void> {
 		this._serverProcess = undefined;
-		super.handleConnectionClosed();
+		return super.handleConnectionClosed();
 	}
 
 	protected fillInitializeParams(params: InitializeParams): void {
