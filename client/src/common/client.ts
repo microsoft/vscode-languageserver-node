@@ -1462,7 +1462,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._diagnostics.set(uri, diagnostics);
 	}
 
-	protected abstract getLocale(): string;
+	protected getLocale(): string {
+		return Env.language;
+	}
 
 	protected abstract createMessageTransports(encoding: string): Promise<MessageTransports>;
 
