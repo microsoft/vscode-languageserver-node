@@ -1217,7 +1217,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onWorkspaceSymbolResolve(handler: ServerRequestHandler<WorkspaceSymbol, WorkspaceSymbol, never, void>): Disposable;
+	onWorkspaceSymbolResolve(handler: RequestHandler<WorkspaceSymbol, WorkspaceSymbol, void>): Disposable;
 
 	/**
 	 * Installs a handler for the `CodeAction` request.
