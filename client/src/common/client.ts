@@ -155,6 +155,14 @@ export type ErrorHandlerResult = {
 	 * An optional message to be presented to the user.
 	 */
 	message?: string;
+
+	/**
+	 * If set to true the client assumes that the corresponding
+	 * error handler has presented an appropriate message to the
+	 * user and the message will only be log to the client's
+	 * output channel.
+	 */
+	handled?: boolean;
 };
 
 /**
@@ -182,6 +190,14 @@ export type CloseHandlerResult = {
 	 * An optional message to be presented to the user.
 	 */
 	message?: string;
+
+	/**
+	 * If set to true the client assumes that the corresponding
+	 * close handler has presented an appropriate message to the
+	 * user and the message will only be log to the client's
+	 * output channel.
+	 */
+	handled?: boolean;
 };
 
 /**
@@ -1498,7 +1514,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 		this._connection = undefined;
 		if (handlerResult.action === CloseAction.DoNotRestart) {
-			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, 'force');
+			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, handlerResult.handled === true ? false : 'force');
 			this.cleanUp('stop');
 			if (this.$state === ClientState.Starting) {
 				this.$state = ClientState.StartFailed;
@@ -1508,7 +1524,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._onStop = Promise.resolve();
 			this._onStart = undefined;
 		} else if (handlerResult.action === CloseAction.Restart) {
-			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.');
+			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.', !handlerResult.handled);
 			this.cleanUp('restart');
 			this.$state = ClientState.Initial;
 			this._onStop = Promise.resolve();
@@ -1520,7 +1536,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private handleConnectionError(error: Error, message: Message | undefined, count: number | undefined): void {
 		const handlerResult: ErrorHandlerResult = this._clientOptions.errorHandler!.error(error, message, count);
 		if (handlerResult.action === ErrorAction.Shutdown) {
-			this.error(handlerResult.message ?? `Client ${this._name}: connection to server is erroring. Shutting down server.`, undefined, 'force');
+			this.error(handlerResult.message ?? `Client ${this._name}: connection to server is erroring. Shutting down server.`, undefined, handlerResult.handled === true ? false : 'force');
 			this.stop().catch((error) => {
 				this.error(`Stopping server failed`, error, false);
 			});
