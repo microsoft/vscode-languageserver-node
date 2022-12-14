@@ -1986,46 +1986,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 interface Connection {
 
-	/**
-	 * A timestamp indicating when the connection was last used (.e.g a request
-	 * or notification has been sent)
-	 */
-	lastUsed: number;
-
-	resetLastUsed(): void;
-
 	listen(): void;
 
-	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
-	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
-	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
-
-	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
-	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
-	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
-	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
 
 	hasPendingResponse(): boolean;
 
-	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
-	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
-	sendNotification(method: string): Promise<void>;
-	sendNotification(method: string, params: any): Promise<void>;
 	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
-
-	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
-	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
-	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
-	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
@@ -2066,40 +2034,23 @@ interface ConnectionCloseHandler {
 }
 
 function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
-	let _lastUsed: number = -1;
 	const logger = new ConsoleLogger();
 	const connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
 	const result: Connection = {
 
-		get lastUsed(): number {
-			return _lastUsed;
-		},
-
-		resetLastUsed: (): void => {
-			_lastUsed = -1;
-		},
-
 		listen: (): void => connection.listen(),
 
-		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => {
-			_lastUsed = Date.now();
-			// This needs to return and MUST not be await to avoid any async
-			// scheduling. Otherwise messages might overtake each other.
-			return connection.sendRequest(type as string, ...params);
-		},
-		onRequest: <R, E>(type: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable => connection.onRequest(type, handler),
+		sendRequest: connection.sendRequest,
 
-		hasPendingResponse: (): boolean => connection.hasPendingResponse(),
+		onRequest: connection.onRequest,
 
-		sendNotification: (type: string | MessageSignature, params?: any): Promise<void> => {
-			_lastUsed = Date.now();
-			// This needs to return and MUST not be await to avoid any async
-			// scheduling. Otherwise messages might overtake each other.
-			return connection.sendNotification(type, params);
-		},
-		onNotification: (type: string | MessageSignature, handler: GenericNotificationHandler): Disposable => connection.onNotification(type, handler),
+		hasPendingResponse: connection.hasPendingResponse,
+
+		sendNotification: connection.sendNotification,
+
+		onNotification: connection.onNotification,
 
 		onProgress: connection.onProgress,
 		sendProgress: connection.sendProgress,
@@ -2120,19 +2071,16 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 		},
 
 		initialize: (params: InitializeParams) => {
-			_lastUsed = Date.now();
 			// This needs to return and MUST not be await to avoid any async
 			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendRequest(InitializeRequest.type, params);
 		},
 		shutdown: () => {
-			_lastUsed = Date.now();
 			// This needs to return and MUST not be await to avoid any async
 			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendRequest(ShutdownRequest.type, undefined);
 		},
 		exit: () => {
-			_lastUsed = Date.now();
 			// This needs to return and MUST not be await to avoid any async
 			// scheduling. Otherwise messages might overtake each other.
 			return connection.sendNotification(ExitNotification.type);
