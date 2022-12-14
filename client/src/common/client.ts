@@ -213,12 +213,12 @@ export interface ErrorHandler {
 	 * @param count - a count indicating how often an error is received. Will
 	 *  be reset if a message got successfully send or received.
 	 */
-	error(error: Error, message: Message | undefined, count: number | undefined): ErrorHandlerResult;
+	error(error: Error, message: Message | undefined, count: number | undefined): ErrorHandlerResult | Promise<ErrorHandlerResult>;
 
 	/**
 	 * The connection to the server got closed.
 	 */
-	closed(): CloseHandlerResult;
+	closed(): CloseHandlerResult | Promise<CloseHandlerResult>;
 }
 
 /**
@@ -1480,11 +1480,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private async createConnection(): Promise<Connection> {
 		let errorHandler = (error: Error, message: Message | undefined, count: number | undefined) => {
-			this.handleConnectionError(error, message, count);
+			this.handleConnectionError(error, message, count).catch((error) => this.error(`Handling connection error failed`, error));
 		};
 
 		let closeHandler = () => {
-			this.handleConnectionClosed();
+			this.handleConnectionClosed().catch((error) => this.error(`Handling connection close failed`, error));
 		};
 
 		const transports = await this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8');
@@ -1492,7 +1492,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this._connection;
 	}
 
-	protected handleConnectionClosed(): void {
+	protected async handleConnectionClosed(): Promise<void> {
 		// Check whether this is a normal shutdown in progress or the client stopped normally.
 		if (this.$state === ClientState.Stopped) {
 			return;
@@ -1507,7 +1507,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		let handlerResult: CloseHandlerResult = { action: CloseAction.DoNotRestart };
 		if (this.$state !== ClientState.Stopping) {
 			try {
-				handlerResult = this._clientOptions.errorHandler!.closed();
+				handlerResult = await this._clientOptions.errorHandler!.closed();
 			} catch (error) {
 				// Ignore errors coming from the error handler.
 			}
@@ -1533,8 +1533,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 	}
 
-	private handleConnectionError(error: Error, message: Message | undefined, count: number | undefined): void {
-		const handlerResult: ErrorHandlerResult = this._clientOptions.errorHandler!.error(error, message, count);
+	private async handleConnectionError(error: Error, message: Message | undefined, count: number | undefined): Promise<void> {
+		const handlerResult: ErrorHandlerResult = await this._clientOptions.errorHandler!.error(error, message, count);
 		if (handlerResult.action === ErrorAction.Shutdown) {
 			this.error(handlerResult.message ?? `Client ${this._name}: connection to server is erroring. Shutting down server.`, undefined, handlerResult.handled === true ? false : 'force');
 			this.stop().catch((error) => {
