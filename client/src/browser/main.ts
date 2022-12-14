@@ -23,10 +23,4 @@ export class LanguageClient extends BaseLanguageClient {
 		const writer = new BrowserMessageWriter(this.worker);
 		return Promise.resolve({ reader, writer });
 	}
-
-	protected getLocale(): string {
-		// ToDo: need to find a way to let the locale
-		// travel to the worker extension host.
-		return 'en';
-	}
 }

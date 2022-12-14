@@ -17,9 +17,6 @@ class TestLanguageClient extends BaseLanguageClient {
 			dispose: () => {}
 		};
 	}
-	protected getLocale(): string {
-		return 'en';
-	}
 }
 
 type MaybeFolders = vscode.WorkspaceFolder[] | undefined;
