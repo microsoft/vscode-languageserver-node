@@ -1570,8 +1570,8 @@ class CrashClient extends lsclient.LanguageClient {
 		});
 	}
 
-	protected handleConnectionClosed(): void {
-		super.handleConnectionClosed();
+	protected async handleConnectionClosed(): Promise<void> {
+		await super.handleConnectionClosed();
 		this.resolve!();
 	}
 }
