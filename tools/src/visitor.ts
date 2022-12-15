@@ -21,7 +21,7 @@ namespace MapKeyType {
 		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'URI'));
 	}
 }
-type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; proposed?: boolean };
+type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; proposed?: boolean; deprecated?: string };
 
 type TypeInfo =
 {
@@ -1165,10 +1165,11 @@ export default class Visitor {
 		const filePath = node.getSourceFile().fileName;
 		const fileName = path.basename(filePath);
 		const tags = ts.getJSDocTags(node);
-		const since = this.getSince(tags);
+		const { since, deprecated } = this.getTags(tags);
 		const proposed = (fileName.startsWith('proposed.') || tags.some((tag) => { return ts.isJSDocUnknownTag(tag) && tag.tagName.text === 'proposed';})) ? true : undefined;
 		value.documentation = this.getDocumentation(node);
 		value.since = since;
+		value.deprecated = deprecated;
 		value.proposed = proposed;
 	}
 
@@ -1208,13 +1209,19 @@ export default class Visitor {
 		return undefined;
 	}
 
-	private getSince(tags: ReadonlyArray<ts.JSDocTag>): string | undefined {
+	private getTags(tags: ReadonlyArray<ts.JSDocTag>): { since?: string; deprecated?: string } {
+		const result: { since?: string; deprecated?: string } = {};
 		for (const tag of tags) {
 			if (tag.tagName.text === 'since' && typeof tag.comment === 'string') {
-				return tag.comment;
+				result.since = tag.comment;
+			} else if (tag.tagName.text === 'deprecated' && typeof tag.comment === 'string') {
+				result.deprecated = tag.comment;
+			}
+			if (result.since !== undefined && result.deprecated !== undefined) {
+				return result;
 			}
 		}
-		return undefined;
+		return result;
 	}
 }
 

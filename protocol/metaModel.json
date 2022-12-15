@@ -4602,7 +4602,8 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Indicates if this item is deprecated.\n@deprecated Use `tags` instead."
+					"documentation": "Indicates if this item is deprecated.\n@deprecated Use `tags` instead.",
+					"deprecated": "Use `tags` instead."
 				},
 				{
 					"name": "preselect",
@@ -5187,7 +5188,8 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Indicates if this symbol is deprecated.\n\n@deprecated Use tags instead"
+					"documentation": "Indicates if this symbol is deprecated.\n\n@deprecated Use tags instead",
+					"deprecated": "Use tags instead"
 				},
 				{
 					"name": "location",
@@ -5254,7 +5256,8 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Indicates if this symbol is deprecated.\n\n@deprecated Use tags instead"
+					"documentation": "Indicates if this symbol is deprecated.\n\n@deprecated Use tags instead",
+					"deprecated": "Use tags instead"
 				},
 				{
 					"name": "range",
@@ -7720,7 +7723,8 @@
 						]
 					},
 					"optional": true,
-					"documentation": "The rootPath of the workspace. Is null\nif no folder is open.\n\n@deprecated in favour of rootUri."
+					"documentation": "The rootPath of the workspace. Is null\nif no folder is open.\n\n@deprecated in favour of rootUri.",
+					"deprecated": "in favour of rootUri."
 				},
 				{
 					"name": "rootUri",
@@ -7737,7 +7741,8 @@
 							}
 						]
 					},
-					"documentation": "The rootUri of the workspace. Is null if no\nfolder is open. If both `rootPath` and `rootUri` are set\n`rootUri` wins.\n\n@deprecated in favour of workspaceFolders."
+					"documentation": "The rootUri of the workspace. Is null if no\nfolder is open. If both `rootPath` and `rootUri` are set\n`rootUri` wins.\n\n@deprecated in favour of workspaceFolders.",
+					"deprecated": "in favour of workspaceFolders."
 				},
 				{
 					"name": "capabilities",
@@ -14082,7 +14087,8 @@
 					}
 				]
 			},
-			"documentation": "MarkedString can be used to render human readable text. It is either a markdown string\nor a code-block that provides a language and a code snippet. The language identifier\nis semantically equal to the optional language identifier in fenced code blocks in GitHub\nissues. See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting\n\nThe pair of a language and a value is an equivalent to markdown:\n```${language}\n${value}\n```\n\nNote that markdown strings will be sanitized - that means html will be escaped.\n@deprecated use MarkupContent instead."
+			"documentation": "MarkedString can be used to render human readable text. It is either a markdown string\nor a code-block that provides a language and a code snippet. The language identifier\nis semantically equal to the optional language identifier in fenced code blocks in GitHub\nissues. See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting\n\nThe pair of a language and a value is an equivalent to markdown:\n```${language}\n${value}\n```\n\nNote that markdown strings will be sanitized - that means html will be escaped.\n@deprecated use MarkupContent instead.",
+			"deprecated": "use MarkupContent instead."
 		},
 		{
 			"name": "DocumentFilter",
