@@ -819,7 +819,7 @@ export interface MarkdownClientCapabilities {
 export namespace PositionEncodingKind {
 
 	/**
-	 * Character offsets count UTF-8 code units.
+	 * Character offsets count UTF-8 code units (e.g. bytes).
 	 */
 	export const UTF8: PositionEncodingKind = 'utf-8';
 
@@ -834,7 +834,7 @@ export namespace PositionEncodingKind {
 	/**
 	 * Character offsets count UTF-32 code units.
 	 *
-	 * Implementation note: these are the same as Unicode code points,
+	 * Implementation note: these are the same as Unicode codepoints,
 	 * so this `PositionEncodingKind` may also be used for an
 	 * encoding-agnostic representation of character offsets.
 	 */
