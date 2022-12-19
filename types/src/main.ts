@@ -3391,7 +3391,7 @@ export interface DocumentLink {
 	/**
 	 * The uri this link points to. If missing a resolve request is sent later.
 	 */
-	target?: string;
+	target?: URI;
 
 	/**
 	 * The tooltip text when you hover over this link.
