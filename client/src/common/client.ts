@@ -319,6 +319,23 @@ interface _Middleware {
 	window?: WindowMiddleware;
 }
 
+// A general middleware is applied to both requests and notifications
+interface GeneralMiddleware {
+	sendRequest?<R>(
+		this: void,
+		type: string | MessageSignature,
+		next: (type: string | MessageSignature, ...params: any[]) => Promise<R>,
+		...params: any[]
+	): Promise<R>;
+
+	sendNotification?<R>(
+		this: void,
+		type: string | MessageSignature,
+		next: (type: string | MessageSignature, params?: R) => Promise<void>,
+		params: R
+	): Promise<void>;
+}
+
 /**
  * The Middleware lets extensions intercept the request and notifications send and received
  * from the server
@@ -327,7 +344,7 @@ export type Middleware = _Middleware & TextDocumentSynchronizationMiddleware & C
 DocumentHighlightMiddleware & DocumentSymbolMiddleware & WorkspaceSymbolMiddleware & ReferencesMiddleware & TypeDefinitionMiddleware & ImplementationMiddleware &
 ColorProviderMiddleware & CodeActionMiddleware & CodeLensMiddleware & FormattingMiddleware & RenameMiddleware & DocumentLinkMiddleware & ExecuteCommandMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware;
+LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware & GeneralMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
@@ -691,7 +708,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full) {
 			await this.sendPendingFullTextDocumentChanges(connection);
 		}
-		return connection.sendRequest<R>(type, ...params);
+
+		const _sendRequest = this._clientOptions.middleware?.sendRequest;
+
+		return _sendRequest
+			? _sendRequest<R>(type, connection.sendRequest.bind(connection), ...params)
+			: connection.sendRequest<R>(type, ...params);
 	}
 
 	public onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
@@ -772,7 +794,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (openNotification !== undefined) {
 			this._pendingOpenNotifications.delete(openNotification);
 		}
-		return connection.sendNotification(type, params);
+
+		const _sendNotification = this._clientOptions.middleware?.sendNotification;
+
+		return _sendNotification
+			? _sendNotification(type, connection.sendNotification.bind(connection), params)
+			: connection.sendNotification(type, params);
 	}
 
 	public onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;

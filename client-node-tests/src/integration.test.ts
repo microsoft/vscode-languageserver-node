@@ -1454,6 +1454,36 @@ suite('Client integration', () => {
 		isDefined(symbol);
 		rangeEqual(symbol.location.range, 1, 2, 3, 4);
 	});
+
+	test('General middleware', async () => {
+		let middlewareCallCount = 0;
+
+		// Add a general middleware for both requests and notifications
+		middleware.sendRequest = (type, next, ...params) => {
+			middlewareCallCount++;
+			return next(type, ...params);
+		};
+
+		middleware.sendNotification = (type, next, params) => {
+			middlewareCallCount++;
+			return next(type, params);
+		};
+
+		// Send a request
+		const definitionProvider = client.getFeature(lsclient.DefinitionRequest.method).getProvider(document);
+		isDefined(definitionProvider);
+		await definitionProvider.provideDefinition(document, position, tokenSource.token);
+
+		// Send a notification
+		const notificationProvider = client.getFeature(lsclient.DidSaveTextDocumentNotification.method).getProvider(document);
+		isDefined(notificationProvider);
+		await notificationProvider.send(document);
+
+		// Verify that both the request and notification went through the middleware
+		middleware.sendRequest = undefined;
+		middleware.sendNotification = undefined;
+		assert.strictEqual(middlewareCallCount, 2);
+	});
 });
 
 function createNotebookData(): vscode.NotebookData {
