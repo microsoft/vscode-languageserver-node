@@ -99,7 +99,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 				? (item: VCodeAction, token: CancellationToken) => {
 					const client = this._client;
 					const middleware = this._client.middleware;
-					const resolveCodeAction: ResolveCodeActionSignature = async (item, token) => {
+					const _resolveCodeAction: ResolveCodeActionSignature = async (item, token) => {
 						return client.sendRequest(CodeActionResolveRequest.type, await client.code2ProtocolConverter.asCodeAction(item, token), token).then((result) => {
 							if (token.isCancellationRequested) {
 								return item;
@@ -110,8 +110,8 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 						});
 					};
 					return middleware.resolveCodeAction
-						? middleware.resolveCodeAction(item, token, resolveCodeAction)
-						: resolveCodeAction(item, token);
+						? middleware.resolveCodeAction(item, token, _resolveCodeAction)
+						: _resolveCodeAction(item, token);
 				}
 				: undefined
 		};
