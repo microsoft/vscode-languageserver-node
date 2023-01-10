@@ -15,6 +15,7 @@ import { LinkedMap, LRUCache, Touch } from './linkedMap';
 import { Disposable } from './disposable';
 import { Event, Emitter } from './events';
 import { AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken } from './cancellation';
+import { SharedArraySenderStrategy, SharedArrayReceiverStrategy } from './sharedArrayCancellation';
 import { MessageReader, AbstractMessageReader, ReadableStreamMessageReader, DataCallback, MessageReaderOptions, PartialMessageInfo } from './messageReader';
 import { MessageWriter, AbstractMessageWriter, WriteableStreamMessageWriter, MessageWriterOptions } from './messageWriter';
 import { AbstractMessageBuffer } from './messageBuffer';
@@ -46,6 +47,8 @@ export {
 	Event, Emitter,
 	// Export from cancellation
 	AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken,
+	// Export form sharedArrayCancellation
+	SharedArraySenderStrategy, SharedArrayReceiverStrategy,
 	// Export from message reader
 	MessageReader, AbstractMessageReader, ReadableStreamMessageReader, DataCallback, MessageReaderOptions, PartialMessageInfo,
 	// Export from message write
