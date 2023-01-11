@@ -10,7 +10,6 @@ import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/diagnostic';
-import { LanguageClient } from 'vscode-languageclient/node';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
@@ -66,6 +65,102 @@ function isInstanceOf<T>(value: T, clazz: any): asserts value is Exclude<T, unde
 function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport): asserts value is vsdiag.FullDocumentDiagnosticReport {
 	assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
 }
+
+interface FoldingRangeTestFeature {
+	getRegistration(documentSelector: lsclient.DocumentSelector | undefined, capability: undefined | lsclient.FoldingRangeOptions | (lsclient.FoldingRangeRegistrationOptions & lsclient.StaticRegistrationOptions)): [string | undefined, (lsclient.FoldingRangeRegistrationOptions & { documentSelector: lsclient.DocumentSelector }) | undefined];
+	getRegistrationOptions(documentSelector: lsclient.DocumentSelector | undefined, capability: undefined | lsclient.FoldingRangeOptions) : (lsclient.FoldingRangeRegistrationOptions & { documentSelector: lsclient.DocumentSelector }) | undefined;
+}
+
+suite ('Client Features', () => {
+
+	const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }];
+
+	function createClient(selector: lsclient.DocumentSelector | undefined): lsclient.LanguageClient {
+		const serverModule = path.join(__dirname, './servers/nullServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+		};
+
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector: selector,
+			synchronize: {},
+			initializationOptions: {},
+			middleware: {},
+		};
+		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
+
+		const result = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		result.registerProposedFeatures();
+		return result;
+	}
+
+	test('Document Selector - Client only', () => {
+		const client = createClient(documentSelector);
+
+		const feature = client.getFeature(lsclient.FoldingRangeRequest.method) as unknown as FoldingRangeTestFeature;
+		{
+			const [, options] = feature.getRegistration(documentSelector, {});
+			isDefined(options);
+			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+			assert.strictEqual(filter.scheme, 'lsptests');
+			assert.strictEqual(filter.language, 'bat');
+		}
+
+		{
+			const options = feature.getRegistrationOptions(documentSelector, {});
+			isDefined(options);
+			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+			assert.strictEqual(filter.scheme, 'lsptests');
+			assert.strictEqual(filter.language, 'bat');
+		}
+	});
+
+	test('Document Selector - Server null', () => {
+		const client = createClient(documentSelector);
+
+		const feature = client.getFeature(lsclient.FoldingRangeRequest.method) as unknown as FoldingRangeTestFeature;
+		const [, options] = feature.getRegistration(documentSelector, { documentSelector: null });
+		isDefined(options);
+		const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+		assert.strictEqual(filter.scheme, 'lsptests');
+		assert.strictEqual(filter.language, 'bat');
+	});
+
+	test('Document Selector - Client and server', () => {
+		const client = createClient(documentSelector);
+
+		const feature = client.getFeature(lsclient.FoldingRangeRequest.method) as unknown as FoldingRangeTestFeature;
+		{
+			const [, options] = feature.getRegistration(documentSelector, { documentSelector: [{ scheme: 'file', language: 'test' }] });
+			isDefined(options);
+			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+			assert.strictEqual(filter.scheme, 'file');
+			assert.strictEqual(filter.language, 'test');
+		}
+
+		{
+			// Note that the old registration spec has no support for providing a document selector.
+			// So ensure that even if we pass one in we will not honor it.
+			const options = feature.getRegistrationOptions(documentSelector, { documentSelector: [{ scheme: 'file', language: 'test' }] } as any);
+			isDefined(options);
+			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+			assert.strictEqual(filter.scheme, 'lsptests');
+			assert.strictEqual(filter.language, 'bat');
+		}
+	});
+
+	test('Document Selector - Server only', () => {
+		const client = createClient(undefined);
+
+		const feature = client.getFeature(lsclient.FoldingRangeRequest.method) as unknown as FoldingRangeTestFeature;
+		const [, options] = feature.getRegistration(undefined, { documentSelector: [{ scheme: 'file', language: 'test' }] });
+		isDefined(options);
+		const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+		assert.strictEqual(filter.scheme, 'file');
+		assert.strictEqual(filter.language, 'test');
+	});
+});
 
 suite('Client integration', () => {
 
@@ -1800,7 +1895,7 @@ suite('Server activation', () => {
 		}, /Client got disposed and can't be restarted./);
 	});
 
-	async function checkServerStart(client: LanguageClient, disposable: vscode.Disposable): Promise<void> {
+	async function checkServerStart(client: lsclient.LanguageClient, disposable: vscode.Disposable): Promise<void> {
 		return new Promise((resolve, reject) => {
 			const timeout = setTimeout(() => {
 				reject(new Error(`Server didn't start in 1000 ms.`));
