@@ -679,15 +679,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
-		try {
-			// Ensure we have a connection before we force the document sync.
-			const connection = await this.$start();
-			await this.sendPendingFullTextDocumentChanges(connection);
-			return await connection.sendRequest<R>(type, ...params);
-		} catch (error) {
-			this.error(`Sending request ${Is.string(type) ? type : type.method} failed.`, error);
-			throw error;
-		}
+
+		// Ensure we have a connection before we force the document sync.
+		const connection = await this.$start();
+		await this.sendPendingFullTextDocumentChanges(connection);
+		return connection.sendRequest<R>(type, ...params);
 	}
 
 	public onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
@@ -742,19 +738,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
-		try {
-			// Ensure we have a connection before we force the document sync.
-			const connection = await this.$start();
-			let exclude: string | undefined;
-			if (typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
-				exclude = (params as DidOpenTextDocumentParams)?.textDocument.uri;
-			}
-			await this.sendPendingFullTextDocumentChanges(connection, exclude);
-			return await connection.sendNotification(type, params);
-		} catch (error) {
-			this.error(`Sending notification ${Is.string(type) ? type : type.method} failed.`, error);
-			throw error;
+
+		// Ensure we have a connection before we force the document sync.
+		const connection = await this.$start();
+		let exclude: string | undefined;
+		if (typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+			exclude = (params as DidOpenTextDocumentParams)?.textDocument.uri;
 		}
+		await this.sendPendingFullTextDocumentChanges(connection, exclude);
+		return connection.sendNotification(type, params);
 	}
 
 	public onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
@@ -1381,16 +1373,21 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private async sendPendingFullTextDocumentChanges(connection: Connection, exclude?: string): Promise<void> {
 		return this._pendingChangeSemaphore.lock(async () => {
-			const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(exclude);
-			if (changes.length === 0) {
-				return;
-			}
-			for (const document of changes) {
-				const params = this.code2ProtocolConverter.asChangeTextDocumentParams(document);
-				// We await the send and not the delivery since it is more or less the same for
-				// notifications.
-				await connection.sendNotification(DidChangeTextDocumentNotification.type, params);
-				this._didChangeTextDocumentFeature!.notificationSent(document, DidChangeTextDocumentNotification.type, params);
+			try {
+				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(exclude);
+				if (changes.length === 0) {
+					return;
+				}
+				for (const document of changes) {
+					const params = this.code2ProtocolConverter.asChangeTextDocumentParams(document);
+					// We await the send and not the delivery since it is more or less the same for
+					// notifications.
+					await connection.sendNotification(DidChangeTextDocumentNotification.type, params);
+					this._didChangeTextDocumentFeature!.notificationSent(document, DidChangeTextDocumentNotification.type, params);
+				}
+			} catch (error) {
+				this.error(`Sending pending changes failed`, error, false);
+				throw error;
 			}
 		});
 	}
@@ -1404,7 +1401,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 			await this.sendPendingFullTextDocumentChanges(connection);
 
-		}).catch((error) => this.error(`Delivering pending changes failed`, error));
+		}).catch((error) => this.error(`Delivering pending changes failed`, error, false));
 	}
 
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
