@@ -75,7 +75,7 @@ suite ('Client Features', () => {
 
 	const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }];
 
-	function createClient(): lsclient.LanguageClient {
+	function createClient(selector: lsclient.DocumentSelector | undefined): lsclient.LanguageClient {
 		const serverModule = path.join(__dirname, './servers/nullServer.js');
 		const serverOptions: lsclient.ServerOptions = {
 			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
@@ -83,7 +83,7 @@ suite ('Client Features', () => {
 		};
 
 		const clientOptions: lsclient.LanguageClientOptions = {
-			documentSelector,
+			documentSelector: selector,
 			synchronize: {},
 			initializationOptions: {},
 			middleware: {},
@@ -96,18 +96,28 @@ suite ('Client Features', () => {
 	}
 
 	test('Document Selector - Client only', () => {
-		const client = createClient();
+		const client = createClient(documentSelector);
 
 		const feature = client.getFeature(lsclient.FoldingRangeRequest.method) as unknown as FoldingRangeTestFeature;
-		const [, options] = feature.getRegistration(documentSelector, {});
-		isDefined(options);
-		const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
-		assert.strictEqual(filter.scheme, 'lsptests');
-		assert.strictEqual(filter.language, 'bat');
+		{
+			const [, options] = feature.getRegistration(documentSelector, {});
+			isDefined(options);
+			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+			assert.strictEqual(filter.scheme, 'lsptests');
+			assert.strictEqual(filter.language, 'bat');
+		}
+
+		{
+			const options = feature.getRegistrationOptions(documentSelector, {});
+			isDefined(options);
+			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+			assert.strictEqual(filter.scheme, 'lsptests');
+			assert.strictEqual(filter.language, 'bat');
+		}
 	});
 
 	test('Document Selector - Server null', () => {
-		const client = createClient();
+		const client = createClient(documentSelector);
 
 		const feature = client.getFeature(lsclient.FoldingRangeRequest.method) as unknown as FoldingRangeTestFeature;
 		const [, options] = feature.getRegistration(documentSelector, { documentSelector: null });
@@ -118,10 +128,33 @@ suite ('Client Features', () => {
 	});
 
 	test('Document Selector - Client and server', () => {
-		const client = createClient();
+		const client = createClient(documentSelector);
 
 		const feature = client.getFeature(lsclient.FoldingRangeRequest.method) as unknown as FoldingRangeTestFeature;
-		const [, options] = feature.getRegistration(documentSelector, { documentSelector: [{ scheme: 'file', language: 'test' }] });
+		{
+			const [, options] = feature.getRegistration(documentSelector, { documentSelector: [{ scheme: 'file', language: 'test' }] });
+			isDefined(options);
+			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+			assert.strictEqual(filter.scheme, 'file');
+			assert.strictEqual(filter.language, 'test');
+		}
+
+		{
+			// Note that the old registration spec has no support for providing a document selector.
+			// So ensure that even if we pass one in we will not honor it.
+			const options = feature.getRegistrationOptions(documentSelector, { documentSelector: [{ scheme: 'file', language: 'test' }] } as any);
+			isDefined(options);
+			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
+			assert.strictEqual(filter.scheme, 'lsptests');
+			assert.strictEqual(filter.language, 'bat');
+		}
+	});
+
+	test('Document Selector - Server only', () => {
+		const client = createClient(undefined);
+
+		const feature = client.getFeature(lsclient.FoldingRangeRequest.method) as unknown as FoldingRangeTestFeature;
+		const [, options] = feature.getRegistration(undefined, { documentSelector: [{ scheme: 'file', language: 'test' }] });
 		isDefined(options);
 		const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
 		assert.strictEqual(filter.scheme, 'file');
