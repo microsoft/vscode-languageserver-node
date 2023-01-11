@@ -493,7 +493,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		}
 	}
 
-	public get registrationType():  RegistrationType<RO> {
+	public get registrationType(): RegistrationType<RO> {
 		return this._registrationType;
 	}
 
@@ -530,15 +530,15 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 			return [undefined, undefined];
 		} else if (TextDocumentRegistrationOptions.is(capability)) {
 			const id = StaticRegistrationOptions.hasId(capability) ? capability.id : UUID.generateUuid();
-			const selector = capability.documentSelector || documentSelector;
+			const selector = capability.documentSelector ?? documentSelector;
 			if (selector) {
-				return [id, Object.assign({}, { documentSelector: selector }, capability)];
+				return [id, Object.assign({}, capability, { documentSelector: selector })];
 			}
 		} else if (Is.boolean(capability) && capability === true || WorkDoneProgressOptions.is(capability)) {
 			if (!documentSelector) {
 				return [undefined, undefined];
 			}
-			const options: RO & { documentSelector: DocumentSelector } = (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, { documentSelector }, capability)) as any;
+			const options: RO & { documentSelector: DocumentSelector } = (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as any;
 			return [UUID.generateUuid(), options];
 		}
 		return [undefined, undefined];
