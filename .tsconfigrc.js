@@ -58,7 +58,8 @@ const vscodeMixin = {
 const common = {
 	extends: [ general ],
 	compilerOptions: {
-		rootDir: '.'
+		rootDir: '.',
+		types: [],
 	},
 	include: ['.']
 };

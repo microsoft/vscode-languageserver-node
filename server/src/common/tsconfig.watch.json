@@ -3,6 +3,7 @@
         "module": "commonjs",
         "moduleResolution": "node",
         "rootDir": ".",
+        "types": [],
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
