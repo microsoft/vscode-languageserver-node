@@ -192,6 +192,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<DidChangeTextDocumentParams>>;
 	private readonly _onPendingChangeAdded: EventEmitter<void>;
 	private readonly _pendingTextDocumentChanges: Map<string, TextDocument>;
+	private _syncKind: TextDocumentSyncKind;
 
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, pendingTextDocumentChanges: Map<string, TextDocument>) {
 		super(client);
@@ -199,6 +200,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		this._onNotificationSent = new EventEmitter();
 		this._onPendingChangeAdded = new EventEmitter();
 		this._pendingTextDocumentChanges = pendingTextDocumentChanges;
+		this._syncKind = TextDocumentSyncKind.None;
 	}
 
 	public get onNotificationSent(): Event<NotificationSendEvent<DidChangeTextDocumentParams>> {
@@ -207,6 +209,10 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 
 	public get onPendingChangeAdded(): Event<void> {
 		return this._onPendingChangeAdded.event;
+	}
+
+	public get syncKind(): TextDocumentSyncKind {
+		return this._syncKind;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentChangeRegistrationOptions> {
@@ -241,6 +247,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 				documentSelector: this._client.protocol2CodeConverter.asDocumentSelector(data.registerOptions.documentSelector),
 			}
 		);
+		this.updateSyncKind(data.registerOptions.syncKind);
 	}
 
 	public *getDocumentSelectors(): IterableIterator<VDocumentSelector> {
@@ -295,33 +302,45 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 
 	public unregister(id: string): void {
 		this._changeData.delete(id);
-		if (this._changeData.size === 0 && this._listener) {
-			this._listener.dispose();
-			this._listener = undefined;
+		if (this._changeData.size === 0) {
+			if (this._listener) {
+				this._listener.dispose();
+				this._listener = undefined;
+			}
+			this._syncKind = TextDocumentSyncKind.None;
+		} else {
+			this._syncKind = TextDocumentSyncKind.None as TextDocumentSyncKind;
+			for (const changeData of this._changeData.values()) {
+				this.updateSyncKind(changeData.syncKind);
+				if (this._syncKind === TextDocumentSyncKind.Full) {
+					break;
+				}
+			}
 		}
 	}
 
 	public dispose(): void {
 		this._pendingTextDocumentChanges.clear();
 		this._changeData.clear();
+		this._syncKind = TextDocumentSyncKind.None;
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
 		}
 	}
 
-	public getPendingDocumentChanges(exclude?: string): TextDocument[] {
+	public getPendingDocumentChanges(excludes: Set<string>): TextDocument[] {
 		if (this._pendingTextDocumentChanges.size === 0) {
 			return [];
 		}
 		let result: TextDocument[];
-		if (exclude === undefined) {
+		if (excludes.size === 0) {
 			result = Array.from(this._pendingTextDocumentChanges.values());
 			this._pendingTextDocumentChanges.clear();
 		} else {
 			result = [];
 			for (const entry of this._pendingTextDocumentChanges) {
-				if (entry[0] !== exclude) {
+				if (!excludes.has(entry[0])) {
 					result.push(entry[1]);
 					this._pendingTextDocumentChanges.delete(entry[0]);
 				}
@@ -341,6 +360,22 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 			}
 		}
 		return undefined;
+	}
+
+	private updateSyncKind(syncKind: TextDocumentSyncKind): void {
+		if (this._syncKind === TextDocumentSyncKind.Full) {
+			return;
+		}
+		switch (syncKind) {
+			case TextDocumentSyncKind.Full:
+				this._syncKind = syncKind;
+				break;
+			case TextDocumentSyncKind.Incremental:
+				if (this._syncKind === TextDocumentSyncKind.None) {
+					this._syncKind= TextDocumentSyncKind.Incremental;
+				}
+				break;
+		}
 	}
 }
 
