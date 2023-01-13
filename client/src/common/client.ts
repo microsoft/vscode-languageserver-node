@@ -481,6 +481,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _syncedDocuments: Map<string, TextDocument>;
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
+	private readonly _pendingOpenNotifications: Set<string>;
 	private readonly _pendingChangeSemaphore: Semaphore<void>;
 	private readonly _pendingChangeDelayer: Delayer<void>;
 
@@ -564,6 +565,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._traceOutputChannel = clientOptions.traceOutputChannel;
 		this._diagnostics = undefined;
 
+		this._pendingOpenNotifications = new Set();
 		this._pendingChangeSemaphore = new Semaphore(1);
 		this._pendingChangeDelayer = new Delayer<void>(250);
 
@@ -682,7 +684,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
-		await this.sendPendingFullTextDocumentChanges(connection);
+		// If any document is synced in full mode make sure we flush any pending
+		// full document syncs.
+		if (this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full) {
+			await this.sendPendingFullTextDocumentChanges(connection);
+		}
 		return connection.sendRequest<R>(type, ...params);
 	}
 
@@ -739,13 +745,31 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
 
+		const needsPendingFullTextDocumentSync: boolean = this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full;
+		let openNotification: string | undefined;
+		if (needsPendingFullTextDocumentSync && typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+			openNotification = (params as DidOpenTextDocumentParams)?.textDocument.uri;
+			this._pendingOpenNotifications.add(openNotification);
+		}
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
-		let exclude: string | undefined;
-		if (typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
-			exclude = (params as DidOpenTextDocumentParams)?.textDocument.uri;
+		// If any document is synced in full mode make sure we flush any pending
+		// full document syncs.
+		if (needsPendingFullTextDocumentSync) {
+			await this.sendPendingFullTextDocumentChanges(connection);
 		}
-		await this.sendPendingFullTextDocumentChanges(connection, exclude);
+		// We need to remove the pending open notification before we actually
+		// send the notification over the connection. Otherwise there could be
+		// a request coming in that although the open notification got already put
+		// onto the wire will ignore pending document changes.
+		//
+		// Since the code path of connection.sendNotification is actually sync
+		// until the message is handed of to the writer and the writer as a semaphore
+		// lock with a capacity of 1 no additional async scheduling can happen until
+		// the message is actually handed of.
+		if (openNotification !== undefined) {
+			this._pendingOpenNotifications.delete(openNotification);
+		}
 		return connection.sendNotification(type, params);
 	}
 
@@ -1371,10 +1395,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		});
 	}
 
-	private async sendPendingFullTextDocumentChanges(connection: Connection, exclude?: string): Promise<void> {
+	private async sendPendingFullTextDocumentChanges(connection: Connection): Promise<void> {
 		return this._pendingChangeSemaphore.lock(async () => {
 			try {
-				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(exclude);
+				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(this._pendingOpenNotifications);
 				if (changes.length === 0) {
 					return;
 				}
