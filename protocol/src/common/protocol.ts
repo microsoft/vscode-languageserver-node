@@ -13,7 +13,7 @@ import {
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
 	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer,
-	InsertTextMode, LSPAny, WorkspaceSymbol, URI, WorkspaceFolder
+	InsertTextMode, LSPAny, WorkspaceSymbol, URI, WorkspaceFolder, LanguageIdentifierKind
 } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
@@ -145,21 +145,21 @@ let __noDynamicImport: LocationLink | undefined;
  */
 export type TextDocumentFilter = {
 	/** A language id, like `typescript`. */
-	language: string;
+	language: LanguageIdentifierKind;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
-	language?: string;
+	language?: LanguageIdentifierKind;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme: string;
 	/** A glob pattern, like `*.{ts,js}`. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
-	language?: string;
+	language?: LanguageIdentifierKind;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
 	/** A glob pattern, like `*.{ts,js}`. */

@@ -1801,6 +1801,68 @@ export namespace OptionalVersionedTextDocumentIdentifier {
 	}
 }
 
+export type LanguageIdentifierKind = string;
+
+export namespace LanguageIdentifierKind {
+	export const ABAP: LanguageIdentifierKind = 'abap';
+	export const Bat: LanguageIdentifierKind = 'bat';
+	export const BibTeX: LanguageIdentifierKind = 'bibtex';
+	export const Clojure: LanguageIdentifierKind =	'clojure';
+	export const Coffeescript: LanguageIdentifierKind =	'coffeescript';
+	export const C: LanguageIdentifierKind = 'c';
+	export const CPP: LanguageIdentifierKind = 'cpp';
+	export const CSharp: LanguageIdentifierKind = 'csharp';
+	export const CSS: LanguageIdentifierKind =	'css';
+	export const Diff: LanguageIdentifierKind =	'diff';
+	export const Dart: LanguageIdentifierKind =	'dart';
+	export const Dockerfile: LanguageIdentifierKind = 'dockerfile';
+	export const Elixir: LanguageIdentifierKind = 'elixir';
+	export const Erlang: LanguageIdentifierKind = 'erlang';
+	export const FSharp: LanguageIdentifierKind = 'fsharp';
+	export const GitCommit: LanguageIdentifierKind = 'git-commit';
+	export const GitRebase: LanguageIdentifierKind = 'git-rebase';
+	export const Go: LanguageIdentifierKind = 'go';
+	export const Groovy: LanguageIdentifierKind = 'groovy';
+	export const Handlebars: LanguageIdentifierKind = 'handlebars';
+	export const HTML: LanguageIdentifierKind =	'html';
+	export const Ini: LanguageIdentifierKind = 'ini';
+	export const Java: LanguageIdentifierKind =	'java';
+	export const JavaScript: LanguageIdentifierKind = 'javascript';
+	export const JavaScriptReact: LanguageIdentifierKind = 'javascriptreact';
+	export const JSON: LanguageIdentifierKind =	'json';
+	export const LaTeX: LanguageIdentifierKind =	'latex';
+	export const Less: LanguageIdentifierKind =	'less';
+	export const Lua: LanguageIdentifierKind =	'lua';
+	export const Makefile: LanguageIdentifierKind =	'makefile';
+	export const Markdown: LanguageIdentifierKind =	'markdown';
+	export const ObjectiveC: LanguageIdentifierKind = 'objective-c';
+	export const ObjectiveCPP: LanguageIdentifierKind = 'objective-cpp';
+	export const Perl: LanguageIdentifierKind =	'perl';
+	export const Perl6: LanguageIdentifierKind = 'perl6';
+	export const PHP: LanguageIdentifierKind = 'php';
+	export const Powershell: LanguageIdentifierKind = 'powershell';
+	export const Pug: LanguageIdentifierKind = 'jade';
+	export const Python: LanguageIdentifierKind = 'python';
+	export const R: LanguageIdentifierKind = 'r';
+	export const Razor: LanguageIdentifierKind = 'razor'; // cshtml
+	export const Ruby: LanguageIdentifierKind =	'ruby';
+	export const Rust: LanguageIdentifierKind =	'rust';
+	export const SCSS: LanguageIdentifierKind =	'scss';
+	export const SASS: LanguageIdentifierKind = 'sass';
+	export const Scala: LanguageIdentifierKind = 'scala';
+	export const ShaderLab: LanguageIdentifierKind = 'shaderlab';
+	export const ShellScript: LanguageIdentifierKind = 'shellscript';
+	export const SQL: LanguageIdentifierKind = 'sql';
+	export const Swift: LanguageIdentifierKind = 'swift';
+	export const TypeScript: LanguageIdentifierKind = 'typescript';
+	export const TypeScriptReact: LanguageIdentifierKind = 'typescriptreact';
+	export const TeX: LanguageIdentifierKind = 'tex';
+	export const VisualBasic: LanguageIdentifierKind = 'vb';
+	export const XML: LanguageIdentifierKind = 'xml';
+	export const XSL: LanguageIdentifierKind = 'xsl';
+	export const YAML: LanguageIdentifierKind = 'yaml';
+}
+
 /**
  * An item to transfer a text document from the client to the
  * server.
@@ -1814,7 +1876,7 @@ export interface TextDocumentItem {
 	/**
 	 * The text document's language identifier.
 	 */
-	languageId: string;
+	languageId: LanguageIdentifierKind;
 
 	/**
 	 * The version number of this document (it will increase after each
