@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ProgressToken, TraceValues } from 'vscode-jsonrpc';
+import { ProgressToken, RequestHandler, TraceValues } from 'vscode-jsonrpc';
 
 import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
 
@@ -335,6 +335,7 @@ export namespace RegistrationRequest {
 	export const method: 'client/registerCapability' = 'client/registerCapability';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<RegistrationParams, void, never, void, void>(method);
+	export type HandlerSignature = RequestHandler<RegistrationParams, void, void>;
 }
 
 /**
@@ -368,6 +369,7 @@ export namespace UnregistrationRequest {
 	export const method: 'client/unregisterCapability' = 'client/unregisterCapability';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<UnregistrationParams, void, never, void, void>(method);
+	export type HandlerSignature = RequestHandler<UnregistrationParams, void, void>;
 }
 
 export interface WorkDoneProgressParams {
