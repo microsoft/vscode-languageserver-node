@@ -1429,15 +1429,15 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					cancellationStrategy.sender.cleanup(id);
 					disposable?.dispose();
 
-				};				
+				};
+				const stack = (new Error()).stack;
 				const rejectWithCleanup = (r: any) => {
-					r.stack = responsePromise!.stack
+					if (r && stack) r.stack = stack;
 					reject(r);
 					cancellationStrategy.sender.cleanup(id);
 					disposable?.dispose();
 				};
 				const responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
-				Error.captureStackTrace(responsePromise);
 				try {
 					await messageWriter.write(requestMessage);
 					responsePromises.set(id, responsePromise);
