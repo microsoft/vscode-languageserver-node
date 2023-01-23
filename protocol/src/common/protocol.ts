@@ -3738,7 +3738,7 @@ export interface WorkspaceEditClientCapabilities {
 }
 
 /**
- * The parameters passed via a apply workspace edit request.
+ * The parameters passed via an apply workspace edit request.
  */
 export interface ApplyWorkspaceEditParams {
 	/**
