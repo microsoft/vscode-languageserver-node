@@ -35,7 +35,7 @@ import {
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
-	MessageStrategy, DidOpenTextDocumentParams
+	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -1917,6 +1917,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		SemanticTokensRangeRequest.method,
 		SemanticTokensDeltaRequest.method
 	]);
+	private static CancellableResolveCalls: Set<string> = new Set([
+		CompletionResolveRequest.method,
+		CodeLensResolveRequest.method,
+		CodeActionResolveRequest.method,
+		InlayHintResolveRequest.method,
+		DocumentLinkResolveRequest.method,
+		WorkspaceSymbolResolveRequest.method
+	]);
+
 	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
@@ -1936,7 +1945,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					}
 				}
 			} else if (error.code === LSPErrorCodes.ContentModified) {
-				if (BaseLanguageClient.RequestsToCancelOnContentModified.has(type.method)) {
+				if (BaseLanguageClient.RequestsToCancelOnContentModified.has(type.method) || BaseLanguageClient.CancellableResolveCalls.has(type.method)) {
 					throw new CancellationError();
 				} else {
 					return defaultValue;
