@@ -11,7 +11,7 @@ import {
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, WorkDoneProgressCreateRequest, WillCreateFilesRequest,
 	WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification,
-	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind, DocumentSymbol
+	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind, DocumentSymbol, InlineCompletionItem
 } from 'vscode-languageserver/node';
 
 import { URI } from 'vscode-uri';
@@ -105,6 +105,7 @@ connection.onInitialize((params: InitializeParams): any => {
 				delta: true
 			}
 		},
+		inlineCompletionProvider: {},
 		workspace: {
 			fileOperations: {
 				// Static reg is folders + .txt files with operation kind in the path
@@ -511,6 +512,12 @@ connection.languages.inlayHint.resolve((hint) => {
 	(hint.label as InlayHintLabelPart[])[0].tooltip = 'tooltip';
 	hint.textEdits = [TextEdit.insert(Position.create(1, 1), 'number')];
 	return hint;
+});
+
+connection.languages.inlineCompletion.on((_params) => {
+	return [
+		InlineCompletionItem.create('text inline', 'te', Range.create(1,2,3,4))
+	];
 });
 
 connection.onRequest(

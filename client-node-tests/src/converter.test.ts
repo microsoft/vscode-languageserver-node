@@ -1244,6 +1244,26 @@ suite('Protocol Converter', () => {
 		strictEqual((result[1] as ProtocolInlayHint).data, '2');
 	});
 
+	test('InlineCompletions', async () => {
+		const items: proto.InlineCompletionItem[] = [
+			proto.InlineCompletionItem.create('insert text', 'in', proto.Range.create(1, 2, 6, 7)),
+			proto.InlineCompletionItem.create('insert text', 'in', proto.Range.create(1, 2, 6, 7), undefined, proto.InsertTextFormat.PlainText),
+			proto.InlineCompletionItem.create('insert text', 'in', proto.Range.create(1, 2, 6, 7), undefined, proto.InsertTextFormat.Snippet),
+		];
+
+		const result = await p2c.asInlineCompletionResult(items);
+		ok(result.every((r) => r.range instanceof vscode.InlineCompletionItem));
+		for (const r of result) {
+			rangeEqual(r.range!, proto.Range.create(1, 2, 6, 7));
+		}
+
+		ok(result[0] instanceof vscode.InlineCompletionItem && result[0].insertText === 'insert text');
+		ok(result[0] instanceof vscode.InlineCompletionItem && result[0].filterText === 'in');
+		ok(typeof result[0].insertText === 'string');
+		ok(typeof result[1].insertText === 'string');
+		ok(result[2].insertText instanceof vscode.SnippetString);
+	});
+
 	test('Bug #361', () => {
 		const item: proto.CompletionItem = {
 			'label': 'MyLabel',

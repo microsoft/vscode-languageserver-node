@@ -1,6 +1,6 @@
 {
 	"metaData": {
-		"version": "3.17.0"
+		"version": "3.18.0"
 	},
 	"requests": [
 		{
@@ -566,7 +566,7 @@
 				"kind": "reference",
 				"name": "ShowDocumentParams"
 			},
-			"documentation": "A request to show a document. This request might open an\nexternal program depending on the value of the URI to open.\nFor example a request to open `https://code.visualstudio.com/`\nwill very likely open the URI in a WEB browser.\n\n@since 3.16.0",
+			"documentation": "A request to show a document. This request might open an\nexternal program depending on the value of the URI to open.\nFor example, a request to open `https://code.visualstudio.com/`\nwill very likely open the URI in a WEB browser.\n\n@since 3.16.0",
 			"since": "3.16.0"
 		},
 		{
@@ -845,6 +845,40 @@
 			},
 			"documentation": "A request to provide inline values in a document. The request's parameter is of\ntype {@link InlineValueParams}, the response is of type\n{@link InlineValue InlineValue[]} or a Thenable that resolves to such.\n\n@since 3.17.0",
 			"since": "3.17.0"
+		},
+		{
+			"method": "textDocument/inlineCompletion",
+			"result": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "InlineCompletionItem"
+						}
+					},
+					{
+						"kind": "reference",
+						"name": "InlineCompletionList"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
+				]
+			},
+			"messageDirection": "clientToServer",
+			"params": {
+				"kind": "reference",
+				"name": "InlineCompletionParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "InlineCompletionRegistrationOptions"
+			},
+			"documentation": "The inline completion request is sent from the client to the server to compute inline completions for a given text document either explicitly by a user gesture or implicitly when typing.",
+			"since": "3.18.0"
 		},
 		{
 			"method": "workspace/inlineValue/refresh",
@@ -1633,7 +1667,7 @@
 				"kind": "reference",
 				"name": "DocumentFormattingRegistrationOptions"
 			},
-			"documentation": "A request to to format a whole document."
+			"documentation": "A request to format a whole document."
 		},
 		{
 			"method": "textDocument/rangeFormatting",
@@ -1662,7 +1696,7 @@
 				"kind": "reference",
 				"name": "DocumentRangeFormattingRegistrationOptions"
 			},
-			"documentation": "A request to to format a range in a document."
+			"documentation": "A request to format a range in a document."
 		},
 		{
 			"method": "textDocument/onTypeFormatting",
@@ -3070,7 +3104,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Indicates to show the resource in an external program.\nTo show for example `https://code.visualstudio.com/`\nin the default WEB browser set `external` to `true`."
+					"documentation": "Indicates to show the resource in an external program.\nTo show, for example, `https://code.visualstudio.com/`\nin the default WEB browser set `external` to `true`."
 				},
 				{
 					"name": "takeFocus",
@@ -3259,7 +3293,7 @@
 					"since": "3.16.0"
 				}
 			],
-			"documentation": "A workspace edit represents changes to many resources managed in the workspace. The edit\nshould either provide `changes` or `documentChanges`. If documentChanges are present\nthey are preferred over `changes` if the client can handle versioned document edits.\n\nSince version 3.13.0 a workspace edit can contain resource operations as well. If resource\noperations are present clients need to execute the operations in the order in which they\nare provided. So a workspace edit for example can consist of the following two changes:\n(1) a create file a.txt and (2) a text document edit which insert text into file a.txt.\n\nAn invalid sequence (e.g. (1) delete file a.txt and (2) insert text into file a.txt) will\ncause failure of the operation. How the client recovers from the failure is described by\nthe client capability: `workspace.workspaceEdit.failureHandling`"
+			"documentation": "A workspace edit represents changes to many resources managed in the workspace. The edit\nshould either provide `changes` or `documentChanges`. If documentChanges are present\nthey are preferred over `changes` if the client can handle versioned document edits.\n\nSince version 3.13.0 a workspace edit can contain resource operations as well. If resource\noperations are present clients need to execute the operations in the order in which they\nare provided. So a workspace edit, for example, can consist of the following two changes:\n(1) a create file a.txt and (2) a text document edit which insert text into file a.txt.\n\nAn invalid sequence (e.g. (1) delete file a.txt and (2) insert text into file a.txt) will\ncause failure of the operation. How the client recovers from the failure is described by\nthe client capability: `workspace.workspaceEdit.failureHandling`"
 		},
 		{
 			"name": "FileOperationRegistrationOptions",
@@ -3344,7 +3378,7 @@
 						"kind": "base",
 						"name": "string"
 					},
-					"documentation": "The scheme of the moniker. For example tsc or .Net"
+					"documentation": "The scheme of the moniker. For example, `tsc` or `.Net`"
 				},
 				{
 					"name": "identifier",
@@ -4639,7 +4673,7 @@
 						"name": "string"
 					},
 					"optional": true,
-					"documentation": "A string that should be inserted into a document when selecting\nthis completion. When `falsy` the {@link CompletionItem.label label}\nis used.\n\nThe `insertText` is subject to interpretation by the client side.\nSome tools might not take the string literally. For example\nVS Code when code complete is requested in this example\n`con<cursor position>` and a completion item with an `insertText` of\n`console` is provided it will only insert `sole`. Therefore it is\nrecommended to use `textEdit` instead since it avoids additional client\nside interpretation."
+					"documentation": "A string that should be inserted into a document when selecting\nthis completion. When `falsy` the {@link CompletionItem.label label}\nis used.\n\nThe `insertText` is subject to interpretation by the client side.\nSome tools might not take the string literally. For example,\nVS Code when code complete is requested in this example\n`con<cursor position>` and a completion item with an `insertText` of\n`console` is provided it will only insert `sole`. Therefore it is\nrecommended to use `textEdit` instead since it avoids additional client\nside interpretation."
 				},
 				{
 					"name": "insertTextFormat",
@@ -4699,7 +4733,7 @@
 						}
 					},
 					"optional": true,
-					"documentation": "An optional array of additional {@link TextEdit text edits} that are applied when\nselecting this completion. Edits must not overlap (including the same insert position)\nwith the main {@link CompletionItem.textEdit edit} nor with themselves.\n\nAdditional text edits should be used to change text unrelated to the current cursor position\n(for example adding an import statement at the top of the file if the completion item will\ninsert an unqualified type)."
+					"documentation": "An optional array of additional {@link TextEdit text edits} that are applied when\nselecting this completion. Edits must not overlap (including the same insert position)\nwith the main {@link CompletionItem.textEdit edit} nor with themselves.\n\nAdditional text edits should be used to change text unrelated to the current cursor position\n(for example, adding an import statement at the top of the file if the completion item will\ninsert an unqualified type)."
 				},
 				{
 					"name": "commitCharacters",
@@ -5991,7 +6025,7 @@
 						"name": "string"
 					},
 					"optional": true,
-					"documentation": "An optional label of the workspace edit. This label is\npresented in the user interface for example on an undo\nstack to undo the workspace edit."
+					"documentation": "An optional label of the workspace edit. This label is\npresented in the user interface, for example, on an undo\nstack to undo the workspace edit."
 				},
 				{
 					"name": "edit",
@@ -6002,7 +6036,7 @@
 					"documentation": "The edits to apply."
 				}
 			],
-			"documentation": "The parameters passed via a apply workspace edit request."
+			"documentation": "The parameters passed via an apply workspace edit request."
 		},
 		{
 			"name": "ApplyWorkspaceEditResult",
@@ -6140,7 +6174,7 @@
 						"name": "string"
 					},
 					"optional": true,
-					"documentation": "Optional, a final message indicating to for example indicate the outcome\nof the operation."
+					"documentation": "Optional, a final message indicating to, for example, indicate the outcome\nof the operation."
 				}
 			]
 		},
@@ -6295,7 +6329,7 @@
 						"kind": "reference",
 						"name": "Range"
 					},
-					"documentation": "The full target range of this link. If the target for example is a symbol then target range is the\nrange enclosing this symbol not including leading/trailing whitespace but everything else\nlike comments. This information is typically used to highlight the range in the editor."
+					"documentation": "The full target range of this link. If the target, for example, is a symbol then target range is the\nrange enclosing this symbol not including leading/trailing whitespace but everything else\nlike comments. This information is typically used to highlight the range in the editor."
 				},
 				{
 					"name": "targetSelectionRange",
@@ -7623,7 +7657,7 @@
 					"documentation": "Options necessary for the registration."
 				}
 			],
-			"documentation": "General parameters to to register for an notification or to register a provider."
+			"documentation": "General parameters to register for a notification or to register a provider."
 		},
 		{
 			"name": "Unregistration",
@@ -8438,6 +8472,25 @@
 					},
 					"optional": true,
 					"documentation": "Experimental server capabilities."
+				},
+				{
+					"name": "InlineCompletionProvider",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "InlineCompletionOptions"
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "The server provides inline completions.",
+					"since": "3.18.0"
 				}
 			],
 			"documentation": "Defines the capabilities provided by a language\nserver."
@@ -8717,7 +8770,7 @@
 						}
 					},
 					"optional": true,
-					"documentation": "Most tools trigger completion request automatically without explicitly requesting\nit using a keyboard shortcut (e.g. Ctrl+Space). Typically they do so when the user\nstarts to type an identifier. For example if the user types `c` in a JavaScript file\ncode complete will automatically pop up present `console` besides others as a\ncompletion item. Characters that make up identifiers don't need to be listed here.\n\nIf code complete should automatically be trigger on characters not being valid inside\nan identifier (for example `.` in JavaScript) list them in `triggerCharacters`."
+					"documentation": "Most tools trigger completion request automatically without explicitly requesting\nit using a keyboard shortcut (e.g. Ctrl+Space). Typically they do so when the user\nstarts to type an identifier. For example, if the user types `c` in a JavaScript file\ncode complete will automatically pop up present `console` besides others as a\ncompletion item. Characters that make up identifiers don't need to be listed here.\n\nIf code complete should automatically be trigger on characters not being valid inside\nan identifier (for example, `.` in JavaScript) list them in `triggerCharacters`."
 				},
 				{
 					"name": "allCommitCharacters",
@@ -10606,6 +10659,16 @@
 					"optional": true,
 					"documentation": "Capabilities specific to the diagnostic pull model.\n\n@since 3.17.0",
 					"since": "3.17.0"
+				},
+				{
+					"name": "inlineCompletion",
+					"type": {
+						"kind": "reference",
+						"name": "InlineCompletionClientCapabilities"
+					},
+					"optional": true,
+					"documentation": "Capabilities specific to the `textDocument/inlineCompletion` request.",
+					"since": "3.18.0"
 				}
 			],
 			"documentation": "Text document specific client capabilities."
@@ -10984,7 +11047,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the client implementation supports a refresh request sent from\nthe server to the client.\n\nNote that this event is global and will force the client to refresh all\nsemantic tokens currently shown. It should be used with absolute care\nand is useful for situation where a server for example detects a project\nwide change that requires such a calculation."
+					"documentation": "Whether the client implementation supports a refresh request sent from\nthe server to the client.\n\nNote that this event is global and will force the client to refresh all\nsemantic tokens currently shown. It should be used with absolute care\nand is useful for situation where a server, for example, detects a project\nwide change that requires such a calculation."
 				}
 			],
 			"documentation": "@since 3.16.0",
@@ -11000,7 +11063,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the client implementation supports a refresh request sent from the\nserver to the client.\n\nNote that this event is global and will force the client to refresh all\ncode lenses currently shown. It should be used with absolute care and is\nuseful for situation where a server for example detect a project wide\nchange that requires such a calculation."
+					"documentation": "Whether the client implementation supports a refresh request sent from the\nserver to the client.\n\nNote that this event is global and will force the client to refresh all\ncode lenses currently shown. It should be used with absolute care and is\nuseful for situation where a server, for example, detect a project wide\nchange that requires such a calculation."
 				}
 			],
 			"documentation": "@since 3.16.0",
@@ -11086,7 +11149,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the client implementation supports a refresh request sent from the\nserver to the client.\n\nNote that this event is global and will force the client to refresh all\ninline values currently shown. It should be used with absolute care and is\nuseful for situation where a server for example detects a project wide\nchange that requires such a calculation."
+					"documentation": "Whether the client implementation supports a refresh request sent from the\nserver to the client.\n\nNote that this event is global and will force the client to refresh all\ninline values currently shown. It should be used with absolute care and is\nuseful for situation where a server, for example, detects a project wide\nchange that requires such a calculation."
 				}
 			],
 			"documentation": "Client workspace capabilities specific to inline values.\n\n@since 3.17.0",
@@ -11102,7 +11165,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the client implementation supports a refresh request sent from\nthe server to the client.\n\nNote that this event is global and will force the client to refresh all\ninlay hints currently shown. It should be used with absolute care and\nis useful for situation where a server for example detects a project wide\nchange that requires such a calculation."
+					"documentation": "Whether the client implementation supports a refresh request sent from\nthe server to the client.\n\nNote that this event is global and will force the client to refresh all\ninlay hints currently shown. It should be used with absolute care and\nis useful for situation where a server, for example, detects a project wide\nchange that requires such a calculation."
 				}
 			],
 			"documentation": "Client workspace capabilities specific to inlay hints.\n\n@since 3.17.0",
@@ -11118,7 +11181,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the client implementation supports a refresh request sent from\nthe server to the client.\n\nNote that this event is global and will force the client to refresh all\npulled diagnostics currently shown. It should be used with absolute care and\nis useful for situation where a server for example detects a project wide\nchange that requires such a calculation."
+					"documentation": "Whether the client implementation supports a refresh request sent from\nthe server to the client.\n\nNote that this event is global and will force the client to refresh all\npulled diagnostics currently shown. It should be used with absolute care and\nis useful for situation where a server, for example, detects a project wide\nchange that requires such a calculation."
 				}
 			],
 			"documentation": "Workspace client capabilities specific to diagnostic pull requests.\n\n@since 3.17.0",
@@ -11826,7 +11889,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the client honors the change annotations in\ntext edits and resource operations returned via the\n`CodeAction#edit` property by for example presenting\nthe workspace edit in the user interface and asking\nfor confirmation.\n\n@since 3.16.0",
+					"documentation": "Whether the client honors the change annotations in\ntext edits and resource operations returned via the\n`CodeAction#edit` property by, for example, presenting\nthe workspace edit in the user interface and asking\nfor confirmation.\n\n@since 3.16.0",
 					"since": "3.16.0"
 				}
 			],
@@ -11970,7 +12033,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the client honors the change annotations in\ntext edits and resource operations returned via the\nrename request's workspace edit by for example presenting\nthe workspace edit in the user interface and asking\nfor confirmation.\n\n@since 3.16.0",
+					"documentation": "Whether the client honors the change annotations in\ntext edits and resource operations returned via the\nrename request's workspace edit by, for example, presenting\nthe workspace edit in the user interface and asking\nfor confirmation.\n\n@since 3.16.0",
 					"since": "3.16.0"
 				}
 			]
@@ -12225,7 +12288,7 @@
 							]
 						}
 					},
-					"documentation": "Which requests the client supports and might send to the server\ndepending on the server's capability. Please note that clients might not\nshow semantic tokens or degrade some of the user experience if a range\nor full request is advertised by the client but not provided by the\nserver. If for example the client capability `requests.full` and\n`request.range` are both set to true but the server only provides a\nrange provider the client might not render a minimap correctly or might\neven decide to not show any semantic tokens at all."
+					"documentation": "Which requests the client supports and might send to the server\ndepending on the server's capability. Please note that clients might not\nshow semantic tokens or degrade some of the user experience if a range\nor full request is advertised by the client but not provided by the\nserver. If, for example, the client capability `requests.full` and\n`request.range` are both set to true but the server only provides a\nrange provider the client might not render a minimap correctly or might\neven decide to not show any semantic tokens at all."
 				},
 				{
 					"name": "tokenTypes",
@@ -12557,6 +12620,183 @@
 			],
 			"documentation": "Client capabilities specific to the used markdown parser.\n\n@since 3.16.0",
 			"since": "3.16.0"
+		},
+		{
+			"name": "InlineCompletionParams",
+			"properties": [
+				{
+					"name": "context",
+					"type": {
+						"kind": "reference",
+						"name": "InlineCompletionContext"
+					},
+					"documentation": "Additional information about the context in which inline completions were requested."
+				}
+			],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "TextDocumentPositionParams"
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "WorkDoneProgressParams"
+				}
+			],
+			"documentation": "Inline completion parameters",
+			"since": "3.18.0"
+		},
+		{
+			"name": "InlineCompletionContext",
+			"properties": [
+				{
+					"name": "triggerKind",
+					"type": {
+						"kind": "reference",
+						"name": "InlineCompletionTriggerKind"
+					},
+					"documentation": "Describes how the inline completion was triggered."
+				},
+				{
+					"name": "selectedCompletionInfo",
+					"type": {
+						"kind": "reference",
+						"name": "SelectedCompletionInfo"
+					},
+					"optional": true,
+					"documentation": "Provides information about the currently selected item in the autocomplete widget if it is visible."
+				}
+			],
+			"documentation": "Provides information about the context in which an inline completion was requested.",
+			"since": "3.18.0"
+		},
+		{
+			"name": "SelectedCompletionInfo",
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					},
+					"documentation": "The range that will be replaced if this completion item is accepted."
+				},
+				{
+					"name": "text",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The text the range will be replaced with if this completion is accepted."
+				}
+			],
+			"documentation": "Describes the currently selected completion item.",
+			"since": "3.18.0"
+		},
+		{
+			"name": "InlineCompletionRegistrationOptions",
+			"properties": [],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "InlineCompletionOptions"
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "TextDocumentRegistrationOptions"
+				},
+				{
+					"kind": "reference",
+					"name": "StaticRegistrationOptions"
+				}
+			],
+			"documentation": "Inline completion options used during static or dynamic registration.",
+			"since": "3.18.0"
+		},
+		{
+			"name": "InlineCompletionOptions",
+			"properties": [],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "WorkDoneProgressOptions"
+				}
+			],
+			"documentation": "Inline completion options used during static registration.",
+			"since": "3.18.0"
+		},
+		{
+			"name": "InlineCompletionItem",
+			"properties": [
+				{
+					"name": "insertText",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The text to replace the range with. Must be set."
+				},
+				{
+					"name": "filterText",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A text that is used to decide if this inline completion should be shown. When `falsy` the {@link InlineCompletionItem.insertText} is used."
+				},
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					},
+					"optional": true,
+					"documentation": "The range to replace. Must begin and end on the same line."
+				},
+				{
+					"name": "command",
+					"type": {
+						"kind": "reference",
+						"name": "Command"
+					},
+					"optional": true,
+					"documentation": "An optional {@link Command} that is executed *after* inserting this completion."
+				},
+				{
+					"name": "insertTextFormat",
+					"type": {
+						"kind": "reference",
+						"name": "InsertTextFormat"
+					},
+					"optional": true,
+					"documentation": "The format of the insert text. The format applies to the `insertText`. If omitted defaults to `InsertTextFormat.PlainText`."
+				}
+			],
+			"documentation": "An inline completion item represents a text snippet that is proposed inline to complete text that is being typed.",
+			"since": "3.18.0"
+		},
+		{
+			"name": "InlineCompletionList",
+			"properties": [
+				{
+					"name": "items",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "InlineCompletionItem"
+						}
+					},
+					"documentation": "The inline completion items"
+				}
+			],
+			"documentation": "Represents a collection of {@link InlineCompletionItem inline completion items} to be presented in the editor.",
+			"since": "3.18.0"
 		}
 	],
 	"enumerations": [
@@ -13745,6 +13985,27 @@
 					"value": "relative"
 				}
 			]
+		},
+		{
+			"name": "InlineCompletionTriggerKind",
+			"type": {
+				"kind": "base",
+				"name": "uinteger"
+			},
+			"values": [
+				{
+					"name": "Invoke",
+					"value": 0,
+					"documentation": "Completion was triggered explicitly by a user gesture."
+				},
+				{
+					"name": "Automatic",
+					"value": 1,
+					"documentation": "Completion was triggered automatically while editing."
+				}
+			],
+			"documentation": "Describes how an {@link InlineCompletionItemProvider inline completion provider} was triggered.",
+			"since": "3.18.0"
 		}
 	],
 	"typeAliases": [

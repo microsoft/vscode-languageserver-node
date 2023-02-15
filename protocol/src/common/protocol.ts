@@ -121,6 +121,8 @@ import {
 	DidCloseNotebookDocumentNotification
 } from './protocol.notebook';
 
+import {InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest} from './protocol.inlineCompletion';
+
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -740,6 +742,13 @@ export interface TextDocumentClientCapabilities {
 	 * @since 3.17.0
 	 */
 	diagnostic?: DiagnosticClientCapabilities;
+
+	/**
+	 * Client capabilities specific to inline completions.
+	 *
+	 * @since 3.18.0
+	 */
+	inlineCompletion?: InlineCompletionClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -1246,6 +1255,13 @@ export interface ServerCapabilities<T = LSPAny> {
 	 * @since 3.17.0
 	 */
 	diagnosticProvider?: DiagnosticOptions | DiagnosticRegistrationOptions;
+
+	/**
+	 * Inline completion options used during static registration.
+	 *
+	 * @since 3.18.0
+	 */
+	inlineCompletionProvider?: boolean | InlineCompletionOptions;
 
 	/**
 	 * Workspace specific server capabilities.
@@ -3847,7 +3863,9 @@ export {
 	VersionedNotebookDocumentIdentifier, NotebookDocumentSyncOptions, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType,
 	DidOpenNotebookDocumentParams, DidOpenNotebookDocumentNotification, NotebookCellArrayChange, NotebookDocumentChangeEvent, DidChangeNotebookDocumentParams,
 	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
-	DidCloseNotebookDocumentNotification
+	DidCloseNotebookDocumentNotification,
+	// Inline Completions
+	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest
 };
 
 // To be backwards compatible
