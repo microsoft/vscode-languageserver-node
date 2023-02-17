@@ -1817,14 +1817,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private async handleRegistrationRequest(params: RegistrationParams): Promise<void> {
 		const middleware = this.clientOptions.middleware?.handleRegisterCapability;
-		if(middleware) {
-			return middleware(params, nextParams => this.tryToRegisterCapability(nextParams));
+		if (middleware) {
+			return middleware(params, nextParams => this.doRegisterCapability(nextParams));
 		} else {
-			return this.tryToRegisterCapability(params);
+			return this.doRegisterCapability(params);
 		}
 	}
 
-	private async tryToRegisterCapability(params: RegistrationParams): Promise<void> {
+	private async doRegisterCapability(params: RegistrationParams): Promise<void> {
 		// We will not receive a registration call before a client is running
 		// from a server. However if we stop or shutdown we might which might
 		// try to restart the server. So ignore registrations if we are not running
@@ -1860,13 +1860,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private async handleUnregistrationRequest(params: UnregistrationParams): Promise<void> {
 		const middleware = this.clientOptions.middleware?.handleUnregisterCapability;
 		if(middleware) {
-			return middleware(params, nextParams => this.tryToUnregisterCapability(nextParams));
+			return middleware(params, nextParams => this.doUnregisterCapability(nextParams));
 		} else {
-			return this.tryToUnregisterCapability(params);
+			return this.doUnregisterCapability(params);
 		}
 	}
 
-	private async tryToUnregisterCapability(params: UnregistrationParams): Promise<void> {
+	private async doUnregisterCapability(params: UnregistrationParams): Promise<void> {
 		for (const unregistration of params.unregisterations) {
 			if (this._ignoredRegistrations.has(unregistration.id)) {
 				continue;
