@@ -1458,7 +1458,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 		const inlineCompletionItem = new code.InlineCompletionItem(insertText, asRange(item.range), command);
 
-		if (item.filterText) {inlineCompletionItem.filterText = item.filterText;}
+		if (item.filterText) { inlineCompletionItem.filterText = item.filterText; }
 
 		return inlineCompletionItem;
 	}

@@ -121,7 +121,7 @@ import {
 	DidCloseNotebookDocumentNotification
 } from './protocol.notebook';
 
-import {InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest} from './protocol.inlineCompletion';
+import { InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest } from './protocol.inlineCompletion';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;

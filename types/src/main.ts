@@ -4099,6 +4099,11 @@ export interface InlineCompletionItem {
 	insertText: string;
 
 	/**
+	 * The format of the insert text. The format applies to the `insertText`. If omitted defaults to `InsertTextFormat.PlainText`.
+	 */
+	insertTextFormat?: InsertTextFormat;
+
+	/**
 	 * A text that is used to decide if this inline completion should be shown. When `falsy` the {@link InlineCompletionItem.insertText} is used.
 	 */
 	filterText?: string;
@@ -4112,16 +4117,11 @@ export interface InlineCompletionItem {
 	 * An optional {@link Command} that is executed *after* inserting this completion.
 	 */
 	command?: Command;
-
-	/**
-	 * The format of the insert text. The format applies to the `insertText`. If omitted defaults to `InsertTextFormat.PlainText`.
-	 */
-	insertTextFormat?: InsertTextFormat;
 }
 
 export namespace InlineCompletionItem {
 	export function create(insertText: string, filterText?: string, range?: Range, command?: Command, insertTextFormat?: InsertTextFormat): InlineCompletionItem {
-		return {insertText, filterText, range, command, insertTextFormat};
+		return { insertText, filterText, range, command, insertTextFormat };
 	}
 }
 
@@ -4137,7 +4137,7 @@ export interface InlineCompletionList {
 
 export namespace InlineCompletionList {
 	export function create(items: InlineCompletionItem[]): InlineCompletionList {
-		return {items};
+		return { items };
 	}
 }
 
@@ -4179,7 +4179,7 @@ export interface SelectedCompletionInfo {
 
 export namespace SelectedCompletionInfo {
 	export function create(range: Range, text: string): SelectedCompletionInfo {
-		return {range, text};
+		return { range, text };
 	}
 }
 
@@ -4202,7 +4202,7 @@ export interface InlineCompletionContext {
 
 export namespace InlineCompletionContext{
 	export function create(triggerKind: InlineCompletionTriggerKind, selectedCompletionInfo?: SelectedCompletionInfo): InlineCompletionContext {
-		return {triggerKind, selectedCompletionInfo};
+		return { triggerKind, selectedCompletionInfo };
 	}
 }
 
