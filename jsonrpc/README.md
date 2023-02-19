@@ -13,7 +13,7 @@ a client and a server. Below an example how to setup a JSON-RPC connection. Firs
 import * as cp from 'child_process';
 import * as rpc from 'vscode-jsonrpc/node';
 
-let childProcess = cp.spawn(...);
+let childProcess = cp.spawn('node', 'server.js');
 
 // Use stdin and stdout for communication:
 let connection = rpc.createMessageConnection(
@@ -22,9 +22,14 @@ let connection = rpc.createMessageConnection(
 
 let notification = new rpc.NotificationType<string, void>('testNotification');
 
+connection.onNotification(notification, (param: string) => {
+	console.log(param); // This prints Hello World
+});
+
+
 connection.listen();
 
-connection.sendNotification(notification, 'Hello World');
+connection.sendNotification(notification, 'Hello World!');
 ```
 
 The server side looks very symmetrical:
@@ -38,8 +43,8 @@ let connection = rpc.createMessageConnection(
 	new rpc.StreamMessageWriter(process.stdout));
 
 let notification = new rpc.NotificationType<string, void>('testNotification');
-connection.onNotification(notification, (param: string) => {
-	console.log(param); // This prints Hello World
+connection.onNotification(notification, (param) => {
+	connection.sendNotification(notification, param);
 });
 
 connection.listen();
