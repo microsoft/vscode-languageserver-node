@@ -313,6 +313,8 @@ export interface HandleWorkDoneProgressSignature {
 interface _Middleware {
 	handleDiagnostics?: (this: void, uri: Uri, diagnostics: VDiagnostic[], next: HandleDiagnosticsSignature) => void;
 	handleWorkDoneProgress?: (this: void, token: ProgressToken, params: WorkDoneProgressBegin | WorkDoneProgressReport | WorkDoneProgressEnd, next: HandleWorkDoneProgressSignature) => void;
+	handleRegisterCapability?: (this: void, params: RegistrationParams, next: RegistrationRequest.HandlerSignature) => Promise<void>;
+	handleUnregisterCapability?: (this: void, params: UnregistrationParams, next: UnregistrationRequest.HandlerSignature) => Promise<void>;
 	workspace?: WorkspaceMiddleware;
 	window?: WindowMiddleware;
 }
@@ -1814,6 +1816,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private async handleRegistrationRequest(params: RegistrationParams): Promise<void> {
+		const middleware = this.clientOptions.middleware?.handleRegisterCapability;
+		if (middleware) {
+			return middleware(params, nextParams => this.doRegisterCapability(nextParams));
+		} else {
+			return this.doRegisterCapability(params);
+		}
+	}
+
+	private async doRegisterCapability(params: RegistrationParams): Promise<void> {
 		// We will not receive a registration call before a client is running
 		// from a server. However if we stop or shutdown we might which might
 		// try to restart the server. So ignore registrations if we are not running
@@ -1823,6 +1834,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 			return;
 		}
+
 		interface WithDocumentSelector {
 			documentSelector: DocumentSelector | undefined;
 		}
@@ -1846,7 +1858,16 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private async handleUnregistrationRequest(params: UnregistrationParams): Promise<void> {
-		for (let unregistration of params.unregisterations) {
+		const middleware = this.clientOptions.middleware?.handleUnregisterCapability;
+		if(middleware) {
+			return middleware(params, nextParams => this.doUnregisterCapability(nextParams));
+		} else {
+			return this.doUnregisterCapability(params);
+		}
+	}
+
+	private async doUnregisterCapability(params: UnregistrationParams): Promise<void> {
+		for (const unregistration of params.unregisterations) {
 			if (this._ignoredRegistrations.has(unregistration.id)) {
 				continue;
 			}
