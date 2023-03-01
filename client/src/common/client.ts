@@ -35,7 +35,8 @@ import {
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
-	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest
+	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
+	CancellationToken as ProtocolCancellationToken
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -321,11 +322,12 @@ interface _Middleware {
 
 // A general middleware is applied to both requests and notifications
 interface GeneralMiddleware {
-	sendRequest?<R>(
+	sendRequest?<P, R>(
 		this: void,
 		type: string | MessageSignature,
-		next: (type: string | MessageSignature, ...params: any[]) => Promise<R>,
-		...params: any[]
+		param: P | undefined,
+		token: CancellationToken | undefined,
+		next: (type: string | MessageSignature, param?: P, token?: CancellationToken) => Promise<R>,
 	): Promise<R>;
 
 	sendNotification?<R>(
@@ -710,10 +712,43 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 
 		const _sendRequest = this._clientOptions.middleware?.sendRequest;
+		if (_sendRequest !== undefined) {
+			let param: any | undefined = undefined;
+			let token: CancellationToken | undefined = undefined;
 
-		return _sendRequest
-			? _sendRequest<R>(type, connection.sendRequest.bind(connection), ...params)
-			: connection.sendRequest<R>(type, ...params);
+			// Separate cancellation tokens from other parameters for a better client interface
+			if (params.length === 1) {
+				// CancellationToken is an interface, so we need to check if the first param complies to it
+				if (ProtocolCancellationToken.is(params[0])) {
+					token = params[0];
+				} else {
+					param = params[0];
+				}
+			} else if (params.length === 2) {
+				param = params[0];
+				token = params[1];
+			}
+
+			// Return the general middleware invocation defining `next` as a utility function that reorganizes parameters to
+			// pass them to the original sendRequest function.
+			return _sendRequest(type, param, token, (type, param, token) => {
+				const params: any[] = [];
+
+				// Add the parameters if there are any
+				if (param !== undefined) {
+					params.push(param);
+				}
+
+				// Add the cancellation token if there is one
+				if (token !== undefined) {
+					params.push(token);
+				}
+
+				return connection.sendRequest<R>(type, ...params);
+			});
+		} else {
+			return connection.sendRequest<R>(type, ...params);
+		}
 	}
 
 	public onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;

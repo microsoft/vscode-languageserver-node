@@ -1459,9 +1459,9 @@ suite('Client integration', () => {
 		let middlewareCallCount = 0;
 
 		// Add a general middleware for both requests and notifications
-		middleware.sendRequest = (type, next, ...params) => {
+		middleware.sendRequest = (type, param, token, next) => {
 			middlewareCallCount++;
-			return next(type, ...params);
+			return next(type, param, token);
 		};
 
 		middleware.sendNotification = (type, next, params) => {
