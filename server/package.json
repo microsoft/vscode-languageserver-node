@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "8.1.0",
+	"version": "8.1.0-next.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -24,7 +24,7 @@
 		"vscode-languageserver-textdocument": "1.0.9"
 	},
 	"dependencies": {
-		"vscode-languageserver-protocol": "3.17.3"
+		"vscode-languageserver-protocol": "3.18.0-next.1"
 	},
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",

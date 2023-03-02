@@ -1247,12 +1247,12 @@ suite('Protocol Converter', () => {
 	test('InlineCompletions', async () => {
 		const items: proto.InlineCompletionItem[] = [
 			proto.InlineCompletionItem.create('insert text', 'in', proto.Range.create(1, 2, 6, 7)),
-			proto.InlineCompletionItem.create('insert text', 'in', proto.Range.create(1, 2, 6, 7), undefined, proto.InsertTextFormat.PlainText),
-			proto.InlineCompletionItem.create('insert text', 'in', proto.Range.create(1, 2, 6, 7), undefined, proto.InsertTextFormat.Snippet),
+			proto.InlineCompletionItem.create('insert text', 'in', proto.Range.create(1, 2, 6, 7), undefined),
+			proto.InlineCompletionItem.create(proto.SnippetString.create('insert text'), 'in', proto.Range.create(1, 2, 6, 7), undefined),
 		];
 
 		const result = await p2c.asInlineCompletionResult(items);
-		ok(result.every((r) => r.range instanceof vscode.InlineCompletionItem));
+		ok(result.every((r) => r instanceof vscode.InlineCompletionItem));
 		for (const r of result) {
 			rangeEqual(r.range!, proto.Range.create(1, 2, 6, 7));
 		}

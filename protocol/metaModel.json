@@ -4126,19 +4126,19 @@
 				{
 					"name": "insertText",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "reference",
+								"name": "SnippetString"
+							}
+						]
 					},
 					"documentation": "The text to replace the range with. Must be set."
-				},
-				{
-					"name": "insertTextFormat",
-					"type": {
-						"kind": "reference",
-						"name": "InsertTextFormat"
-					},
-					"optional": true,
-					"documentation": "The format of the insert text. The format applies to the `insertText`. If omitted defaults to `InsertTextFormat.PlainText`."
 				},
 				{
 					"name": "filterText",
@@ -7774,6 +7774,21 @@
 				}
 			],
 			"documentation": "Provides information about the context in which an inline completion was requested.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "SnippetString",
+			"properties": [
+				{
+					"name": "value",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The snippet string."
+				}
+			],
+			"documentation": "A snippet string is a template which allows to insert text\nand to control the editor cursor when insertion happens.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Variables are defined with `$name` and\n`${name:default value}`.\n\n@since 3.18.0",
 			"since": "3.18.0"
 		},
 		{
@@ -13314,26 +13329,6 @@
 			"since": "3.17.0"
 		},
 		{
-			"name": "InsertTextFormat",
-			"type": {
-				"kind": "base",
-				"name": "uinteger"
-			},
-			"values": [
-				{
-					"name": "PlainText",
-					"value": 1,
-					"documentation": "The primary text to be inserted is treated as a plain string."
-				},
-				{
-					"name": "Snippet",
-					"value": 2,
-					"documentation": "The primary text to be inserted is treated as a snippet.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Placeholders with equal identifiers are linked,\nthat is typing in one will update others too.\n\nSee also: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#snippet_syntax"
-				}
-			],
-			"documentation": "Defines whether the insert text in a completion item should be interpreted as\nplain text or a snippet."
-		},
-		{
 			"name": "MessageType",
 			"type": {
 				"kind": "base",
@@ -13538,6 +13533,26 @@
 			],
 			"documentation": "Completion item tags are extra annotations that tweak the rendering of a completion\nitem.\n\n@since 3.15.0",
 			"since": "3.15.0"
+		},
+		{
+			"name": "InsertTextFormat",
+			"type": {
+				"kind": "base",
+				"name": "uinteger"
+			},
+			"values": [
+				{
+					"name": "PlainText",
+					"value": 1,
+					"documentation": "The primary text to be inserted is treated as a plain string."
+				},
+				{
+					"name": "Snippet",
+					"value": 2,
+					"documentation": "The primary text to be inserted is treated as a snippet.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Placeholders with equal identifiers are linked,\nthat is typing in one will update others too.\n\nSee also: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#snippet_syntax"
+				}
+			],
+			"documentation": "Defines whether the insert text in a completion item should be interpreted as\nplain text or a snippet."
 		},
 		{
 			"name": "InsertTextMode",

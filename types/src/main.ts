@@ -4088,6 +4088,30 @@ export namespace InlayHint {
 }
 
 /**
+ * A snippet string is a template which allows to insert text
+ * and to control the editor cursor when insertion happens.
+ *
+ * A snippet can define tab stops and placeholders with `$1`, `$2`
+ * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+ * the end of the snippet. Variables are defined with `$name` and
+ * `${name:default value}`.
+ *
+ * @since 3.18.0
+ */
+export interface SnippetString {
+	/**
+	 * The snippet string.
+	 */
+	value: string;
+}
+
+export namespace SnippetString {
+	export function create(value: string) {
+		return { value };
+	}
+}
+
+/**
  * An inline completion item represents a text snippet that is proposed inline to complete text that is being typed.
  *
  * @since 3.18.0
@@ -4096,12 +4120,7 @@ export interface InlineCompletionItem {
 	/**
 	 * The text to replace the range with. Must be set.
 	 */
-	insertText: string;
-
-	/**
-	 * The format of the insert text. The format applies to the `insertText`. If omitted defaults to `InsertTextFormat.PlainText`.
-	 */
-	insertTextFormat?: InsertTextFormat;
+	insertText: string | SnippetString;
 
 	/**
 	 * A text that is used to decide if this inline completion should be shown. When `falsy` the {@link InlineCompletionItem.insertText} is used.
@@ -4120,8 +4139,8 @@ export interface InlineCompletionItem {
 }
 
 export namespace InlineCompletionItem {
-	export function create(insertText: string, filterText?: string, range?: Range, command?: Command, insertTextFormat?: InsertTextFormat): InlineCompletionItem {
-		return { insertText, filterText, range, command, insertTextFormat };
+	export function create(insertText: string | SnippetString, filterText?: string, range?: Range, command?: Command): InlineCompletionItem {
+		return { insertText, filterText, range, command };
 	}
 }
 

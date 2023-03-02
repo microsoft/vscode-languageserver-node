@@ -39,7 +39,7 @@ import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperati
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
 import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './typeHierarchy';
 import { InlineValueFeatureShape, InlineValueFeature } from './inlineValue';
-import { InlineCompletionFeatureShape, InlineCompletionFeature } from './inlineCompletion';
+// import { InlineCompletionFeatureShape, InlineCompletionFeature } from './inlineCompletion.proposed';
 import { InlayHintFeatureShape, InlayHintFeature } from './inlayHint';
 import { DiagnosticFeatureShape, DiagnosticFeature } from './diagnostic';
 import { NotebookSyncFeatureShape, NotebookSyncFeature } from './notebook';
@@ -815,8 +815,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & TypeHierarchyFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & DiagnosticFeatureShape & MonikerFeatureShape & InlineCompletionFeatureShape;
-const LanguagesImpl: new () => Languages = InlineCompletionFeature(MonikerFeature(DiagnosticFeature(InlayHintFeature(InlineValueFeature(TypeHierarchyFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))))))))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & TypeHierarchyFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & DiagnosticFeatureShape & MonikerFeatureShape;
+const LanguagesImpl: new () => Languages = MonikerFeature(DiagnosticFeature(InlayHintFeature(InlineValueFeature(TypeHierarchyFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))))))) as (new () => Languages);
 
 export interface _Notebooks extends FeatureBase {
 	connection: Connection;

@@ -16,7 +16,7 @@ import {
 
 import { URI } from 'vscode-uri';
 
-const connection: ProposedFeatures.Connection = createConnection();
+const connection = createConnection() as ProposedFeatures.Connection;
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);

@@ -1447,10 +1447,10 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	function asInlineCompletionItem(item: ls.InlineCompletionItem): code.InlineCompletionItem {
 		let insertText: string | code.SnippetString;
-		if (item.insertTextFormat === ls.InsertTextFormat.Snippet) {
-			insertText = new code.SnippetString(item.insertText);
-		} else {
+		if (typeof item.insertText === 'string') {
 			insertText = item.insertText;
+		} else {
+			insertText = new code.SnippetString(item.insertText.value);
 		}
 
 		let command: code.Command | undefined = undefined;
