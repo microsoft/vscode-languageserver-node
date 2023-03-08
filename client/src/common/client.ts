@@ -35,7 +35,8 @@ import {
 	ImplementationRequest, SelectionRangeRequest, TypeDefinitionRequest, CallHierarchyPrepareRequest, SemanticTokensRegistrationType, LinkedEditingRangeRequest,
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
-	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest
+	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
+	CancellationToken as ProtocolCancellationToken
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -319,6 +320,24 @@ interface _Middleware {
 	window?: WindowMiddleware;
 }
 
+// A general middleware is applied to both requests and notifications
+interface GeneralMiddleware {
+	sendRequest?<P, R>(
+		this: void,
+		type: string | MessageSignature,
+		param: P | undefined,
+		token: CancellationToken | undefined,
+		next: (type: string | MessageSignature, param?: P, token?: CancellationToken) => Promise<R>,
+	): Promise<R>;
+
+	sendNotification?<R>(
+		this: void,
+		type: string | MessageSignature,
+		next: (type: string | MessageSignature, params?: R) => Promise<void>,
+		params: R
+	): Promise<void>;
+}
+
 /**
  * The Middleware lets extensions intercept the request and notifications send and received
  * from the server
@@ -327,7 +346,7 @@ export type Middleware = _Middleware & TextDocumentSynchronizationMiddleware & C
 DocumentHighlightMiddleware & DocumentSymbolMiddleware & WorkspaceSymbolMiddleware & ReferencesMiddleware & TypeDefinitionMiddleware & ImplementationMiddleware &
 ColorProviderMiddleware & CodeActionMiddleware & CodeLensMiddleware & FormattingMiddleware & RenameMiddleware & DocumentLinkMiddleware & ExecuteCommandMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware;
+LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware & GeneralMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
@@ -691,7 +710,45 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full) {
 			await this.sendPendingFullTextDocumentChanges(connection);
 		}
-		return connection.sendRequest<R>(type, ...params);
+
+		const _sendRequest = this._clientOptions.middleware?.sendRequest;
+		if (_sendRequest !== undefined) {
+			let param: any | undefined = undefined;
+			let token: CancellationToken | undefined = undefined;
+
+			// Separate cancellation tokens from other parameters for a better client interface
+			if (params.length === 1) {
+				// CancellationToken is an interface, so we need to check if the first param complies to it
+				if (ProtocolCancellationToken.is(params[0])) {
+					token = params[0];
+				} else {
+					param = params[0];
+				}
+			} else if (params.length === 2) {
+				param = params[0];
+				token = params[1];
+			}
+
+			// Return the general middleware invocation defining `next` as a utility function that reorganizes parameters to
+			// pass them to the original sendRequest function.
+			return _sendRequest(type, param, token, (type, param, token) => {
+				const params: any[] = [];
+
+				// Add the parameters if there are any
+				if (param !== undefined) {
+					params.push(param);
+				}
+
+				// Add the cancellation token if there is one
+				if (token !== undefined) {
+					params.push(token);
+				}
+
+				return connection.sendRequest<R>(type, ...params);
+			});
+		} else {
+			return connection.sendRequest<R>(type, ...params);
+		}
 	}
 
 	public onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
@@ -772,7 +829,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (openNotification !== undefined) {
 			this._pendingOpenNotifications.delete(openNotification);
 		}
-		return connection.sendNotification(type, params);
+
+		const _sendNotification = this._clientOptions.middleware?.sendNotification;
+
+		return _sendNotification
+			? _sendNotification(type, connection.sendNotification.bind(connection), params)
+			: connection.sendNotification(type, params);
 	}
 
 	public onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
