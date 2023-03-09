@@ -747,6 +747,7 @@ export interface TextDocumentClientCapabilities {
 	 * Client capabilities specific to inline completions.
 	 *
 	 * @since 3.18.0
+ 	 * @proposed
 	 */
 	inlineCompletion?: InlineCompletionClientCapabilities;
 }
@@ -1260,6 +1261,7 @@ export interface ServerCapabilities<T = LSPAny> {
 	 * Inline completion options used during static registration.
 	 *
 	 * @since 3.18.0
+ 	 * @proposed
 	 */
 	inlineCompletionProvider?: boolean | InlineCompletionOptions;
 

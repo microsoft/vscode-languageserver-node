@@ -1013,8 +1013,9 @@
 				"kind": "reference",
 				"name": "InlineCompletionRegistrationOptions"
 			},
-			"documentation": "A request to provide inline completions in a document. The request's parameter is of\ntype {@link InlineCompletionParams}, the response is of type\n{@link InlineCompletion InlineCompletion[]} or a Thenable that resolves to such.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "A request to provide inline completions in a document. The request's parameter is of\ntype {@link InlineCompletionParams}, the response is of type\n{@link InlineCompletion InlineCompletion[]} or a Thenable that resolves to such.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"method": "client/registerCapability",
@@ -4100,8 +4101,9 @@
 					"name": "WorkDoneProgressParams"
 				}
 			],
-			"documentation": "A parameter literal used in inline completion requests.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "A parameter literal used in inline completion requests.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "InlineCompletionList",
@@ -4134,7 +4136,7 @@
 							},
 							{
 								"kind": "reference",
-								"name": "SnippetString"
+								"name": "StringValue"
 							}
 						]
 					},
@@ -4168,8 +4170,9 @@
 					"documentation": "An optional {@link Command} that is executed *after* inserting this completion."
 				}
 			],
-			"documentation": "An inline completion item represents a text snippet that is proposed inline to complete text that is being typed.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "An inline completion item represents a text snippet that is proposed inline to complete text that is being typed.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "InlineCompletionRegistrationOptions",
@@ -4190,8 +4193,9 @@
 					"name": "StaticRegistrationOptions"
 				}
 			],
-			"documentation": "Inline completion options used during static or dynamic registration.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Inline completion options used during static or dynamic registration.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "RegistrationParams",
@@ -7773,12 +7777,21 @@
 					"documentation": "Provides information about the currently selected item in the autocomplete widget if it is visible."
 				}
 			],
-			"documentation": "Provides information about the context in which an inline completion was requested.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Provides information about the context in which an inline completion was requested.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
-			"name": "SnippetString",
+			"name": "StringValue",
 			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "stringLiteral",
+						"value": "snippet"
+					},
+					"documentation": "The kind of string value."
+				},
 				{
 					"name": "value",
 					"type": {
@@ -7788,8 +7801,9 @@
 					"documentation": "The snippet string."
 				}
 			],
-			"documentation": "A snippet string is a template which allows to insert text\nand to control the editor cursor when insertion happens.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Variables are defined with `$name` and\n`${name:default value}`.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "A string value used as a snippet is a template which allows to insert text\nand to control the editor cursor when insertion happens.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Variables are defined with `$name` and\n`${name:default value}`.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "InlineCompletionOptions",
@@ -7800,8 +7814,9 @@
 				}
 			],
 			"properties": [],
-			"documentation": "Inline completion options used during static registration.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Inline completion options used during static registration.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "Registration",
@@ -8623,8 +8638,9 @@
 						]
 					},
 					"optional": true,
-					"documentation": "Inline completion options used during static registration.\n\n@since 3.18.0",
-					"since": "3.18.0"
+					"documentation": "Inline completion options used during static registration.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				},
 				{
 					"name": "workspace",
@@ -9919,8 +9935,9 @@
 					"documentation": "The text the range will be replaced with if this completion is accepted."
 				}
 			],
-			"documentation": "Describes the currently selected completion item.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Describes the currently selected completion item.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientCapabilities",
@@ -10865,8 +10882,9 @@
 						"name": "InlineCompletionClientCapabilities"
 					},
 					"optional": true,
-					"documentation": "Client capabilities specific to inline completions.\n\n@since 3.18.0",
-					"since": "3.18.0"
+					"documentation": "Client capabilities specific to inline completions.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			],
 			"documentation": "Text document specific client capabilities."
@@ -12704,8 +12722,9 @@
 					"documentation": "Whether implementation supports dynamic registration for inline completion providers."
 				}
 			],
-			"documentation": "Client capabilities specific to inline completions.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Client capabilities specific to inline completions.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentSyncClientCapabilities",
@@ -13719,8 +13738,9 @@
 					"documentation": "Completion was triggered automatically while editing."
 				}
 			],
-			"documentation": "Describes how an {@link InlineCompletionItemProvider inline completion provider} was triggered.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Describes how an {@link InlineCompletionItemProvider inline completion provider} was triggered.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "PositionEncodingKind",

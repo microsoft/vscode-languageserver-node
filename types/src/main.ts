@@ -4088,7 +4088,7 @@ export namespace InlayHint {
 }
 
 /**
- * A snippet string is a template which allows to insert text
+ * A string value used as a snippet is a template which allows to insert text
  * and to control the editor cursor when insertion happens.
  *
  * A snippet can define tab stops and placeholders with `$1`, `$2`
@@ -4097,17 +4097,22 @@ export namespace InlayHint {
  * `${name:default value}`.
  *
  * @since 3.18.0
+ * @proposed
  */
-export interface SnippetString {
+export interface StringValue {
+	/**
+	 * The kind of string value.
+	 */
+	kind: 'snippet';
 	/**
 	 * The snippet string.
 	 */
 	value: string;
 }
 
-export namespace SnippetString {
-	export function create(value: string) {
-		return { value };
+export namespace StringValue {
+	export function create(value: string): StringValue {
+		return { value, kind: 'snippet' };
 	}
 }
 
@@ -4115,12 +4120,13 @@ export namespace SnippetString {
  * An inline completion item represents a text snippet that is proposed inline to complete text that is being typed.
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface InlineCompletionItem {
 	/**
 	 * The text to replace the range with. Must be set.
 	 */
-	insertText: string | SnippetString;
+	insertText: string | StringValue;
 
 	/**
 	 * A text that is used to decide if this inline completion should be shown. When `falsy` the {@link InlineCompletionItem.insertText} is used.
@@ -4139,7 +4145,7 @@ export interface InlineCompletionItem {
 }
 
 export namespace InlineCompletionItem {
-	export function create(insertText: string | SnippetString, filterText?: string, range?: Range, command?: Command): InlineCompletionItem {
+	export function create(insertText: string | StringValue, filterText?: string, range?: Range, command?: Command): InlineCompletionItem {
 		return { insertText, filterText, range, command };
 	}
 }
@@ -4164,6 +4170,7 @@ export namespace InlineCompletionList {
  * Describes how an {@link InlineCompletionItemProvider inline completion provider} was triggered.
  *
  * @since 3.18.0
+ * @proposed
  */
 export namespace InlineCompletionTriggerKind {
 	/**
@@ -4183,6 +4190,7 @@ export type InlineCompletionTriggerKind = 0 | 1;
  * Describes the currently selected completion item.
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface SelectedCompletionInfo {
 	/**
@@ -4206,6 +4214,7 @@ export namespace SelectedCompletionInfo {
  * Provides information about the context in which an inline completion was requested.
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface InlineCompletionContext {
 	/**

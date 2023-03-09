@@ -1248,7 +1248,7 @@ suite('Protocol Converter', () => {
 		const items: proto.InlineCompletionItem[] = [
 			proto.InlineCompletionItem.create('insert text', 'in', proto.Range.create(1, 2, 6, 7)),
 			proto.InlineCompletionItem.create('insert text', 'in', proto.Range.create(1, 2, 6, 7), undefined),
-			proto.InlineCompletionItem.create(proto.SnippetString.create('insert text'), 'in', proto.Range.create(1, 2, 6, 7), undefined),
+			proto.InlineCompletionItem.create(proto.StringValue.create('insert text'), 'in', proto.Range.create(1, 2, 6, 7), undefined),
 		];
 
 		const result = await p2c.asInlineCompletionResult(items);
