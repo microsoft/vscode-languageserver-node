@@ -4152,6 +4152,9 @@ export namespace InlineCompletionItem {
 
 /**
  * Represents a collection of {@link InlineCompletionItem inline completion items} to be presented in the editor.
+ *
+ * @since 3.18.0
+ * @proposed
  */
 export interface InlineCompletionList {
 	/**

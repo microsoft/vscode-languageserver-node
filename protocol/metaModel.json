@@ -4120,7 +4120,9 @@
 					"documentation": "The inline completion items"
 				}
 			],
-			"documentation": "Represents a collection of {@link InlineCompletionItem inline completion items} to be presented in the editor."
+			"documentation": "Represents a collection of {@link InlineCompletionItem inline completion items} to be presented in the editor.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "InlineCompletionItem",
