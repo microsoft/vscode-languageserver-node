@@ -82,12 +82,9 @@ extends:
               package: tsconfig-gen
         ghTagPrefix: release/tsconfigGen/
         tag: ${{ parameters.quality }}
+        preReleaseTag: next
+        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishTsconfigGen }}
-        postPublishSteps:
-          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-            parameters:
-              package: tsconfig-gen
-              quality: ${{ parameters.quality }}
         workingDirectory: $(Build.SourcesDirectory)/tsconfig-gen
 
       - name: textDocument
@@ -111,12 +108,9 @@ extends:
               package: textDocument
         ghTagPrefix: release/textDocument/
         tag: ${{ parameters.quality }}
+        preReleaseTag: next
+        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishTextDocument }}
-        postPublishSteps:
-          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-            parameters:
-              package: textDocument
-              quality: ${{ parameters.quality }}
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
@@ -140,12 +134,9 @@ extends:
               package: types
         ghTagPrefix: release/types/
         tag: ${{ parameters.quality }}
+        preReleaseTag: next
+        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishTypes }}
-        postPublishSteps:
-          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-            parameters:
-              package: types
-              quality: ${{ parameters.quality }}
         workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
@@ -169,12 +160,9 @@ extends:
               package: jsonrpc
         ghTagPrefix: release/jsonrpc/
         tag: ${{ parameters.quality }}
+        preReleaseTag: next
+        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishJsonrpc }}
-        postPublishSteps:
-          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-            parameters:
-              package: jsonrpc
-              quality: ${{ parameters.quality }}
         workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       - name: protocol
@@ -198,12 +186,9 @@ extends:
               package: protocol
         ghTagPrefix: release/protocol/
         tag: ${{ parameters.quality }}
+        preReleaseTag: next
+        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishProtocol }}
-        postPublishSteps:
-          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-            parameters:
-              package: protocol
-              quality: ${{ parameters.quality }}
         workingDirectory: $(Build.SourcesDirectory)/protocol
 
       - name: server
@@ -227,12 +212,9 @@ extends:
               package: server
         ghTagPrefix: release/server/
         tag: ${{ parameters.quality }}
+        preReleaseTag: next
+        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishServer }}
-        postPublishSteps:
-          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-            parameters:
-              package: server
-              quality: ${{ parameters.quality }}
         workingDirectory: $(Build.SourcesDirectory)/server
 
       - name: client
@@ -256,10 +238,7 @@ extends:
               package: client
         ghTagPrefix: release/client/
         tag: ${{ parameters.quality }}
+        preReleaseTag: next
+        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishClient }}
-        postPublishSteps:
-          - template: /build/azure-pipelines/templates/postPublish-steps.yml@self
-            parameters:
-              package: client
-              quality: ${{ parameters.quality }}
         workingDirectory: $(Build.SourcesDirectory)/client
