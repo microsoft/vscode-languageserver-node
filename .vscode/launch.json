@@ -82,7 +82,6 @@
 			"name": "test:client",
 			"runtimeExecutable": "${execPath}",
 			"args": ["--extensionDevelopmentPath=${workspaceFolder}/client-node-tests", "--extensionTestsPath=${workspaceFolder}/client-node-tests/lib" ],
-			"stopOnEntry": false,
 			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/client-node-tests/lib/test/**/*.js"],
 			"preLaunchTask": "npm: watch"

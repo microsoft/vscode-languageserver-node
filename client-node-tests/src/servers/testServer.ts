@@ -509,6 +509,7 @@ connection.languages.inlayHint.on(() => {
 
 connection.languages.inlayHint.resolve((hint) => {
 	(hint.label as InlayHintLabelPart[])[0].tooltip = 'tooltip';
+	hint.textEdits = [TextEdit.insert(Position.create(1, 1), 'number')];
 	return hint;
 });
 

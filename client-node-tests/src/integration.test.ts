@@ -1435,8 +1435,14 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 		assert.ok(typeof provider.resolveInlayHint === 'function');
 
+		assert.strictEqual(hint.textEdits, undefined);
 		const resolvedHint = await provider.resolveInlayHint!(hint, tokenSource.token);
 		assert.strictEqual((resolvedHint?.label as vscode.InlayHintLabelPart[])[0].tooltip, 'tooltip');
+		assert.strictEqual(resolvedHint?.textEdits?.length, 1);
+		const edit = resolvedHint?.textEdits![0];
+		isDefined(edit);
+		rangeEqual(edit.range, 1, 1, 1, 1);
+		assert.strictEqual(edit.newText, 'number');
 	});
 
 	test('Workspace symbols', async () => {
