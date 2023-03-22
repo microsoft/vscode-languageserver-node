@@ -17,7 +17,7 @@ import {
 	TextEdit, ProposedFeatures, DiagnosticTag, InsertTextFormat, SelectionRangeRequest, SelectionRange, InsertReplaceEdit,
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
-	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments
+	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, WorkspaceEdit
 } from 'vscode-languageserver/node';
 
 import {
@@ -153,6 +153,11 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					workspaceFolders: {
 						supported: true,
 						changeNotifications: true
+					},
+					fileOperations: {
+						willRename: {
+							filters: [ { scheme: 'file', pattern: { glob: '**/*.ts', matches: 'file' } } ]
+						}
 					}
 				},
 				implementationProvider: {
@@ -630,6 +635,11 @@ connection.languages.callHierarchy.onIncomingCalls((params) => {
 
 connection.languages.callHierarchy.onOutgoingCalls((params) => {
 	return [];
+});
+
+connection.workspace.onWillRenameFiles((params) => {
+	console.log(params);
+	return { documentChanges: [] };
 });
 
 let tokenBuilders: Map<string, SemanticTokensBuilder> = new Map();
