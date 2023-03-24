@@ -196,13 +196,13 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	}
 
 	private static asMinimatchOptions(options: proto.FileOperationPatternOptions | undefined): minimatch.IOptions | undefined {
-		if (options === undefined) {
-			return undefined;
+		// The spec doesn't state that dot files don't match. So we make
+		// matching those the default.
+		const result: minimatch.IOptions = { dot: true };
+		if (options?.ignoreCase === true) {
+			result.nocase = true;
 		}
-		if (options.ignoreCase === true) {
-			return { nocase: true };
-		}
-		return undefined;
+		return result;
 	}
 }
 
