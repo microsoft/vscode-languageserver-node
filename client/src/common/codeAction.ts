@@ -59,7 +59,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 				]
 			}
 		};
-		cap.honorsChangeAnnotations = false;
+		cap.honorsChangeAnnotations = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
