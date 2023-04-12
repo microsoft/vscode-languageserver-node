@@ -47,7 +47,7 @@ export class SelectionRangeFeature extends TextDocumentLanguageFeature<boolean |
 				const provideSelectionRanges: ProvideSelectionRangeSignature = async (document, positions, token) => {
 					const requestParams: SelectionRangeParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-						positions: await client.code2ProtocolConverter.asPositions(positions, token)
+						positions: client.code2ProtocolConverter.asPositionsSync(positions, token)
 					};
 					return client.sendRequest(SelectionRangeRequest.type, requestParams, token).then((ranges) => {
 						if (token.isCancellationRequested) {
