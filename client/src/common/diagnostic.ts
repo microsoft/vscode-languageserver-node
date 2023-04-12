@@ -8,7 +8,7 @@ import * as minimatch from 'minimatch';
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
 	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff,
-	TabChangeEvent, Event, workspace
+	TabChangeEvent, Event, workspace, TabInputCustom
 } from 'vscode';
 
 import {
@@ -280,6 +280,8 @@ class Tabs {
 					uri = input.uri;
 				} else if (input instanceof TabInputTextDiff) {
 					uri = input.modified;
+				} else if (input instanceof TabInputCustom) {
+					uri = input.uri;
 				}
 				if (uri !== undefined && !seen.has(uri.toString())) {
 					seen.add(uri.toString());
