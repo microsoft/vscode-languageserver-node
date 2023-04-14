@@ -79,6 +79,7 @@ export interface Converter {
 	asPosition(value: code.Position | undefined | null): proto.Position | undefined | null;
 
 	asPositions(value: readonly code.Position[], token?: code.CancellationToken): Promise<proto.Position[]>;
+	asPositionsSync(value: readonly code.Position[], token?: code.CancellationToken): proto.Position[];
 
 	asRange(value: null): null;
 	asRange(value: undefined): undefined;
@@ -96,6 +97,7 @@ export interface Converter {
 	asDiagnostic(item: code.Diagnostic): proto.Diagnostic;
 
 	asDiagnostics(items: code.Diagnostic[], token?: code.CancellationToken): Promise<proto.Diagnostic[]>;
+	asDiagnosticsSync(items: code.Diagnostic[]): proto.Diagnostic[];
 
 	asCompletionItem(item: code.CompletionItem, labelDetailsSupport?: boolean): proto.CompletionItem;
 
@@ -109,8 +111,10 @@ export interface Converter {
 	asReferenceParams(textDocument: code.TextDocument, position: code.Position, options: { includeDeclaration: boolean }): proto.ReferenceParams;
 
 	asCodeAction(item: code.CodeAction, token?: code.CancellationToken): Promise<proto.CodeAction>;
+	asCodeActionSync(item: code.CodeAction): proto.CodeAction;
 
 	asCodeActionContext(context: code.CodeActionContext, token?: code.CancellationToken): Promise<proto.CodeActionContext>;
+	asCodeActionContextSync(context: code.CodeActionContext): proto.CodeActionContext;
 
 	asInlineValueContext(context: code.InlineValueContext): proto.InlineValueContext;
 
@@ -418,8 +422,12 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return { line: value.line > proto.uinteger.MAX_VALUE ? proto.uinteger.MAX_VALUE : value.line, character: value.character > proto.uinteger.MAX_VALUE ? proto.uinteger.MAX_VALUE : value.character };
 	}
 
-	function asPositions(value: readonly code.Position[], token?: code.CancellationToken): Promise<proto.Position[]> {
-		return async.map(value, (asPosition as (item: code.Position) => proto.Position), token);
+	function asPositions(values: readonly code.Position[], token?: code.CancellationToken): Promise<proto.Position[]> {
+		return async.map(values, (asPosition as (item: code.Position) => proto.Position), token);
+	}
+
+	function asPositionsSync(values: readonly code.Position[]): proto.Position[] {
+		return values.map(asPosition as (item: code.Position) => proto.Position);
 	}
 
 	function asRange(value: code.Range): proto.Range;
@@ -534,6 +542,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return items;
 		}
 		return async.map(items, asDiagnostic, token);
+	}
+
+	function asDiagnosticsSync(items: ReadonlyArray<code.Diagnostic>): proto.Diagnostic[] {
+		if (items === undefined || items === null) {
+			return items;
+		}
+		return items.map(asDiagnostic);
 	}
 
 	function asDocumentation(format: string, documentation: string | code.MarkdownString): string | proto.MarkupContent {
@@ -723,6 +738,20 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
+	function asCodeActionSync(item: code.CodeAction): proto.CodeAction {
+		let result = proto.CodeAction.create(item.title);
+		if (item instanceof ProtocolCodeAction && item.data !== undefined) {
+			result.data = item.data;
+		}
+		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
+		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnosticsSync(item.diagnostics); }
+		if (item.edit !== undefined) { throw new Error (`VS Code code actions can only be converted to a protocol code action without an edit.`); }
+		if (item.command !== undefined) { result.command = asCommand(item.command); }
+		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
+		if (item.disabled !== undefined) { result.disabled = { reason: item.disabled.reason }; }
+		return result;
+	}
+
 	async function asCodeActionContext(context: code.CodeActionContext, token?: code.CancellationToken): Promise<proto.CodeActionContext> {
 		if (context === undefined || context === null) {
 			return context;
@@ -732,6 +761,17 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			only = [context.only.value];
 		}
 		return proto.CodeActionContext.create(await asDiagnostics(context.diagnostics, token), only, asCodeActionTriggerKind(context.triggerKind));
+	}
+
+	function asCodeActionContextSync(context: code.CodeActionContext): proto.CodeActionContext {
+		if (context === undefined || context === null) {
+			return context;
+		}
+		let only: proto.CodeActionKind[] | undefined;
+		if (context.only && Is.string(context.only.value)) {
+			only = [context.only.value];
+		}
+		return proto.CodeActionContext.create(asDiagnosticsSync(context.diagnostics), only, asCodeActionTriggerKind(context.triggerKind));
 	}
 
 	function asCodeActionTriggerKind(kind: code.CodeActionTriggerKind): proto.CodeActionTriggerKind | undefined {
@@ -921,11 +961,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asRange,
 		asPosition,
 		asPositions,
+		asPositionsSync,
 		asLocation,
 		asDiagnosticSeverity,
 		asDiagnosticTag,
 		asDiagnostic,
 		asDiagnostics,
+		asDiagnosticsSync,
 		asCompletionItem,
 		asTextEdit,
 		asSymbolKind,
@@ -933,7 +975,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asSymbolTags,
 		asReferenceParams,
 		asCodeAction,
+		asCodeActionSync,
 		asCodeActionContext,
+		asCodeActionContextSync,
 		asInlineValueContext,
 		asCommand,
 		asCodeLens,

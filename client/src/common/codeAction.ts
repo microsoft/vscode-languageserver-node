@@ -59,7 +59,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 				]
 			}
 		};
-		cap.honorsChangeAnnotations = false;
+		cap.honorsChangeAnnotations = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -79,7 +79,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 					const params: CodeActionParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						range: client.code2ProtocolConverter.asRange(range),
-						context: await client.code2ProtocolConverter.asCodeActionContext(context, token)
+						context: client.code2ProtocolConverter.asCodeActionContextSync(context)
 					};
 					return client.sendRequest(CodeActionRequest.type, params, token).then((values) => {
 						if (token.isCancellationRequested || values === null || values === undefined) {
@@ -100,7 +100,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 					const client = this._client;
 					const middleware = this._client.middleware;
 					const resolveCodeAction: ResolveCodeActionSignature = async (item, token) => {
-						return client.sendRequest(CodeActionResolveRequest.type, await client.code2ProtocolConverter.asCodeAction(item, token), token).then((result) => {
+						return client.sendRequest(CodeActionResolveRequest.type, client.code2ProtocolConverter.asCodeActionSync(item), token).then((result) => {
 							if (token.isCancellationRequested) {
 								return item;
 							}
