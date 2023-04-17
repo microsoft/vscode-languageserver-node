@@ -28,6 +28,7 @@ export class ProtocolRequestType0<R, PR, E, RO> extends RequestType0<R, E> imple
 	 * Clients must not use these properties. They are here to ensure correct typing.
 	 * in TypeScript
 	 */
+	public readonly __: [PR, _EM] | undefined;
 	public readonly ___: [PR, RO, _EM] | undefined;
 	public readonly ____: [RO, _EM] | undefined;
 	public readonly _pr: PR | undefined;
@@ -41,6 +42,7 @@ export class ProtocolRequestType<P, R, PR, E, RO> extends RequestType<P, R, E> i
 	/**
 	 * Clients must not use this property. It is here to ensure correct typing.
 	 */
+	public readonly __: [PR, _EM] | undefined;
 	public readonly ___: [PR, RO, _EM] | undefined;
 	public readonly ____: [RO, _EM] | undefined;
 	public readonly _pr: PR | undefined;
