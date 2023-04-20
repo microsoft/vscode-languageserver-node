@@ -177,7 +177,7 @@ export type TextDocumentFilter = {
 export namespace TextDocumentFilter {
 	export function is(value: any): value is TextDocumentFilter {
 		const candidate: TextDocumentFilter = value;
-		return Is.string(candidate.language) || Is.string(candidate.scheme) || Is.string(candidate.pattern);
+		return Is.string(candidate) || (Is.string(candidate.language) || Is.string(candidate.scheme) || Is.string(candidate.pattern));
 	}
 }
 
