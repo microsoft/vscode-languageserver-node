@@ -34,6 +34,12 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.17.4-next.0 Protocol, 8.2.0-next.0 JSON-RPC, 8.2.0-next.0 Client and 8.2.0-next.0 Server.
+
+- middleware support for general notifications and requests as well as for register and unregister capabilities.
+- various [bug fixes](https://github.com/microsoft/vscode-languageserver-node/milestone/46?closed=1).
+
+
 ## 3.17.3 Protocol, 8.1.0 JSON-RPC, 8.1.0 Client and 8.1.0 Server.
 
 - support for custom message handlers

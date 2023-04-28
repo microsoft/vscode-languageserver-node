@@ -305,7 +305,7 @@ export namespace DocumentSelector {
 }
 
 /**
- * General parameters to to register for an notification or to register a provider.
+ * General parameters to register for a notification or to register a provider.
  */
 export interface Registration {
 	/**
@@ -3410,7 +3410,7 @@ export interface DocumentFormattingRegistrationOptions extends TextDocumentRegis
 }
 
 /**
- * A request to to format a whole document.
+ * A request to format a whole document.
  */
 export namespace DocumentFormattingRequest {
 	export const method: 'textDocument/formatting' = 'textDocument/formatting';
@@ -3461,7 +3461,7 @@ export interface DocumentRangeFormattingRegistrationOptions extends TextDocument
 }
 
 /**
- * A request to to format a range in a document.
+ * A request to format a range in a document.
  */
 export namespace DocumentRangeFormattingRequest {
 	export const method: 'textDocument/rangeFormatting' = 'textDocument/rangeFormatting';
