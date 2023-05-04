@@ -510,22 +510,49 @@ connection.onWorkspaceSymbol((params) => {
 });
 
 connection.onCodeAction((params) => {
-	const document = documents.get(params.textDocument.uri);
-	const change: WorkspaceChange = new WorkspaceChange();
-	change.createFile(`${folder}/newFile.bat`, { overwrite: true });
-	const a = change.getTextEditChange(document);
-	a.insert({ line: 0, character: 0}, 'Code Action', ChangeAnnotation.create('Insert some text', true));
-	const b = change.getTextEditChange({ uri: `${folder}/newFile.bat`, version: null });
-	b.insert({ line: 0, character: 0 }, 'The initial content', ChangeAnnotation.create('Add additional content', true));
-
-	const codeAction: CodeAction = {
-		title: 'Custom Code Action',
-		kind: CodeActionKind.QuickFix,
-		data: params.textDocument.uri
-	};
-	codeAction.edit = change.edit;
 	return [
-		codeAction
+		{
+			'title': 'Wrap call chain',
+			'kind': 'refactor',
+			'data': {
+				'UniqueIdentifier': 'Wrap call chain',
+				'CustomTags': [],
+				'Range': {
+					'start': {
+						'line': 48,
+						'character': 38
+					},
+					'end': {
+						'line': 48,
+						'character': 38
+					}
+				},
+				'TextDocument': {
+					'uri': 'file:///MMMMMMMM.cs'
+				}
+			}
+		},
+		{
+			'title': 'Wrap and align call chain',
+			'kind': 'refactor',
+			'data': {
+				'UniqueIdentifier': 'Wrap and align call chain',
+				'CustomTags': [],
+				'Range': {
+					'start': {
+						'line': 48,
+						'character': 38
+					},
+					'end': {
+						'line': 48,
+						'character': 38
+					}
+				},
+				'TextDocument': {
+					'uri': 'file:///MMMMMMMM.cs'
+				}
+			}
+		}
 	];
 });
 
