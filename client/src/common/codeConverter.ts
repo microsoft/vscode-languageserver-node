@@ -139,6 +139,8 @@ export interface Converter {
 	asWorkspaceSymbol(item: code.SymbolInformation): proto.WorkspaceSymbol;
 
 	asInlayHint(value: code.InlayHint): proto.InlayHint;
+
+	asInlineCompletionParams(document: code.TextDocument, position: code.Position, context: code.InlineCompletionContext): proto.InlineCompletionParams;
 }
 
 export interface URIConverter {
@@ -797,6 +799,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return proto.InlineValueContext.create(context.frameId, asRange(context.stoppedLocation));
 	}
 
+	function asInlineCompletionParams(document: code.TextDocument, position: code.Position, context: code.InlineCompletionContext): proto.InlineCompletionParams {
+		return {context: proto.InlineCompletionContext.create(context.triggerKind, context.selectedCompletionInfo),
+			textDocument: asTextDocumentIdentifier(document), position: asPosition(position)};
+	}
+
 	function asCommand(item: code.Command): proto.Command {
 		let result = proto.Command.create(item.title, item.command);
 		if (item.arguments) { result.arguments = item.arguments; }
@@ -982,6 +989,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCallHierarchyItem,
 		asTypeHierarchyItem,
 		asInlayHint,
-		asWorkspaceSymbol
+		asWorkspaceSymbol,
+		asInlineCompletionParams
 	};
 }

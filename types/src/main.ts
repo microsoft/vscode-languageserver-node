@@ -4088,6 +4088,156 @@ export namespace InlayHint {
 }
 
 /**
+ * A string value used as a snippet is a template which allows to insert text
+ * and to control the editor cursor when insertion happens.
+ *
+ * A snippet can define tab stops and placeholders with `$1`, `$2`
+ * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+ * the end of the snippet. Variables are defined with `$name` and
+ * `${name:default value}`.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface StringValue {
+	/**
+	 * The kind of string value.
+	 */
+	kind: 'snippet';
+	/**
+	 * The snippet string.
+	 */
+	value: string;
+}
+
+export namespace StringValue {
+	export function create(value: string): StringValue {
+		return { value, kind: 'snippet' };
+	}
+}
+
+/**
+ * An inline completion item represents a text snippet that is proposed inline to complete text that is being typed.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface InlineCompletionItem {
+	/**
+	 * The text to replace the range with. Must be set.
+	 */
+	insertText: string | StringValue;
+
+	/**
+	 * A text that is used to decide if this inline completion should be shown. When `falsy` the {@link InlineCompletionItem.insertText} is used.
+	 */
+	filterText?: string;
+
+	/**
+	 * The range to replace. Must begin and end on the same line.
+	 */
+	range?: Range;
+
+	/**
+	 * An optional {@link Command} that is executed *after* inserting this completion.
+	 */
+	command?: Command;
+}
+
+export namespace InlineCompletionItem {
+	export function create(insertText: string | StringValue, filterText?: string, range?: Range, command?: Command): InlineCompletionItem {
+		return { insertText, filterText, range, command };
+	}
+}
+
+/**
+ * Represents a collection of {@link InlineCompletionItem inline completion items} to be presented in the editor.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface InlineCompletionList {
+	/**
+	 * The inline completion items
+	 */
+	items: InlineCompletionItem[];
+}
+
+export namespace InlineCompletionList {
+	export function create(items: InlineCompletionItem[]): InlineCompletionList {
+		return { items };
+	}
+}
+
+/**
+ * Describes how an {@link InlineCompletionItemProvider inline completion provider} was triggered.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export namespace InlineCompletionTriggerKind {
+	/**
+	 * Completion was triggered explicitly by a user gesture.
+	 */
+	export const Invoked: 0 = 0;
+
+	/**
+	 * Completion was triggered automatically while editing.
+	 */
+	export const Automatic: 1 = 1;
+}
+
+export type InlineCompletionTriggerKind = 0 | 1;
+
+/**
+ * Describes the currently selected completion item.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface SelectedCompletionInfo {
+	/**
+	 * The range that will be replaced if this completion item is accepted.
+	 */
+	range: Range;
+
+	/**
+	 * The text the range will be replaced with if this completion is accepted.
+	 */
+	text: string;
+}
+
+export namespace SelectedCompletionInfo {
+	export function create(range: Range, text: string): SelectedCompletionInfo {
+		return { range, text };
+	}
+}
+
+/**
+ * Provides information about the context in which an inline completion was requested.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface InlineCompletionContext {
+	/**
+	 * Describes how the inline completion was triggered.
+	 */
+	triggerKind: InlineCompletionTriggerKind;
+
+	/**
+	 * Provides information about the currently selected item in the autocomplete widget if it is visible.
+	 */
+	selectedCompletionInfo?: SelectedCompletionInfo;
+}
+
+export namespace InlineCompletionContext{
+	export function create(triggerKind: InlineCompletionTriggerKind, selectedCompletionInfo?: SelectedCompletionInfo): InlineCompletionContext {
+		return { triggerKind, selectedCompletionInfo };
+	}
+}
+
+/**
  * A workspace folder inside a client.
  */
 export interface WorkspaceFolder {

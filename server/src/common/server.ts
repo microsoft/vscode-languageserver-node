@@ -39,6 +39,7 @@ import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperati
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
 import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './typeHierarchy';
 import { InlineValueFeatureShape, InlineValueFeature } from './inlineValue';
+// import { InlineCompletionFeatureShape, InlineCompletionFeature } from './inlineCompletion.proposed';
 import { InlayHintFeatureShape, InlayHintFeature } from './inlayHint';
 import { DiagnosticFeatureShape, DiagnosticFeature } from './diagnostic';
 import { NotebookSyncFeatureShape, NotebookSyncFeature } from './notebook';

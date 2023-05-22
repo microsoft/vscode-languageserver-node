@@ -273,6 +273,7 @@ suite('Client integration', () => {
 						delta: true
 					}
 				},
+				inlineCompletionProvider: {},
 				workspace: {
 					fileOperations: {
 						didCreate: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
@@ -1443,6 +1444,27 @@ suite('Client integration', () => {
 		isDefined(edit);
 		rangeEqual(edit.range, 1, 1, 1, 1);
 		assert.strictEqual(edit.newText, 'number');
+	});
+
+	test('Inline Completions', async () => {
+		const providerData = client.getFeature(lsclient.InlineCompletionRequest.method).getProvider(document);
+		isDefined(providerData);
+		const results = (await providerData.provideInlineCompletionItems(document, position, { triggerKind: 1, selectedCompletionInfo: {range, text: 'text'} }, tokenSource.token)) as vscode.InlineCompletionItem[];
+
+		isArray(results, vscode.InlineCompletionItem, 1);
+
+		rangeEqual(results[0].range!, 1, 2, 3, 4);
+		assert.strictEqual(results[0].filterText!, 'te');
+		assert.strictEqual(results[0].insertText, 'text inline');
+
+		let middlewareCalled: boolean = false;
+		middleware.provideInlineCompletionItems = (d, r, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, r, c, t);
+		};
+		await providerData.provideInlineCompletionItems(document, position, { triggerKind: 0, selectedCompletionInfo: undefined }, tokenSource.token);
+		middleware.provideInlineCompletionItems = undefined;
+		assert.strictEqual(middlewareCalled, true);
 	});
 
 	test('Workspace symbols', async () => {
