@@ -4111,8 +4111,8 @@ export interface StringValue {
 }
 
 export namespace StringValue {
-	export function create(value: string): StringValue {
-		return { value, kind: 'snippet' };
+	export function createSnippet(value: string): StringValue {
+		return { kind: 'snippet', value };
 	}
 }
 

@@ -81,10 +81,26 @@
 			"request": "launch",
 			"name": "test:client",
 			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceFolder}/client-node-tests", "--extensionTestsPath=${workspaceFolder}/client-node-tests/lib" ],
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/client-node-tests",
+				"--extensionTestsPath=${workspaceFolder}/client-node-tests/lib"
+			],
 			"sourceMaps": true,
-			"outFiles": ["${workspaceRoot}/client-node-tests/lib/test/**/*.js"],
+			"outFiles": [
+				"${workspaceRoot}/client-node-tests/lib/**/*.js"
+			],
 			"preLaunchTask": "npm: watch"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "test:attach server",
+			"port": 6014,
+			"restart": true,
+			"outFiles": [
+				"${workspaceRoot}/client-node-tests/lib/**/*.js"
+			],
+			"sourceMaps": true
 		},
 		{
 			"type": "extensionHost",
