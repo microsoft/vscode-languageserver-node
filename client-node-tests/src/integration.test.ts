@@ -1781,6 +1781,38 @@ suite('Server tests', () => {
 		await client.stop();
 	});
 
+	test('Server accepts content encoders and decoders', async () => {
+		let usedEncoder = false;
+		let usedDecoder = false;
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/startStopServer.js'),
+			transport: lsclient.TransportKind.stdio,
+			contentDecoder: {
+				name: 'test-decoder',
+				decode: (buffer: Uint8Array) => {
+					usedDecoder = true;
+					return Promise.resolve(buffer);
+				}
+			},
+			contentEncoder: {
+				name: 'test-encoder',
+				encode: (buffer: Uint8Array) => {
+					usedEncoder = true;
+					return Promise.resolve(buffer);
+				}
+			}
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		void client.start();
+		await client.start();
+
+		assert.strictEqual(usedEncoder, true);
+		assert.strictEqual(usedDecoder, true);
+
+		await client.stop();
+	});
+
 	test('Test state change events', async() => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/nullServer.js'),

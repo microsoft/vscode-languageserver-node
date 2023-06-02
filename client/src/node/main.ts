@@ -14,7 +14,7 @@ import * as Is from '../common/utils/is';
 import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '../common/client';
 
 import { terminate } from './processes';
-import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
+import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams, ContentDecoder, ContentEncoder, MessageReaderOptions, MessageWriterOptions } from 'vscode-languageserver-protocol/node';
 
 // Import SemVer functions individually to avoid circular dependencies in SemVer
 import semverParse = require('semver/functions/parse');
@@ -123,7 +123,8 @@ namespace ChildProcessInfo {
 	}
 }
 
-export type ServerOptions = Executable | { run: Executable; debug: Executable } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Promise<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
+type ContentEncoding = { contentEncoder?: ContentEncoder; contentDecoder?: ContentDecoder };
+export type ServerOptions = Executable & ContentEncoding | { run: Executable; debug: Executable } & ContentEncoding | { run: NodeModule; debug: NodeModule } & ContentEncoding | NodeModule & ContentEncoding | (() => Promise<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
 
 export class LanguageClient extends BaseLanguageClient {
 
@@ -317,6 +318,10 @@ export class LanguageClient extends BaseLanguageClient {
 		} else {
 			json = server as NodeModule | Executable;
 		}
+
+		const messageReaderOptions: MessageReaderOptions | undefined = server.contentDecoder ? { contentDecoder: server.contentDecoder } : undefined;
+		const messageWriterOptions: MessageWriterOptions | undefined = server.contentEncoder ? { contentEncoder: server.contentEncoder } : undefined;
+
 		return this._getServerWorkingDir(json.options).then(serverWorkingDir => {
 			if (NodeModule.is(json) && json.module) {
 				let node = json;
@@ -360,7 +365,7 @@ export class LanguageClient extends BaseLanguageClient {
 							serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 							return Promise.resolve({ reader: new IPCMessageReader(serverProcess), writer: new IPCMessageWriter(serverProcess) });
 						} else {
-							return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
+							return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout, messageReaderOptions), writer: new StreamMessageWriter(serverProcess.stdin, messageWriterOptions) });
 						}
 					} else if (transport === TransportKind.pipe) {
 						return createClientPipeTransport(pipeName!).then((transport) => {
@@ -418,7 +423,7 @@ export class LanguageClient extends BaseLanguageClient {
 								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								resolve({ reader: new IPCMessageReader(this._serverProcess), writer: new IPCMessageWriter(this._serverProcess) });
 							} else {
-								resolve({ reader: new StreamMessageReader(sp.stdout), writer: new StreamMessageWriter(sp.stdin) });
+								resolve({ reader: new StreamMessageReader(sp.stdout, messageReaderOptions), writer: new StreamMessageWriter(sp.stdin, messageWriterOptions) });
 							}
 						} else if (transport === TransportKind.pipe) {
 							createClientPipeTransport(pipeName!).then((transport) => {
@@ -470,7 +475,7 @@ export class LanguageClient extends BaseLanguageClient {
 					serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 					this._serverProcess = serverProcess;
 					this._isDetached = !!options.detached;
-					return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
+					return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout, messageReaderOptions), writer: new StreamMessageWriter(serverProcess.stdin, messageWriterOptions) });
 				} else if (transport === TransportKind.pipe) {
 					return createClientPipeTransport(pipeName!).then((transport) => {
 						const serverProcess = cp.spawn(command.command, args, options);

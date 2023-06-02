@@ -21,6 +21,7 @@ import {
 } from '../common/api';
 
 export * from '../common/api';
+export { ContentEncoder, ContentDecoder } from '../common/encoding';
 
 export class IPCMessageReader extends AbstractMessageReader {
 
