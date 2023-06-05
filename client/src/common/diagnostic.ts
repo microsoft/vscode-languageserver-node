@@ -907,7 +907,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}
 		}));
 
-		tabs.onOpen((opened) => {
+		disposables.push(tabs.onOpen((opened) => {
 			for (const resource of opened) {
 				// We already know about this document. This can happen via a document open.
 				if (this.diagnosticRequestor.knows(PullState.document, resource)) {
@@ -933,7 +933,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 					this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument!); });
 				}
 			}
-		});
+		}));
 
 		// Pull all diagnostics for documents that are already open
 		const pulledTextDocuments: Set<string> = new Set();
