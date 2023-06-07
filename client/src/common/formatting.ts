@@ -137,6 +137,29 @@ export class DocumentRangeFormattingFeature extends TextDocumentLanguageFeature<
 				return middleware.provideDocumentRangeFormattingEdits
 					? middleware.provideDocumentRangeFormattingEdits(document, range, options, token, provideDocumentRangeFormattingEdits)
 					: provideDocumentRangeFormattingEdits(document, range, options, token);
+			},
+			provideDocumentRangesFormattingEdits: (document, ranges, options, token) => {
+				const client = this._client;
+				const range = ranges [0];
+				const provideDocumentRangeFormattingEdits: ProvideDocumentRangeFormattingEditsSignature = (document, range, options, token) => {
+					const params: DocumentRangeFormattingParams = {
+						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
+						range: client.code2ProtocolConverter.asRange(range),
+						options: client.code2ProtocolConverter.asFormattingOptions(options, FileFormattingOptions.fromConfiguration(document))
+					};
+					return client.sendRequest(DocumentRangeFormattingRequest.type, params, token).then((result) => {
+						if (token.isCancellationRequested) {
+							return null;
+						}
+						return client.protocol2CodeConverter.asTextEdits(result, token);
+					}, (error) => {
+						return client.handleFailedRequest(DocumentRangeFormattingRequest.type, token, error, null);
+					});
+				};
+				const middleware = client.middleware;
+				return middleware.provideDocumentRangeFormattingEdits
+					? middleware.provideDocumentRangeFormattingEdits(document, range, options, token, provideDocumentRangeFormattingEdits)
+					: provideDocumentRangeFormattingEdits(document, range, options, token);
 			}
 		};
 		return [Languages.registerDocumentRangeFormattingEditProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];

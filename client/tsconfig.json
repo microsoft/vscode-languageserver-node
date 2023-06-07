@@ -3,7 +3,7 @@
         "incremental": true,
         "composite": true
     },
-    "files": [],
+    "files": ["./vscode.proposed.formatMultipleRanges.d.ts"],
     "references": [
         {
             "path": "./../protocol/tsconfig.json"
