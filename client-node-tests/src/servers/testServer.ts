@@ -73,7 +73,9 @@ connection.onInitialize((params: InitializeParams): any => {
 			resolveProvider: true
 		},
 		documentFormattingProvider: true,
-		documentRangeFormattingProvider: true,
+		documentRangeFormattingProvider: {
+			formatMultipleRanges: true
+		},
 		documentOnTypeFormattingProvider: {
 			firstTriggerCharacter: ':'
 		},

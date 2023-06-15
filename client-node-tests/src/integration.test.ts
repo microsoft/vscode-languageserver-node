@@ -241,7 +241,9 @@ suite('Client integration', () => {
 					resolveProvider: true
 				},
 				documentFormattingProvider: true,
-				documentRangeFormattingProvider: true,
+				documentRangeFormattingProvider: {
+					formatMultipleRanges: true
+				},
 				documentOnTypeFormattingProvider: {
 					firstTriggerCharacter: ':'
 				},

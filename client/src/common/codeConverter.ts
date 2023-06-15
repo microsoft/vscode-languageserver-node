@@ -86,6 +86,8 @@ export interface Converter {
 	asRange(value: code.Range): proto.Range;
 	asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
 
+	asRanges(values: readonly code.Range[]): proto.Range[]; // any reason for this to be async like positions/diagnostics? symbolTags are sync
+
 	asLocation(value: null): null;
 	asLocation(value: undefined): undefined;
 	asLocation(value: code.Location): proto.Location;
@@ -439,6 +441,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return value;
 		}
 		return { start: asPosition(value.start), end: asPosition(value.end) };
+	}
+
+	function asRanges(values: readonly code.Range[]): proto.Range[] {
+		return values.map(asRange as (item: code.Range) => proto.Range);
 	}
 
 	function asLocation(value: code.Location): proto.Location;
@@ -959,6 +965,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asSignatureHelpParams,
 		asWorkerPosition,
 		asRange,
+		asRanges,
 		asPosition,
 		asPositions,
 		asPositionsSync,

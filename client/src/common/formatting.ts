@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+/// <reference path="../../typings/vscode.proposed.formatMultipleRanges.d.ts" />
 
 import {
 	languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Position as VPosition, TextEdit as VTextEdit, FormattingOptions as VFormattingOptions,
@@ -9,7 +10,7 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentHighlightRegistrationOptions, DocumentFormattingOptions, DocumentFormattingRequest, TextDocumentRegistrationOptions, DocumentFormattingParams, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingOptions, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams} from 'vscode-languageserver-protocol';
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentHighlightRegistrationOptions, DocumentFormattingOptions, DocumentFormattingRequest, TextDocumentRegistrationOptions, DocumentFormattingParams, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingOptions, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentRangesFormattingRequest, DocumentRangesFormattingParams, DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams} from 'vscode-languageserver-protocol';
 
 import * as UUID from './utils/uuid';
 
@@ -36,6 +37,10 @@ export interface ProvideDocumentRangeFormattingEditsSignature {
 	(this: void, document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]>;
 }
 
+export interface ProvideDocumentRangesFormattingEditsSignature {
+	(this: void, document: TextDocument, ranges: VRange[], options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]>;
+}
+
 export interface ProvideOnTypeFormattingEditsSignature {
 	(this: void, document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken): ProviderResult<VTextEdit[]>;
 }
@@ -44,6 +49,7 @@ export interface ProvideOnTypeFormattingEditsSignature {
 export interface FormattingMiddleware {
 	provideDocumentFormattingEdits?: (this: void, document: TextDocument, options: VFormattingOptions, token: CancellationToken, next: ProvideDocumentFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
 	provideDocumentRangeFormattingEdits?: (this: void, document: TextDocument, range: VRange, options: VFormattingOptions, token: CancellationToken, next: ProvideDocumentRangeFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
+	provideDocumentRangesFormattingEdits?: (this: void, document: TextDocument, range: VRange[], options: VFormattingOptions, token: CancellationToken, next: ProvideDocumentRangesFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
 	provideOnTypeFormattingEdits?: (this: void, document: TextDocument, position: VPosition, ch: string, options: VFormattingOptions, token: CancellationToken, next: ProvideOnTypeFormattingEditsSignature) => ProviderResult<VTextEdit[]>;
 }
 
@@ -113,7 +119,7 @@ export class DocumentRangeFormattingFeature extends TextDocumentLanguageFeature<
 		this.register({ id: UUID.generateUuid(), registerOptions: options });
 	}
 
-	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentRangeFormattingEditProvider] {
+	protected registerLanguageProvider(options: DocumentRangeFormattingRegistrationOptions): [Disposable, DocumentRangeFormattingEditProvider] {
 		const selector = options.documentSelector!;
 		const provider: DocumentRangeFormattingEditProvider = {
 			provideDocumentRangeFormattingEdits: (document, range, options, token) => {
@@ -137,31 +143,33 @@ export class DocumentRangeFormattingFeature extends TextDocumentLanguageFeature<
 				return middleware.provideDocumentRangeFormattingEdits
 					? middleware.provideDocumentRangeFormattingEdits(document, range, options, token, provideDocumentRangeFormattingEdits)
 					: provideDocumentRangeFormattingEdits(document, range, options, token);
-			},
-			provideDocumentRangesFormattingEdits: (document, ranges, options, token) => {
+			}
+		};
+
+		if (options.canFormatMultipleRanges) {
+			provider.provideDocumentRangesFormattingEdits = (document, ranges, options, token) => {
 				const client = this._client;
-				const range = ranges [0];
-				const provideDocumentRangeFormattingEdits: ProvideDocumentRangeFormattingEditsSignature = (document, range, options, token) => {
-					const params: DocumentRangeFormattingParams = {
+				const provideDocumentRangesFormattingEdits: ProvideDocumentRangesFormattingEditsSignature = (document, ranges, options, token) => {
+					const params: DocumentRangesFormattingParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
-						range: client.code2ProtocolConverter.asRange(range),
+						ranges: client.code2ProtocolConverter.asRanges(ranges),
 						options: client.code2ProtocolConverter.asFormattingOptions(options, FileFormattingOptions.fromConfiguration(document))
 					};
-					return client.sendRequest(DocumentRangeFormattingRequest.type, params, token).then((result) => {
+					return client.sendRequest(DocumentRangesFormattingRequest.type, params, token).then((result) => {
 						if (token.isCancellationRequested) {
 							return null;
 						}
 						return client.protocol2CodeConverter.asTextEdits(result, token);
 					}, (error) => {
-						return client.handleFailedRequest(DocumentRangeFormattingRequest.type, token, error, null);
+						return client.handleFailedRequest(DocumentRangesFormattingRequest.type, token, error, null);
 					});
 				};
 				const middleware = client.middleware;
-				return middleware.provideDocumentRangeFormattingEdits
-					? middleware.provideDocumentRangeFormattingEdits(document, range, options, token, provideDocumentRangeFormattingEdits)
-					: provideDocumentRangeFormattingEdits(document, range, options, token);
-			}
-		};
+				return middleware.provideDocumentRangesFormattingEdits
+					? middleware.provideDocumentRangesFormattingEdits(document, ranges, options, token, provideDocumentRangesFormattingEdits)
+					: provideDocumentRangesFormattingEdits(document, ranges, options, token);
+			};
+		}
 		return [Languages.registerDocumentRangeFormattingEditProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider), provider];
 	}
 }

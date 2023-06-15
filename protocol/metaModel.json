@@ -1707,6 +1707,35 @@
 			"documentation": "A request to format a range in a document."
 		},
 		{
+			"method": "textDocument/rangesFormatting",
+			"result": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextEdit"
+						}
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
+				]
+			},
+			"messageDirection": "clientToServer",
+			"params": {
+				"kind": "reference",
+				"name": "DocumentRangesFormattingParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "DocumentRangeFormattingRegistrationOptions"
+			},
+			"documentation": "A request to format ranges in a document."
+		},
+		{
 			"method": "textDocument/onTypeFormatting",
 			"result": {
 				"kind": "or",
@@ -5983,6 +6012,45 @@
 			"documentation": "Registration options for a {@link DocumentRangeFormattingRequest}."
 		},
 		{
+			"name": "DocumentRangesFormattingParams",
+			"properties": [
+				{
+					"name": "textDocument",
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentIdentifier"
+					},
+					"documentation": "The document to format."
+				},
+				{
+					"name": "ranges",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "Range"
+						}
+					},
+					"documentation": "The ranges to format"
+				},
+				{
+					"name": "options",
+					"type": {
+						"kind": "reference",
+						"name": "FormattingOptions"
+					},
+					"documentation": "The format options"
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "WorkDoneProgressParams"
+				}
+			],
+			"documentation": "The parameters of a {@link DocumentRangesFormattingRequest}."
+		},
+		{
 			"name": "DocumentOnTypeFormattingParams",
 			"properties": [
 				{
@@ -9477,7 +9545,17 @@
 		},
 		{
 			"name": "DocumentRangeFormattingOptions",
-			"properties": [],
+			"properties": [
+				{
+					"name": "canFormatMultipleRanges",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the server supports formatting multiple ranges at once."
+				}
+			],
 			"mixins": [
 				{
 					"kind": "reference",

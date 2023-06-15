@@ -3449,9 +3449,33 @@ export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 }
 
 /**
+ * The parameters of a {@link DocumentRangesFormattingRequest}.
+ */
+export interface DocumentRangesFormattingParams extends WorkDoneProgressParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The ranges to format
+	 */
+	ranges: Range[];
+
+	/**
+	 * The format options
+	 */
+	options: FormattingOptions;
+}
+
+/**
  * Provider options for a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions {
+	/**
+     * Whether the server supports formatting multiple ranges at once.
+     */
+	canFormatMultipleRanges?: boolean;
 }
 
 /**
@@ -3467,6 +3491,15 @@ export namespace DocumentRangeFormattingRequest {
 	export const method: 'textDocument/rangeFormatting' = 'textDocument/rangeFormatting';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentRangeFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
+}
+
+/**
+ * A request to format ranges in a document.
+ */
+export namespace DocumentRangesFormattingRequest {
+	export const method: 'textDocument/rangesFormatting' = 'textDocument/rangesFormatting';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<DocumentRangesFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
 }
 
 /**
