@@ -378,7 +378,7 @@ export type LanguageClientOptions = {
 		maxRestartCount?: number;
 	};
 	markdown?: {
-		isTrusted?: boolean;
+		isTrusted?: boolean | { readonly enabledCommands: readonly string[] };
 		supportHtml?: boolean;
 	};
 } & $NotebookDocumentOptions & $DiagnosticPullOptions & $ConfigurationOptions;
@@ -410,10 +410,21 @@ type ResolvedClientOptions = {
 		maxRestartCount?: number;
 	};
 	markdown: {
-		isTrusted: boolean;
+		isTrusted: boolean | { readonly enabledCommands: readonly string[] };
 		supportHtml: boolean;
 	};
 } & Required<$NotebookDocumentOptions> & Required<$DiagnosticPullOptions>;
+namespace ResolvedClientOptions {
+	export function sanitizeIsTrusted(isTrusted?: boolean | { readonly enabledCommands: readonly string[] }): boolean | { readonly enabledCommands: readonly string[] } {
+		if (isTrusted === undefined || isTrusted === null) {
+			return false;
+		}
+		if ((typeof isTrusted === 'boolean') || (typeof isTrusted === 'object' && isTrusted !== null && Is.stringArray(isTrusted.enabledCommands))) {
+			return isTrusted;
+		}
+		return false;
+	}
+}
 
 class DefaultErrorHandler implements ErrorHandler {
 
@@ -527,9 +538,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		clientOptions = clientOptions || {};
 
-		const markdown = { isTrusted: false, supportHtml: false };
+		const markdown: ResolvedClientOptions['markdown'] = { isTrusted: false, supportHtml: false };
 		if (clientOptions.markdown !== undefined) {
-			markdown.isTrusted = clientOptions.markdown.isTrusted === true;
+			markdown.isTrusted = ResolvedClientOptions.sanitizeIsTrusted(clientOptions.markdown.isTrusted);
 			markdown.supportHtml = clientOptions.markdown.supportHtml === true;
 		}
 
