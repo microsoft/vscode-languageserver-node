@@ -6,7 +6,7 @@
 	"description": "",
 	"version": "0.0.1",
 	"engines": {
-		"vscode": "^1.68.0"
+		"vscode": "^1.79.0"
 	},
 	"categories": [
 		"Other"
@@ -38,7 +38,7 @@
 		"@types/minimatch": "^3.0.5",
 		"@types/sinon": "^10.0.2",
 		"@types/uuid": "^8.3.1",
-		"@types/vscode": "1.68.0",
+		"@types/vscode": "1.79.0",
 		"find-process": "^1.4.7",
 		"glob": "^7.1.7",
 		"sinon": "^11.1.2",
