@@ -108,7 +108,9 @@ export class DocumentRangeFormattingFeature extends TextDocumentLanguageFeature<
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		ensure(ensure(capabilities, 'textDocument')!, 'rangeFormatting')!.dynamicRegistration = true;
+		const capability = ensure(ensure(capabilities, 'textDocument')!, 'rangeFormatting')!;
+		capability.dynamicRegistration = true;
+		capability.rangesSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -146,7 +148,7 @@ export class DocumentRangeFormattingFeature extends TextDocumentLanguageFeature<
 			}
 		};
 
-		if (options.canFormatMultipleRanges) {
+		if (options.rangesSupport) {
 			provider.provideDocumentRangesFormattingEdits = (document, ranges, options, token) => {
 				const client = this._client;
 				const provideDocumentRangesFormattingEdits: ProvideDocumentRangesFormattingEditsSignature = (document, ranges, options, token) => {

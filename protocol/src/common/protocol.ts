@@ -3426,6 +3426,14 @@ export interface DocumentRangeFormattingClientCapabilities {
 	 * Whether range formatting supports dynamic registration.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Whether the client supports formatting multiple ranges at once.
+	 *
+	 * @since 3.18.0
+ 	 * @proposed
+	 */
+	rangesSupport?: boolean;
 }
 
 /**
@@ -3450,6 +3458,9 @@ export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 
 /**
  * The parameters of a {@link DocumentRangesFormattingRequest}.
+ *
+ * @since 3.18.0
+ * @proposed
  */
 export interface DocumentRangesFormattingParams extends WorkDoneProgressParams {
 	/**
@@ -3474,8 +3485,11 @@ export interface DocumentRangesFormattingParams extends WorkDoneProgressParams {
 export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions {
 	/**
      * Whether the server supports formatting multiple ranges at once.
+	 *
+	 * @since 3.18.0
+ 	 * @proposed
      */
-	canFormatMultipleRanges?: boolean;
+	rangesSupport?: boolean;
 }
 
 /**
@@ -3495,6 +3509,9 @@ export namespace DocumentRangeFormattingRequest {
 
 /**
  * A request to format ranges in a document.
+ *
+ * @since 3.18.0
+ * @proposed
  */
 export namespace DocumentRangesFormattingRequest {
 	export const method: 'textDocument/rangesFormatting' = 'textDocument/rangesFormatting';

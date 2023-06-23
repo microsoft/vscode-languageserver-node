@@ -86,7 +86,7 @@ export interface Converter {
 	asRange(value: code.Range): proto.Range;
 	asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
 
-	asRanges(values: readonly code.Range[]): proto.Range[]; // any reason for this to be async like positions/diagnostics? symbolTags are sync
+	asRanges(values: readonly code.Range[]): proto.Range[];
 
 	asLocation(value: null): null;
 	asLocation(value: undefined): undefined;

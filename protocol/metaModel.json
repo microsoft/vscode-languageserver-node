@@ -1733,7 +1733,9 @@
 				"kind": "reference",
 				"name": "DocumentRangeFormattingRegistrationOptions"
 			},
-			"documentation": "A request to format ranges in a document."
+			"documentation": "A request to format ranges in a document.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"method": "textDocument/onTypeFormatting",
@@ -6048,7 +6050,9 @@
 					"name": "WorkDoneProgressParams"
 				}
 			],
-			"documentation": "The parameters of a {@link DocumentRangesFormattingRequest}."
+			"documentation": "The parameters of a {@link DocumentRangesFormattingRequest}.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "DocumentOnTypeFormattingParams",
@@ -9547,13 +9551,15 @@
 			"name": "DocumentRangeFormattingOptions",
 			"properties": [
 				{
-					"name": "canFormatMultipleRanges",
+					"name": "rangesSupport",
 					"type": {
 						"kind": "base",
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the server supports formatting multiple ranges at once."
+					"documentation": "Whether the server supports formatting multiple ranges at once.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			],
 			"mixins": [
@@ -12271,6 +12277,17 @@
 					},
 					"optional": true,
 					"documentation": "Whether range formatting supports dynamic registration."
+				},
+				{
+					"name": "rangesSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports formatting multiple ranges at once.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			],
 			"documentation": "Client capabilities of a {@link DocumentRangeFormattingRequest}."

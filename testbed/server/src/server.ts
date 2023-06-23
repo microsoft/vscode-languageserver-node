@@ -144,7 +144,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				},
 				documentFormattingProvider: true,
 				documentRangeFormattingProvider: {
-					canFormatMultipleRanges: true
+					rangesSupport: true
 				},
 				documentOnTypeFormattingProvider: {
 					firstTriggerCharacter: ';',
