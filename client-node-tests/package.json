@@ -44,5 +44,6 @@
 		"sinon": "^11.1.2",
 		"uuid": "^8.3.2",
 		"vscode-test": "^1.6.1"
-	}
+	},
+	"enabledApiProposals": ["formatMultipleRanges"]
 }
