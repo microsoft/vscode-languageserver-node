@@ -13470,6 +13470,11 @@
 					"name": "Log",
 					"value": 4,
 					"documentation": "A log message."
+				},
+				{
+					"name": "Debug",
+					"value": 5,
+					"documentation": "A debug message."
 				}
 			],
 			"documentation": "The message type"

@@ -113,6 +113,7 @@ import { InlineCompletionItemFeature } from './inlineCompletion';
  * Controls when the output channel is revealed.
  */
 export enum RevealOutputChannelOn {
+	Debug = 0,
 	Info = 1,
 	Warn = 2,
 	Error = 3,
@@ -983,6 +984,16 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return data.toString();
 	}
 
+	public debug(message: string, data?: any, showNotification: boolean = true): void {
+		this.outputChannel.appendLine(`[Debug - ${(new Date().toLocaleTimeString())}] ${message}`);
+		if (data !== null && data !== undefined) {
+			this.outputChannel.appendLine(this.data2String(data));
+		}
+		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Debug) {
+			this.showNotificationMessage(MessageType.Debug, message);
+		}
+	}
+
 	public info(message: string, data?: any, showNotification: boolean = true): void {
 		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data !== null && data !== undefined) {
@@ -1114,6 +1125,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 						break;
 					case MessageType.Info:
 						this.info(message.message, undefined, false);
+						break;
+					case MessageType.Debug:
+						this.debug(message.message, undefined, false);
 						break;
 					default:
 						this.outputChannel.appendLine(message.message);
