@@ -985,42 +985,28 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public debug(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.appendLine(`[Debug - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data !== null && data !== undefined) {
-			this.outputChannel.appendLine(this.data2String(data));
-		}
-		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Debug) {
-			this.showNotificationMessage(MessageType.Debug, message);
-		}
+		this.logOutputMessage(MessageType.Debug, RevealOutputChannelOn.Debug, 'Debug', message, data, showNotification);
 	}
 
 	public info(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data !== null && data !== undefined) {
-			this.outputChannel.appendLine(this.data2String(data));
-		}
-		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
-			this.showNotificationMessage(MessageType.Info, message);
-		}
+		this.logOutputMessage(MessageType.Info, RevealOutputChannelOn.Info, 'Info', message, data, showNotification);
 	}
 
 	public warn(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data !== null && data !== undefined) {
-			this.outputChannel.appendLine(this.data2String(data));
-		}
-		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
-			this.showNotificationMessage(MessageType.Warning, message);
-		}
+		this.logOutputMessage(MessageType.Warning, RevealOutputChannelOn.Warn, 'Warn', message, data, showNotification);
 	}
 
 	public error(message: string, data?: any, showNotification: boolean | 'force' = true): void {
-		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
+		this.logOutputMessage(MessageType.Error, RevealOutputChannelOn.Error, 'Error', message, data, showNotification);
+	}
+
+	private logOutputMessage(type: MessageType, reveal: RevealOutputChannelOn, name: string, message: string, data: any | undefined, showNotification: boolean | 'force'): void {
+		this.outputChannel.appendLine(`[${name.padEnd(5)} - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data !== null && data !== undefined) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error)) {
-			this.showNotificationMessage(MessageType.Error, message);
+		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= reveal)) {
+			this.showNotificationMessage(type, message);
 		}
 	}
 
