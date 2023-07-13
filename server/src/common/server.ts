@@ -167,6 +167,8 @@ export interface RemoteConsole extends FeatureBase {
 	 * Log a debug message.
 	 *
 	 * @param message The message to log.
+	 *
+	 * @since 3.18.0
 	 */
 	debug(message: string): void;
 }

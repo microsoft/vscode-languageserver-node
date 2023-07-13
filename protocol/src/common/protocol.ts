@@ -1540,6 +1540,8 @@ export namespace MessageType {
 	export const Log = 4;
 	/**
 	 * A debug message.
+	 *
+	 * @since 3.18.0
 	 */
 	export const Debug = 5;
 }
