@@ -247,6 +247,13 @@ export interface Converter {
 	asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.TypeHierarchyItem[] | undefined>;
 
 	asGlobPattern(pattern: ls.GlobPattern): code.GlobPattern | undefined;
+
+	asInlineCompletionResult(value: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	asInlineCompletionResult(value: ls.InlineCompletionList, token?: code.CancellationToken): Promise<code.InlineCompletionList>;
+	asInlineCompletionResult(value: ls.InlineCompletionItem[], token?: code.CancellationToken): Promise<code.InlineCompletionItem[]>;
+	asInlineCompletionResult(value: ls.InlineCompletionItem[] | ls.InlineCompletionList | undefined | null, token?: code.CancellationToken): Promise<code.InlineCompletionItem[] | code.InlineCompletionList | undefined>;
+
+	asInlineCompletionItem(item: ls.InlineCompletionItem): code.InlineCompletionItem;
 }
 
 export interface URIConverter {
@@ -265,7 +272,7 @@ namespace CodeBlock {
 	}
 }
 
-export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean, supportHtml: boolean): Converter {
+export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean | { readonly enabledCommands: readonly string[] }, supportHtml: boolean): Converter {
 
 	const nullConverter = (value: string) => code.Uri.parse(value);
 
@@ -1420,6 +1427,41 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return undefined;
 	}
 
+	function asInlineCompletionResult(value: undefined | null, token?: code.CancellationToken): Promise<undefined>;
+	function asInlineCompletionResult(value: ls.InlineCompletionList, token?: code.CancellationToken): Promise<code.InlineCompletionList>;
+	function asInlineCompletionResult(value: ls.InlineCompletionItem[], token?: code.CancellationToken): Promise<code.InlineCompletionItem[]>;
+	function asInlineCompletionResult(value: ls.InlineCompletionItem[] | ls.InlineCompletionList | undefined | null, token?: code.CancellationToken): Promise<code.InlineCompletionItem[] | code.InlineCompletionList | undefined>;
+	async function asInlineCompletionResult(value: ls.InlineCompletionItem[] | ls.InlineCompletionList | undefined | null, token?: code.CancellationToken): Promise<code.InlineCompletionItem[]| code.InlineCompletionList | undefined> {
+		if (!value) {
+			return undefined;
+		}
+		if (Array.isArray(value)) {
+			return async.map(value, (item) => asInlineCompletionItem(item), token);
+		}
+		const list = <ls.InlineCompletionList>value;
+		const converted = await async.map(list.items, (item) => {
+			return asInlineCompletionItem(item);
+		}, token);
+		return new code.InlineCompletionList(converted);
+	}
+
+	function asInlineCompletionItem(item: ls.InlineCompletionItem): code.InlineCompletionItem {
+		let insertText: string | code.SnippetString;
+		if (typeof item.insertText === 'string') {
+			insertText = item.insertText;
+		} else {
+			insertText = new code.SnippetString(item.insertText.value);
+		}
+
+		let command: code.Command | undefined = undefined;
+		if (item.command) {command = asCommand(item.command);}
+
+		const inlineCompletionItem = new code.InlineCompletionItem(insertText, asRange(item.range), command);
+
+		if (item.filterText) { inlineCompletionItem.filterText = item.filterText; }
+
+		return inlineCompletionItem;
+	}
 
 	return {
 		asUri,
@@ -1493,6 +1535,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asLinkedEditingRanges: asLinkedEditingRanges,
 		asTypeHierarchyItem,
 		asTypeHierarchyItems,
-		asGlobPattern
+		asGlobPattern,
+		asInlineCompletionResult,
+		asInlineCompletionItem
 	};
 }

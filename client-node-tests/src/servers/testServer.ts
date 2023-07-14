@@ -11,12 +11,12 @@ import {
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, WorkDoneProgressCreateRequest, WillCreateFilesRequest,
 	WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification,
-	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind, DocumentSymbol
+	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind, DocumentSymbol, InlineCompletionItem
 } from 'vscode-languageserver/node';
 
 import { URI } from 'vscode-uri';
 
-const connection: ProposedFeatures.Connection = createConnection();
+const connection = createConnection(ProposedFeatures.all);
 
 console.log = connection.console.log.bind(connection.console);
 console.error = connection.console.error.bind(connection.console);
@@ -73,7 +73,9 @@ connection.onInitialize((params: InitializeParams): any => {
 			resolveProvider: true
 		},
 		documentFormattingProvider: true,
-		documentRangeFormattingProvider: true,
+		documentRangeFormattingProvider: {
+			rangesSupport: true
+		},
 		documentOnTypeFormattingProvider: {
 			firstTriggerCharacter: ':'
 		},
@@ -105,6 +107,7 @@ connection.onInitialize((params: InitializeParams): any => {
 				delta: true
 			}
 		},
+		inlineCompletionProvider: {},
 		workspace: {
 			fileOperations: {
 				// Static reg is folders + .txt files with operation kind in the path
@@ -511,6 +514,12 @@ connection.languages.inlayHint.resolve((hint) => {
 	(hint.label as InlayHintLabelPart[])[0].tooltip = 'tooltip';
 	hint.textEdits = [TextEdit.insert(Position.create(1, 1), 'number')];
 	return hint;
+});
+
+connection.languages.inlineCompletion.on((_params) => {
+	return [
+		InlineCompletionItem.create('text inline', 'te', Range.create(1,2,3,4))
+	];
 });
 
 connection.onRequest(

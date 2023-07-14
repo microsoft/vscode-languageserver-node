@@ -121,6 +121,8 @@ import {
 	DidCloseNotebookDocumentNotification
 } from './protocol.notebook';
 
+import { InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest } from './protocol.inlineCompletion';
+
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -740,6 +742,14 @@ export interface TextDocumentClientCapabilities {
 	 * @since 3.17.0
 	 */
 	diagnostic?: DiagnosticClientCapabilities;
+
+	/**
+	 * Client capabilities specific to inline completions.
+	 *
+	 * @since 3.18.0
+ 	 * @proposed
+	 */
+	inlineCompletion?: InlineCompletionClientCapabilities;
 }
 
 export interface WindowClientCapabilities {
@@ -1246,6 +1256,14 @@ export interface ServerCapabilities<T = LSPAny> {
 	 * @since 3.17.0
 	 */
 	diagnosticProvider?: DiagnosticOptions | DiagnosticRegistrationOptions;
+
+	/**
+	 * Inline completion options used during static registration.
+	 *
+	 * @since 3.18.0
+ 	 * @proposed
+	 */
+	inlineCompletionProvider?: boolean | InlineCompletionOptions;
 
 	/**
 	 * Workspace specific server capabilities.
@@ -3408,6 +3426,14 @@ export interface DocumentRangeFormattingClientCapabilities {
 	 * Whether range formatting supports dynamic registration.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Whether the client supports formatting multiple ranges at once.
+	 *
+	 * @since 3.18.0
+ 	 * @proposed
+	 */
+	rangesSupport?: boolean;
 }
 
 /**
@@ -3431,9 +3457,39 @@ export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 }
 
 /**
+ * The parameters of a {@link DocumentRangesFormattingRequest}.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface DocumentRangesFormattingParams extends WorkDoneProgressParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The ranges to format
+	 */
+	ranges: Range[];
+
+	/**
+	 * The format options
+	 */
+	options: FormattingOptions;
+}
+
+/**
  * Provider options for a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions {
+	/**
+     * Whether the server supports formatting multiple ranges at once.
+	 *
+	 * @since 3.18.0
+ 	 * @proposed
+     */
+	rangesSupport?: boolean;
 }
 
 /**
@@ -3449,6 +3505,18 @@ export namespace DocumentRangeFormattingRequest {
 	export const method: 'textDocument/rangeFormatting' = 'textDocument/rangeFormatting';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentRangeFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
+}
+
+/**
+ * A request to format ranges in a document.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export namespace DocumentRangesFormattingRequest {
+	export const method: 'textDocument/rangesFormatting' = 'textDocument/rangesFormatting';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<DocumentRangesFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
 }
 
 /**
@@ -3847,7 +3915,9 @@ export {
 	VersionedNotebookDocumentIdentifier, NotebookDocumentSyncOptions, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType,
 	DidOpenNotebookDocumentParams, DidOpenNotebookDocumentNotification, NotebookCellArrayChange, NotebookDocumentChangeEvent, DidChangeNotebookDocumentParams,
 	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
-	DidCloseNotebookDocumentNotification
+	DidCloseNotebookDocumentNotification,
+	// Inline Completions
+	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest
 };
 
 // To be backwards compatible

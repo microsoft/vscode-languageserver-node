@@ -86,6 +86,8 @@ export interface Converter {
 	asRange(value: code.Range): proto.Range;
 	asRange(value: code.Range | undefined | null): proto.Range | undefined | null;
 
+	asRanges(values: readonly code.Range[]): proto.Range[];
+
 	asLocation(value: null): null;
 	asLocation(value: undefined): undefined;
 	asLocation(value: code.Location): proto.Location;
@@ -139,6 +141,8 @@ export interface Converter {
 	asWorkspaceSymbol(item: code.SymbolInformation): proto.WorkspaceSymbol;
 
 	asInlayHint(value: code.InlayHint): proto.InlayHint;
+
+	asInlineCompletionParams(document: code.TextDocument, position: code.Position, context: code.InlineCompletionContext): proto.InlineCompletionParams;
 }
 
 export interface URIConverter {
@@ -437,6 +441,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return value;
 		}
 		return { start: asPosition(value.start), end: asPosition(value.end) };
+	}
+
+	function asRanges(values: readonly code.Range[]): proto.Range[] {
+		return values.map(asRange as (item: code.Range) => proto.Range);
 	}
 
 	function asLocation(value: code.Location): proto.Location;
@@ -797,6 +805,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return proto.InlineValueContext.create(context.frameId, asRange(context.stoppedLocation));
 	}
 
+	function asInlineCompletionParams(document: code.TextDocument, position: code.Position, context: code.InlineCompletionContext): proto.InlineCompletionParams {
+		return {context: proto.InlineCompletionContext.create(context.triggerKind, context.selectedCompletionInfo),
+			textDocument: asTextDocumentIdentifier(document), position: asPosition(position)};
+	}
+
 	function asCommand(item: code.Command): proto.Command {
 		let result = proto.Command.create(item.title, item.command);
 		if (item.arguments) { result.arguments = item.arguments; }
@@ -952,6 +965,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asSignatureHelpParams,
 		asWorkerPosition,
 		asRange,
+		asRanges,
 		asPosition,
 		asPositions,
 		asPositionsSync,
@@ -982,6 +996,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asCallHierarchyItem,
 		asTypeHierarchyItem,
 		asInlayHint,
-		asWorkspaceSymbol
+		asWorkspaceSymbol,
+		asInlineCompletionParams
 	};
 }

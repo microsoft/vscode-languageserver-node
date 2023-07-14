@@ -11,7 +11,7 @@ import {
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider,
 	OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DeclarationProvider, FoldingRangeProvider, ImplementationProvider,
 	DocumentColorProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider, LinkedEditingRangeProvider, TypeHierarchyProvider, WorkspaceSymbolProvider,
-	ProviderResult, TextEdit as VTextEdit
+	ProviderResult, TextEdit as VTextEdit, InlineCompletionItemProvider
 } from 'vscode';
 
 import {
@@ -36,7 +36,7 @@ import {
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
-	CancellationToken as ProtocolCancellationToken
+	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -90,6 +90,7 @@ import { InlineValueMiddleware, InlineValueProviderShape } from './inlineValue';
 import { InlayHintsMiddleware, InlayHintsProviderShape } from './inlayHint';
 import { WorkspaceFolderMiddleware } from './workspaceFolder';
 import { FileOperationsMiddleware } from './fileOperations';
+import { InlineCompletionMiddleware } from './inlineCompletion';
 import { FileSystemWatcherFeature } from './fileSystemWatcher';
 import { ColorProviderFeature } from './colorProvider';
 import { ImplementationFeature } from './implementation';
@@ -106,6 +107,7 @@ import { LinkedEditingFeature } from './linkedEditingRange';
 import { TypeHierarchyFeature } from './typeHierarchy';
 import { InlineValueFeature } from './inlineValue';
 import { InlayHintsFeature } from './inlayHint';
+import { InlineCompletionItemFeature } from './inlineCompletion';
 
 /**
  * Controls when the output channel is revealed.
@@ -346,7 +348,7 @@ export type Middleware = _Middleware & TextDocumentSynchronizationMiddleware & C
 DocumentHighlightMiddleware & DocumentSymbolMiddleware & WorkspaceSymbolMiddleware & ReferencesMiddleware & TypeDefinitionMiddleware & ImplementationMiddleware &
 ColorProviderMiddleware & CodeActionMiddleware & CodeLensMiddleware & FormattingMiddleware & RenameMiddleware & DocumentLinkMiddleware & ExecuteCommandMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware & GeneralMiddleware;
+LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware & InlineCompletionMiddleware & GeneralMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
@@ -376,7 +378,7 @@ export type LanguageClientOptions = {
 		maxRestartCount?: number;
 	};
 	markdown?: {
-		isTrusted?: boolean;
+		isTrusted?: boolean | { readonly enabledCommands: readonly string[] };
 		supportHtml?: boolean;
 	};
 } & $NotebookDocumentOptions & $DiagnosticPullOptions & $ConfigurationOptions;
@@ -408,10 +410,21 @@ type ResolvedClientOptions = {
 		maxRestartCount?: number;
 	};
 	markdown: {
-		isTrusted: boolean;
+		isTrusted: boolean | { readonly enabledCommands: readonly string[] };
 		supportHtml: boolean;
 	};
 } & Required<$NotebookDocumentOptions> & Required<$DiagnosticPullOptions>;
+namespace ResolvedClientOptions {
+	export function sanitizeIsTrusted(isTrusted?: boolean | { readonly enabledCommands: readonly string[] }): boolean | { readonly enabledCommands: readonly string[] } {
+		if (isTrusted === undefined || isTrusted === null) {
+			return false;
+		}
+		if ((typeof isTrusted === 'boolean') || (typeof isTrusted === 'object' && isTrusted !== null && Is.stringArray(isTrusted.enabledCommands))) {
+			return isTrusted;
+		}
+		return false;
+	}
+}
 
 class DefaultErrorHandler implements ErrorHandler {
 
@@ -525,9 +538,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		clientOptions = clientOptions || {};
 
-		const markdown = { isTrusted: false, supportHtml: false };
+		const markdown: ResolvedClientOptions['markdown'] = { isTrusted: false, supportHtml: false };
 		if (clientOptions.markdown !== undefined) {
-			markdown.isTrusted = clientOptions.markdown.isTrusted === true;
+			markdown.isTrusted = ResolvedClientOptions.sanitizeIsTrusted(clientOptions.markdown.isTrusted);
 			markdown.supportHtml = clientOptions.markdown.supportHtml === true;
 		}
 
@@ -1734,6 +1747,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
 	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> | undefined;
 	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape | undefined;
+	getFeature(request: typeof InlineCompletionRequest.method): DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
 		return this._dynamicFeatures.get(request);
 	}
@@ -2213,6 +2227,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 export namespace ProposedFeatures {
 	export function createAll(_client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
 		let result: (StaticFeature | DynamicFeature<any>)[] = [
+			new InlineCompletionItemFeature(_client)
 		];
 		return result;
 	}
