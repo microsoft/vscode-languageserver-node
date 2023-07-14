@@ -13474,7 +13474,8 @@
 				{
 					"name": "Debug",
 					"value": 5,
-					"documentation": "A debug message."
+					"documentation": "A debug message.\n\n@since 3.18.0",
+					"since": "3.18.0"
 				}
 			],
 			"documentation": "The message type"
