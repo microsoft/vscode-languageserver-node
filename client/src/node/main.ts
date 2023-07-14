@@ -23,7 +23,7 @@ import semverSatisfies = require('semver/functions/satisfies');
 export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
 
-const REQUIRED_VSCODE_VERSION = '^1.78.0'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.79.0'; // do not change format, updated by `updateVSCode` script
 
 export enum TransportKind {
 	stdio,
