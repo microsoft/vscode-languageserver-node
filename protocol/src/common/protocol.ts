@@ -127,10 +127,6 @@ import { InlineCompletionClientCapabilities, InlineCompletionOptions, InlineComp
 let __noDynamicImport: LocationLink | undefined;
 
 /**
-**​/*.{ts,js}
-*/
-
-/**
  * A document filter denotes a document by different properties like
  * the {@link TextDocument.languageId language}, the {@link Uri.scheme scheme} of
  * its resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.
