@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "8.2.0-next.0",
+	"version": "8.2.0-next.2",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -30,7 +30,7 @@
 	"dependencies": {
 		"minimatch": "^5.1.0",
 		"semver": "^7.3.7",
-		"vscode-languageserver-protocol": "3.17.4-next.0"
+		"vscode-languageserver-protocol": "3.17.4-next.2"
 	},
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
@@ -40,7 +40,7 @@
 		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "cd ../client-node-tests && npm test && cd ../client",
-		"clean": "node ../node_modules/rimraf/bin.js lib",
+		"clean": "node ../node_modules/.bin/rimraf lib",
 		"all": "npm run clean && npm run compile && npm run lint && npm test",
 		"compile:publish": "node ../build/bin/tsc -b ./tsconfig.publish.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
 		"all:publish": "git clean -xfd . && npm install && npm run updateVSCodeVersion && npm run compile:publish && npm run lint && cd ../client-node-tests && npm run all:publish && cd ..",

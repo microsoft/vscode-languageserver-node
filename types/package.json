@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-types",
 	"description": "Types used by the Language server for node",
-	"version": "3.17.4-next.0",
+	"version": "3.17.4-next.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -19,7 +19,7 @@
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
 		"prepack": "npm run all:publish",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
-		"clean": "node ../node_modules/rimraf/bin.js lib",
+		"clean": "node ../node_modules/.bin/rimraf lib",
 		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "node ../node_modules/mocha/bin/_mocha",

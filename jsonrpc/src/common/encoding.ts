@@ -120,7 +120,7 @@ export namespace Encodings {
 		const index = value.indexOf(';q=');
 		if (index !== -1) {
 			const parsed = parseFloat(value.substr(index));
-			if (parsed !== NaN) {
+			if (!Number.isNaN(parsed)) {
 				q = parsed;
 			}
 			encoding = value.substr(0, index);
