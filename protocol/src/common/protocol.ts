@@ -126,7 +126,6 @@ import { InlineCompletionClientCapabilities, InlineCompletionOptions, InlineComp
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
-
 /**
  * A document filter denotes a document by different properties like
  * the {@link TextDocument.languageId language}, the {@link Uri.scheme scheme} of
@@ -150,21 +149,21 @@ export type TextDocumentFilter = {
 	language: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
-	/** A glob pattern, like `*.{ts,js}`. */
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme: string;
-	/** A glob pattern, like `*.{ts,js}`. */
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
-	/** A glob pattern, like `*.{ts,js}`. */
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`. */
 	pattern: string;
 };
 
