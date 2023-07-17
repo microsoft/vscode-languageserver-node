@@ -3861,6 +3861,7 @@ export namespace ApplyWorkspaceEditRequest {
 	export const method: 'workspace/applyEdit' = 'workspace/applyEdit';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, never, void, void>('workspace/applyEdit');
+	export type HandlerSignature = RequestHandler<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, void>;
 }
 
 export {

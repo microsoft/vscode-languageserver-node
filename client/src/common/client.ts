@@ -296,6 +296,7 @@ export interface DidChangeWatchedFileSignature {
 
 type _WorkspaceMiddleware = {
 	didChangeWatchedFile?: (this: void, event: FileEvent, next: DidChangeWatchedFileSignature) => Promise<void>;
+	applyEdit?: (this: void, params: ApplyWorkspaceEditParams, next: ApplyWorkspaceEditRequest.HandlerSignature) => Promise<ApplyWorkspaceEditResult>;
 };
 
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware;
@@ -1955,8 +1956,17 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 	}
 
-	private workspaceEditLock: Semaphore<VWorkspaceEdit> = new Semaphore(1);
 	private async handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
+		const middleware = this.clientOptions.middleware?.workspace?.applyEdit;
+		if(middleware) {
+			return middleware(params, nextParams => this.doHandleApplyWorkspaceEdit(nextParams));
+		} else {
+			return this.doHandleApplyWorkspaceEdit(params);
+		}
+	}
+
+	private workspaceEditLock: Semaphore<VWorkspaceEdit> = new Semaphore(1);
+	private async doHandleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
 		const workspaceEdit: WorkspaceEdit = params.edit;
 		// Make sure we convert workspace edits one after the other. Otherwise
 		// we might execute a workspace edit received first after we received another
