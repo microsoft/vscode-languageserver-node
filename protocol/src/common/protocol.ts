@@ -149,21 +149,21 @@ export type TextDocumentFilter = {
 	language: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`. */
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`. */
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`. */
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
 	pattern: string;
 };
 
