@@ -14590,7 +14590,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`."
+									"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 								}
 							]
 						}
@@ -14623,7 +14623,7 @@
 										"name": "string"
 									},
 									"optional": true,
-									"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`."
+									"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 								}
 							]
 						}
@@ -14656,7 +14656,7 @@
 										"kind": "base",
 										"name": "string"
 									},
-									"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`."
+									"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 								}
 							]
 						}
