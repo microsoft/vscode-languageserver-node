@@ -155,17 +155,18 @@ export interface StaticFeature {
 	getState(): FeatureState;
 
 	/**
-	 * Called when the client is stopped to dispose this feature. Usually a feature
-	 * un-registers listeners registered hooked up with the VS Code extension host.
+	 * Called when the client is stopped or re-started to clear this feature.
+	 * Usually a feature un-registers listeners registered hooked up with the
+	 * VS Code extension host.
 	 */
-	dispose(): void;
+	clear(): void;
 }
 
 export namespace StaticFeature {
 	export function is (value: any): value is StaticFeature {
 		const candidate: StaticFeature = value;
 		return candidate !== undefined && candidate !== null &&
-			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.dispose) &&
+			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.clear) &&
 			(candidate.fillInitializeParams === undefined || Is.func(candidate.fillInitializeParams));
 	}
 }
@@ -237,17 +238,18 @@ export interface DynamicFeature<RO> {
 	unregister(id: string): void;
 
 	/**
-	 * Called when the client is stopped to dispose this feature. Usually a feature
-	 * un-registers listeners registered hooked up with the VS Code extension host.
+	 * Called when the client is stopped or re-started to clear this feature.
+	 * Usually a feature un-registers listeners registered hooked up with the
+	 * VS Code extension host.
 	 */
-	dispose(): void;
+	clear(): void;
 }
 
 export namespace DynamicFeature {
 	export function is<T>(value: any): value is DynamicFeature<T> {
 		const candidate: DynamicFeature<T> = value;
 		return candidate !== undefined && candidate !== null &&
-			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.dispose) &&
+			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.clear) &&
 			(candidate.fillInitializeParams === undefined || Is.func(candidate.fillInitializeParams)) && Is.func(candidate.register) &&
 			Is.func(candidate.unregister) && candidate.registrationType !== undefined;
 	}
@@ -285,7 +287,7 @@ export abstract class DynamicDocumentFeature<RO, MW, CO = object> implements Dyn
 	public abstract registrationType: RegistrationType<RO>;
 	public abstract register(data: RegistrationData<RO>): void;
 	public abstract unregister(id: string): void;
-	public abstract dispose(): void;
+	public abstract clear(): void;
 
 	/**
 	 * Returns the state the feature is in.
@@ -424,7 +426,7 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._selectors.clear();
 		this._onNotificationSent.dispose();
 		if (this._listener) {
@@ -518,7 +520,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._registrations.forEach((value) => {
 			value.disposable.dispose();
 		});
@@ -618,7 +620,7 @@ export abstract class WorkspaceFeature<RO, PR, M> implements DynamicFeature<RO> 
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._registrations.forEach((registration) => {
 			registration.disposable.dispose();
 		});

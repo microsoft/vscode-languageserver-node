@@ -1056,12 +1056,12 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 		this.register({ id: id, registerOptions: options });
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		if (this.tabs !== undefined) {
 			this.tabs.dispose();
 			this.tabs = undefined;
 		}
-		super.dispose();
+		super.clear();
 	}
 
 	protected registerLanguageProvider(options: DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {

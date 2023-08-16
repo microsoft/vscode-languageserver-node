@@ -319,7 +319,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._pendingTextDocumentChanges.clear();
 		this._changeData.clear();
 		this._syncKind = TextDocumentSyncKind.None;
@@ -484,7 +484,7 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._selectors.clear();
 		if (this._listener) {
 			this._listener.dispose();

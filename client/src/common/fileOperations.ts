@@ -130,7 +130,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._filters.clear();
 		if (this._listener) {
 			this._listener.dispose();
@@ -276,8 +276,8 @@ abstract class CachingNotificationFileOperationFeature<I, E extends { readonly f
 		}
 	}
 
-	public dispose(): void {
-		super.dispose();
+	public clear(): void {
+		super.clear();
 		if (this._willListener) {
 			this._willListener.dispose();
 			this._willListener = undefined;

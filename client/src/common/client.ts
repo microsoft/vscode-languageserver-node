@@ -1434,9 +1434,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._syncedDocuments) {
 			this._syncedDocuments.clear();
 		}
-		// Dispose features in reverse order;
+		// Clear features in reverse order;
 		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
-			feature.dispose();
+			feature.clear();
 		}
 		if (mode === 'stop' && this._diagnostics !== undefined) {
 			this._diagnostics.dispose();

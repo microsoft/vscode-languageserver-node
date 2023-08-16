@@ -160,7 +160,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 		disposable.dispose();
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		for (let disposable of this._listeners.values()) {
 			disposable.dispose();
 		}
