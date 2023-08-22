@@ -29,9 +29,9 @@
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "node ../node_modules/mocha/bin/_mocha",
 		"all": "npm run clean && npm run compile && npm run lint && npm run test",
-		"compile:esm": "node ../build/bin/tsc -b ./tsconfig.esm.publish.json",
+		"compile:esm": "node ../build/bin/tsc -b ./tsconfig.esm.publish.json && node ../build/bin/fix-esm",
 		"compile:umd": "node ../build/bin/tsc -b ./tsconfig.umd.publish.json",
-		"all:publish": "git clean -xfd . && npm install && npm run compile:esm && npm run compile:umd && echo '{\"type\":\"module\"}' > lib/esm/package.json && npm run lint && npm run test",
+		"all:publish": "git clean -xfd . && npm install && npm run compile:esm && npm run compile:umd && npm run lint && npm run test",
 		"preversion": "npm test"
 	}
 }
