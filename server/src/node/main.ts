@@ -4,6 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 /// <reference path="../../typings/thenable.d.ts" />
 
+import { inspect } from 'node:util';
+
 import * as Is from '../common/utils/is';
 import { Connection, _, _Connection, Features, WatchDog, createConnection as createCommonConnection } from '../common/server';
 
@@ -190,6 +192,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 	options?: ConnectionStrategy | ConnectionOptions,
 	factories?: Features<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks>,
 ): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks> {
+	let stdio = false;
 	if (!input && !output && process.argv.length > 2) {
 		let port: number | undefined = void 0;
 		let pipeName: string | undefined = void 0;
@@ -201,6 +204,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 				output = new IPCMessageWriter(process);
 				break;
 			} else if (arg === '--stdio') {
+				stdio = true;
 				input = process.stdin;
 				output = process.stdout;
 				break;
@@ -255,7 +259,40 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 	const connectionFactory = (logger: Logger): ProtocolConnection => {
 		const result = createProtocolConnection(input as any, output as any, logger, options);
+		if(stdio) {
+			patchConsole(logger);
+		}
 		return result;
 	};
 	return createCommonConnection(connectionFactory, watchDog, factories);
+}
+
+function patchConsole(logger: Logger): undefined {
+	function serialize(args: unknown[]) {
+		return args.map(arg => typeof arg === 'string' ? arg : inspect(arg)).join(' ');
+	}
+
+	console.assert = (assertion, ...args) => {
+		if (assertion) {
+			return;
+		}
+		if (args.length === 0) {
+			logger.error('Assertion failed');
+		} else {
+			const [message, ...rest] = args;
+			logger.error(`Assertion failed: ${message} ${serialize(rest)}`);
+		}
+	};
+	console.dir = function dir(arg){
+		logger.log(inspect(arg));
+	};
+	console.log = function log(...args) {
+		logger.log(serialize(args));
+	};
+	console.error = function error(...args){
+		logger.error(serialize(args));
+	};
+	console.warn = function warn(...args) {
+		logger.warn(serialize(args));
+	};
 }
