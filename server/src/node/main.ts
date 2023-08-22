@@ -272,7 +272,7 @@ function patchConsole(logger: Logger): undefined {
 		return args.map(arg => typeof arg === 'string' ? arg : inspect(arg)).join(' ');
 	}
 
-	console.assert = (assertion, ...args) => {
+	console.assert = function assert(assertion, ...args) {
 		if (assertion) {
 			return;
 		}
@@ -283,15 +283,19 @@ function patchConsole(logger: Logger): undefined {
 			logger.error(`Assertion failed: ${message} ${serialize(rest)}`);
 		}
 	};
+
 	console.dir = function dir(arg){
 		logger.log(inspect(arg));
 	};
+
 	console.log = function log(...args) {
 		logger.log(serialize(args));
 	};
+
 	console.error = function error(...args){
 		logger.error(serialize(args));
 	};
+
 	console.warn = function warn(...args) {
 		logger.warn(serialize(args));
 	};
