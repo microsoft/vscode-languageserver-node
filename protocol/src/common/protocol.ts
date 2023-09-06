@@ -1298,6 +1298,41 @@ export interface ServerCapabilities<T = LSPAny> {
 }
 
 /**
+ * Information about the server
+ *
+ * @since 3.15.0
+ */
+export interface ServerInfo {
+	/**
+	 * The name of the server as defined by the server.
+	 */
+	name: string;
+
+	/**
+	 * The server's version as defined by the server.
+	 */
+	version?: string;
+}
+
+
+/**
+ * Information about the client
+ *
+ * @since 3.15.0
+ */
+export interface ClientInfo {
+	/**
+	 * The name of the client as defined by the client.
+	 */
+	name: string;
+
+	/**
+	 * The client's version as defined by the client.
+	 */
+	version?: string;
+}
+
+/**
  * The initialize request is sent from the client to the server.
  * It is sent once as the request after starting up the server.
  * The requests parameter is of type {@link InitializeParams}
@@ -1328,17 +1363,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	 *
 	 * @since 3.15.0
 	 */
-	clientInfo?: {
-		/**
-		 * The name of the client as defined by the client.
-		 */
-		name: string;
-
-		/**
-		 * The client's version as defined by the client.
-		 */
-		version?: string;
-	};
+	clientInfo?: ClientInfo;
 
 	/**
 	 * The locale the client is currently showing the user interface
@@ -1402,17 +1427,7 @@ export interface InitializeResult<T = any> {
 	 *
 	 * @since 3.15.0
 	 */
-	serverInfo?: {
-		/**
-		 * The name of the server as defined by the server.
-		 */
-		name: string;
-
-		/**
-		 * The server's version as defined by the server.
-		 */
-		version?: string;
-	};
+	serverInfo?: ServerInfo;
 
 	/**
 	 * Custom initialization results.
@@ -2246,6 +2261,26 @@ export namespace PublishDiagnosticsNotification {
 //---- Completion Support --------------------------
 
 /**
+ * The client supports the following `CompletionList` specific
+ * capabilities.
+ *
+ * @since 3.17.0
+ */
+export interface CompletionListCapabilities {
+	/**
+	 * The client supports the following itemDefaults on
+	 * a completion list.
+	 *
+	 * The value lists the supported property names of the
+	 * `CompletionList.itemDefaults` object. If omitted
+	 * no properties are supported.
+	 *
+	 * @since 3.17.0
+	 */
+	itemDefaults?: string[];
+}
+
+/**
  * Completion client capabilities
  */
 export interface CompletionClientCapabilities {
@@ -2382,19 +2417,7 @@ export interface CompletionClientCapabilities {
 	 *
 	 * @since 3.17.0
 	 */
-	completionList?: {
-		/**
-		 * The client supports the following itemDefaults on
-		 * a completion list.
-		 *
-		 * The value lists the supported property names of the
-		 * `CompletionList.itemDefaults` object. If omitted
-		 * no properties are supported.
-		 *
-		 * @since 3.17.0
-		 */
-		itemDefaults?: string[];
-	};
+	completionList?: CompletionListCapabilities;
 }
 
 /**

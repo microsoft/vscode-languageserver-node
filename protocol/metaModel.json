@@ -4299,28 +4299,8 @@
 				{
 					"name": "serverInfo",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "name",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "The name of the server as defined by the server."
-								},
-								{
-									"name": "version",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "The server's version as defined by the server."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ServerInfo"
 					},
 					"optional": true,
 					"documentation": "Information about the server.\n\n@since 3.15.0",
@@ -7979,28 +7959,8 @@
 				{
 					"name": "clientInfo",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "name",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "The name of the client as defined by the client."
-								},
-								{
-									"name": "version",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "The client's version as defined by the client."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientInfo"
 					},
 					"optional": true,
 					"documentation": "Information about the client\n\n@since 3.15.0",
@@ -8770,6 +8730,30 @@
 				}
 			],
 			"documentation": "Defines the capabilities provided by a language\nserver."
+		},
+		{
+			"name": "ServerInfo",
+			"properties": [
+				{
+					"name": "name",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The name of the server as defined by the server."
+				},
+				{
+					"name": "version",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The server's version as defined by the server."
+				}
+			],
+			"documentation": "Information about the server\n\n@since 3.15.0",
+			"since": "3.15.0"
 		},
 		{
 			"name": "VersionedTextDocumentIdentifier",
@@ -10035,6 +10019,30 @@
 			"documentation": "Describes the currently selected completion item.\n\n@since 3.18.0\n@proposed",
 			"since": "3.18.0",
 			"proposed": true
+		},
+		{
+			"name": "ClientInfo",
+			"properties": [
+				{
+					"name": "name",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The name of the client as defined by the client."
+				},
+				{
+					"name": "version",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The client's version as defined by the client."
+				}
+			],
+			"documentation": "Information about the client\n\n@since 3.15.0",
+			"since": "3.15.0"
 		},
 		{
 			"name": "ClientCapabilities",
@@ -11779,24 +11787,8 @@
 				{
 					"name": "completionList",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "itemDefaults",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "base",
-											"name": "string"
-										}
-									},
-									"optional": true,
-									"documentation": "The client supports the following itemDefaults on\na completion list.\n\nThe value lists the supported property names of the\n`CompletionList.itemDefaults` object. If omitted\nno properties are supported.\n\n@since 3.17.0",
-									"since": "3.17.0"
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "CompletionListCapabilities"
 					},
 					"optional": true,
 					"documentation": "The client supports the following `CompletionList` specific\ncapabilities.\n\n@since 3.17.0",
@@ -12991,6 +12983,26 @@
 			],
 			"documentation": "Client capabilities specific to the used markdown parser.\n\n@since 3.16.0",
 			"since": "3.16.0"
+		},
+		{
+			"name": "CompletionListCapabilities",
+			"properties": [
+				{
+					"name": "itemDefaults",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"optional": true,
+					"documentation": "The client supports the following itemDefaults on\na completion list.\n\nThe value lists the supported property names of the\n`CompletionList.itemDefaults` object. If omitted\nno properties are supported.\n\n@since 3.17.0",
+					"since": "3.17.0"
+				}
+			],
+			"documentation": "The client supports the following `CompletionList` specific\ncapabilities.\n\n@since 3.17.0",
+			"since": "3.17.0"
 		}
 	],
 	"enumerations": [
