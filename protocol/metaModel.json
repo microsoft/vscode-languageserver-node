@@ -4934,90 +4934,8 @@
 				{
 					"name": "itemDefaults",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "commitCharacters",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "base",
-											"name": "string"
-										}
-									},
-									"optional": true,
-									"documentation": "A default commit character set.\n\n@since 3.17.0",
-									"since": "3.17.0"
-								},
-								{
-									"name": "editRange",
-									"type": {
-										"kind": "or",
-										"items": [
-											{
-												"kind": "reference",
-												"name": "Range"
-											},
-											{
-												"kind": "literal",
-												"value": {
-													"properties": [
-														{
-															"name": "insert",
-															"type": {
-																"kind": "reference",
-																"name": "Range"
-															}
-														},
-														{
-															"name": "replace",
-															"type": {
-																"kind": "reference",
-																"name": "Range"
-															}
-														}
-													]
-												}
-											}
-										]
-									},
-									"optional": true,
-									"documentation": "A default edit range.\n\n@since 3.17.0",
-									"since": "3.17.0"
-								},
-								{
-									"name": "insertTextFormat",
-									"type": {
-										"kind": "reference",
-										"name": "InsertTextFormat"
-									},
-									"optional": true,
-									"documentation": "A default insert text format.\n\n@since 3.17.0",
-									"since": "3.17.0"
-								},
-								{
-									"name": "insertTextMode",
-									"type": {
-										"kind": "reference",
-										"name": "InsertTextMode"
-									},
-									"optional": true,
-									"documentation": "A default insert text mode.\n\n@since 3.17.0",
-									"since": "3.17.0"
-								},
-								{
-									"name": "data",
-									"type": {
-										"kind": "reference",
-										"name": "LSPAny"
-									},
-									"optional": true,
-									"documentation": "A default data value.\n\n@since 3.17.0",
-									"since": "3.17.0"
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "CompletionItemDefaults"
 					},
 					"optional": true,
 					"documentation": "In many cases the items of an actual completion result share the same\nvalue for properties like `commitCharacters` or the range of a text\nedit. A completion list can therefore define item defaults which will\nbe used if a completion item itself doesn't specify the value.\n\nIf a completion list specifies a default value and a completion item\nalso specifies a corresponding value the one from the item is used.\n\nServers are only allowed to return default values if the client\nsignals support for this via the `completionList.itemDefaults`\ncapability.\n\n@since 3.17.0",
@@ -9018,6 +8936,75 @@
 			"since": "3.16.0"
 		},
 		{
+			"name": "CompletionItemDefaults",
+			"properties": [
+				{
+					"name": "commitCharacters",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"optional": true,
+					"documentation": "A default commit character set.\n\n@since 3.17.0",
+					"since": "3.17.0"
+				},
+				{
+					"name": "editRange",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "Range"
+							},
+							{
+								"kind": "reference",
+								"name": "EditRangeWithInsertReplace"
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "A default edit range.\n\n@since 3.17.0",
+					"since": "3.17.0"
+				},
+				{
+					"name": "insertTextFormat",
+					"type": {
+						"kind": "reference",
+						"name": "InsertTextFormat"
+					},
+					"optional": true,
+					"documentation": "A default insert text format.\n\n@since 3.17.0",
+					"since": "3.17.0"
+				},
+				{
+					"name": "insertTextMode",
+					"type": {
+						"kind": "reference",
+						"name": "InsertTextMode"
+					},
+					"optional": true,
+					"documentation": "A default insert text mode.\n\n@since 3.17.0",
+					"since": "3.17.0"
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "reference",
+						"name": "LSPAny"
+					},
+					"optional": true,
+					"documentation": "A default data value.\n\n@since 3.17.0",
+					"since": "3.17.0"
+				}
+			],
+			"documentation": "In many cases the items of an actual completion result share the same\nvalue for properties like `commitCharacters` or the range of a text\nedit. A completion list can therefore define item defaults which will\nbe used if a completion item itself doesn't specify the value.\n\nIf a completion list specifies a default value and a completion item\nalso specifies a corresponding value the one from the item is used.\n\nServers are only allowed to return default values if the client\nsignals support for this via the `completionList.itemDefaults`\ncapability.\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
 			"name": "CompletionOptions",
 			"properties": [
 				{
@@ -10432,6 +10419,27 @@
 				}
 			],
 			"documentation": "Represents a related message and source code location for a diagnostic. This should be\nused to point to code locations that cause or related to a diagnostics, e.g when duplicating\na symbol in a scope."
+		},
+		{
+			"name": "EditRangeWithInsertReplace",
+			"properties": [
+				{
+					"name": "insert",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "replace",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				}
+			],
+			"documentation": "Edit range variant that includes ranges for insert and replace operations.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ParameterInformation",
