@@ -244,6 +244,16 @@
 			"documentation": "A request to provide folding ranges in a document. The request's\nparameter is of type {@link FoldingRangeParams}, the\nresponse is of type {@link FoldingRangeList} or a Thenable\nthat resolves to such."
 		},
 		{
+			"method": "workspace/foldingRange/refresh",
+			"result": {
+				"kind": "base",
+				"name": "null"
+			},
+			"messageDirection": "serverToClient",
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
 			"method": "textDocument/declaration",
 			"result": {
 				"kind": "or",
@@ -12428,6 +12438,16 @@
 					"optional": true,
 					"documentation": "Specific options for the folding range.\n\n@since 3.17.0",
 					"since": "3.17.0"
+				},
+				{
+					"name": "refreshSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client implementation supports a refresh request sent from the\nserver to the client.\n\nNote that this event is global and will force the client to refresh all\nfolding ranges currently shown. It should be used with absolute care and is\nuseful for situation where a server for example detects a project wide\nchange that requires such a calculation.\n\n@since 3.18.0",
+					"since": "3.18.0"
 				}
 			]
 		},
