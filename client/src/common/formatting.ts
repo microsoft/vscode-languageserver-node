@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-/// <reference path="../../typings/vscode.proposed.formatMultipleRanges.d.ts" />
 
 import {
 	languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Position as VPosition, TextEdit as VTextEdit, FormattingOptions as VFormattingOptions,
