@@ -1636,10 +1636,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private async handleConnectionError(error: Error, message: Message | undefined, count: number | undefined): Promise<void> {
 		const handlerResult: ErrorHandlerResult = await this._clientOptions.errorHandler!.error(error, message, count);
 		if (handlerResult.action === ErrorAction.Shutdown) {
-			this.error(handlerResult.message ?? `Client ${this._name}: connection to server is erroring. Shutting down server.`, undefined, handlerResult.handled === true ? false : 'force');
+			this.error(handlerResult.message ?? `Client ${this._name}: connection to server is erroring.\n${error.message}\nShutting down server.`, undefined, handlerResult.handled === true ? false : 'force');
 			this.stop().catch((error) => {
 				this.error(`Stopping server failed`, error, false);
 			});
+		} else {
+			this.error(handlerResult.message ??
+				`Client ${this._name}: connection to server is erroring.\n${error.message}`, undefined, handlerResult.handled === true ? false : 'force');
 		}
 	}
 
