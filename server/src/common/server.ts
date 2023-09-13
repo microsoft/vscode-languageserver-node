@@ -162,6 +162,15 @@ export interface RemoteConsole extends FeatureBase {
 	 * @param message The message to log.
 	 */
 	log(message: string): void;
+
+	/**
+	 * Log a debug message.
+	 *
+	 * @param message The message to log.
+	 *
+	 * @since 3.18.0
+	 */
+	debug(message: string): void;
 }
 
 class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
@@ -207,6 +216,10 @@ class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
 
 	public log(message: string): void {
 		this.send(MessageType.Log, message);
+	}
+
+	public debug(message: string): void {
+		this.send(MessageType.Debug, message);
 	}
 
 	private send(type: MessageType, message: string): void {
