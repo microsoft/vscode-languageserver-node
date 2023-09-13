@@ -87,7 +87,7 @@ export class ConfigurationFeature implements StaticFeature {
 		return result;
 	}
 
-	public dispose(): void {
+	public clear(): void {
 	}
 }
 
@@ -149,11 +149,11 @@ export type $ConfigurationOptions = {
 
 export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigurationRegistrationOptions> {
 
-	private isDisposed: boolean;
+	private isCleared: boolean;
 	private readonly _listeners: Map<string, Disposable>;
 
 	constructor(private _client: FeatureClient<DidChangeConfigurationWorkspaceMiddleware, $ConfigurationOptions>) {
-		this.isDisposed = false;
+		this.isCleared = false;
 		this._listeners = new Map();
 	}
 
@@ -170,6 +170,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 	}
 
 	public initialize(): void {
+		this.isCleared = false;
 		let section = this._client.clientOptions.synchronize?.configurationSection;
 		if (section !== undefined) {
 			this.register({
@@ -199,16 +200,16 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		for (const disposable of this._listeners.values()) {
 			disposable.dispose();
 		}
 		this._listeners.clear();
-		this.isDisposed = true;
+		this.isCleared = true;
 	}
 
 	private onDidChangeConfiguration(configurationSection: string | string[] | undefined, event: ConfigurationChangeEvent | undefined): void {
-		if (this.isDisposed) {
+		if (this.isCleared) {
 			return;
 		}
 		let sections: string[] | undefined;

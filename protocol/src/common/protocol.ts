@@ -149,21 +149,21 @@ export type TextDocumentFilter = {
 	language: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`. */
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`. */
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
 	pattern?: string;
 } | {
 	/** A language id, like `typescript`. */
 	language?: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme?: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples`. */
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
 	pattern: string;
 };
 
@@ -2767,10 +2767,9 @@ export interface DefinitionRegistrationOptions extends TextDocumentRegistrationO
 
 /**
  * A request to resolve the definition location of a symbol at a given text
- * document position. The request's parameter is of type [TextDocumentPosition]
- * (#TextDocumentPosition) the response is of either type {@link Definition}
- * or a typed array of {@link DefinitionLink} or a Thenable that resolves
- * to such.
+ * document position. The request's parameter is of type {@link TextDocumentPosition}
+ * the response is of either type {@link Definition} or a typed array of
+ * {@link DefinitionLink} or a Thenable that resolves to such.
  */
 export namespace DefinitionRequest {
 	export const method: 'textDocument/definition' = 'textDocument/definition';
@@ -2853,9 +2852,9 @@ export interface DocumentHighlightRegistrationOptions extends TextDocumentRegist
 
 /**
  * Request to resolve a {@link DocumentHighlight} for a given
- * text document position. The request's parameter is of type [TextDocumentPosition]
- * (#TextDocumentPosition) the request response is of type [DocumentHighlight[]]
- * (#DocumentHighlight) or a Thenable that resolves to such.
+ * text document position. The request's parameter is of type {@link TextDocumentPosition}
+ * the request response is an array of type {@link DocumentHighlight}
+ * or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
 	export const method: 'textDocument/documentHighlight' = 'textDocument/documentHighlight';

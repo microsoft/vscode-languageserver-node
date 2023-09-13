@@ -329,7 +329,7 @@ suite('Messages', () => {
 			assert.fail('Should not parse a message without a Content-Length');
 		});
 		reader.onError((err) => {
-			assert.strictEqual(err.message, 'Header must provide a Content-Length property.');
+			assert.strictEqual(err.message, 'Header must provide a Content-Length property.\n{"not-content-length":"43"}');
 			done();
 		});
 		readable.push('Not-Content-Length: 43\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}');
@@ -343,7 +343,7 @@ suite('Messages', () => {
 			assert.fail('Should not parse a message without a Content-Length');
 		});
 		reader.onError((err) => {
-			assert.strictEqual(err.message, 'Content-Length value must be a number.');
+			assert.strictEqual(err.message, 'Content-Length value must be a number. Got NaN');
 			done();
 		});
 		readable.push('Content-Length: NaN\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}');
