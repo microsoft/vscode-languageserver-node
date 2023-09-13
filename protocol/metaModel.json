@@ -10066,96 +10066,12 @@
 							"kind": "or",
 							"items": [
 								{
-									"kind": "literal",
-									"value": {
-										"properties": [
-											{
-												"name": "notebook",
-												"type": {
-													"kind": "or",
-													"items": [
-														{
-															"kind": "base",
-															"name": "string"
-														},
-														{
-															"kind": "reference",
-															"name": "NotebookDocumentFilter"
-														}
-													]
-												},
-												"documentation": "The notebook to be synced If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
-											},
-											{
-												"name": "cells",
-												"type": {
-													"kind": "array",
-													"element": {
-														"kind": "literal",
-														"value": {
-															"properties": [
-																{
-																	"name": "language",
-																	"type": {
-																		"kind": "base",
-																		"name": "string"
-																	}
-																}
-															]
-														}
-													}
-												},
-												"optional": true,
-												"documentation": "The cells of the matching notebook to be synced."
-											}
-										]
-									}
+									"kind": "reference",
+									"name": "NotebookDocumentFilterWithNotebook"
 								},
 								{
-									"kind": "literal",
-									"value": {
-										"properties": [
-											{
-												"name": "notebook",
-												"type": {
-													"kind": "or",
-													"items": [
-														{
-															"kind": "base",
-															"name": "string"
-														},
-														{
-															"kind": "reference",
-															"name": "NotebookDocumentFilter"
-														}
-													]
-												},
-												"optional": true,
-												"documentation": "The notebook to be synced If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
-											},
-											{
-												"name": "cells",
-												"type": {
-													"kind": "array",
-													"element": {
-														"kind": "literal",
-														"value": {
-															"properties": [
-																{
-																	"name": "language",
-																	"type": {
-																		"kind": "base",
-																		"name": "string"
-																	}
-																}
-															]
-														}
-													}
-												},
-												"documentation": "The cells of the matching notebook to be synced."
-											}
-										]
-									}
+									"kind": "reference",
+									"name": "NotebookDocumentFilterWithCells"
 								}
 							]
 						}
@@ -10970,30 +10886,8 @@
 				{
 					"name": "staleRequestSupport",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "cancel",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"documentation": "The client will actively cancel the request."
-								},
-								{
-									"name": "retryOnContentModified",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "base",
-											"name": "string"
-										}
-									},
-									"documentation": "The list of requests for which the client\nwill retry the request if it receives a\nresponse with error code `ContentModified`"
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "StaleRequestSupportOptions"
 					},
 					"optional": true,
 					"documentation": "Client capability that signals how the client\nhandles stale requests (e.g. a request\nfor which the client will not process the response\nanymore since the information is outdated).\n\n@since 3.17.0",
@@ -11035,6 +10929,78 @@
 			],
 			"documentation": "General client capabilities.\n\n@since 3.16.0",
 			"since": "3.16.0"
+		},
+		{
+			"name": "NotebookDocumentFilterWithNotebook",
+			"properties": [
+				{
+					"name": "notebook",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "reference",
+								"name": "NotebookDocumentFilter"
+							}
+						]
+					},
+					"documentation": "The notebook to be synced If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
+				},
+				{
+					"name": "cells",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "NotebookCellLanguage"
+						}
+					},
+					"optional": true,
+					"documentation": "The cells of the matching notebook to be synced."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "NotebookDocumentFilterWithCells",
+			"properties": [
+				{
+					"name": "notebook",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "reference",
+								"name": "NotebookDocumentFilter"
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "The notebook to be synced If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
+				},
+				{
+					"name": "cells",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "NotebookCellLanguage"
+						}
+					},
+					"documentation": "The cells of the matching notebook to be synced."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "WorkspaceFoldersServerCapabilities",
@@ -11244,20 +11210,8 @@
 				{
 					"name": "changeAnnotationSupport",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "groupsOnLabel",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "Whether the client groups edits with equal labels into tree nodes,\nfor instance all edits labelled with \"Changes in Strings\" would\nbe a tree node."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ChangeAnnotationsSupportOptions"
 					},
 					"optional": true,
 					"documentation": "Whether the client in general supports change annotations on text edits,\ncreate file, rename file and delete file changes.\n\n@since 3.16.0",
@@ -11318,23 +11272,8 @@
 				{
 					"name": "symbolKind",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "valueSet",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "SymbolKind"
-										}
-									},
-									"optional": true,
-									"documentation": "The symbol kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown.\n\nIf this property is not present the client only supports\nthe symbol kinds from `File` to `Array` as defined in\nthe initial version of the protocol."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "SymbolKindOptions"
 					},
 					"optional": true,
 					"documentation": "Specific capabilities for the `SymbolKind` in the `workspace/symbol` request."
@@ -11342,22 +11281,8 @@
 				{
 					"name": "tagSupport",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "valueSet",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "SymbolTag"
-										}
-									},
-									"documentation": "The tags supported by the client."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "TagSupportOptions"
 					},
 					"optional": true,
 					"documentation": "The client supports tags on `SymbolInformation`.\nClients supporting tags have to handle unknown tags gracefully.\n\n@since 3.16.0",
@@ -11366,22 +11291,8 @@
 				{
 					"name": "resolveSupport",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "properties",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "base",
-											"name": "string"
-										}
-									},
-									"documentation": "The properties that a client can resolve lazily. Usually\n`location.range`"
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ResolveSupportOptions"
 					},
 					"optional": true,
 					"documentation": "The client support partial workspace symbols. The client will send the\nrequest `workspaceSymbol/resolve` to the server to resolve additional\nproperties.\n\n@since 3.17.0",
@@ -11630,150 +11541,8 @@
 				{
 					"name": "completionItem",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "snippetSupport",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "Client supports snippets as insert text.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Placeholders with equal identifiers are linked,\nthat is typing in one will update others too."
-								},
-								{
-									"name": "commitCharactersSupport",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "Client supports commit characters on a completion item."
-								},
-								{
-									"name": "documentationFormat",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "MarkupKind"
-										}
-									},
-									"optional": true,
-									"documentation": "Client supports the following content formats for the documentation\nproperty. The order describes the preferred format of the client."
-								},
-								{
-									"name": "deprecatedSupport",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "Client supports the deprecated property on a completion item."
-								},
-								{
-									"name": "preselectSupport",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "Client supports the preselect property on a completion item."
-								},
-								{
-									"name": "tagSupport",
-									"type": {
-										"kind": "literal",
-										"value": {
-											"properties": [
-												{
-													"name": "valueSet",
-													"type": {
-														"kind": "array",
-														"element": {
-															"kind": "reference",
-															"name": "CompletionItemTag"
-														}
-													},
-													"documentation": "The tags supported by the client."
-												}
-											]
-										}
-									},
-									"optional": true,
-									"documentation": "Client supports the tag property on a completion item. Clients supporting\ntags have to handle unknown tags gracefully. Clients especially need to\npreserve unknown tags when sending a completion item back to the server in\na resolve call.\n\n@since 3.15.0",
-									"since": "3.15.0"
-								},
-								{
-									"name": "insertReplaceSupport",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "Client support insert replace edit to control different behavior if a\ncompletion item is inserted in the text or should replace text.\n\n@since 3.16.0",
-									"since": "3.16.0"
-								},
-								{
-									"name": "resolveSupport",
-									"type": {
-										"kind": "literal",
-										"value": {
-											"properties": [
-												{
-													"name": "properties",
-													"type": {
-														"kind": "array",
-														"element": {
-															"kind": "base",
-															"name": "string"
-														}
-													},
-													"documentation": "The properties that a client can resolve lazily."
-												}
-											]
-										}
-									},
-									"optional": true,
-									"documentation": "Indicates which properties a client can resolve lazily on a completion\nitem. Before version 3.16.0 only the predefined properties `documentation`\nand `details` could be resolved lazily.\n\n@since 3.16.0",
-									"since": "3.16.0"
-								},
-								{
-									"name": "insertTextModeSupport",
-									"type": {
-										"kind": "literal",
-										"value": {
-											"properties": [
-												{
-													"name": "valueSet",
-													"type": {
-														"kind": "array",
-														"element": {
-															"kind": "reference",
-															"name": "InsertTextMode"
-														}
-													}
-												}
-											]
-										}
-									},
-									"optional": true,
-									"documentation": "The client supports the `insertTextMode` property on\na completion item to override the whitespace handling mode\nas defined by the client (see `insertTextMode`).\n\n@since 3.16.0",
-									"since": "3.16.0"
-								},
-								{
-									"name": "labelDetailsSupport",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "The client has support for completion item label\ndetails (see also `CompletionItemLabelDetails`).\n\n@since 3.17.0",
-									"since": "3.17.0"
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "CompletionItemOptions"
 					},
 					"optional": true,
 					"documentation": "The client supports the following `CompletionItem` specific\ncapabilities."
@@ -12085,23 +11854,8 @@
 				{
 					"name": "symbolKind",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "valueSet",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "SymbolKind"
-										}
-									},
-									"optional": true,
-									"documentation": "The symbol kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown.\n\nIf this property is not present the client only supports\nthe symbol kinds from `File` to `Array` as defined in\nthe initial version of the protocol."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "SymbolKindOptions"
 					},
 					"optional": true,
 					"documentation": "Specific capabilities for the `SymbolKind` in the\n`textDocument/documentSymbol` request."
@@ -12118,22 +11872,8 @@
 				{
 					"name": "tagSupport",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "valueSet",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "SymbolTag"
-										}
-									},
-									"documentation": "The tags supported by the client."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "TagSupportOptions"
 					},
 					"optional": true,
 					"documentation": "The client supports tags on `SymbolInformation`. Tags are supported on\n`DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.\nClients supporting tags have to handle unknown tags gracefully.\n\n@since 3.16.0",
@@ -12960,6 +12700,32 @@
 			"since": "3.16.0"
 		},
 		{
+			"name": "StaleRequestSupportOptions",
+			"properties": [
+				{
+					"name": "cancel",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"documentation": "The client will actively cancel the request."
+				},
+				{
+					"name": "retryOnContentModified",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"documentation": "The list of requests for which the client\nwill retry the request if it receives a\nresponse with error code `ContentModified`"
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
 			"name": "RegularExpressionsClientCapabilities",
 			"properties": [
 				{
@@ -13021,6 +12787,196 @@
 			"since": "3.16.0"
 		},
 		{
+			"name": "NotebookCellLanguage",
+			"properties": [
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ChangeAnnotationsSupportOptions",
+			"properties": [
+				{
+					"name": "groupsOnLabel",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client groups edits with equal labels into tree nodes,\nfor instance all edits labelled with \"Changes in Strings\" would\nbe a tree node."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "SymbolKindOptions",
+			"properties": [
+				{
+					"name": "valueSet",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SymbolKind"
+						}
+					},
+					"optional": true,
+					"documentation": "The symbol kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown.\n\nIf this property is not present the client only supports\nthe symbol kinds from `File` to `Array` as defined in\nthe initial version of the protocol."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "TagSupportOptions",
+			"properties": [
+				{
+					"name": "valueSet",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "SymbolTag"
+						}
+					},
+					"documentation": "The tags supported by the client."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ResolveSupportOptions",
+			"properties": [
+				{
+					"name": "properties",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"documentation": "The properties that a client can resolve lazily. Usually\n`location.range`"
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "CompletionItemOptions",
+			"properties": [
+				{
+					"name": "snippetSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Client supports snippets as insert text.\n\nA snippet can define tab stops and placeholders with `$1`, `$2`\nand `${3:foo}`. `$0` defines the final tab stop, it defaults to\nthe end of the snippet. Placeholders with equal identifiers are linked,\nthat is typing in one will update others too."
+				},
+				{
+					"name": "commitCharactersSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Client supports commit characters on a completion item."
+				},
+				{
+					"name": "documentationFormat",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "MarkupKind"
+						}
+					},
+					"optional": true,
+					"documentation": "Client supports the following content formats for the documentation\nproperty. The order describes the preferred format of the client."
+				},
+				{
+					"name": "deprecatedSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Client supports the deprecated property on a completion item."
+				},
+				{
+					"name": "preselectSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Client supports the preselect property on a completion item."
+				},
+				{
+					"name": "tagSupport",
+					"type": {
+						"kind": "reference",
+						"name": "CompletionItemTagOptions"
+					},
+					"optional": true,
+					"documentation": "Client supports the tag property on a completion item. Clients supporting\ntags have to handle unknown tags gracefully. Clients especially need to\npreserve unknown tags when sending a completion item back to the server in\na resolve call.\n\n@since 3.15.0",
+					"since": "3.15.0"
+				},
+				{
+					"name": "insertReplaceSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Client support insert replace edit to control different behavior if a\ncompletion item is inserted in the text or should replace text.\n\n@since 3.16.0",
+					"since": "3.16.0"
+				},
+				{
+					"name": "resolveSupport",
+					"type": {
+						"kind": "reference",
+						"name": "CompletionItemResolveOptions"
+					},
+					"optional": true,
+					"documentation": "Indicates which properties a client can resolve lazily on a completion\nitem. Before version 3.16.0 only the predefined properties `documentation`\nand `details` could be resolved lazily.\n\n@since 3.16.0",
+					"since": "3.16.0"
+				},
+				{
+					"name": "insertTextModeSupport",
+					"type": {
+						"kind": "reference",
+						"name": "CompletionItemInsertTextModeOptions"
+					},
+					"optional": true,
+					"documentation": "The client supports the `insertTextMode` property on\na completion item to override the whitespace handling mode\nas defined by the client (see `insertTextMode`).\n\n@since 3.16.0",
+					"since": "3.16.0"
+				},
+				{
+					"name": "labelDetailsSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "The client has support for completion item label\ndetails (see also `CompletionItemLabelDetails`).\n\n@since 3.17.0",
+					"since": "3.17.0"
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
 			"name": "CompletionListCapabilities",
 			"properties": [
 				{
@@ -13039,6 +12995,59 @@
 			],
 			"documentation": "The client supports the following `CompletionList` specific\ncapabilities.\n\n@since 3.17.0",
 			"since": "3.17.0"
+		},
+		{
+			"name": "CompletionItemTagOptions",
+			"properties": [
+				{
+					"name": "valueSet",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CompletionItemTag"
+						}
+					},
+					"documentation": "The tags supported by the client."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "CompletionItemResolveOptions",
+			"properties": [
+				{
+					"name": "properties",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"documentation": "The properties that a client can resolve lazily."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "CompletionItemInsertTextModeOptions",
+			"properties": [
+				{
+					"name": "valueSet",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "InsertTextMode"
+						}
+					}
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		}
 	],
 	"enumerations": [
@@ -14762,6 +14771,15 @@
 			"since": "3.17.0"
 		},
 		{
+			"name": "Pattern",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"documentation": "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
 			"name": "NotebookDocumentFilter",
 			"type": {
 				"kind": "or",
@@ -14868,15 +14886,6 @@
 				]
 			},
 			"documentation": "A notebook document filter denotes a notebook document by\ndifferent properties. The properties will be match\nagainst the notebook's URI (same as with documents)\n\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
-			"name": "Pattern",
-			"type": {
-				"kind": "base",
-				"name": "string"
-			},
-			"documentation": "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@since 3.17.0",
 			"since": "3.17.0"
 		}
 	]

@@ -870,6 +870,23 @@ export type PositionEncodingKind = string;
 
 
 /**
+ * @since 3.18.0
+ */
+export interface StaleRequestSupportOptions {
+	/**
+	 * The client will actively cancel the request.
+	 */
+	cancel: boolean;
+
+	/**
+	 * The list of requests for which the client
+	 * will retry the request if it receives a
+	 * response with error code `ContentModified`
+	 */
+	retryOnContentModified: string[];
+}
+
+/**
  * General client capabilities.
  *
  * @since 3.16.0
@@ -883,19 +900,7 @@ export interface GeneralClientCapabilities {
 	 *
 	 * @since 3.17.0
 	 */
-	staleRequestSupport?: {
-		/**
-		 * The client will actively cancel the request.
-		 */
-		cancel: boolean;
-
-		/**
-		 * The list of requests for which the client
-		 * will retry the request if it receives a
-		 * response with error code `ContentModified`
-		 */
-		retryOnContentModified: string[];
-	};
+	staleRequestSupport?: StaleRequestSupportOptions;
 
 	/**
 	 * Client capabilities specific to regular expressions.
@@ -2288,6 +2293,113 @@ export interface CompletionListCapabilities {
 }
 
 /**
+ * @since 3.18.0
+ */
+export interface CompletionItemTagOptions {
+	/**
+	 * The tags supported by the client.
+	 */
+	valueSet: CompletionItemTag[];
+}
+
+/**
+ * @since 3.18.0
+ */
+export interface CompletionItemResolveOptions {
+	/**
+	 * The properties that a client can resolve lazily.
+	 */
+	properties: string[];
+}
+
+/**
+ * @since 3.18.0
+ */
+export interface CompletionItemInsertTextModeOptions {
+	valueSet: InsertTextMode[];
+}
+
+/**
+ * @since 3.18.0
+ */
+export interface CompletionItemOptions {
+	/**
+	 * Client supports snippets as insert text.
+	 *
+	 * A snippet can define tab stops and placeholders with `$1`, `$2`
+	 * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+	 * the end of the snippet. Placeholders with equal identifiers are linked,
+	 * that is typing in one will update others too.
+	 */
+	snippetSupport?: boolean;
+
+	/**
+	 * Client supports commit characters on a completion item.
+	 */
+	commitCharactersSupport?: boolean;
+
+	/**
+	 * Client supports the following content formats for the documentation
+	 * property. The order describes the preferred format of the client.
+	 */
+	documentationFormat?: MarkupKind[];
+
+	/**
+	 * Client supports the deprecated property on a completion item.
+	 */
+	deprecatedSupport?: boolean;
+
+	/**
+	 * Client supports the preselect property on a completion item.
+	 */
+	preselectSupport?: boolean;
+
+	/**
+	 * Client supports the tag property on a completion item. Clients supporting
+	 * tags have to handle unknown tags gracefully. Clients especially need to
+	 * preserve unknown tags when sending a completion item back to the server in
+	 * a resolve call.
+	 *
+	 * @since 3.15.0
+	 */
+	tagSupport?: CompletionItemTagOptions;
+
+	/**
+	 * Client support insert replace edit to control different behavior if a
+	 * completion item is inserted in the text or should replace text.
+	 *
+	 * @since 3.16.0
+	 */
+	insertReplaceSupport?: boolean;
+
+	/**
+	 * Indicates which properties a client can resolve lazily on a completion
+	 * item. Before version 3.16.0 only the predefined properties `documentation`
+	 * and `details` could be resolved lazily.
+	 *
+	 * @since 3.16.0
+	 */
+	resolveSupport?: CompletionItemResolveOptions;
+
+	/**
+	 * The client supports the `insertTextMode` property on
+	 * a completion item to override the whitespace handling mode
+	 * as defined by the client (see `insertTextMode`).
+	 *
+	 * @since 3.16.0
+	 */
+	insertTextModeSupport?: CompletionItemInsertTextModeOptions;
+
+	/**
+	 * The client has support for completion item label
+	 * details (see also `CompletionItemLabelDetails`).
+	 *
+	 * @since 3.17.0
+	 */
+	labelDetailsSupport?: boolean;
+}
+
+/**
  * Completion client capabilities
  */
 export interface CompletionClientCapabilities {
@@ -2300,94 +2412,7 @@ export interface CompletionClientCapabilities {
 	 * The client supports the following `CompletionItem` specific
 	 * capabilities.
 	 */
-	completionItem?: {
-		/**
-		 * Client supports snippets as insert text.
-		 *
-		 * A snippet can define tab stops and placeholders with `$1`, `$2`
-		 * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
-		 * the end of the snippet. Placeholders with equal identifiers are linked,
-		 * that is typing in one will update others too.
-		 */
-		snippetSupport?: boolean;
-
-		/**
-		 * Client supports commit characters on a completion item.
-		 */
-		commitCharactersSupport?: boolean;
-
-		/**
-		 * Client supports the following content formats for the documentation
-		 * property. The order describes the preferred format of the client.
-		 */
-		documentationFormat?: MarkupKind[];
-
-		/**
-		 * Client supports the deprecated property on a completion item.
-		 */
-		deprecatedSupport?: boolean;
-
-		/**
-		 * Client supports the preselect property on a completion item.
-		 */
-		preselectSupport?: boolean;
-
-		/**
-		 * Client supports the tag property on a completion item. Clients supporting
-		 * tags have to handle unknown tags gracefully. Clients especially need to
-		 * preserve unknown tags when sending a completion item back to the server in
-		 * a resolve call.
-		 *
-		 * @since 3.15.0
-		 */
-		tagSupport?: {
-			/**
-			 * The tags supported by the client.
-			 */
-			valueSet: CompletionItemTag[];
-		};
-
-		/**
-		 * Client support insert replace edit to control different behavior if a
-		 * completion item is inserted in the text or should replace text.
-		 *
-		 * @since 3.16.0
-		 */
-		insertReplaceSupport?: boolean;
-
-		/**
-		 * Indicates which properties a client can resolve lazily on a completion
-		 * item. Before version 3.16.0 only the predefined properties `documentation`
-		 * and `details` could be resolved lazily.
-		 *
-		 * @since 3.16.0
-		 */
-		resolveSupport?: {
-			/**
-			 * The properties that a client can resolve lazily.
-			 */
-			properties: string[];
-		};
-
-		/**
-		 * The client supports the `insertTextMode` property on
-		 * a completion item to override the whitespace handling mode
-		 * as defined by the client (see `insertTextMode`).
-		 *
-		 * @since 3.16.0
-		 */
-		insertTextModeSupport?: {
-			valueSet: InsertTextMode[];
-		};
-
-		/**
-		 * The client has support for completion item label
-		 * details (see also `CompletionItemLabelDetails`).
-		 *
-		 * @since 3.17.0
-		 */
-		labelDetailsSupport?: boolean;
-	};
+	completionItem?: CompletionItemOptions;
 
 	completionItemKind?: {
 		/**
@@ -2915,19 +2940,7 @@ export interface DocumentSymbolClientCapabilities {
 	 * Specific capabilities for the `SymbolKind` in the
 	 * `textDocument/documentSymbol` request.
 	 */
-	symbolKind?: {
-		/**
-		 * The symbol kind values the client supports. When this
-		 * property exists the client also guarantees that it will
-		 * handle values outside its set gracefully and falls back
-		 * to a default value when unknown.
-		 *
-		 * If this property is not present the client only supports
-		 * the symbol kinds from `File` to `Array` as defined in
-		 * the initial version of the protocol.
-		 */
-		valueSet?: SymbolKind[];
-	};
+	symbolKind?: SymbolKindOptions;
 
 	/**
 	 * The client supports hierarchical document symbols.
@@ -2941,12 +2954,7 @@ export interface DocumentSymbolClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	tagSupport?: {
-		/**
-		 * The tags supported by the client.
-		 */
-		valueSet: SymbolTag[];
-	};
+	tagSupport?: TagSupportOptions;
 
 	/**
 	 * The client supports an additional label presented in the UI when
@@ -3151,6 +3159,44 @@ export namespace CodeActionResolveRequest {
 //---- Workspace Symbol Provider ---------------------------
 
 /**
+ * @since 3.18.0
+ */
+export interface SymbolKindOptions {
+	/**
+	 * The symbol kind values the client supports. When this
+	 * property exists the client also guarantees that it will
+	 * handle values outside its set gracefully and falls back
+	 * to a default value when unknown.
+	 *
+	 * If this property is not present the client only supports
+	 * the symbol kinds from `File` to `Array` as defined in
+	 * the initial version of the protocol.
+	 */
+	valueSet?: SymbolKind[];
+}
+
+/**
+ * @since 3.18.0
+ */
+export interface TagSupportOptions {
+	/**
+	 * The tags supported by the client.
+	 */
+	valueSet: SymbolTag[];
+}
+
+/**
+ * @since 3.18.0
+ */
+export interface ResolveSupportOptions {
+	/**
+	 * The properties that a client can resolve lazily. Usually
+	 * `location.range`
+	 */
+	properties: string[];
+}
+
+/**
  * Client capabilities for a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolClientCapabilities {
@@ -3162,19 +3208,7 @@ export interface WorkspaceSymbolClientCapabilities {
 	/**
 	 * Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
 	 */
-	symbolKind?: {
-		/**
-		 * The symbol kind values the client supports. When this
-		 * property exists the client also guarantees that it will
-		 * handle values outside its set gracefully and falls back
-		 * to a default value when unknown.
-		 *
-		 * If this property is not present the client only supports
-		 * the symbol kinds from `File` to `Array` as defined in
-		 * the initial version of the protocol.
-		 */
-		valueSet?: SymbolKind[];
-	};
+	symbolKind?: SymbolKindOptions;
 
 	/**
 	 * The client supports tags on `SymbolInformation`.
@@ -3182,12 +3216,7 @@ export interface WorkspaceSymbolClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	tagSupport?: {
-		/**
-		 * The tags supported by the client.
-		 */
-		valueSet: SymbolTag[];
-	};
+	tagSupport?: TagSupportOptions;
 
 	/**
 	 * The client support partial workspace symbols. The client will send the
@@ -3196,13 +3225,7 @@ export interface WorkspaceSymbolClientCapabilities {
 	 *
 	 * @since 3.17.0
 	 */
-	resolveSupport?: {
-		/**
-		 * The properties that a client can resolve lazily. Usually
-		 * `location.range`
-		 */
-		properties: string[];
-	};
+	resolveSupport?: ResolveSupportOptions;
 }
 
 /**
@@ -3800,6 +3823,18 @@ export namespace ExecuteCommandRequest {
 
 //---- Apply Edit request ----------------------------------------
 
+/**
+ * @since 3.18.0
+ */
+export interface ChangeAnnotationsSupportOptions {
+	/**
+	 * Whether the client groups edits with equal labels into tree nodes,
+	 * for instance all edits labelled with "Changes in Strings" would
+	 * be a tree node.
+	 */
+	groupsOnLabel?: boolean;
+}
+
 export interface WorkspaceEditClientCapabilities {
 	/**
 	 * The client supports versioned document changes in `WorkspaceEdit`s
@@ -3839,14 +3874,7 @@ export interface WorkspaceEditClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	changeAnnotationSupport?: {
-		/**
-		 * Whether the client groups edits with equal labels into tree nodes,
-		 * for instance all edits labelled with "Changes in Strings" would
-		 * be a tree node.
-		 */
-		groupsOnLabel?: boolean;
-	};
+	changeAnnotationSupport?: ChangeAnnotationsSupportOptions;
 }
 
 /**

@@ -295,6 +295,48 @@ export type VersionedNotebookDocumentIdentifier = {
 };
 
 /**
+ * @since 3.18.0
+ */
+export interface NotebookCellLanguage {
+	language: string;
+}
+
+/**
+ * @since 3.18.0
+ */
+export interface NotebookDocumentFilterWithNotebook {
+	/**
+	 * The notebook to be synced If a string
+	 * value is provided it matches against the
+	 * notebook type. '*' matches every notebook.
+	 */
+	notebook: string | NotebookDocumentFilter;
+
+	/**
+	 * The cells of the matching notebook to be synced.
+	 */
+	cells?: NotebookCellLanguage[];
+}
+
+
+/**
+ * @since 3.18.0
+ */
+export interface NotebookDocumentFilterWithCells {
+	/**
+	 * The notebook to be synced If a string
+	 * value is provided it matches against the
+	 * notebook type. '*' matches every notebook.
+	 */
+	notebook?: string | NotebookDocumentFilter;
+
+	/**
+	 * The cells of the matching notebook to be synced.
+	 */
+	cells: NotebookCellLanguage[];
+}
+
+/**
  * Options specific to a notebook plus its cells
  * to be synced to the server.
  *
@@ -313,31 +355,7 @@ export type NotebookDocumentSyncOptions = {
 	/**
 	 * The notebooks to be synced
 	 */
-	notebookSelector: ({
-		/**
-		 * The notebook to be synced If a string
-		 * value is provided it matches against the
-		 * notebook type. '*' matches every notebook.
-		 */
-		notebook: string | NotebookDocumentFilter;
-
-		/**
-		 * The cells of the matching notebook to be synced.
-		 */
-		cells?: { language: string }[];
-	} | {
-		/**
-		 * The notebook to be synced If a string
-		 * value is provided it matches against the
-		 * notebook type. '*' matches every notebook.
-		 */
-		notebook?: string | NotebookDocumentFilter;
-
-		/**
-		 * The cells of the matching notebook to be synced.
-		 */
-		cells: { language: string }[];
-	})[];
+	notebookSelector: (NotebookDocumentFilterWithNotebook|NotebookDocumentFilterWithCells)[];
 
 	/**
 	 * Whether save notification should be forwarded to
