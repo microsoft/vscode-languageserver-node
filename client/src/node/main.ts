@@ -502,6 +502,17 @@ export class LanguageClient extends BaseLanguageClient {
 				}
 			}
 			return Promise.reject<MessageTransports>(new Error(`Unsupported server configuration ` + JSON.stringify(server, null, 4)));
+		}).finally(() => {
+			if (this._serverProcess !== undefined) {
+				this._serverProcess.on('exit', (code, signal) => {
+					if (code !== null) {
+						this.error(`Server process exited with code ${code}.`, undefined, false);
+					}
+					if (signal !== null) {
+						this.error(`Server process exited with signal ${signal}.`, undefined, false);
+					}
+				});
+			}
 		});
 	}
 
