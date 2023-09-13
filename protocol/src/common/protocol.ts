@@ -1062,6 +1062,27 @@ export namespace WorkDoneProgressOptions {
 }
 
 /**
+ * Defines workspace specific capabilities of the server.
+ *
+ * @since 3.18.0
+ */
+export interface WorkspaceOptions {
+	/**
+	 * The server supports workspace folder.
+	 *
+	 * @since 3.16.0
+	 */
+	workspaceFolders?: WorkspaceFoldersServerCapabilities;
+
+	/**
+	* The server is interested in notifications/requests for operations on files.
+	*
+	* @since 3.16.0
+	*/
+	fileOperations?: FileOperationOptions;
+}
+
+/**
  * Defines the capabilities provided by a language
  * server.
  */
@@ -1275,21 +1296,7 @@ export interface ServerCapabilities<T = LSPAny> {
 	/**
 	 * Workspace specific server capabilities.
 	 */
-	workspace?: {
-		/**
-		 * The server supports workspace folder.
-		 *
-		 * @since 3.6.0
-		 */
-		workspaceFolders?: WorkspaceFoldersServerCapabilities;
-
-		/**
-		* The server is interested in notifications/requests for operations on files.
-		*
-		* @since 3.16.0
-		*/
-		fileOperations?: FileOperationOptions;
-	};
+	workspace?: WorkspaceOptions;
 
 	/**
 	 * Experimental server capabilities.

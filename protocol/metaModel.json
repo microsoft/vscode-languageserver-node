@@ -5528,19 +5528,8 @@
 				{
 					"name": "disabled",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "reason",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "Human readable description of why the code action is currently disabled.\n\nThis is displayed in the code actions UI."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "CodeActionDisabled"
 					},
 					"optional": true,
 					"documentation": "Marks that the code action cannot currently be applied.\n\nClients should follow the following guidelines regarding disabled code actions:\n\n  - Disabled code actions are not shown in automatic [lightbulbs](https://code.visualstudio.com/docs/editor/editingevolved#_code-action)\n    code action menus.\n\n  - Disabled actions are shown as faded out in the code action menu when the user requests a more specific type\n    of code action, such as refactorings.\n\n  - If the user has a [keybinding](https://code.visualstudio.com/docs/editor/refactoring#_keybindings-for-code-actions)\n    that auto applies a code action and only disabled code actions are returned, the client should show the user an\n    error message with `reason` in the editor.\n\n@since 3.16.0",
@@ -5629,18 +5618,8 @@
 								"name": "Location"
 							},
 							{
-								"kind": "literal",
-								"value": {
-									"properties": [
-										{
-											"name": "uri",
-											"type": {
-												"kind": "base",
-												"name": "DocumentUri"
-											}
-										}
-									]
-								}
+								"kind": "reference",
+								"name": "LocationUriOnly"
 							}
 						]
 					},
@@ -6729,20 +6708,8 @@
 								"name": "boolean"
 							},
 							{
-								"kind": "literal",
-								"value": {
-									"properties": [
-										{
-											"name": "delta",
-											"type": {
-												"kind": "base",
-												"name": "boolean"
-											},
-											"optional": true,
-											"documentation": "The server supports deltas for full documents."
-										}
-									]
-								}
+								"kind": "reference",
+								"name": "SemanticTokensFullDelta"
 							}
 						]
 					},
@@ -7623,99 +7590,8 @@
 				{
 					"name": "cells",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "structure",
-									"type": {
-										"kind": "literal",
-										"value": {
-											"properties": [
-												{
-													"name": "array",
-													"type": {
-														"kind": "reference",
-														"name": "NotebookCellArrayChange"
-													},
-													"documentation": "The change to the cell array."
-												},
-												{
-													"name": "didOpen",
-													"type": {
-														"kind": "array",
-														"element": {
-															"kind": "reference",
-															"name": "TextDocumentItem"
-														}
-													},
-													"optional": true,
-													"documentation": "Additional opened cell text documents."
-												},
-												{
-													"name": "didClose",
-													"type": {
-														"kind": "array",
-														"element": {
-															"kind": "reference",
-															"name": "TextDocumentIdentifier"
-														}
-													},
-													"optional": true,
-													"documentation": "Additional closed cell text documents."
-												}
-											]
-										}
-									},
-									"optional": true,
-									"documentation": "Changes to the cell structure to add or\nremove cells."
-								},
-								{
-									"name": "data",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "NotebookCell"
-										}
-									},
-									"optional": true,
-									"documentation": "Changes to notebook cells properties like its\nkind, execution summary or metadata."
-								},
-								{
-									"name": "textContent",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "literal",
-											"value": {
-												"properties": [
-													{
-														"name": "document",
-														"type": {
-															"kind": "reference",
-															"name": "VersionedTextDocumentIdentifier"
-														}
-													},
-													{
-														"name": "changes",
-														"type": {
-															"kind": "array",
-															"element": {
-																"kind": "reference",
-																"name": "TextDocumentContentChangeEvent"
-															}
-														}
-													}
-												]
-											}
-										}
-									},
-									"optional": true,
-									"documentation": "Changes to the text content of notebook cells."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "NotebookDocumentCellChanges"
 					},
 					"optional": true,
 					"documentation": "Changes to cells"
@@ -8608,31 +8484,8 @@
 				{
 					"name": "workspace",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "workspaceFolders",
-									"type": {
-										"kind": "reference",
-										"name": "WorkspaceFoldersServerCapabilities"
-									},
-									"optional": true,
-									"documentation": "The server supports workspace folder.\n\n@since 3.6.0",
-									"since": "3.6.0"
-								},
-								{
-									"name": "fileOperations",
-									"type": {
-										"kind": "reference",
-										"name": "FileOperationOptions"
-									},
-									"optional": true,
-									"documentation": "The server is interested in notifications/requests for operations on files.\n\n@since 3.16.0",
-									"since": "3.16.0"
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "WorkspaceOptions"
 					},
 					"optional": true,
 					"documentation": "Workspace specific server capabilities."
@@ -9369,6 +9222,21 @@
 			"documentation": "Contains additional diagnostic information about the context in which\na {@link CodeActionProvider.provideCodeActions code action} is run."
 		},
 		{
+			"name": "CodeActionDisabled",
+			"properties": [
+				{
+					"name": "reason",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "Human readable description of why the code action is currently disabled.\n\nThis is displayed in the code actions UI."
+				}
+			],
+			"documentation": "Captures why the code action is currently disabled.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
 			"name": "CodeActionOptions",
 			"properties": [
 				{
@@ -9401,6 +9269,20 @@
 				}
 			],
 			"documentation": "Provider options for a {@link CodeActionRequest}."
+		},
+		{
+			"name": "LocationUriOnly",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					}
+				}
+			],
+			"documentation": "Location with only uri and does not include range.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "WorkspaceSymbolOptions",
@@ -9651,6 +9533,22 @@
 			],
 			"documentation": "@since 3.16.0",
 			"since": "3.16.0"
+		},
+		{
+			"name": "SemanticTokensFullDelta",
+			"properties": [
+				{
+					"name": "delta",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "The server supports deltas for full documents."
+				}
+			],
+			"documentation": "Semantic tokens options to support deltas for full documents\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "OptionalVersionedTextDocumentIdentifier",
@@ -9949,26 +9847,19 @@
 			"since": "3.17.0"
 		},
 		{
-			"name": "NotebookCellArrayChange",
+			"name": "NotebookDocumentCellChanges",
 			"properties": [
 				{
-					"name": "start",
+					"name": "structure",
 					"type": {
-						"kind": "base",
-						"name": "uinteger"
+						"kind": "reference",
+						"name": "NotebookDocumentCellChangeStructure"
 					},
-					"documentation": "The start oftest of the cell that changed."
+					"optional": true,
+					"documentation": "Changes to the cell structure to add or\nremove cells."
 				},
 				{
-					"name": "deleteCount",
-					"type": {
-						"kind": "base",
-						"name": "uinteger"
-					},
-					"documentation": "The deleted cells"
-				},
-				{
-					"name": "cells",
+					"name": "data",
 					"type": {
 						"kind": "array",
 						"element": {
@@ -9977,11 +9868,23 @@
 						}
 					},
 					"optional": true,
-					"documentation": "The new cells, if any"
+					"documentation": "Changes to notebook cells properties like its\nkind, execution summary or metadata."
+				},
+				{
+					"name": "textContent",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "NotebookDocumentCellContentChanges"
+						}
+					},
+					"optional": true,
+					"documentation": "Changes to the text content of notebook cells."
 				}
 			],
-			"documentation": "A change describing how to move a `NotebookCell`\narray from state S to S'.\n\n@since 3.17.0",
-			"since": "3.17.0"
+			"documentation": "Cell changes to a notebook document.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "SelectedCompletionInfo",
@@ -10291,97 +10194,31 @@
 			"since": "3.17.0"
 		},
 		{
-			"name": "WorkspaceFoldersServerCapabilities",
+			"name": "WorkspaceOptions",
 			"properties": [
 				{
-					"name": "supported",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"optional": true,
-					"documentation": "The server has support for workspace folders"
-				},
-				{
-					"name": "changeNotifications",
-					"type": {
-						"kind": "or",
-						"items": [
-							{
-								"kind": "base",
-								"name": "string"
-							},
-							{
-								"kind": "base",
-								"name": "boolean"
-							}
-						]
-					},
-					"optional": true,
-					"documentation": "Whether the server wants to receive workspace folder\nchange notifications.\n\nIf a string is provided the string is treated as an ID\nunder which the notification is registered on the client\nside. The ID can be used to unregister for these events\nusing the `client/unregisterCapability` request."
-				}
-			]
-		},
-		{
-			"name": "FileOperationOptions",
-			"properties": [
-				{
-					"name": "didCreate",
+					"name": "workspaceFolders",
 					"type": {
 						"kind": "reference",
-						"name": "FileOperationRegistrationOptions"
+						"name": "WorkspaceFoldersServerCapabilities"
 					},
 					"optional": true,
-					"documentation": "The server is interested in receiving didCreateFiles notifications."
+					"documentation": "The server supports workspace folder.\n\n@since 3.16.0",
+					"since": "3.16.0"
 				},
 				{
-					"name": "willCreate",
+					"name": "fileOperations",
 					"type": {
 						"kind": "reference",
-						"name": "FileOperationRegistrationOptions"
+						"name": "FileOperationOptions"
 					},
 					"optional": true,
-					"documentation": "The server is interested in receiving willCreateFiles requests."
-				},
-				{
-					"name": "didRename",
-					"type": {
-						"kind": "reference",
-						"name": "FileOperationRegistrationOptions"
-					},
-					"optional": true,
-					"documentation": "The server is interested in receiving didRenameFiles notifications."
-				},
-				{
-					"name": "willRename",
-					"type": {
-						"kind": "reference",
-						"name": "FileOperationRegistrationOptions"
-					},
-					"optional": true,
-					"documentation": "The server is interested in receiving willRenameFiles requests."
-				},
-				{
-					"name": "didDelete",
-					"type": {
-						"kind": "reference",
-						"name": "FileOperationRegistrationOptions"
-					},
-					"optional": true,
-					"documentation": "The server is interested in receiving didDeleteFiles file notifications."
-				},
-				{
-					"name": "willDelete",
-					"type": {
-						"kind": "reference",
-						"name": "FileOperationRegistrationOptions"
-					},
-					"optional": true,
-					"documentation": "The server is interested in receiving willDeleteFiles file requests."
+					"documentation": "The server is interested in notifications/requests for operations on files.\n\n@since 3.16.0",
+					"since": "3.16.0"
 				}
 			],
-			"documentation": "Options for notifications/requests for user operations on files.\n\n@since 3.16.0",
-			"since": "3.16.0"
+			"documentation": "Defines workspace specific capabilities of the server.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "CodeDescription",
@@ -10561,6 +10398,69 @@
 					"documentation": "Whether the execution was successful or\nnot if known by the client."
 				}
 			]
+		},
+		{
+			"name": "NotebookDocumentCellChangeStructure",
+			"properties": [
+				{
+					"name": "array",
+					"type": {
+						"kind": "reference",
+						"name": "NotebookCellArrayChange"
+					},
+					"documentation": "The change to the cell array."
+				},
+				{
+					"name": "didOpen",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextDocumentItem"
+						}
+					},
+					"optional": true,
+					"documentation": "Additional opened cell text documents."
+				},
+				{
+					"name": "didClose",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextDocumentIdentifier"
+						}
+					},
+					"optional": true,
+					"documentation": "Additional closed cell text documents."
+				}
+			],
+			"documentation": "Structural changes to cells in a notebook document.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "NotebookDocumentCellContentChanges",
+			"properties": [
+				{
+					"name": "document",
+					"type": {
+						"kind": "reference",
+						"name": "VersionedTextDocumentIdentifier"
+					}
+				},
+				{
+					"name": "changes",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "TextDocumentContentChangeEvent"
+						}
+					}
+				}
+			],
+			"documentation": "Content changes to a cell in a notebook document.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "WorkspaceClientCapabilities",
@@ -11137,6 +11037,99 @@
 			"since": "3.16.0"
 		},
 		{
+			"name": "WorkspaceFoldersServerCapabilities",
+			"properties": [
+				{
+					"name": "supported",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "The server has support for workspace folders"
+				},
+				{
+					"name": "changeNotifications",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "base",
+								"name": "boolean"
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "Whether the server wants to receive workspace folder\nchange notifications.\n\nIf a string is provided the string is treated as an ID\nunder which the notification is registered on the client\nside. The ID can be used to unregister for these events\nusing the `client/unregisterCapability` request."
+				}
+			]
+		},
+		{
+			"name": "FileOperationOptions",
+			"properties": [
+				{
+					"name": "didCreate",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true,
+					"documentation": "The server is interested in receiving didCreateFiles notifications."
+				},
+				{
+					"name": "willCreate",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true,
+					"documentation": "The server is interested in receiving willCreateFiles requests."
+				},
+				{
+					"name": "didRename",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true,
+					"documentation": "The server is interested in receiving didRenameFiles notifications."
+				},
+				{
+					"name": "willRename",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true,
+					"documentation": "The server is interested in receiving willRenameFiles requests."
+				},
+				{
+					"name": "didDelete",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true,
+					"documentation": "The server is interested in receiving didDeleteFiles file notifications."
+				},
+				{
+					"name": "willDelete",
+					"type": {
+						"kind": "reference",
+						"name": "FileOperationRegistrationOptions"
+					},
+					"optional": true,
+					"documentation": "The server is interested in receiving willDeleteFiles file requests."
+				}
+			],
+			"documentation": "Options for notifications/requests for user operations on files.\n\n@since 3.16.0",
+			"since": "3.16.0"
+		},
+		{
 			"name": "RelativePattern",
 			"properties": [
 				{
@@ -11166,6 +11159,41 @@
 				}
 			],
 			"documentation": "A relative pattern is a helper to construct glob patterns that are matched\nrelatively to a base URI. The common value for a `baseUri` is a workspace\nfolder root, but it can be another absolute URI as well.\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
+			"name": "NotebookCellArrayChange",
+			"properties": [
+				{
+					"name": "start",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"documentation": "The start oftest of the cell that changed."
+				},
+				{
+					"name": "deleteCount",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"documentation": "The deleted cells"
+				},
+				{
+					"name": "cells",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "NotebookCell"
+						}
+					},
+					"optional": true,
+					"documentation": "The new cells, if any"
+				}
+			],
+			"documentation": "A change describing how to move a `NotebookCell`\narray from state S to S'.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{

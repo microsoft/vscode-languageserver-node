@@ -429,6 +429,62 @@ export namespace NotebookCellArrayChange {
 }
 
 /**
+ * Structural changes to cells in a notebook document.
+ *
+ * @since 3.18.0
+ */
+export interface NotebookDocumentCellChangeStructure {
+	/**
+	 * The change to the cell array.
+	 */
+	array: NotebookCellArrayChange;
+
+	/**
+	 * Additional opened cell text documents.
+	 */
+	didOpen?: TextDocumentItem[];
+
+	/**
+	 * Additional closed cell text documents.
+	 */
+	didClose?: TextDocumentIdentifier[];
+}
+
+/**
+ * Content changes to a cell in a notebook document.
+ *
+ * @since 3.18.0
+ */
+export interface NotebookDocumentCellContentChanges {
+	document: VersionedTextDocumentIdentifier;
+	changes: TextDocumentContentChangeEvent[];
+}
+
+/**
+ * Cell changes to a notebook document.
+ *
+ * @since 3.18.0
+ */
+export interface NotebookDocumentCellChanges {
+	/**
+	 * Changes to the cell structure to add or
+	 * remove cells.
+	 */
+	structure?: NotebookDocumentCellChangeStructure;
+
+	/**
+	 * Changes to notebook cells properties like its
+	 * kind, execution summary or metadata.
+	 */
+	data?: NotebookCell[];
+
+	/**
+	 * Changes to the text content of notebook cells.
+	 */
+	textContent?: NotebookDocumentCellContentChanges[];
+}
+
+/**
  * A change event for a notebook document.
  *
  * @since 3.17.0
@@ -444,42 +500,7 @@ export type NotebookDocumentChangeEvent = {
 	/**
 	 * Changes to cells
 	 */
-	cells?: {
-		/**
-		 * Changes to the cell structure to add or
-		 * remove cells.
-		 */
-		structure?: {
-			/**
-			 * The change to the cell array.
-			 */
-			array: NotebookCellArrayChange;
-
-			/**
-			 * Additional opened cell text documents.
-			 */
-			didOpen?: TextDocumentItem[];
-
-			/**
-			 * Additional closed cell text documents.
-			 */
-			didClose?: TextDocumentIdentifier[];
-		};
-
-		/**
-		 * Changes to notebook cells properties like its
-		 * kind, execution summary or metadata.
-		 */
-		data?: NotebookCell[];
-
-		/**
-		 * Changes to the text content of notebook cells.
-		 */
-		textContent?: {
-			document: VersionedTextDocumentIdentifier;
-			changes: TextDocumentContentChangeEvent[];
-		}[];
-	};
+	cells?: NotebookDocumentCellChanges;
 };
 
 /**

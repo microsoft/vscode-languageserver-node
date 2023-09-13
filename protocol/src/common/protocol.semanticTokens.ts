@@ -127,6 +127,19 @@ export interface SemanticTokensClientCapabilities {
 	augmentsSyntaxTokens?: boolean;
 }
 
+
+/**
+ * Semantic tokens options to support deltas for full documents
+ *
+ * @since 3.18.0
+ */
+export interface SemanticTokensFullDelta {
+	/**
+	 * The server supports deltas for full documents.
+	 */
+	delta?: boolean;
+}
+
 /**
  * @since 3.16.0
  */
@@ -146,12 +159,7 @@ export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 	/**
 	 * Server supports providing semantic tokens for a full document.
 	 */
-	full?: boolean | {
-		/**
-		 * The server supports deltas for full documents.
-		 */
-		delta?: boolean;
-	};
+	full?: boolean | SemanticTokensFullDelta;
 }
 
 /**

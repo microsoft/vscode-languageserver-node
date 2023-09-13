@@ -2842,6 +2842,13 @@ export namespace SymbolInformation {
 }
 
 /**
+ * Location with only uri and does not include range.
+ *
+ * @since 3.18.0
+ */
+export interface LocationUriOnly { uri: DocumentUri }
+
+/**
  * A special workspace symbol that supports locations without a range.
  *
  * See also SymbolInformation.
@@ -2856,7 +2863,7 @@ export interface WorkspaceSymbol extends BaseSymbolInformation {
 	 *
 	 * See SymbolInformation#location for more details.
 	 */
-	location: Location | { uri: DocumentUri };
+	location: Location | LocationUriOnly;
 
 	/**
 	 * A data entry field that is preserved on a workspace symbol between a
@@ -3153,6 +3160,22 @@ export namespace CodeActionContext {
 	}
 }
 
+
+/**
+ * Captures why the code action is currently disabled.
+ *
+ * @since 3.18.0
+ */
+export interface CodeActionDisabled {
+
+	/**
+	 * Human readable description of why the code action is currently disabled.
+	 *
+	 * This is displayed in the code actions UI.
+	 */
+	reason: string;
+}
+
 /**
  * A code action represents a change that can be performed in code, e.g. to fix a problem or
  * to refactor code.
@@ -3206,15 +3229,7 @@ export interface CodeAction {
 	 *
 	 * @since 3.16.0
 	 */
-	disabled?: {
-
-		/**
-		 * Human readable description of why the code action is currently disabled.
-		 *
-		 * This is displayed in the code actions UI.
-		 */
-		reason: string;
-	};
+	disabled?: CodeActionDisabled;
 
 	/**
 	 * The workspace edit this code action performs.
