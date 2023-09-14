@@ -43,7 +43,7 @@ import {
 } from './protocol.colorProvider';
 
 import {
-	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions, FoldingRangeRefreshRequest
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions, FoldingRangeRefreshRequest, FoldingRangeWorkspaceClientCapabilities
 } from './protocol.foldingRange';
 
 import {
@@ -556,6 +556,14 @@ export interface WorkspaceClientCapabilities {
 	 * @since 3.17.0.
 	 */
 	diagnostics?: DiagnosticWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the folding range requests scoped to the workspace.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	foldingRange?: FoldingRangeWorkspaceClientCapabilities;
 }
 
 /**

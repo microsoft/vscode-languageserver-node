@@ -66,6 +66,15 @@ export interface FoldingRangeClientCapabilities {
 		*/
 		collapsedText?: boolean;
 	};
+}
+
+/**
+ * Client workspace capabilities specific to folding ranges
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface FoldingRangeWorkspaceClientCapabilities {
 
 	/**
 	 * Whether the client implementation supports a refresh request sent from the

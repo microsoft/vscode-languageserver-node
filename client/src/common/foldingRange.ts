@@ -40,7 +40,7 @@ export class FoldingRangeFeature extends TextDocumentLanguageFeature<boolean | F
 		capability.lineFoldingOnly = true;
 		capability.foldingRangeKind = { valueSet: [ FoldingRangeKind.Comment, FoldingRangeKind.Imports, FoldingRangeKind.Region ] };
 		capability.foldingRange = { collapsedText: false };
-		capability.refreshSupport = true;
+		ensure(ensure(capabilities, 'workspace')!, 'foldingRange')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
