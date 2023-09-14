@@ -250,8 +250,9 @@
 				"name": "null"
 			},
 			"messageDirection": "serverToClient",
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"method": "textDocument/declaration",
@@ -12446,8 +12447,9 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the client implementation supports a refresh request sent from the\nserver to the client.\n\nNote that this event is global and will force the client to refresh all\nfolding ranges currently shown. It should be used with absolute care and is\nuseful for situation where a server for example detects a project wide\nchange that requires such a calculation.\n\n@since 3.18.0",
-					"since": "3.18.0"
+					"documentation": "Whether the client implementation supports a refresh request sent from the\nserver to the client.\n\nNote that this event is global and will force the client to refresh all\nfolding ranges currently shown. It should be used with absolute care and is\nuseful for situation where a server for example detects a project wide\nchange that requires such a calculation.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			]
 		},

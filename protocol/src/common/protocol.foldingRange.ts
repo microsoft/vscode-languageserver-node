@@ -77,6 +77,7 @@ export interface FoldingRangeClientCapabilities {
 	 * change that requires such a calculation.
 	 *
 	 * @since 3.18.0
+	 * @proposed
 	 */
 	refreshSupport?: boolean;
 }
@@ -112,6 +113,7 @@ export namespace FoldingRangeRequest {
 
 /**
  * @since 3.18.0
+ * @proposed
  */
 export namespace FoldingRangeRefreshRequest {
 	export const method: `workspace/foldingRange/refresh` = `workspace/foldingRange/refresh`;
