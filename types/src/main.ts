@@ -2414,6 +2414,14 @@ export namespace CompletionList {
 }
 
 /**
+ * @deprecated use MarkupContent instead.
+ */
+export interface MarkedStringDetail {
+	language: string;
+	value: string;
+}
+
+/**
  * MarkedString can be used to render human readable text. It is either a markdown string
  * or a code-block that provides a language and a code snippet. The language identifier
  * is semantically equal to the optional language identifier in fenced code blocks in GitHub
@@ -2427,7 +2435,7 @@ export namespace CompletionList {
  * Note that markdown strings will be sanitized - that means html will be escaped.
  * @deprecated use MarkupContent instead.
  */
-export type MarkedString = string | { language: string; value: string };
+export type MarkedString = string | MarkedStringDetail;
 
 export namespace MarkedString {
 	/**

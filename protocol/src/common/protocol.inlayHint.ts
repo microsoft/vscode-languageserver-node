@@ -10,6 +10,15 @@ import { MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './m
 import type { StaticRegistrationOptions, TextDocumentRegistrationOptions, WorkDoneProgressOptions, WorkDoneProgressParams } from './protocol';
 
 /**
+ * @since 3.18.0
+ */
+export interface ClientInlayHintResolveOptions {
+	/**
+	 * The properties that a client can resolve lazily.
+	 */
+	properties: string[];
+}
+/**
  * Inlay hint client capabilities.
  *
  * @since 3.17.0
@@ -25,13 +34,7 @@ export type InlayHintClientCapabilities = {
 	 * Indicates which properties a client can resolve lazily on an inlay
 	 * hint.
 	 */
-	resolveSupport?: {
-
-		/**
-		 * The properties that a client can resolve lazily.
-		 */
-		properties: string[];
-	};
+	resolveSupport?: ClientInlayHintResolveOptions;
 };
 
 /**

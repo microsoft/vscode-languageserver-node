@@ -8897,21 +8897,8 @@
 				{
 					"name": "completionItem",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "labelDetailsSupport",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "The server has support for completion item label\ndetails (see also `CompletionItemLabelDetails`) when\nreceiving a completion item in a resolve call.\n\n@since 3.17.0",
-									"since": "3.17.0"
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ServerCompletionItemOptions"
 					},
 					"optional": true,
 					"documentation": "The server supports the following `CompletionItem` specific\ncapabilities.\n\n@since 3.17.0",
@@ -9481,6 +9468,41 @@
 				}
 			],
 			"documentation": "Provider options for a {@link RenameRequest}."
+		},
+		{
+			"name": "PrepareRenamePlaceholder",
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					}
+				},
+				{
+					"name": "placeholder",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "PrepareRenameDefaultBehavior",
+			"properties": [
+				{
+					"name": "defaultBehavior",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					}
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ExecuteCommandOptions",
@@ -10119,8 +10141,8 @@
 						"name": "WorkspaceFoldersServerCapabilities"
 					},
 					"optional": true,
-					"documentation": "The server supports workspace folder.\n\n@since 3.16.0",
-					"since": "3.16.0"
+					"documentation": "The server supports workspace folder.\n\n@since 3.6.0",
+					"since": "3.6.0"
 				},
 				{
 					"name": "fileOperations",
@@ -10134,6 +10156,54 @@
 				}
 			],
 			"documentation": "Defines workspace specific capabilities of the server.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "TextDocumentContentChangePartial",
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					},
+					"documentation": "The range of the document that changed."
+				},
+				{
+					"name": "rangeLength",
+					"type": {
+						"kind": "base",
+						"name": "uinteger"
+					},
+					"optional": true,
+					"documentation": "The optional length of the range that got replaced.\n\n@deprecated use range instead.",
+					"deprecated": "use range instead."
+				},
+				{
+					"name": "text",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The new text for the provided range."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "TextDocumentContentChangeWholeDocument",
+			"properties": [
+				{
+					"name": "text",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The new text of the whole document."
+				}
+			],
+			"documentation": "@since 3.18.0",
 			"since": "3.18.0"
 		},
 		{
@@ -10193,6 +10263,44 @@
 			],
 			"documentation": "Edit range variant that includes ranges for insert and replace operations.\n\n@since 3.18.0",
 			"since": "3.18.0"
+		},
+		{
+			"name": "ServerCompletionItemOptions",
+			"properties": [
+				{
+					"name": "labelDetailsSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "The server has support for completion item label\ndetails (see also `CompletionItemLabelDetails`) when\nreceiving a completion item in a resolve call.\n\n@since 3.17.0",
+					"since": "3.17.0"
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "MarkedStringDetail",
+			"properties": [
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				},
+				{
+					"name": "value",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			],
+			"documentation": "@deprecated use MarkupContent instead.",
+			"deprecated": "use MarkupContent instead."
 		},
 		{
 			"name": "ParameterInformation",
@@ -11128,6 +11236,105 @@
 			"since": "3.17.0"
 		},
 		{
+			"name": "TextDocumentFilterLanguage",
+			"properties": [
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A language id, like `typescript`."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
+				}
+			],
+			"documentation": "A document filter where `language` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "TextDocumentFilterScheme",
+			"properties": [
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A language id, like `typescript`."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
+				}
+			],
+			"documentation": "A document filter where `scheme` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "TextDocumentFilterPattern",
+			"properties": [
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A language id, like `typescript`."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
+				}
+			],
+			"documentation": "A document filter where `pattern` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
 			"name": "NotebookCellArrayChange",
 			"properties": [
 				{
@@ -11273,7 +11480,7 @@
 					"name": "symbolKind",
 					"type": {
 						"kind": "reference",
-						"name": "SymbolKindOptions"
+						"name": "ClientSymbolKindOptions"
 					},
 					"optional": true,
 					"documentation": "Specific capabilities for the `SymbolKind` in the `workspace/symbol` request."
@@ -11282,7 +11489,7 @@
 					"name": "tagSupport",
 					"type": {
 						"kind": "reference",
-						"name": "TagSupportOptions"
+						"name": "ClientSymbolTagOptions"
 					},
 					"optional": true,
 					"documentation": "The client supports tags on `SymbolInformation`.\nClients supporting tags have to handle unknown tags gracefully.\n\n@since 3.16.0",
@@ -11292,7 +11499,7 @@
 					"name": "resolveSupport",
 					"type": {
 						"kind": "reference",
-						"name": "ResolveSupportOptions"
+						"name": "ClientSymbolResolveOptions"
 					},
 					"optional": true,
 					"documentation": "The client support partial workspace symbols. The client will send the\nrequest `workspaceSymbol/resolve` to the server to resolve additional\nproperties.\n\n@since 3.17.0",
@@ -11542,7 +11749,7 @@
 					"name": "completionItem",
 					"type": {
 						"kind": "reference",
-						"name": "CompletionItemOptions"
+						"name": "ClientCompletionItemOptions"
 					},
 					"optional": true,
 					"documentation": "The client supports the following `CompletionItem` specific\ncapabilities."
@@ -11550,23 +11757,8 @@
 				{
 					"name": "completionItemKind",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "valueSet",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "CompletionItemKind"
-										}
-									},
-									"optional": true,
-									"documentation": "The completion item kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown.\n\nIf this property is not present the client only supports\nthe completion items kinds from `Text` to `Reference` as defined in\nthe initial version of the protocol."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientCompletionItemOptionsKind"
 					},
 					"optional": true
 				},
@@ -11643,55 +11835,8 @@
 				{
 					"name": "signatureInformation",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "documentationFormat",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "MarkupKind"
-										}
-									},
-									"optional": true,
-									"documentation": "Client supports the following content formats for the documentation\nproperty. The order describes the preferred format of the client."
-								},
-								{
-									"name": "parameterInformation",
-									"type": {
-										"kind": "literal",
-										"value": {
-											"properties": [
-												{
-													"name": "labelOffsetSupport",
-													"type": {
-														"kind": "base",
-														"name": "boolean"
-													},
-													"optional": true,
-													"documentation": "The client supports processing label offsets instead of a\nsimple label string.\n\n@since 3.14.0",
-													"since": "3.14.0"
-												}
-											]
-										}
-									},
-									"optional": true,
-									"documentation": "Client capabilities specific to parameter information."
-								},
-								{
-									"name": "activeParameterSupport",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "The client supports the `activeParameter` property on `SignatureInformation`\nliteral.\n\n@since 3.16.0",
-									"since": "3.16.0"
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientSignatureInformationOptions"
 					},
 					"optional": true,
 					"documentation": "The client supports the following `SignatureInformation`\nspecific properties."
@@ -11855,7 +12000,7 @@
 					"name": "symbolKind",
 					"type": {
 						"kind": "reference",
-						"name": "SymbolKindOptions"
+						"name": "ClientSymbolKindOptions"
 					},
 					"optional": true,
 					"documentation": "Specific capabilities for the `SymbolKind` in the\n`textDocument/documentSymbol` request."
@@ -11873,7 +12018,7 @@
 					"name": "tagSupport",
 					"type": {
 						"kind": "reference",
-						"name": "TagSupportOptions"
+						"name": "ClientSymbolTagOptions"
 					},
 					"optional": true,
 					"documentation": "The client supports tags on `SymbolInformation`. Tags are supported on\n`DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.\nClients supporting tags have to handle unknown tags gracefully.\n\n@since 3.16.0",
@@ -11907,33 +12052,8 @@
 				{
 					"name": "codeActionLiteralSupport",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "codeActionKind",
-									"type": {
-										"kind": "literal",
-										"value": {
-											"properties": [
-												{
-													"name": "valueSet",
-													"type": {
-														"kind": "array",
-														"element": {
-															"kind": "reference",
-															"name": "CodeActionKind"
-														}
-													},
-													"documentation": "The code action kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown."
-												}
-											]
-										}
-									},
-									"documentation": "The code action kind is support with the following value\nset."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientCodeActionLiteralOptions"
 					},
 					"optional": true,
 					"documentation": "The client support code action literals of type `CodeAction` as a valid\nresponse of the `textDocument/codeAction` request. If the property is not\nset the request can only return `Command` literals.\n\n@since 3.8.0",
@@ -11972,22 +12092,8 @@
 				{
 					"name": "resolveSupport",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "properties",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "base",
-											"name": "string"
-										}
-									},
-									"documentation": "The properties that a client can resolve lazily."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientCodeActionResolveOptions"
 					},
 					"optional": true,
 					"documentation": "Whether the client supports resolving additional code action\nproperties via a separate `codeAction/resolve` request.\n\n@since 3.16.0",
@@ -12193,23 +12299,8 @@
 				{
 					"name": "foldingRangeKind",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "valueSet",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "FoldingRangeKind"
-										}
-									},
-									"optional": true,
-									"documentation": "The folding range kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientFoldingRangeKindOptions"
 					},
 					"optional": true,
 					"documentation": "Specific options for the folding range kind.\n\n@since 3.17.0",
@@ -12218,21 +12309,8 @@
 				{
 					"name": "foldingRange",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "collapsedText",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "If set, the client signals that it supports setting collapsedText on\nfolding ranges to display custom labels instead of the default text.\n\n@since 3.17.0",
-									"since": "3.17.0"
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientFoldingRangeOptions"
 					},
 					"optional": true,
 					"documentation": "Specific options for the folding range.\n\n@since 3.17.0",
@@ -12269,22 +12347,8 @@
 				{
 					"name": "tagSupport",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "valueSet",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "reference",
-											"name": "DiagnosticTag"
-										}
-									},
-									"documentation": "The tags supported by the client."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientDiagnosticsTagOptions"
 					},
 					"optional": true,
 					"documentation": "Client supports the tag property to provide meta data about a diagnostic.\nClients supporting tags have to handle unknown tags gracefully.\n\n@since 3.15.0",
@@ -12354,61 +12418,8 @@
 				{
 					"name": "requests",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "range",
-									"type": {
-										"kind": "or",
-										"items": [
-											{
-												"kind": "base",
-												"name": "boolean"
-											},
-											{
-												"kind": "literal",
-												"value": {
-													"properties": []
-												}
-											}
-										]
-									},
-									"optional": true,
-									"documentation": "The client will send the `textDocument/semanticTokens/range` request if\nthe server provides a corresponding handler."
-								},
-								{
-									"name": "full",
-									"type": {
-										"kind": "or",
-										"items": [
-											{
-												"kind": "base",
-												"name": "boolean"
-											},
-											{
-												"kind": "literal",
-												"value": {
-													"properties": [
-														{
-															"name": "delta",
-															"type": {
-																"kind": "base",
-																"name": "boolean"
-															},
-															"optional": true,
-															"documentation": "The client will send the `textDocument/semanticTokens/full/delta` request if\nthe server provides a corresponding handler."
-														}
-													]
-												}
-											}
-										]
-									},
-									"optional": true,
-									"documentation": "The client will send the `textDocument/semanticTokens/full` request if\nthe server provides a corresponding handler."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientSemanticTokensRequestOptions"
 					},
 					"documentation": "Which requests the client supports and might send to the server\ndepending on the server's capability. Please note that clients might not\nshow semantic tokens or degrade some of the user experience if a range\nor full request is advertised by the client but not provided by the\nserver. If for example the client capability `requests.full` and\n`request.range` are both set to true but the server only provides a\nrange provider the client might not render a minimap correctly or might\neven decide to not show any semantic tokens at all."
 				},
@@ -12566,22 +12577,8 @@
 				{
 					"name": "resolveSupport",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "properties",
-									"type": {
-										"kind": "array",
-										"element": {
-											"kind": "base",
-											"name": "string"
-										}
-									},
-									"documentation": "The properties that a client can resolve lazily."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientInlayHintResolveOptions"
 					},
 					"optional": true,
 					"documentation": "Indicates which properties a client can resolve lazily on an inlay\nhint."
@@ -12663,20 +12660,8 @@
 				{
 					"name": "messageActionItem",
 					"type": {
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "additionalPropertiesSupport",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									},
-									"optional": true,
-									"documentation": "Whether the client supports additional attributes which\nare preserved and send back to the server in the\nrequest's response."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "ClientShowMessageActionItemOptions"
 					},
 					"optional": true,
 					"documentation": "Capabilities specific to the `MessageActionItem` type."
@@ -12801,6 +12786,105 @@
 			"since": "3.18.0"
 		},
 		{
+			"name": "NotebookDocumentFilterNotebookType",
+			"properties": [
+				{
+					"name": "notebookType",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The type of the enclosing notebook."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A glob pattern."
+				}
+			],
+			"documentation": "A notebook document filter where `notebookType` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "NotebookDocumentFilterScheme",
+			"properties": [
+				{
+					"name": "notebookType",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The type of the enclosing notebook."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A glob pattern."
+				}
+			],
+			"documentation": "A notebook document filter where `scheme` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "NotebookDocumentFilterPattern",
+			"properties": [
+				{
+					"name": "notebookType",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The type of the enclosing notebook."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A glob pattern."
+				}
+			],
+			"documentation": "A notebook document filter where `pattern` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
 			"name": "ChangeAnnotationsSupportOptions",
 			"properties": [
 				{
@@ -12817,7 +12901,7 @@
 			"since": "3.18.0"
 		},
 		{
-			"name": "SymbolKindOptions",
+			"name": "ClientSymbolKindOptions",
 			"properties": [
 				{
 					"name": "valueSet",
@@ -12836,7 +12920,7 @@
 			"since": "3.18.0"
 		},
 		{
-			"name": "TagSupportOptions",
+			"name": "ClientSymbolTagOptions",
 			"properties": [
 				{
 					"name": "valueSet",
@@ -12854,7 +12938,7 @@
 			"since": "3.18.0"
 		},
 		{
-			"name": "ResolveSupportOptions",
+			"name": "ClientSymbolResolveOptions",
 			"properties": [
 				{
 					"name": "properties",
@@ -12872,7 +12956,7 @@
 			"since": "3.18.0"
 		},
 		{
-			"name": "CompletionItemOptions",
+			"name": "ClientCompletionItemOptions",
 			"properties": [
 				{
 					"name": "snippetSupport",
@@ -12946,7 +13030,7 @@
 					"name": "resolveSupport",
 					"type": {
 						"kind": "reference",
-						"name": "CompletionItemResolveOptions"
+						"name": "ClientCompletionItemResolveOptions"
 					},
 					"optional": true,
 					"documentation": "Indicates which properties a client can resolve lazily on a completion\nitem. Before version 3.16.0 only the predefined properties `documentation`\nand `details` could be resolved lazily.\n\n@since 3.16.0",
@@ -12956,7 +13040,7 @@
 					"name": "insertTextModeSupport",
 					"type": {
 						"kind": "reference",
-						"name": "CompletionItemInsertTextModeOptions"
+						"name": "ClientCompletionItemInsertTextModeOptions"
 					},
 					"optional": true,
 					"documentation": "The client supports the `insertTextMode` property on\na completion item to override the whitespace handling mode\nas defined by the client (see `insertTextMode`).\n\n@since 3.16.0",
@@ -12971,6 +13055,25 @@
 					"optional": true,
 					"documentation": "The client has support for completion item label\ndetails (see also `CompletionItemLabelDetails`).\n\n@since 3.17.0",
 					"since": "3.17.0"
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientCompletionItemOptionsKind",
+			"properties": [
+				{
+					"name": "valueSet",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CompletionItemKind"
+						}
+					},
+					"optional": true,
+					"documentation": "The completion item kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown.\n\nIf this property is not present the client only supports\nthe completion items kinds from `Text` to `Reference` as defined in\nthe initial version of the protocol."
 				}
 			],
 			"documentation": "@since 3.18.0",
@@ -12997,6 +13100,210 @@
 			"since": "3.17.0"
 		},
 		{
+			"name": "ClientSignatureInformationOptions",
+			"properties": [
+				{
+					"name": "documentationFormat",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "MarkupKind"
+						}
+					},
+					"optional": true,
+					"documentation": "Client supports the following content formats for the documentation\nproperty. The order describes the preferred format of the client."
+				},
+				{
+					"name": "parameterInformation",
+					"type": {
+						"kind": "reference",
+						"name": "ClientSignatureParameterInformationOptions"
+					},
+					"optional": true,
+					"documentation": "Client capabilities specific to parameter information."
+				},
+				{
+					"name": "activeParameterSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "The client supports the `activeParameter` property on `SignatureInformation`\nliteral.\n\n@since 3.16.0",
+					"since": "3.16.0"
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientCodeActionLiteralOptions",
+			"properties": [
+				{
+					"name": "codeActionKind",
+					"type": {
+						"kind": "reference",
+						"name": "ClientCodeActionKindOptions"
+					},
+					"documentation": "The code action kind is support with the following value\nset."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientCodeActionResolveOptions",
+			"properties": [
+				{
+					"name": "properties",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"documentation": "The properties that a client can resolve lazily."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientFoldingRangeKindOptions",
+			"properties": [
+				{
+					"name": "valueSet",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "FoldingRangeKind"
+						}
+					},
+					"optional": true,
+					"documentation": "The folding range kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientFoldingRangeOptions",
+			"properties": [
+				{
+					"name": "collapsedText",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "If set, the client signals that it supports setting collapsedText on\nfolding ranges to display custom labels instead of the default text.\n\n@since 3.17.0",
+					"since": "3.17.0"
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientDiagnosticsTagOptions",
+			"properties": [
+				{
+					"name": "valueSet",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DiagnosticTag"
+						}
+					},
+					"documentation": "The tags supported by the client."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientSemanticTokensRequestOptions",
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "literal",
+								"value": {
+									"properties": []
+								}
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "The client will send the `textDocument/semanticTokens/range` request if\nthe server provides a corresponding handler."
+				},
+				{
+					"name": "full",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "boolean"
+							},
+							{
+								"kind": "reference",
+								"name": "ClientSemanticTokensRequestFullDelta"
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "The client will send the `textDocument/semanticTokens/full` request if\nthe server provides a corresponding handler."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientInlayHintResolveOptions",
+			"properties": [
+				{
+					"name": "properties",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"documentation": "The properties that a client can resolve lazily."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientShowMessageActionItemOptions",
+			"properties": [
+				{
+					"name": "additionalPropertiesSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports additional attributes which\nare preserved and send back to the server in the\nrequest's response."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
 			"name": "CompletionItemTagOptions",
 			"properties": [
 				{
@@ -13015,7 +13322,7 @@
 			"since": "3.18.0"
 		},
 		{
-			"name": "CompletionItemResolveOptions",
+			"name": "ClientCompletionItemResolveOptions",
 			"properties": [
 				{
 					"name": "properties",
@@ -13033,7 +13340,7 @@
 			"since": "3.18.0"
 		},
 		{
-			"name": "CompletionItemInsertTextModeOptions",
+			"name": "ClientCompletionItemInsertTextModeOptions",
 			"properties": [
 				{
 					"name": "valueSet",
@@ -13044,6 +13351,57 @@
 							"name": "InsertTextMode"
 						}
 					}
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientSignatureParameterInformationOptions",
+			"properties": [
+				{
+					"name": "labelOffsetSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "The client supports processing label offsets instead of a\nsimple label string.\n\n@since 3.14.0",
+					"since": "3.14.0"
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientCodeActionKindOptions",
+			"properties": [
+				{
+					"name": "valueSet",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CodeActionKind"
+						}
+					},
+					"documentation": "The code action kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientSemanticTokensRequestFullDelta",
+			"properties": [
+				{
+					"name": "delta",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "The client will send the `textDocument/semanticTokens/full/delta` request if\nthe server provides a corresponding handler."
 				}
 			],
 			"documentation": "@since 3.18.0",
@@ -14427,39 +14785,12 @@
 						"name": "Range"
 					},
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "range",
-									"type": {
-										"kind": "reference",
-										"name": "Range"
-									}
-								},
-								{
-									"name": "placeholder",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									}
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "PrepareRenamePlaceholder"
 					},
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "defaultBehavior",
-									"type": {
-										"kind": "base",
-										"name": "boolean"
-									}
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "PrepareRenameDefaultBehavior"
 					}
 				]
 			}
@@ -14524,51 +14855,12 @@
 				"kind": "or",
 				"items": [
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "range",
-									"type": {
-										"kind": "reference",
-										"name": "Range"
-									},
-									"documentation": "The range of the document that changed."
-								},
-								{
-									"name": "rangeLength",
-									"type": {
-										"kind": "base",
-										"name": "uinteger"
-									},
-									"optional": true,
-									"documentation": "The optional length of the range that got replaced.\n\n@deprecated use range instead."
-								},
-								{
-									"name": "text",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "The new text for the provided range."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "TextDocumentContentChangePartial"
 					},
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "text",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "The new text of the whole document."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "TextDocumentContentChangeWholeDocument"
 					}
 				]
 			},
@@ -14584,25 +14876,8 @@
 						"name": "string"
 					},
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "language",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									}
-								},
-								{
-									"name": "value",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									}
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "MarkedStringDetail"
 					}
 				]
 			},
@@ -14667,103 +14942,16 @@
 				"kind": "or",
 				"items": [
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "language",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "A language id, like `typescript`."
-								},
-								{
-									"name": "scheme",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-								},
-								{
-									"name": "pattern",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "TextDocumentFilterLanguage"
 					},
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "language",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A language id, like `typescript`."
-								},
-								{
-									"name": "scheme",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-								},
-								{
-									"name": "pattern",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "TextDocumentFilterScheme"
 					},
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "language",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A language id, like `typescript`."
-								},
-								{
-									"name": "scheme",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-								},
-								{
-									"name": "pattern",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "TextDocumentFilterPattern"
 					}
 				]
 			},
@@ -14785,103 +14973,16 @@
 				"kind": "or",
 				"items": [
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "notebookType",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "The type of the enclosing notebook."
-								},
-								{
-									"name": "scheme",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-								},
-								{
-									"name": "pattern",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A glob pattern."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "NotebookDocumentFilterNotebookType"
 					},
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "notebookType",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "The type of the enclosing notebook."
-								},
-								{
-									"name": "scheme",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-								},
-								{
-									"name": "pattern",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A glob pattern."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "NotebookDocumentFilterScheme"
 					},
 					{
-						"kind": "literal",
-						"value": {
-							"properties": [
-								{
-									"name": "notebookType",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "The type of the enclosing notebook."
-								},
-								{
-									"name": "scheme",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"optional": true,
-									"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-								},
-								{
-									"name": "pattern",
-									"type": {
-										"kind": "base",
-										"name": "string"
-									},
-									"documentation": "A glob pattern."
-								}
-							]
-						}
+						"kind": "reference",
+						"name": "NotebookDocumentFilterPattern"
 					}
 				]
 			},
