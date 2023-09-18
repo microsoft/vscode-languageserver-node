@@ -259,7 +259,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 	const connectionFactory = (logger: Logger): ProtocolConnection => {
 		const result = createProtocolConnection(input as any, output as any, logger, options);
-		if(stdio) {
+		if (stdio) {
 			patchConsole(logger);
 		}
 		return result;
@@ -295,7 +295,7 @@ function patchConsole(logger: Logger): undefined {
 	};
 
 	console.countReset = function countReset(label) {
-		if(label === undefined) {
+		if (label === undefined) {
 			counters.clear();
 		} else {
 			counters.delete(String(label));
