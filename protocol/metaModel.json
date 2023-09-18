@@ -244,6 +244,17 @@
 			"documentation": "A request to provide folding ranges in a document. The request's\nparameter is of type {@link FoldingRangeParams}, the\nresponse is of type {@link FoldingRangeList} or a Thenable\nthat resolves to such."
 		},
 		{
+			"method": "workspace/foldingRange/refresh",
+			"result": {
+				"kind": "base",
+				"name": "null"
+			},
+			"messageDirection": "serverToClient",
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
 			"method": "textDocument/declaration",
 			"result": {
 				"kind": "or",
@@ -10670,6 +10681,17 @@
 					"optional": true,
 					"documentation": "Capabilities specific to the diagnostic requests scoped to the\nworkspace.\n\n@since 3.17.0.",
 					"since": "3.17.0."
+				},
+				{
+					"name": "foldingRange",
+					"type": {
+						"kind": "reference",
+						"name": "FoldingRangeWorkspaceClientCapabilities"
+					},
+					"optional": true,
+					"documentation": "Capabilities specific to the folding range requests scoped to the workspace.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			],
 			"documentation": "Workspace specific client capabilities."
@@ -11488,6 +11510,25 @@
 			],
 			"documentation": "Workspace client capabilities specific to diagnostic pull requests.\n\n@since 3.17.0",
 			"since": "3.17.0"
+		},
+		{
+			"name": "FoldingRangeWorkspaceClientCapabilities",
+			"properties": [
+				{
+					"name": "refreshSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client implementation supports a refresh request sent from the\nserver to the client.\n\nNote that this event is global and will force the client to refresh all\nfolding ranges currently shown. It should be used with absolute care and is\nuseful for situation where a server for example detects a project wide\nchange that requires such a calculation.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
+				}
+			],
+			"documentation": "Client workspace capabilities specific to folding ranges\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "TextDocumentSyncClientCapabilities",
@@ -13470,6 +13511,12 @@
 					"name": "Log",
 					"value": 4,
 					"documentation": "A log message."
+				},
+				{
+					"name": "Debug",
+					"value": 5,
+					"documentation": "A debug message.\n\n@since 3.18.0",
+					"since": "3.18.0"
 				}
 			],
 			"documentation": "The message type"

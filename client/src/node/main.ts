@@ -23,7 +23,7 @@ import semverSatisfies = require('semver/functions/satisfies');
 export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
 
-const REQUIRED_VSCODE_VERSION = '^1.78.0'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.82.0'; // do not change format, updated by `updateVSCode` script
 
 export enum TransportKind {
 	stdio,
@@ -502,6 +502,17 @@ export class LanguageClient extends BaseLanguageClient {
 				}
 			}
 			return Promise.reject<MessageTransports>(new Error(`Unsupported server configuration ` + JSON.stringify(server, null, 4)));
+		}).finally(() => {
+			if (this._serverProcess !== undefined) {
+				this._serverProcess.on('exit', (code, signal) => {
+					if (code !== null) {
+						this.error(`Server process exited with code ${code}.`, undefined, false);
+					}
+					if (signal !== null) {
+						this.error(`Server process exited with signal ${signal}.`, undefined, false);
+					}
+				});
+			}
 		});
 	}
 
