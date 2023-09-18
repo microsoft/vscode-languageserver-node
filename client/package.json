@@ -15,7 +15,7 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
-	"enabledApiProposals": ["formatMultipleRanges"],
+	"enabledApiProposals": [],
 	"main": "./lib/node/main.js",
 	"browser": {
 		"./lib/node/main.js": "./lib/browser/main.js"

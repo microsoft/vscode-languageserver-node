@@ -763,8 +763,9 @@ suite('Client integration', () => {
 	});
 
 	test('Folding Ranges', async () => {
-		const provider = client.getFeature(lsclient.FoldingRangeRequest.method).getProvider(document);
-		isDefined(provider);
+		const providerData = client.getFeature(lsclient.FoldingRangeRequest.method).getProvider(document);
+		isDefined(providerData);
+		const provider = providerData.provider;
 		const result = (await provider.provideFoldingRanges(document, {}, tokenSource.token));
 
 		isArray(result, vscode.FoldingRange, 1);
