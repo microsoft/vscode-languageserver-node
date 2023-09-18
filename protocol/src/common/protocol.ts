@@ -43,7 +43,7 @@ import {
 } from './protocol.colorProvider';
 
 import {
-	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions, FoldingRangeRefreshRequest, FoldingRangeWorkspaceClientCapabilities
 } from './protocol.foldingRange';
 
 import {
@@ -556,6 +556,14 @@ export interface WorkspaceClientCapabilities {
 	 * @since 3.17.0.
 	 */
 	diagnostics?: DiagnosticWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the folding range requests scoped to the workspace.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	foldingRange?: FoldingRangeWorkspaceClientCapabilities;
 }
 
 /**
@@ -3874,7 +3882,7 @@ export {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams, DocumentColorRegistrationOptions,
-	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions,
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions, FoldingRangeRefreshRequest,
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationParams, DeclarationRegistrationOptions, DeclarationOptions,
 	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeParams, SelectionRangeRequest, SelectionRangeRegistrationOptions,
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
