@@ -36,7 +36,9 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## 3.17.0 Protocol, 8.2.0 JSON-RPC 9.0.0 Client and 9.0.0 Server
 
-- added proposed refresh method for folding ranges. This changed the shape of the folding range feature since we need to expose the event emitter. The change is breaking. To get to the provider you now need to do
+- added proposed inline completion request.
+- added proposed formatting ranges request.
+- added proposed refresh request for folding ranges. This changed the shape of the folding range feature since we need to expose the event emitter. The change is breaking. To get to the provider you now need to do
   ```ts
   client.getFeature(lsclient.FoldingRangeRequest.method).getProvider(document)?.provider;
   ```
