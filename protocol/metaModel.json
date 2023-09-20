@@ -6647,7 +6647,7 @@
 					"name": "scopeUri",
 					"type": {
 						"kind": "base",
-						"name": "string"
+						"name": "URI"
 					},
 					"optional": true,
 					"documentation": "The scope to get the configuration section for."
