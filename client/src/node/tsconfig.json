@@ -4,8 +4,7 @@
             "node",
             "vscode"
         ],
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "nodenext",
         "rootDir": ".",
         "strict": true,
         "noImplicitAny": true,

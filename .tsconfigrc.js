@@ -35,8 +35,7 @@ const general = {
 	 * rely on webpack to package everything correctly.
 	 */
 	compilerOptions: {
-		module: 'commonjs',
-		moduleResolution: 'node'
+		module: 'nodenext'
 	}
 };
 
@@ -115,7 +114,7 @@ const textDocument = {
 const textDocument_publish = {
 	name: 'textDocument_publish',
 	path: './textDocument',
-	references: [ './tsconfig.esm.publish.json', './tsconfig.umd.publish.json' ]
+	references: [ './tsconfig.esm.publish.json', './tsconfig.cjs.publish.json' ]
 };
 
 
@@ -149,7 +148,7 @@ const types = {
 const types_publish = {
 	name: 'types_publish',
 	path: './types',
-	references: [ './tsconfig.esm.publish.json', './tsconfig.umd.publish.json' ]
+	references: [ './tsconfig.esm.publish.json', './tsconfig.cjs.publish.json' ]
 };
 
 /** @type ProjectDescription */
@@ -414,49 +413,49 @@ const publishProjectOptions = {
 };
 
 /** @type CompilerOptions */
-const umdCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
+const cjsCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: true,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
 	target: 'es5',
-	module: 'umd',
+	module: 'nodenext',
 	lib: [ 'es2015' ],
 });
 
 /** @type ProjectOptions */
-const umdProjectOptions = {
-	tags: ['umd', 'compile'],
+const cjsProjectOptions = {
+	tags: ['cjs', 'compile'],
 	tsconfig: 'tsconfig.json',
-	variables: new Map([['target', 'umd'], ['buildInfoFile', 'compile']]),
-	compilerOptions: umdCompilerOptions
+	variables: new Map([['target', 'cjs'], ['buildInfoFile', 'compile']]),
+	compilerOptions: cjsCompilerOptions
 };
 
 /** @type CompilerOptions */
-const umdWatchCompilerOptions = CompilerOptions.assign(umdCompilerOptions, {
+const cjsWatchCompilerOptions = CompilerOptions.assign(cjsCompilerOptions, {
 	noUnusedLocals: false,
 	noUnusedParameters: false,
 	assumeChangesOnlyAffectDirectDependencies: true,
 });
 
 /** @type ProjectOptions */
-const umdWatchProjectOptions = {
-	tags: ['umd', 'watch'],
+const cjsWatchProjectOptions = {
+	tags: ['cjs', 'watch'],
 	tsconfig: 'tsconfig.watch.json',
-	variables: new Map([['target', 'umd'], ['buildInfoFile', 'watch']]),
-	compilerOptions: umdCompilerOptions
+	variables: new Map([['target', 'cjs'], ['buildInfoFile', 'watch']]),
+	compilerOptions: cjsCompilerOptions
 };
 
 /** @type CompilerOptions */
-const umdPublishCompilerOptions = CompilerOptions.assign(umdCompilerOptions, {
+const cjsPublishCompilerOptions = CompilerOptions.assign(cjsCompilerOptions, {
 	sourceMap: false
 });
 
 /** @type ProjectOptions */
-const umdPublishProjectOptions = {
-	tags: ['umd', 'publish'],
-	tsconfig: 'tsconfig.umd.publish.json',
-	variables: new Map([['target', 'umd'], ['buildInfoFile', 'publish']]),
-	compilerOptions: umdPublishCompilerOptions
+const cjsPublishProjectOptions = {
+	tags: ['cjs', 'publish'],
+	tsconfig: 'tsconfig.cjs.publish.json',
+	variables: new Map([['target', 'cjs'], ['buildInfoFile', 'publish']]),
+	compilerOptions: cjsPublishCompilerOptions
 };
 
 
@@ -464,7 +463,7 @@ const umdPublishProjectOptions = {
 const esmPublishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: false,
 	target: 'es5',
-	module: 'es6',
+	module: 'esnext',
 	lib: [ 'es2015' ]
 });
 
@@ -478,9 +477,9 @@ const esmPublishProjectOptions = {
 
 /** @type Projects */
 const projects = [
-	[ textDocument, [ umdProjectOptions, umdWatchProjectOptions, esmPublishProjectOptions, umdPublishProjectOptions ] ],
+	[ textDocument, [ cjsProjectOptions, cjsWatchProjectOptions, esmPublishProjectOptions, cjsPublishProjectOptions ] ],
 	[ textDocument_publish, [ publishProjectOptions ] ],
-	[ types, [ umdProjectOptions, umdWatchProjectOptions, esmPublishProjectOptions, umdPublishProjectOptions ] ],
+	[ types, [ cjsProjectOptions, cjsWatchProjectOptions, esmPublishProjectOptions, cjsPublishProjectOptions ] ],
 	[ types_publish, [ publishProjectOptions ]],
 	[ jsonrpc, [ compileProjectOptions, watchProjectOptions ] ],
 	[ createPublishProjectDescription(jsonrpc), [ publishProjectOptions ] ],

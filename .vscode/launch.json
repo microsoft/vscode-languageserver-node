@@ -13,7 +13,7 @@
 			"runtimeArgs": [],
 			"env": { },
 			"sourceMaps": true,
-			"outFiles": ["${workspaceRoot}/types/lib/umd/**/*.js"],
+			"outFiles": ["${workspaceRoot}/types/lib/cjs/**/*.js"],
 			"preLaunchTask": "npm: watch"
 		},
 		{
@@ -28,7 +28,7 @@
 			"runtimeArgs": [],
 			"env": { },
 			"sourceMaps": true,
-			"outFiles": ["${workspaceRoot}/textDocument/lib/umd/**/*.js"],
+			"outFiles": ["${workspaceRoot}/textDocument/lib/cjs/**/*.js"],
 			"preLaunchTask": "npm: watch"
 		},
 		{

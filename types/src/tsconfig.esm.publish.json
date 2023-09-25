@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "module": "es6",
-        "moduleResolution": "node",
+        "module": "esnext",
+        "moduleResolution": "bundler",
         "rootDir": ".",
         "types": [],
         "strict": true,

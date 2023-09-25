@@ -3,8 +3,8 @@
         "types": [
             "mocha"
         ],
-        "module": "es6",
-        "moduleResolution": "node",
+        "module": "esnext",
+        "moduleResolution": "bundler",
         "rootDir": ".",
         "strict": true,
         "noImplicitAny": true,

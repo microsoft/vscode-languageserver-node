@@ -54,8 +54,8 @@
 		"source.fixAll.eslint": true
 	},
 	"mochaExplorer.files": [
-		"textDocument/lib/umd/test/*.js",
-		"types/lib/umd/test/*.js",
+		"textDocument/lib/cjs/test/*.js",
+		"types/lib/cjs/test/*.js",
 		"jsonrpc/lib/common/test/*.js",
 		"jsonrpc/lib/node/test/*.js",
 		"protocol/lib/node/test/*.js",

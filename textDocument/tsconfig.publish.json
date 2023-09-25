@@ -9,7 +9,7 @@
             "path": "./tsconfig.esm.publish.json"
         },
         {
-            "path": "./tsconfig.umd.publish.json"
+            "path": "./tsconfig.cjs.publish.json"
         }
     ]
 }

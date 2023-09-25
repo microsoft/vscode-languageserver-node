@@ -9,6 +9,6 @@ import { Trace } from '../api';
 
 suite('General Tests', () => {
 	test('Trace#fromString', () => {
-		assert(Trace.Off === Trace.fromString(10 as any));
+		assert.equal(Trace.Off, Trace.fromString(10 as any));
 	});
 });

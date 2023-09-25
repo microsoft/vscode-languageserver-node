@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
-        "module": "umd",
-        "moduleResolution": "node",
+        "module": "nodenext",
         "rootDir": ".",
         "types": [],
         "strict": true,
@@ -17,8 +16,8 @@
         "lib": [
             "es2015"
         ],
-        "outDir": "../lib/umd",
-        "tsBuildInfoFile": "../lib/umd/publish.tsbuildInfo",
+        "outDir": "../lib/cjs",
+        "tsBuildInfoFile": "../lib/cjs/publish.tsbuildInfo",
         "incremental": true,
         "composite": true
     },

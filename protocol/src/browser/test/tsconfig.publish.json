@@ -3,8 +3,7 @@
         "types": [
             "mocha"
         ],
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "nodenext",
         "rootDir": ".",
         "lib": [
             "es2020",

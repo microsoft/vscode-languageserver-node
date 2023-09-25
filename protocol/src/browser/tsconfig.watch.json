@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "nodenext",
         "rootDir": ".",
         "types": [],
         "lib": [

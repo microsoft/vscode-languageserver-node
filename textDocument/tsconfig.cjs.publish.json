@@ -6,10 +6,10 @@
     "files": [],
     "references": [
         {
-            "path": "./src/tsconfig.umd.publish.json"
+            "path": "./src/tsconfig.cjs.publish.json"
         },
         {
-            "path": "./src/test/tsconfig.umd.publish.json"
+            "path": "./src/test/tsconfig.cjs.publish.json"
         }
     ]
 }

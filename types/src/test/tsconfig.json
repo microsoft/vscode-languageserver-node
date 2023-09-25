@@ -3,8 +3,7 @@
         "types": [
             "mocha"
         ],
-        "module": "umd",
-        "moduleResolution": "node",
+        "module": "nodenext",
         "rootDir": ".",
         "strict": true,
         "noImplicitAny": true,
@@ -19,8 +18,8 @@
         "lib": [
             "es2015"
         ],
-        "outDir": "../../lib/umd/test",
-        "tsBuildInfoFile": "../../lib/umd/test/compile.tsbuildInfo",
+        "outDir": "../../lib/cjs/test",
+        "tsBuildInfoFile": "../../lib/cjs/test/compile.tsbuildInfo",
         "incremental": true
     },
     "include": [

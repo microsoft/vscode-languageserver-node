@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"strict": true,
 		"checkJs": true,
-		"module": "commonjs",
+		"module": "nodenext",
 		"target": "es2020",
 		"types": [
 			"node"
