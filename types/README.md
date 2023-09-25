@@ -6,7 +6,7 @@
 
 Npm module containing the types used by the VSCode language client and [Node.js](https://nodejs.org/) language server
 
-Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how 
+Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how
 to implement language servers for [VSCode](https://code.visualstudio.com/).
 
 ## History

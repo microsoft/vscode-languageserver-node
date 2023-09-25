@@ -15,7 +15,7 @@
 	],
 	// Get the source info from the package.json file
 	"source": "./package.json",
-	// The catalog information 
+	// The catalog information
 	"catalogInfo": {
 		"uri": "lsif-cat://microsoft.com/azure/devdiv/vscode/vscode-languageserver-node",
 		"name": "VS Code LSP implementation in Node"
