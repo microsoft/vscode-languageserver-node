@@ -34,7 +34,11 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## 3.17.0 Protocol, 8.2.0 JSON-RPC 9.0.0 Client and 9.0.0 Server
+## 3.17.5 Protocol, 9.0.1 Client and 9.0.1 Server
+
+- fix ESM bundling
+
+## 3.17.4 Protocol, 8.2.0 JSON-RPC 9.0.0 Client and 9.0.0 Server
 
 - added proposed inline completion request.
 - added proposed formatting ranges request.
