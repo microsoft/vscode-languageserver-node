@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-textdocument",
 	"description": "A simple text document implementation for Node LSP servers",
-	"version": "1.0.10",
+	"version": "1.0.11",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -16,6 +16,7 @@
 	"typings": "./lib/umd/main",
 	"exports": {
 		".": {
+			"browser": "./lib/esm/main.js",
 			"import": "./lib/esm/main.js",
 			"default": "./lib/umd/main.js"
 		}

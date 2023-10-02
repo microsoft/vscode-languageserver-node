@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-types",
 	"description": "Types used by the Language server for node",
-	"version": "3.17.4",
+	"version": "3.17.5",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -16,6 +16,7 @@
 	"typings": "./lib/umd/main",
 	"exports": {
 		".": {
+			"browser": "./lib/esm/main.js",
 			"import": "./lib/esm/main.js",
 			"default": "./lib/umd/main.js"
 		}
