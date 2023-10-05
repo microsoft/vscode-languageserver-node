@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "8.2.0-next.2",
+	"version": "9.0.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -21,10 +21,10 @@
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
 	},
 	"devDependencies": {
-		"vscode-languageserver-textdocument": "1.0.10"
+		"vscode-languageserver-textdocument": "1.0.11"
 	},
 	"dependencies": {
-		"vscode-languageserver-protocol": "3.17.4-next.2"
+		"vscode-languageserver-protocol": "3.17.5"
 	},
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",

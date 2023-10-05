@@ -1,11 +1,11 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "8.2.0-next.2",
+	"version": "9.0.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.79.0"
+		"vscode": "^1.82.0"
 	},
 	"repository": {
 		"type": "git",
@@ -15,7 +15,7 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
-	"enabledApiProposals": ["formatMultipleRanges"],
+	"enabledApiProposals": [],
 	"main": "./lib/node/main.js",
 	"browser": {
 		"./lib/node/main.js": "./lib/browser/main.js"
@@ -24,13 +24,13 @@
 	"devDependencies": {
 		"@types/minimatch": "^3.0.5",
 		"@types/semver": "^7.3.10",
-		"@types/vscode": "1.79.0",
+		"@types/vscode": "1.82.0",
 		"shx": "^0.3.4"
 	},
 	"dependencies": {
 		"minimatch": "^5.1.0",
 		"semver": "^7.3.7",
-		"vscode-languageserver-protocol": "3.17.4-next.2"
+		"vscode-languageserver-protocol": "3.17.5"
 	},
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",

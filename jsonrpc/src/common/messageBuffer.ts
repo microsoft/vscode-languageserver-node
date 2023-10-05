@@ -100,7 +100,7 @@ export abstract class AbstractMessageBuffer implements RAL.MessageBuffer {
 			const header = headers[i];
 			const index: number = header.indexOf(':');
 			if (index === -1) {
-				throw new Error('Message header must separate key and value using :');
+				throw new Error(`Message header must separate key and value using ':'\n${header}`);
 			}
 			const key = header.substr(0, index);
 			const value = header.substr(index + 1).trim();

@@ -45,9 +45,8 @@ export interface ImplementationParams extends TextDocumentPositionParams, WorkDo
 
 /**
  * A request to resolve the implementation locations of a symbol at a given text
- * document position. The request's parameter is of type [TextDocumentPositionParams]
- * (#TextDocumentPositionParams) the response is of type {@link Definition} or a
- * Thenable that resolves to such.
+ * document position. The request's parameter is of type {@link TextDocumentPositionParams}
+ * the response is of type {@link Definition} or a Thenable that resolves to such.
  */
 export namespace ImplementationRequest {
 	export const method: 'textDocument/implementation' = 'textDocument/implementation';

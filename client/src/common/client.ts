@@ -9,7 +9,7 @@ import {
 	MessageItem, WorkspaceFolder as VWorkspaceFolder, env as Env, TextDocumentShowOptions, CancellationError, CancellationTokenSource, FileCreateEvent,
 	FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider,
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider,
-	OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DeclarationProvider, FoldingRangeProvider, ImplementationProvider,
+	OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DeclarationProvider, ImplementationProvider,
 	DocumentColorProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider, LinkedEditingRangeProvider, TypeHierarchyProvider, WorkspaceSymbolProvider,
 	ProviderResult, TextEdit as VTextEdit, InlineCompletionItemProvider
 } from 'vscode';
@@ -36,7 +36,7 @@ import {
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
-	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions
+	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -79,7 +79,7 @@ import { DocumentFormattingFeature, DocumentOnTypeFormattingFeature, DocumentRan
 import { RenameFeature, RenameMiddleware } from './rename';
 import { DocumentLinkFeature, DocumentLinkMiddleware } from './documentLink';
 import { ExecuteCommandFeature, ExecuteCommandMiddleware } from './executeCommand';
-import { FoldingRangeProviderMiddleware } from './foldingRange';
+import { FoldingRangeProviderMiddleware, FoldingRangeProviderShape } from './foldingRange';
 import { DeclarationMiddleware } from './declaration';
 import { SelectionRangeProviderMiddleware } from './selectionRange';
 import { CallHierarchyMiddleware } from './callHierarchy';
@@ -113,6 +113,7 @@ import { InlineCompletionItemFeature } from './inlineCompletion';
  * Controls when the output channel is revealed.
  */
 export enum RevealOutputChannelOn {
+	Debug = 0,
 	Info = 1,
 	Warn = 2,
 	Error = 3,
@@ -984,33 +985,29 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return data.toString();
 	}
 
+	public debug(message: string, data?: any, showNotification: boolean = true): void {
+		this.logOutputMessage(MessageType.Debug, RevealOutputChannelOn.Debug, 'Debug', message, data, showNotification);
+	}
+
 	public info(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.appendLine(`[Info  - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data !== null && data !== undefined) {
-			this.outputChannel.appendLine(this.data2String(data));
-		}
-		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
-			this.showNotificationMessage(MessageType.Info, message);
-		}
+		this.logOutputMessage(MessageType.Info, RevealOutputChannelOn.Info, 'Info', message, data, showNotification);
 	}
 
 	public warn(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.appendLine(`[Warn  - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data !== null && data !== undefined) {
-			this.outputChannel.appendLine(this.data2String(data));
-		}
-		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
-			this.showNotificationMessage(MessageType.Warning, message);
-		}
+		this.logOutputMessage(MessageType.Warning, RevealOutputChannelOn.Warn, 'Warn', message, data, showNotification);
 	}
 
 	public error(message: string, data?: any, showNotification: boolean | 'force' = true): void {
-		this.outputChannel.appendLine(`[Error - ${(new Date().toLocaleTimeString())}] ${message}`);
+		this.logOutputMessage(MessageType.Error, RevealOutputChannelOn.Error, 'Error', message, data, showNotification);
+	}
+
+	private logOutputMessage(type: MessageType, reveal: RevealOutputChannelOn, name: string, message: string, data: any | undefined, showNotification: boolean | 'force'): void {
+		this.outputChannel.appendLine(`[${name.padEnd(5)} - ${(new Date().toLocaleTimeString())}] ${message}`);
 		if (data !== null && data !== undefined) {
 			this.outputChannel.appendLine(this.data2String(data));
 		}
-		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error)) {
-			this.showNotificationMessage(MessageType.Error, message);
+		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= reveal)) {
+			this.showNotificationMessage(type, message);
 		}
 	}
 
@@ -1115,6 +1112,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 						break;
 					case MessageType.Info:
 						this.info(message.message, undefined, false);
+						break;
+					case MessageType.Debug:
+						this.debug(message.message, undefined, false);
 						break;
 					default:
 						this.outputChannel.appendLine(message.message);
@@ -1435,9 +1435,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._syncedDocuments) {
 			this._syncedDocuments.clear();
 		}
-		// Dispose features in reverse order;
+		// Clear features in reverse order;
 		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
-			feature.dispose();
+			feature.clear();
 		}
 		if (mode === 'stop' && this._diagnostics !== undefined) {
 			this._diagnostics.dispose();
@@ -1637,10 +1637,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private async handleConnectionError(error: Error, message: Message | undefined, count: number | undefined): Promise<void> {
 		const handlerResult: ErrorHandlerResult = await this._clientOptions.errorHandler!.error(error, message, count);
 		if (handlerResult.action === ErrorAction.Shutdown) {
-			this.error(handlerResult.message ?? `Client ${this._name}: connection to server is erroring. Shutting down server.`, undefined, handlerResult.handled === true ? false : 'force');
+			this.error(handlerResult.message ?? `Client ${this._name}: connection to server is erroring.\n${error.message}\nShutting down server.`, undefined, handlerResult.handled === true ? false : 'force');
 			this.stop().catch((error) => {
 				this.error(`Stopping server failed`, error, false);
 			});
+		} else {
+			this.error(handlerResult.message ??
+				`Client ${this._name}: connection to server is erroring.\n${error.message}`, undefined, handlerResult.handled === true ? false : 'force');
 		}
 	}
 
@@ -1735,7 +1738,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	getFeature(request: typeof DocumentLinkRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentLinkProvider>;
 	getFeature(request: typeof DocumentColorRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentColorProvider>;
 	getFeature(request: typeof DeclarationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DeclarationProvider>;
-	getFeature(request: typeof FoldingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<FoldingRangeProvider>;
+	getFeature(request: typeof FoldingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<FoldingRangeProviderShape>;
 	getFeature(request: typeof ImplementationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ImplementationProvider>;
 	getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider>;
 	getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
@@ -1749,6 +1752,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> | undefined;
 	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape | undefined;
 	getFeature(request: typeof InlineCompletionRequest.method): DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>;
+	getFeature(request: typeof ExecuteCommandRequest.method): DynamicFeature<ExecuteCommandOptions>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
 		return this._dynamicFeatures.get(request);
 	}
