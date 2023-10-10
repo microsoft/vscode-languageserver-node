@@ -9220,8 +9220,9 @@
 					"documentation": "Human readable description of why the code action is currently disabled.\n\nThis is displayed in the code actions UI."
 				}
 			],
-			"documentation": "Captures why the code action is currently disabled.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Captures why the code action is currently disabled.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "CodeActionOptions",
@@ -9268,8 +9269,9 @@
 					}
 				}
 			],
-			"documentation": "Location with only uri and does not include range.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Location with only uri and does not include range.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "WorkspaceSymbolOptions",
@@ -9487,8 +9489,9 @@
 					}
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "PrepareRenameDefaultBehavior",
@@ -9501,8 +9504,9 @@
 					}
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ExecuteCommandOptions",
@@ -9569,8 +9573,9 @@
 					"documentation": "The server supports deltas for full documents."
 				}
 			],
-			"documentation": "Semantic tokens options to support deltas for full documents\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Semantic tokens options to support deltas for full documents\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "OptionalVersionedTextDocumentIdentifier",
@@ -9905,8 +9910,9 @@
 					"documentation": "Changes to the text content of notebook cells."
 				}
 			],
-			"documentation": "Cell changes to a notebook document.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Cell changes to a notebook document.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "SelectedCompletionInfo",
@@ -10155,8 +10161,9 @@
 					"since": "3.16.0"
 				}
 			],
-			"documentation": "Defines workspace specific capabilities of the server.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Defines workspace specific capabilities of the server.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "TextDocumentContentChangePartial",
@@ -10188,8 +10195,9 @@
 					"documentation": "The new text for the provided range."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "TextDocumentContentChangeWholeDocument",
@@ -10203,8 +10211,9 @@
 					"documentation": "The new text of the whole document."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "CodeDescription",
@@ -10261,8 +10270,9 @@
 					}
 				}
 			],
-			"documentation": "Edit range variant that includes ranges for insert and replace operations.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Edit range variant that includes ranges for insert and replace operations.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ServerCompletionItemOptions",
@@ -10278,8 +10288,9 @@
 					"since": "3.17.0"
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "MarkedStringDetail",
@@ -10459,8 +10470,9 @@
 					"documentation": "Additional closed cell text documents."
 				}
 			],
-			"documentation": "Structural changes to cells in a notebook document.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Structural changes to cells in a notebook document.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentCellContentChanges",
@@ -10483,8 +10495,9 @@
 					}
 				}
 			],
-			"documentation": "Content changes to a cell in a notebook document.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "Content changes to a cell in a notebook document.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "WorkspaceClientCapabilities",
@@ -11071,8 +11084,9 @@
 					"documentation": "The cells of the matching notebook to be synced."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentFilterWithCells",
@@ -11107,8 +11121,9 @@
 					"documentation": "The cells of the matching notebook to be synced."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "WorkspaceFoldersServerCapabilities",
@@ -11265,8 +11280,9 @@
 					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 				}
 			],
-			"documentation": "A document filter where `language` is required field.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "A document filter where `language` is required field.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "TextDocumentFilterScheme",
@@ -11298,8 +11314,9 @@
 					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 				}
 			],
-			"documentation": "A document filter where `scheme` is required field.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "A document filter where `scheme` is required field.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "TextDocumentFilterPattern",
@@ -11331,8 +11348,9 @@
 					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 				}
 			],
-			"documentation": "A document filter where `pattern` is required field.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "A document filter where `pattern` is required field.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "NotebookCellArrayChange",
@@ -12707,8 +12725,9 @@
 					"documentation": "The list of requests for which the client\nwill retry the request if it receives a\nresponse with error code `ContentModified`"
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "RegularExpressionsClientCapabilities",
@@ -12782,8 +12801,9 @@
 					}
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentFilterNotebookType",
@@ -12815,8 +12835,9 @@
 					"documentation": "A glob pattern."
 				}
 			],
-			"documentation": "A notebook document filter where `notebookType` is required field.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "A notebook document filter where `notebookType` is required field.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentFilterScheme",
@@ -12848,8 +12869,9 @@
 					"documentation": "A glob pattern."
 				}
 			],
-			"documentation": "A notebook document filter where `scheme` is required field.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "A notebook document filter where `scheme` is required field.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentFilterPattern",
@@ -12881,8 +12903,9 @@
 					"documentation": "A glob pattern."
 				}
 			],
-			"documentation": "A notebook document filter where `pattern` is required field.\n\n@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "A notebook document filter where `pattern` is required field.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ChangeAnnotationsSupportOptions",
@@ -12897,8 +12920,9 @@
 					"documentation": "Whether the client groups edits with equal labels into tree nodes,\nfor instance all edits labelled with \"Changes in Strings\" would\nbe a tree node."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientSymbolKindOptions",
@@ -12916,8 +12940,9 @@
 					"documentation": "The symbol kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown.\n\nIf this property is not present the client only supports\nthe symbol kinds from `File` to `Array` as defined in\nthe initial version of the protocol."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientSymbolTagOptions",
@@ -12934,8 +12959,9 @@
 					"documentation": "The tags supported by the client."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientSymbolResolveOptions",
@@ -12952,8 +12978,9 @@
 					"documentation": "The properties that a client can resolve lazily. Usually\n`location.range`"
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientCompletionItemOptions",
@@ -13057,8 +13084,9 @@
 					"since": "3.17.0"
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientCompletionItemOptionsKind",
@@ -13076,8 +13104,9 @@
 					"documentation": "The completion item kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown.\n\nIf this property is not present the client only supports\nthe completion items kinds from `Text` to `Reference` as defined in\nthe initial version of the protocol."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "CompletionListCapabilities",
@@ -13134,8 +13163,9 @@
 					"since": "3.16.0"
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientCodeActionLiteralOptions",
@@ -13149,8 +13179,9 @@
 					"documentation": "The code action kind is support with the following value\nset."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientCodeActionResolveOptions",
@@ -13167,8 +13198,9 @@
 					"documentation": "The properties that a client can resolve lazily."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientFoldingRangeKindOptions",
@@ -13186,8 +13218,9 @@
 					"documentation": "The folding range kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientFoldingRangeOptions",
@@ -13203,8 +13236,9 @@
 					"since": "3.17.0"
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientDiagnosticsTagOptions",
@@ -13221,8 +13255,9 @@
 					"documentation": "The tags supported by the client."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientSemanticTokensRequestOptions",
@@ -13266,8 +13301,9 @@
 					"documentation": "The client will send the `textDocument/semanticTokens/full` request if\nthe server provides a corresponding handler."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientInlayHintResolveOptions",
@@ -13284,8 +13320,9 @@
 					"documentation": "The properties that a client can resolve lazily."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientShowMessageActionItemOptions",
@@ -13300,8 +13337,9 @@
 					"documentation": "Whether the client supports additional attributes which\nare preserved and send back to the server in the\nrequest's response."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "CompletionItemTagOptions",
@@ -13318,8 +13356,9 @@
 					"documentation": "The tags supported by the client."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientCompletionItemResolveOptions",
@@ -13336,8 +13375,9 @@
 					"documentation": "The properties that a client can resolve lazily."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientCompletionItemInsertTextModeOptions",
@@ -13353,8 +13393,9 @@
 					}
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientSignatureParameterInformationOptions",
@@ -13370,8 +13411,9 @@
 					"since": "3.14.0"
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientCodeActionKindOptions",
@@ -13388,8 +13430,9 @@
 					"documentation": "The code action kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ClientSemanticTokensRequestFullDelta",
@@ -13404,8 +13447,9 @@
 					"documentation": "The client will send the `textDocument/semanticTokens/full/delta` request if\nthe server provides a corresponding handler."
 				}
 			],
-			"documentation": "@since 3.18.0",
-			"since": "3.18.0"
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		}
 	],
 	"enumerations": [

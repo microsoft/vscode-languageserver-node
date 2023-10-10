@@ -296,6 +296,7 @@ export type VersionedNotebookDocumentIdentifier = {
 
 /**
  * @since 3.18.0
+ * @proposed
  */
 export interface NotebookCellLanguage {
 	language: string;
@@ -303,6 +304,7 @@ export interface NotebookCellLanguage {
 
 /**
  * @since 3.18.0
+ * @proposed
  */
 export interface NotebookDocumentFilterWithNotebook {
 	/**
@@ -321,6 +323,7 @@ export interface NotebookDocumentFilterWithNotebook {
 
 /**
  * @since 3.18.0
+ * @proposed
  */
 export interface NotebookDocumentFilterWithCells {
 	/**
@@ -450,6 +453,7 @@ export namespace NotebookCellArrayChange {
  * Structural changes to cells in a notebook document.
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface NotebookDocumentCellChangeStructure {
 	/**
@@ -472,6 +476,7 @@ export interface NotebookDocumentCellChangeStructure {
  * Content changes to a cell in a notebook document.
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface NotebookDocumentCellContentChanges {
 	document: VersionedTextDocumentIdentifier;
@@ -482,6 +487,7 @@ export interface NotebookDocumentCellContentChanges {
  * Cell changes to a notebook document.
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface NotebookDocumentCellChanges {
 	/**

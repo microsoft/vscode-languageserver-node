@@ -36,6 +36,7 @@ export type TokenFormat = 'relative';
 
 /**
  * @since 3.18.0
+ * @proposed
  */
 export interface ClientSemanticTokensRequestFullDelta {
 	/**
@@ -47,6 +48,7 @@ export interface ClientSemanticTokensRequestFullDelta {
 
 /**
  * @since 3.18.0
+ * @proposed
  */
 export interface ClientSemanticTokensRequestOptions  {
 
@@ -142,6 +144,7 @@ export interface SemanticTokensClientCapabilities {
  * Semantic tokens options to support deltas for full documents
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface SemanticTokensFullDelta {
 	/**

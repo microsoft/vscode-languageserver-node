@@ -2303,6 +2303,7 @@ export namespace CompletionItem {
  * Edit range variant that includes ranges for insert and replace operations.
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface EditRangeWithInsertReplace {
 	insert: Range;
@@ -2853,6 +2854,7 @@ export namespace SymbolInformation {
  * Location with only uri and does not include range.
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface LocationUriOnly { uri: DocumentUri }
 
@@ -3173,6 +3175,7 @@ export namespace CodeActionContext {
  * Captures why the code action is currently disabled.
  *
  * @since 3.18.0
+ * @proposed
  */
 export interface CodeActionDisabled {
 

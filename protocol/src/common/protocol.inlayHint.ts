@@ -11,6 +11,7 @@ import type { StaticRegistrationOptions, TextDocumentRegistrationOptions, WorkDo
 
 /**
  * @since 3.18.0
+ * @proposed
  */
 export interface ClientInlayHintResolveOptions {
 	/**
