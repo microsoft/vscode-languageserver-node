@@ -166,9 +166,9 @@ export interface TextDocumentFilterPattern {
 	/** A language id, like `typescript`. */
 	language?: string;
 	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
-	scheme: string;
+	scheme?: string;
 	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
-	pattern?: string;
+	pattern: string;
 }
 
 /**
@@ -1363,6 +1363,8 @@ export interface ServerCapabilities<T = LSPAny> {
  * Information about the server
  *
  * @since 3.15.0
+ * @since 3.18.0 ServerInfo type name added.
+ * @proposed
  */
 export interface ServerInfo {
 	/**
@@ -1381,6 +1383,8 @@ export interface ServerInfo {
  * Information about the client
  *
  * @since 3.15.0
+ * @since 3.18.0 ClientInfo type name added.
+ * @proposed
  */
 export interface ClientInfo {
 	/**

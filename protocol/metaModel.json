@@ -8523,8 +8523,9 @@
 					"documentation": "The server's version as defined by the server."
 				}
 			],
-			"documentation": "Information about the server\n\n@since 3.15.0",
-			"since": "3.15.0"
+			"documentation": "Information about the server\n\n@since 3.15.0\n@since 3.18.0 ServerInfo type name added.\n@proposed",
+			"since": "3.18.0 ServerInfo type name added.",
+			"proposed": true
 		},
 		{
 			"name": "VersionedTextDocumentIdentifier",
@@ -9959,8 +9960,9 @@
 					"documentation": "The client's version as defined by the client."
 				}
 			],
-			"documentation": "Information about the client\n\n@since 3.15.0",
-			"since": "3.15.0"
+			"documentation": "Information about the client\n\n@since 3.15.0\n@since 3.18.0 ClientInfo type name added.\n@proposed",
+			"since": "3.18.0 ClientInfo type name added.",
+			"proposed": true
 		},
 		{
 			"name": "ClientCapabilities",
@@ -10293,7 +10295,7 @@
 			"proposed": true
 		},
 		{
-			"name": "MarkedStringDetail",
+			"name": "MarkedStringWithLanguage",
 			"properties": [
 				{
 					"name": "language",
@@ -10310,8 +10312,10 @@
 					}
 				}
 			],
-			"documentation": "@deprecated use MarkupContent instead.",
-			"deprecated": "use MarkupContent instead."
+			"documentation": "@since 3.18.0\n@proposed\n@deprecated use MarkupContent instead.",
+			"since": "3.18.0",
+			"deprecated": "use MarkupContent instead.",
+			"proposed": true
 		},
 		{
 			"name": "ParameterInformation",
@@ -11336,6 +11340,7 @@
 						"kind": "base",
 						"name": "string"
 					},
+					"optional": true,
 					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
 				},
 				{
@@ -11344,7 +11349,6 @@
 						"kind": "base",
 						"name": "string"
 					},
-					"optional": true,
 					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 				}
 			],
@@ -14921,7 +14925,7 @@
 					},
 					{
 						"kind": "reference",
-						"name": "MarkedStringDetail"
+						"name": "MarkedStringWithLanguage"
 					}
 				]
 			},

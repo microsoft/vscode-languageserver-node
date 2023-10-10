@@ -2415,9 +2415,11 @@ export namespace CompletionList {
 }
 
 /**
+ * @since 3.18.0
+ * @proposed
  * @deprecated use MarkupContent instead.
  */
-export interface MarkedStringDetail {
+export interface MarkedStringWithLanguage {
 	language: string;
 	value: string;
 }
@@ -2436,7 +2438,7 @@ export interface MarkedStringDetail {
  * Note that markdown strings will be sanitized - that means html will be escaped.
  * @deprecated use MarkupContent instead.
  */
-export type MarkedString = string | MarkedStringDetail;
+export type MarkedString = string | MarkedStringWithLanguage;
 
 export namespace MarkedString {
 	/**
