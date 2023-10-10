@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-types",
 	"description": "Types used by the Language server for node",
-	"version": "3.17.5-next.0",
+	"version": "3.17.4",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
