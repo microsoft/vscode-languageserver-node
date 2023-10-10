@@ -358,7 +358,7 @@ export type NotebookDocumentSyncOptions = {
 	/**
 	 * The notebooks to be synced
 	 */
-	notebookSelector: (NotebookDocumentFilterWithNotebook|NotebookDocumentFilterWithCells)[];
+	notebookSelector: (NotebookDocumentFilterWithNotebook | NotebookDocumentFilterWithCells)[];
 
 	/**
 	 * Whether save notification should be forwarded to
