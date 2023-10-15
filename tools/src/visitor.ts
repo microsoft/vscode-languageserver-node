@@ -1213,9 +1213,9 @@ export default class Visitor {
 		const result: { since?: string; deprecated?: string } = {};
 		for (const tag of tags) {
 			if (tag.tagName.text === 'since' && typeof tag.comment === 'string') {
-				result.since = tag.comment;
+				result.since = tag.comment.replace(/\r?\n/g, '\n');
 			} else if (tag.tagName.text === 'deprecated' && typeof tag.comment === 'string') {
-				result.deprecated = tag.comment;
+				result.deprecated = tag.comment.replace(/\r?\n/g, '\n');
 			}
 			if (result.since !== undefined && result.deprecated !== undefined) {
 				return result;
