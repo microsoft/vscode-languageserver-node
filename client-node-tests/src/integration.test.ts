@@ -1515,6 +1515,43 @@ suite('Client integration', () => {
 		middleware.sendNotification = undefined;
 		assert.strictEqual(middlewareCallCount, 2);
 	});
+
+	test('applyEdit middleware', async () => {
+		const middlewareEvents: Array<lsclient.ApplyWorkspaceEditParams> = [];
+		let currentProgressResolver: (value: unknown) => void | undefined;
+
+		// Set up middleware that calls the current resolve function when it gets its 'end' progress event.
+		middleware.workspace = middleware.workspace || {};
+		middleware.workspace.handleApplyEdit = async (params, next) => {
+			middlewareEvents.push(params);
+			setImmediate(currentProgressResolver);
+			/**
+			 * TODO signatures need to be updated also for showDocument, handleRegisterCapability, handleUnregisterCapability
+			 * The use of `HandlerSignature` makes it that you have to pass a dummy cancellation token and handle `ResponseError`
+			 */
+			const resultOrError = await next(params, tokenSource.token);
+			if(resultOrError instanceof lsclient.ResponseError) {
+				return Promise.reject(resultOrError.message);
+			}
+			return resultOrError;
+		};
+
+		// Trigger sample applyEdit event.
+		await new Promise<unknown>((resolve) => {
+			currentProgressResolver = resolve;
+			void client.sendRequest(
+				new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendApplyEdit'),
+				{},
+				tokenSource.token,
+			);
+		});
+
+		middleware.workspace.handleApplyEdit = undefined;
+
+		// Ensure event was handled.
+		assert.deepStrictEqual(middlewareEvents, [{ label: 'Apply Edit', edit: {} }]);
+	});
+
 });
 
 function createNotebookData(): vscode.NotebookData {

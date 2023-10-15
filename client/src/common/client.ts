@@ -297,7 +297,7 @@ export interface DidChangeWatchedFileSignature {
 
 type _WorkspaceMiddleware = {
 	didChangeWatchedFile?: (this: void, event: FileEvent, next: DidChangeWatchedFileSignature) => Promise<void>;
-	applyEdit?: (this: void, params: ApplyWorkspaceEditParams, next: ApplyWorkspaceEditRequest.HandlerSignature) => Promise<ApplyWorkspaceEditResult>;
+	handleApplyEdit?: (this: void, params: ApplyWorkspaceEditParams, next: ApplyWorkspaceEditRequest.HandlerSignature) => Promise<ApplyWorkspaceEditResult>;
 };
 
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware;
@@ -1961,7 +1961,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private async handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
-		const middleware = this.clientOptions.middleware?.workspace?.applyEdit;
+		const middleware = this.clientOptions.middleware?.workspace?.handleApplyEdit;
 		if(middleware) {
 			return middleware(params, nextParams => this.doHandleApplyWorkspaceEdit(nextParams));
 		} else {
