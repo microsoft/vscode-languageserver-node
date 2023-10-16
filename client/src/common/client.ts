@@ -36,7 +36,7 @@ import {
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
-	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions
+	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, HandlerResult
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -297,7 +297,7 @@ export interface DidChangeWatchedFileSignature {
 
 type _WorkspaceMiddleware = {
 	didChangeWatchedFile?: (this: void, event: FileEvent, next: DidChangeWatchedFileSignature) => Promise<void>;
-	handleApplyEdit?: (this: void, params: ApplyWorkspaceEditParams, next: ApplyWorkspaceEditRequest.HandlerSignature) => Promise<ApplyWorkspaceEditResult>;
+	handleApplyEdit?: (this: void, params: ApplyWorkspaceEditParams, next: ApplyWorkspaceEditRequest.HandlerSignature) => HandlerResult<ApplyWorkspaceEditResult, void>;
 };
 
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware;
@@ -1963,7 +1963,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private async handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
 		const middleware = this.clientOptions.middleware?.workspace?.handleApplyEdit;
 		if(middleware) {
-			return middleware(params, nextParams => this.doHandleApplyWorkspaceEdit(nextParams));
+			const resultOrError = await middleware(params, nextParams => this.doHandleApplyWorkspaceEdit(nextParams));
+			if(resultOrError instanceof ResponseError) {
+				return Promise.reject(resultOrError);
+			}
+			return resultOrError;
 		} else {
 			return this.doHandleApplyWorkspaceEdit(params);
 		}

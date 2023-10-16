@@ -1520,20 +1520,11 @@ suite('Client integration', () => {
 		const middlewareEvents: Array<lsclient.ApplyWorkspaceEditParams> = [];
 		let currentProgressResolver: (value: unknown) => void | undefined;
 
-		// Set up middleware that calls the current resolve function when it gets its 'end' progress event.
 		middleware.workspace = middleware.workspace || {};
 		middleware.workspace.handleApplyEdit = async (params, next) => {
 			middlewareEvents.push(params);
 			setImmediate(currentProgressResolver);
-			/**
-			 * TODO signatures need to be updated also for showDocument, handleRegisterCapability, handleUnregisterCapability
-			 * The use of `HandlerSignature` makes it that you have to pass a dummy cancellation token and handle `ResponseError`
-			 */
-			const resultOrError = await next(params, tokenSource.token);
-			if(resultOrError instanceof lsclient.ResponseError) {
-				return Promise.reject(resultOrError.message);
-			}
-			return resultOrError;
+			return next(params, tokenSource.token);
 		};
 
 		// Trigger sample applyEdit event.
