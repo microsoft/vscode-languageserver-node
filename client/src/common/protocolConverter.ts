@@ -341,7 +341,16 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (diagnostic.source) { result.source = diagnostic.source; }
 		if (diagnostic.relatedInformation) { result.relatedInformation = asRelatedInformation(diagnostic.relatedInformation); }
 		if (Array.isArray(diagnostic.tags)) { result.tags = asDiagnosticTags(diagnostic.tags); }
+		if (diagnostic.messageDetails) { result.messageDetails = asMessageDetails(diagnostic.messageDetails); }
 		return result;
+	}
+
+	function asMessageDetails(messageDetails: string | ls.MarkupContent): string | code.MarkdownString {
+		if (Is.string(messageDetails)) {
+			return messageDetails;
+		} else {
+			return new code.MarkdownString(messageDetails.value);
+		}
 	}
 
 	function asRelatedInformation(relatedInformation: ls.DiagnosticRelatedInformation[]): code.DiagnosticRelatedInformation[] {

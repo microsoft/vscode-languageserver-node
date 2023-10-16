@@ -509,6 +509,17 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return items.map(asRelatedInformation);
 	}
 
+	function asMessageDetails(messageDetails: string | code.MarkdownString): string | proto.MarkupContent {
+		if (Is.string(messageDetails)) {
+			return messageDetails;
+		} else {
+			return {
+				kind: 'markdown',
+				value: messageDetails.value,
+			};
+		}
+	}
+
 	function asDiagnosticCode(value: number | string | { value: string | number; target: code.Uri } | undefined | null): number | string | DiagnosticCode | undefined {
 		if (value === undefined || value === null) {
 			return undefined;
@@ -540,6 +551,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (Array.isArray(item.tags)) { result.tags = asDiagnosticTags(item.tags); }
 		if (item.relatedInformation) { result.relatedInformation = asRelatedInformations(item.relatedInformation); }
 		if (item.source) { result.source = item.source; }
+		if (item.messageDetails) { result.messageDetails = asMessageDetails(item.messageDetails); }
 		return result;
 	}
 
