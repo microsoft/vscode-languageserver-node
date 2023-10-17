@@ -36,7 +36,7 @@ import {
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
-	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions
+	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, HandlerResult
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -297,6 +297,7 @@ export interface DidChangeWatchedFileSignature {
 
 type _WorkspaceMiddleware = {
 	didChangeWatchedFile?: (this: void, event: FileEvent, next: DidChangeWatchedFileSignature) => Promise<void>;
+	handleApplyEdit?: (this: void, params: ApplyWorkspaceEditParams, next: ApplyWorkspaceEditRequest.HandlerSignature) => HandlerResult<ApplyWorkspaceEditResult, void>;
 };
 
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware;
@@ -1959,8 +1960,21 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 	}
 
-	private workspaceEditLock: Semaphore<VWorkspaceEdit> = new Semaphore(1);
 	private async handleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
+		const middleware = this.clientOptions.middleware?.workspace?.handleApplyEdit;
+		if(middleware) {
+			const resultOrError = await middleware(params, nextParams => this.doHandleApplyWorkspaceEdit(nextParams));
+			if(resultOrError instanceof ResponseError) {
+				return Promise.reject(resultOrError);
+			}
+			return resultOrError;
+		} else {
+			return this.doHandleApplyWorkspaceEdit(params);
+		}
+	}
+
+	private workspaceEditLock: Semaphore<VWorkspaceEdit> = new Semaphore(1);
+	private async doHandleApplyWorkspaceEdit(params: ApplyWorkspaceEditParams): Promise<ApplyWorkspaceEditResult> {
 		const workspaceEdit: WorkspaceEdit = params.edit;
 		// Make sure we convert workspace edits one after the other. Otherwise
 		// we might execute a workspace edit received first after we received another
