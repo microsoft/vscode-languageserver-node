@@ -8,7 +8,8 @@ import { strictEqual, ok } from 'assert';
 import {
 	Position, Range, TextDocumentIdentifier, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
 	Diagnostic, DiagnosticSeverity, WorkspaceChange, TextDocumentEdit, CreateFile, RenameFile, DeleteFile, ChangeAnnotation,
-	AnnotatedTextEdit
+	AnnotatedTextEdit,
+	TextEdit
 } from 'vscode-languageclient';
 
 suite('Protocol Helper Tests', () => {
@@ -124,17 +125,21 @@ suite('Protocol Helper Tests', () => {
 		strictEqual(workspaceEdit.documentChanges!.length, 2);
 		let edits = (workspaceEdit.documentChanges![0] as TextDocumentEdit).edits;
 		strictEqual(edits.length, 3);
-		rangeEqual(edits[0].range, Range.create(0,1,0,1));
-		strictEqual(edits[0].newText, 'insert');
-		rangeEqual(edits[1].range, Range.create(0,1,2,3));
-		strictEqual(edits[1].newText, 'replace');
-		rangeEqual(edits[2].range, Range.create(0,1,2,3));
-		strictEqual(edits[2].newText, '');
+		let edit = edits[0] as TextEdit;
+		rangeEqual(edit.range, Range.create(0,1,0,1));
+		strictEqual(edit.newText, 'insert');
+		edit = edits[1] as TextEdit;
+		rangeEqual(edit.range, Range.create(0,1,2,3));
+		strictEqual(edit.newText, 'replace');
+		edit = edits[2] as TextEdit;
+		rangeEqual(edit.range, Range.create(0,1,2,3));
+		strictEqual(edit.newText, '');
 
 		edits = (workspaceEdit.documentChanges![1] as TextDocumentEdit).edits;
 		strictEqual(edits.length, 1);
-		rangeEqual(edits[0].range, Range.create(2,3,2,3));
-		strictEqual(edits[0].newText, 'insert');
+		edit = edits[0] as TextEdit;
+		rangeEqual(edit.range, Range.create(2,3,2,3));
+		strictEqual(edit.newText, 'insert');
 
 		workspaceChange.createFile('file:///create.txt');
 		workspaceChange.renameFile('file:///old.txt', 'file:///new.txt');

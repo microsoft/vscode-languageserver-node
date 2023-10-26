@@ -4094,6 +4094,14 @@ export interface WorkspaceEditClientCapabilities {
 	 * @since 3.16.0
 	 */
 	changeAnnotationSupport?: ChangeAnnotationsSupportOptions;
+
+	/**
+	 * Whether the client supports snippets as text edits.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	snippetEditSupport?: boolean;
 }
 
 /**
@@ -4207,7 +4215,7 @@ export {
 	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
 	DidCloseNotebookDocumentNotification,
 	// Inline Completions
-	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest
+	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest,
 };
 
 // To be backwards compatible
