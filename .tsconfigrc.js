@@ -464,7 +464,7 @@ const umdPublishProjectOptions = {
 /** @type CompilerOptions */
 const esmPublishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: false,
-	target: 'es5',
+	target: 'es6',
 	module: 'es6',
 	lib: [ 'es2015' ]
 });
