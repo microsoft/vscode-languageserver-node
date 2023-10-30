@@ -58,7 +58,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	private _listener: code.Disposable | undefined;
 	// This property must stay private. Otherwise the type `minimatch.IMinimatch` becomes public and as a consequence we would need to
 	// ship the d.ts files for minimatch to make the compiler happy when compiling against the vscode-languageclient library
-	private readonly _filters: Map<string, Array<{ scheme?: string; matcher: minimatch.IMinimatch; kind?: proto.FileOperationPatternKind }>>;
+	private readonly _filters: Map<string, Array<{ scheme?: string; matcher: minimatch.Minimatch; kind?: proto.FileOperationPatternKind }>>;
 
 	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -195,10 +195,10 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		}
 	}
 
-	private static asMinimatchOptions(options: proto.FileOperationPatternOptions | undefined): minimatch.IOptions | undefined {
+	private static asMinimatchOptions(options: proto.FileOperationPatternOptions | undefined): minimatch.MinimatchOptions | undefined {
 		// The spec doesn't state that dot files don't match. So we make
 		// matching those the default.
-		const result: minimatch.IOptions = { dot: true };
+		const result: minimatch.MinimatchOptions = { dot: true };
 		if (options?.ignoreCase === true) {
 			result.nocase = true;
 		}

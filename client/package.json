@@ -22,14 +22,14 @@
 	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
-		"@types/minimatch": "^3.0.5",
-		"@types/semver": "^7.3.10",
+		"@types/minimatch": "^5.1.2",
+		"@types/semver": "^7.5.4",
 		"@types/vscode": "1.82.0",
 		"shx": "^0.3.4"
 	},
 	"dependencies": {
-		"minimatch": "^5.1.0",
-		"semver": "^7.3.7",
+		"minimatch": "^9.0.3",
+		"semver": "^7.5.4",
 		"vscode-languageserver-protocol": "3.17.5"
 	},
 	"scripts": {
