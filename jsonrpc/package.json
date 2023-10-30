@@ -21,7 +21,7 @@
 	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
-		"@types/msgpack-lite": "^0.1.7",
+		"@types/msgpack-lite": "^0.1.10",
 		"msgpack-lite": "^0.1.26"
 	},
 	"scripts": {

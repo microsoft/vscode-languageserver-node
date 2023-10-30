@@ -11,7 +11,7 @@
         "declaration": true,
         "stripInternal": true,
         "sourceMap": false,
-        "target": "es6",
+        "target": "es5",
         "lib": [
             "es2015"
         ],
