@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "9.0.1",
+	"version": "9.0.2-next.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -30,7 +30,7 @@
 	"dependencies": {
 		"minimatch": "^9.0.3",
 		"semver": "^7.5.4",
-		"vscode-languageserver-protocol": "3.17.5"
+		"vscode-languageserver-protocol": "3.17.6-next.1"
 	},
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
