@@ -1548,6 +1548,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					this.setDiagnostics(uri, converted);
 				}
 			}
+		}).catch((error) => {
+			this.error(`Processing diagnostic queue failed.`, error);
 		}).finally(() => {
 			this._diagnosticQueueState = { state: 'idle' };
 			this.triggerDiagnosticQueue();
