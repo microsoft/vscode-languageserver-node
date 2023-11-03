@@ -34,7 +34,7 @@
 		"node-polyfill-webpack-plugin": "^2.0.1"
 	},
 	"scripts": {
-		"postinstall": "node ./build/bin/all.js install && cd testbed && npm install && cd .. && npm run symlink:testbed",
+		"postinstall": "node ./build/bin/all.js install && cd testbed && npm install && cd .. && npm run symlink:testbed && npx playwright install",
 		"test": "node ./build/bin/all.js run test",
 		"clean": "node ./build/bin/all.js run clean",
 		"symlink": "node ./build/bin/symlink.js",
