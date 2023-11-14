@@ -51,7 +51,7 @@
 		"./tsconfig-gen"
 	],
 	"editor.codeActionsOnSave": {
-		"source.fixAll.eslint": true
+		"source.fixAll.eslint": "explicit"
 	},
 	"mochaExplorer.files": [
 		"textDocument/lib/umd/test/*.js",

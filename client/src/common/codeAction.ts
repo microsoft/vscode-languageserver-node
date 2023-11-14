@@ -43,7 +43,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 		cap.dataSupport = true;
 		// We can only resolve the edit property.
 		cap.resolveSupport = {
-			properties: ['edit']
+			properties: ['edit', 'command']
 		};
 		cap.codeActionLiteralSupport = {
 			codeActionKind: {
