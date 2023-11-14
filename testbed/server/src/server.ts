@@ -205,6 +205,9 @@ connection.onInitialized((params) => {
 		}
 	};
 	void connection.client.register(SemanticTokensRegistrationType.type, registrationOptions);
+	void connection.sendRequest('testbed/request', {name: 'World'}).then(value => {
+		connection.console.log(`Request got resolved: ${value}`);
+	});
 });
 
 connection.onShutdown((_handler) => {

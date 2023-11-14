@@ -62,6 +62,9 @@ export async function activate(context: ExtensionContext) {
 	client.onTelemetry((data: any) => {
 		console.log(`Telemetry event received: ${JSON.stringify(data)}`);
 	});
+	client.onRequest('testbed/request', (param: { name: string }) => {
+		return `Hello ${param.name}!`;
+	});
 	const not: NotificationType<string[]> = new NotificationType<string[]>('testbed/notification');
 	try {
 		await client.start();
@@ -93,7 +96,7 @@ FOR %%f IN (*.jpg *.png *.bmp) DO XCOPY C:\\source\\"%%f" c:\\images /m /y
 REM This moves any files with a .jpg, .png,
 REM or .bmp extension from c:\\source to c:\\images;;`;
 
-		workspace
+		void workspace
 			.openTextDocument({
 				content: testContent,
 				language: 'bat',
