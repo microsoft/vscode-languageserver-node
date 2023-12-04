@@ -1935,6 +1935,10 @@
 				"name": "DidOpenNotebookDocumentParams"
 			},
 			"registrationMethod": "notebookDocument/sync",
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "NotebookDocumentSyncRegistrationOptions"
+			},
 			"documentation": "A notification sent when a notebook opens.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -1945,7 +1949,11 @@
 				"kind": "reference",
 				"name": "DidChangeNotebookDocumentParams"
 			},
-			"registrationMethod": "notebookDocument/sync"
+			"registrationMethod": "notebookDocument/sync",
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "NotebookDocumentSyncRegistrationOptions"
+			}
 		},
 		{
 			"method": "notebookDocument/didSave",
@@ -1955,6 +1963,10 @@
 				"name": "DidSaveNotebookDocumentParams"
 			},
 			"registrationMethod": "notebookDocument/sync",
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "NotebookDocumentSyncRegistrationOptions"
+			},
 			"documentation": "A notification sent when a notebook document is saved.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -1966,6 +1978,10 @@
 				"name": "DidCloseNotebookDocumentParams"
 			},
 			"registrationMethod": "notebookDocument/sync",
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "NotebookDocumentSyncRegistrationOptions"
+			},
 			"documentation": "A notification sent when a notebook closes.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -4053,6 +4069,24 @@
 				}
 			],
 			"documentation": "The params sent in an open notebook document notification.\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
+			"name": "NotebookDocumentSyncRegistrationOptions",
+			"properties": [],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "NotebookDocumentSyncOptions"
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "StaticRegistrationOptions"
+				}
+			],
+			"documentation": "Registration options specific to a notebook.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{
@@ -7553,6 +7587,42 @@
 			"documentation": "An item to transfer a text document from the client to the\nserver."
 		},
 		{
+			"name": "NotebookDocumentSyncOptions",
+			"properties": [
+				{
+					"name": "notebookSelector",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "or",
+							"items": [
+								{
+									"kind": "reference",
+									"name": "NotebookDocumentFilterWithNotebook"
+								},
+								{
+									"kind": "reference",
+									"name": "NotebookDocumentFilterWithCells"
+								}
+							]
+						}
+					},
+					"documentation": "The notebooks to be synced"
+				},
+				{
+					"name": "save",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether save notification should be forwarded to\nthe server. Will only be honored if mode === `notebook`."
+				}
+			],
+			"documentation": "Options specific to a notebook plus its cells\nto be synced to the server.\n\nIf a selector provides a notebook document\nfilter but no cell selector all cells of a\nmatching notebook document will be synced.\n\nIf a selector provides no notebook document\nfilter but only a cell selector all notebook\ndocument that contain at least one matching\ncell will be synced.\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
 			"name": "VersionedNotebookDocumentIdentifier",
 			"properties": [
 				{
@@ -9875,6 +9945,80 @@
 			"since": "3.17.0"
 		},
 		{
+			"name": "NotebookDocumentFilterWithNotebook",
+			"properties": [
+				{
+					"name": "notebook",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "reference",
+								"name": "NotebookDocumentFilter"
+							}
+						]
+					},
+					"documentation": "The notebook to be synced If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
+				},
+				{
+					"name": "cells",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "NotebookCellLanguage"
+						}
+					},
+					"optional": true,
+					"documentation": "The cells of the matching notebook to be synced."
+				}
+			],
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookDocumentFilterWithCells",
+			"properties": [
+				{
+					"name": "notebook",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "reference",
+								"name": "NotebookDocumentFilter"
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "The notebook to be synced If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
+				},
+				{
+					"name": "cells",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "NotebookCellLanguage"
+						}
+					},
+					"documentation": "The cells of the matching notebook to be synced."
+				}
+			],
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
 			"name": "NotebookDocumentCellChanges",
 			"properties": [
 				{
@@ -10084,60 +10228,6 @@
 					"documentation": "If present save notifications are sent to the server. If omitted the notification should not be\nsent."
 				}
 			]
-		},
-		{
-			"name": "NotebookDocumentSyncOptions",
-			"properties": [
-				{
-					"name": "notebookSelector",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "or",
-							"items": [
-								{
-									"kind": "reference",
-									"name": "NotebookDocumentFilterWithNotebook"
-								},
-								{
-									"kind": "reference",
-									"name": "NotebookDocumentFilterWithCells"
-								}
-							]
-						}
-					},
-					"documentation": "The notebooks to be synced"
-				},
-				{
-					"name": "save",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"optional": true,
-					"documentation": "Whether save notification should be forwarded to\nthe server. Will only be honored if mode === `notebook`."
-				}
-			],
-			"documentation": "Options specific to a notebook plus its cells\nto be synced to the server.\n\nIf a selector provides a notebook document\nfilter but no cell selector all cells of a\nmatching notebook document will be synced.\n\nIf a selector provides no notebook document\nfilter but only a cell selector all notebook\ndocument that contain at least one matching\ncell will be synced.\n\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
-			"name": "NotebookDocumentSyncRegistrationOptions",
-			"properties": [],
-			"extends": [
-				{
-					"kind": "reference",
-					"name": "NotebookDocumentSyncOptions"
-				}
-			],
-			"mixins": [
-				{
-					"kind": "reference",
-					"name": "StaticRegistrationOptions"
-				}
-			],
-			"documentation": "Registration options specific to a notebook.\n\n@since 3.17.0",
-			"since": "3.17.0"
 		},
 		{
 			"name": "WorkspaceOptions",
@@ -10437,6 +10527,21 @@
 					"documentation": "Whether the execution was successful or\nnot if known by the client."
 				}
 			]
+		},
+		{
+			"name": "NotebookCellLanguage",
+			"properties": [
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					}
+				}
+			],
+			"documentation": "@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "NotebookDocumentCellChangeStructure",
@@ -11056,80 +11161,6 @@
 			"since": "3.16.0"
 		},
 		{
-			"name": "NotebookDocumentFilterWithNotebook",
-			"properties": [
-				{
-					"name": "notebook",
-					"type": {
-						"kind": "or",
-						"items": [
-							{
-								"kind": "base",
-								"name": "string"
-							},
-							{
-								"kind": "reference",
-								"name": "NotebookDocumentFilter"
-							}
-						]
-					},
-					"documentation": "The notebook to be synced If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
-				},
-				{
-					"name": "cells",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "NotebookCellLanguage"
-						}
-					},
-					"optional": true,
-					"documentation": "The cells of the matching notebook to be synced."
-				}
-			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
-		},
-		{
-			"name": "NotebookDocumentFilterWithCells",
-			"properties": [
-				{
-					"name": "notebook",
-					"type": {
-						"kind": "or",
-						"items": [
-							{
-								"kind": "base",
-								"name": "string"
-							},
-							{
-								"kind": "reference",
-								"name": "NotebookDocumentFilter"
-							}
-						]
-					},
-					"optional": true,
-					"documentation": "The notebook to be synced If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
-				},
-				{
-					"name": "cells",
-					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "NotebookCellLanguage"
-						}
-					},
-					"documentation": "The cells of the matching notebook to be synced."
-				}
-			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
-		},
-		{
 			"name": "WorkspaceFoldersServerCapabilities",
 			"properties": [
 				{
@@ -11353,6 +11384,108 @@
 				}
 			],
 			"documentation": "A document filter where `pattern` is required field.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookDocumentFilterNotebookType",
+			"properties": [
+				{
+					"name": "notebookType",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The type of the enclosing notebook."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A glob pattern."
+				}
+			],
+			"documentation": "A notebook document filter where `notebookType` is required field.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookDocumentFilterScheme",
+			"properties": [
+				{
+					"name": "notebookType",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The type of the enclosing notebook."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A glob pattern."
+				}
+			],
+			"documentation": "A notebook document filter where `scheme` is required field.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
+			"name": "NotebookDocumentFilterPattern",
+			"properties": [
+				{
+					"name": "notebookType",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The type of the enclosing notebook."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A glob pattern."
+				}
+			],
+			"documentation": "A notebook document filter where `pattern` is required field.\n\n@since 3.18.0\n@proposed",
 			"since": "3.18.0",
 			"proposed": true
 		},
@@ -12793,123 +12926,6 @@
 			],
 			"documentation": "Client capabilities specific to the used markdown parser.\n\n@since 3.16.0",
 			"since": "3.16.0"
-		},
-		{
-			"name": "NotebookCellLanguage",
-			"properties": [
-				{
-					"name": "language",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					}
-				}
-			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
-		},
-		{
-			"name": "NotebookDocumentFilterNotebookType",
-			"properties": [
-				{
-					"name": "notebookType",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "The type of the enclosing notebook."
-				},
-				{
-					"name": "scheme",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-				},
-				{
-					"name": "pattern",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "A glob pattern."
-				}
-			],
-			"documentation": "A notebook document filter where `notebookType` is required field.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
-		},
-		{
-			"name": "NotebookDocumentFilterScheme",
-			"properties": [
-				{
-					"name": "notebookType",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "The type of the enclosing notebook."
-				},
-				{
-					"name": "scheme",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-				},
-				{
-					"name": "pattern",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "A glob pattern."
-				}
-			],
-			"documentation": "A notebook document filter where `scheme` is required field.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
-		},
-		{
-			"name": "NotebookDocumentFilterPattern",
-			"properties": [
-				{
-					"name": "notebookType",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "The type of the enclosing notebook."
-				},
-				{
-					"name": "scheme",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-				},
-				{
-					"name": "pattern",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "A glob pattern."
-				}
-			],
-			"documentation": "A notebook document filter where `pattern` is required field.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
 		},
 		{
 			"name": "ChangeAnnotationsSupportOptions",
@@ -15007,15 +15023,6 @@
 			"since": "3.17.0"
 		},
 		{
-			"name": "Pattern",
-			"type": {
-				"kind": "base",
-				"name": "string"
-			},
-			"documentation": "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
 			"name": "NotebookDocumentFilter",
 			"type": {
 				"kind": "or",
@@ -15035,6 +15042,15 @@
 				]
 			},
 			"documentation": "A notebook document filter denotes a notebook document by\ndifferent properties. The properties will be match\nagainst the notebook's URI (same as with documents)\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
+			"name": "Pattern",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"documentation": "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@since 3.17.0",
 			"since": "3.17.0"
 		}
 	]
