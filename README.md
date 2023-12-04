@@ -34,6 +34,10 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## Next
+
+- added proposed CodeActionKind.RefactorMove
+
 ## 3.17.5 Protocol, 9.0.1 Client and 9.0.1 Server
 
 - fix ESM bundling
