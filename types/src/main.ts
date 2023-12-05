@@ -99,14 +99,14 @@ export type LSPArray = any[];
  * offset of b is 3 since `𐐀` is represented using two code units in UTF-16.
  * Since 3.17 clients and servers can agree on a different string encoding
  * representation (e.g. UTF-8). The client announces it's supported encoding
- * via the client capability [`general.positionEncodings`](#clientCapabilities).
+ * via the client capability [`general.positionEncodings`](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#clientCapabilities).
  * The value is an array of position encodings the client supports, with
  * decreasing preference (e.g. the encoding at index `0` is the most preferred
  * one). To stay backwards compatible the only mandatory encoding is UTF-16
  * represented via the string `utf-16`. The server can pick one of the
  * encodings offered by the client and signals that encoding back to the
  * client via the initialize result's property
- * [`capabilities.positionEncoding`](#serverCapabilities). If the string value
+ * [`capabilities.positionEncoding`](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#serverCapabilities). If the string value
  * `utf-16` is missing from the client's capability `general.positionEncodings`
  * servers can safely assume that the client supports UTF-16. If the server
  * omits the position encoding in its initialize result the encoding defaults
@@ -2300,6 +2300,69 @@ export namespace CompletionItem {
 }
 
 /**
+ * Edit range variant that includes ranges for insert and replace operations.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface EditRangeWithInsertReplace {
+	insert: Range;
+	replace: Range;
+}
+
+/**
+ * In many cases the items of an actual completion result share the same
+ * value for properties like `commitCharacters` or the range of a text
+ * edit. A completion list can therefore define item defaults which will
+ * be used if a completion item itself doesn't specify the value.
+ *
+ * If a completion list specifies a default value and a completion item
+ * also specifies a corresponding value the one from the item is used.
+ *
+ * Servers are only allowed to return default values if the client
+ * signals support for this via the `completionList.itemDefaults`
+ * capability.
+ *
+ * @since 3.17.0
+ */
+export interface CompletionItemDefaults {
+	/**
+	 * A default commit character set.
+	 *
+	 * @since 3.17.0
+	 */
+	commitCharacters?: string[];
+
+	/**
+	 * A default edit range.
+	 *
+	 * @since 3.17.0
+	 */
+	editRange?: Range | EditRangeWithInsertReplace;
+
+	/**
+	 * A default insert text format.
+	 *
+	 * @since 3.17.0
+	 */
+	insertTextFormat?: InsertTextFormat;
+
+	/**
+	 * A default insert text mode.
+	 *
+	 * @since 3.17.0
+	 */
+	insertTextMode?: InsertTextMode;
+
+	/**
+	 * A default data value.
+	 *
+	 * @since 3.17.0
+	 */
+	data?: LSPAny;
+}
+
+/**
  * Represents a collection of {@link CompletionItem completion items} to be presented
  * in the editor.
  */
@@ -2327,45 +2390,7 @@ export interface CompletionList {
 	 *
 	 * @since 3.17.0
 	 */
-	itemDefaults?: {
-		/**
-		 * A default commit character set.
-		 *
-		 * @since 3.17.0
-		 */
-		commitCharacters?: string[];
-
-		/**
-		 * A default edit range.
-		 *
-		 * @since 3.17.0
-		 */
-		editRange?: Range | {
-			insert: Range;
-			replace: Range;
-		};
-
-		/**
-		 * A default insert text format.
-		 *
-		 * @since 3.17.0
-		 */
-		insertTextFormat?: InsertTextFormat;
-
-		/**
-		 * A default insert text mode.
-		 *
-		 * @since 3.17.0
-		 */
-		insertTextMode?: InsertTextMode;
-
-		/**
-		 * A default data value.
-		 *
-		 * @since 3.17.0
-		 */
-		data?: LSPAny;
-	};
+	itemDefaults?: CompletionItemDefaults;
 
 	/**
 	 * The completion items.
@@ -2390,6 +2415,16 @@ export namespace CompletionList {
 }
 
 /**
+ * @since 3.18.0
+ * @proposed
+ * @deprecated use MarkupContent instead.
+ */
+export interface MarkedStringWithLanguage {
+	language: string;
+	value: string;
+}
+
+/**
  * MarkedString can be used to render human readable text. It is either a markdown string
  * or a code-block that provides a language and a code snippet. The language identifier
  * is semantically equal to the optional language identifier in fenced code blocks in GitHub
@@ -2403,7 +2438,7 @@ export namespace CompletionList {
  * Note that markdown strings will be sanitized - that means html will be escaped.
  * @deprecated use MarkupContent instead.
  */
-export type MarkedString = string | { language: string; value: string };
+export type MarkedString = string | MarkedStringWithLanguage;
 
 export namespace MarkedString {
 	/**
@@ -2818,6 +2853,14 @@ export namespace SymbolInformation {
 }
 
 /**
+ * Location with only uri and does not include range.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface LocationUriOnly { uri: DocumentUri }
+
+/**
  * A special workspace symbol that supports locations without a range.
  *
  * See also SymbolInformation.
@@ -2832,7 +2875,7 @@ export interface WorkspaceSymbol extends BaseSymbolInformation {
 	 *
 	 * See SymbolInformation#location for more details.
 	 */
-	location: Location | { uri: DocumentUri };
+	location: Location | LocationUriOnly;
 
 	/**
 	 * A data entry field that is preserved on a workspace symbol between a
@@ -3011,6 +3054,21 @@ export namespace CodeActionKind {
 	export const RefactorInline: 'refactor.inline' = 'refactor.inline';
 
 	/**
+	 * Base kind for refactoring move actions: `refactor.move`
+	 *
+	 * Example move actions:
+	 *
+	 * - Move a function to a new file
+	 * - Move a property between classes
+	 * - Move method to base class
+	 * - ...
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	export const RefactorMove: 'refactor.move' = 'refactor.move';
+
+	/**
 	 * Base kind for refactoring rewrite actions: 'refactor.rewrite'
 	 *
 	 * Example rewrite actions:
@@ -3129,6 +3187,23 @@ export namespace CodeActionContext {
 	}
 }
 
+
+/**
+ * Captures why the code action is currently disabled.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface CodeActionDisabled {
+
+	/**
+	 * Human readable description of why the code action is currently disabled.
+	 *
+	 * This is displayed in the code actions UI.
+	 */
+	reason: string;
+}
+
 /**
  * A code action represents a change that can be performed in code, e.g. to fix a problem or
  * to refactor code.
@@ -3182,15 +3257,7 @@ export interface CodeAction {
 	 *
 	 * @since 3.16.0
 	 */
-	disabled?: {
-
-		/**
-		 * Human readable description of why the code action is currently disabled.
-		 *
-		 * This is displayed in the code actions UI.
-		 */
-		reason: string;
-	};
+	disabled?: CodeActionDisabled;
 
 	/**
 	 * The workspace edit this code action performs.
@@ -3288,8 +3355,7 @@ export interface CodeLens {
 
 	/**
 	 * A data entry field that is preserved on a code lens item between
-	 * a {@link CodeLensRequest} and a [CodeLensResolveRequest]
-	 * (#CodeLensResolveRequest)
+	 * a {@link CodeLensRequest} and a {@link CodeLensResolveRequest}
 	 */
 	data?: LSPAny;
 }
@@ -4179,15 +4245,15 @@ export namespace InlineCompletionTriggerKind {
 	/**
 	 * Completion was triggered explicitly by a user gesture.
 	 */
-	export const Invoked: 0 = 0;
+	export const Invoked: 1 = 1;
 
 	/**
 	 * Completion was triggered automatically while editing.
 	 */
-	export const Automatic: 1 = 1;
+	export const Automatic: 2 = 2;
 }
 
-export type InlineCompletionTriggerKind = 0 | 1;
+export type InlineCompletionTriggerKind = 1 | 2;
 
 /**
  * Describes the currently selected completion item.

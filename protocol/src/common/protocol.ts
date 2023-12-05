@@ -43,7 +43,7 @@ import {
 } from './protocol.colorProvider';
 
 import {
-	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions, FoldingRangeRefreshRequest, FoldingRangeWorkspaceClientCapabilities
 } from './protocol.foldingRange';
 
 import {
@@ -126,6 +126,50 @@ import { InlineCompletionClientCapabilities, InlineCompletionOptions, InlineComp
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
+/**
+ * A document filter where `language` is required field.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface TextDocumentFilterLanguage {
+	/** A language id, like `typescript`. */
+	language: string;
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	scheme?: string;
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
+	pattern?: string;
+}
+
+/**
+ * A document filter where `scheme` is required field.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface TextDocumentFilterScheme {
+	/** A language id, like `typescript`. */
+	language?: string;
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	scheme: string;
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
+	pattern?: string;
+}
+
+/**
+ * A document filter where `pattern` is required field.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface TextDocumentFilterPattern {
+	/** A language id, like `typescript`. */
+	language?: string;
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	scheme?: string;
+	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
+	pattern: string;
+}
 
 /**
  * A document filter denotes a document by different properties like
@@ -145,28 +189,7 @@ let __noDynamicImport: LocationLink | undefined;
  *
  * @since 3.17.0
  */
-export type TextDocumentFilter = {
-	/** A language id, like `typescript`. */
-	language: string;
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
-	scheme?: string;
-	/** A glob pattern, like `*.{ts,js}`. */
-	pattern?: string;
-} | {
-	/** A language id, like `typescript`. */
-	language?: string;
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
-	scheme: string;
-	/** A glob pattern, like `*.{ts,js}`. */
-	pattern?: string;
-} | {
-	/** A language id, like `typescript`. */
-	language?: string;
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
-	scheme?: string;
-	/** A glob pattern, like `*.{ts,js}`. */
-	pattern: string;
-};
+export type TextDocumentFilter = TextDocumentFilterLanguage | TextDocumentFilterScheme | TextDocumentFilterPattern;
 
 /**
  * The TextDocumentFilter namespace provides helper functions to work with
@@ -182,13 +205,12 @@ export namespace TextDocumentFilter {
 }
 
 /**
- * A notebook document filter denotes a notebook document by
- * different properties. The properties will be match
- * against the notebook's URI (same as with documents)
+ * A notebook document filter where `notebookType` is required field.
  *
- * @since 3.17.0
+ * @since 3.18.0
+ * @proposed
  */
-export type NotebookDocumentFilter = {
+export interface NotebookDocumentFilterNotebookType {
 	/** The type of the enclosing notebook. */
 	notebookType: string;
 
@@ -197,16 +219,32 @@ export type NotebookDocumentFilter = {
 
 	/** A glob pattern. */
 	pattern?: string;
-} | {
+}
+
+/**
+ * A notebook document filter where `scheme` is required field.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface NotebookDocumentFilterScheme {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.*/
+	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
 	scheme: string;
 
 	/** A glob pattern. */
 	pattern?: string;
-} | {
+}
+
+/**
+ * A notebook document filter where `pattern` is required field.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface NotebookDocumentFilterPattern {
 	/** The type of the enclosing notebook. */
 	notebookType?: string;
 
@@ -215,7 +253,16 @@ export type NotebookDocumentFilter = {
 
 	/** A glob pattern. */
 	pattern: string;
-};
+}
+
+/**
+ * A notebook document filter denotes a notebook document by
+ * different properties. The properties will be match
+ * against the notebook's URI (same as with documents)
+ *
+ * @since 3.17.0
+ */
+export type NotebookDocumentFilter = NotebookDocumentFilterNotebookType | NotebookDocumentFilterScheme | NotebookDocumentFilterPattern;
 
 /**
  * The NotebookDocumentFilter namespace provides helper functions to work with
@@ -557,6 +604,14 @@ export interface WorkspaceClientCapabilities {
 	 * @since 3.17.0.
 	 */
 	diagnostics?: DiagnosticWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the folding range requests scoped to the workspace.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	foldingRange?: FoldingRangeWorkspaceClientCapabilities;
 }
 
 /**
@@ -863,6 +918,24 @@ export type PositionEncodingKind = string;
 
 
 /**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface StaleRequestSupportOptions {
+	/**
+	 * The client will actively cancel the request.
+	 */
+	cancel: boolean;
+
+	/**
+	 * The list of requests for which the client
+	 * will retry the request if it receives a
+	 * response with error code `ContentModified`
+	 */
+	retryOnContentModified: string[];
+}
+
+/**
  * General client capabilities.
  *
  * @since 3.16.0
@@ -876,19 +949,7 @@ export interface GeneralClientCapabilities {
 	 *
 	 * @since 3.17.0
 	 */
-	staleRequestSupport?: {
-		/**
-		 * The client will actively cancel the request.
-		 */
-		cancel: boolean;
-
-		/**
-		 * The list of requests for which the client
-		 * will retry the request if it receives a
-		 * response with error code `ContentModified`
-		 */
-		retryOnContentModified: string[];
-	};
+	staleRequestSupport?: StaleRequestSupportOptions;
 
 	/**
 	 * Client capabilities specific to regular expressions.
@@ -1052,6 +1113,28 @@ export namespace WorkDoneProgressOptions {
 		const candidate = value as WorkDoneProgressOptions;
 		return candidate && Is.boolean(candidate.workDoneProgress);
 	}
+}
+
+/**
+ * Defines workspace specific capabilities of the server.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface WorkspaceOptions {
+	/**
+	 * The server supports workspace folder.
+	 *
+	 * @since 3.6.0
+	 */
+	workspaceFolders?: WorkspaceFoldersServerCapabilities;
+
+	/**
+	* The server is interested in notifications/requests for operations on files.
+	*
+	* @since 3.16.0
+	*/
+	fileOperations?: FileOperationOptions;
 }
 
 /**
@@ -1268,26 +1351,51 @@ export interface ServerCapabilities<T = LSPAny> {
 	/**
 	 * Workspace specific server capabilities.
 	 */
-	workspace?: {
-		/**
-		 * The server supports workspace folder.
-		 *
-		 * @since 3.6.0
-		 */
-		workspaceFolders?: WorkspaceFoldersServerCapabilities;
-
-		/**
-		* The server is interested in notifications/requests for operations on files.
-		*
-		* @since 3.16.0
-		*/
-		fileOperations?: FileOperationOptions;
-	};
+	workspace?: WorkspaceOptions;
 
 	/**
 	 * Experimental server capabilities.
 	 */
 	experimental?: T;
+}
+
+/**
+ * Information about the server
+ *
+ * @since 3.15.0
+ * @since 3.18.0 ServerInfo type name added.
+ * @proposed
+ */
+export interface ServerInfo {
+	/**
+	 * The name of the server as defined by the server.
+	 */
+	name: string;
+
+	/**
+	 * The server's version as defined by the server.
+	 */
+	version?: string;
+}
+
+
+/**
+ * Information about the client
+ *
+ * @since 3.15.0
+ * @since 3.18.0 ClientInfo type name added.
+ * @proposed
+ */
+export interface ClientInfo {
+	/**
+	 * The name of the client as defined by the client.
+	 */
+	name: string;
+
+	/**
+	 * The client's version as defined by the client.
+	 */
+	version?: string;
 }
 
 /**
@@ -1321,17 +1429,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	 *
 	 * @since 3.15.0
 	 */
-	clientInfo?: {
-		/**
-		 * The name of the client as defined by the client.
-		 */
-		name: string;
-
-		/**
-		 * The client's version as defined by the client.
-		 */
-		version?: string;
-	};
+	clientInfo?: ClientInfo;
 
 	/**
 	 * The locale the client is currently showing the user interface
@@ -1395,17 +1493,7 @@ export interface InitializeResult<T = any> {
 	 *
 	 * @since 3.15.0
 	 */
-	serverInfo?: {
-		/**
-		 * The name of the server as defined by the server.
-		 */
-		name: string;
-
-		/**
-		 * The server's version as defined by the server.
-		 */
-		version?: string;
-	};
+	serverInfo?: ServerInfo;
 
 	/**
 	 * Custom initialization results.
@@ -1538,9 +1626,16 @@ export namespace MessageType {
 	 * A log message.
 	 */
 	export const Log = 4;
+	/**
+	 * A debug message.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	export const Debug = 5;
 }
 
-export type MessageType = 1 | 2 | 3 | 4;
+export type MessageType = 1 | 2 | 3 | 4 | 5;
 
 /**
  * The parameters of a notification message.
@@ -1568,20 +1663,26 @@ export namespace ShowMessageNotification {
 }
 
 /**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientShowMessageActionItemOptions {
+	/**
+	 * Whether the client supports additional attributes which
+	 * are preserved and send back to the server in the
+	 * request's response.
+	 */
+	additionalPropertiesSupport?: boolean;
+}
+
+/**
  * Show message request client capabilities
  */
 export interface ShowMessageRequestClientCapabilities {
 	/**
 	 * Capabilities specific to the `MessageActionItem` type.
 	 */
-	messageActionItem?: {
-		/**
-		 * Whether the client supports additional attributes which
-		 * are preserved and send back to the server in the
-		 * request's response.
-		 */
-		additionalPropertiesSupport?: boolean;
-	};
+	messageActionItem?: ClientShowMessageActionItemOptions;
 }
 
 export interface MessageActionItem {
@@ -1769,10 +1870,21 @@ export namespace DidOpenTextDocumentNotification {
 }
 
 /**
- * An event describing a change to a text document. If only a text is provided
- * it is considered to be the full content of the document.
+ * @since 3.18.0
+ * @proposed
  */
-export type TextDocumentContentChangeEvent = {
+export interface TextDocumentContentChangeWholeDocument {
+	/**
+	 * The new text of the whole document.
+	 */
+	text: string;
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface TextDocumentContentChangePartial {
 	/**
 	 * The range of the document that changed.
 	 */
@@ -1789,12 +1901,13 @@ export type TextDocumentContentChangeEvent = {
 	 * The new text for the provided range.
 	 */
 	text: string;
-} | {
-	/**
-	 * The new text of the whole document.
-	 */
-	text: string;
-};
+}
+
+/**
+ * An event describing a change to a text document. If only a text is provided
+ * it is considered to be the full content of the document.
+ */
+export type TextDocumentContentChangeEvent = TextDocumentContentChangePartial | TextDocumentContentChangeWholeDocument;
 
 export namespace TextDocumentContentChangeEvent {
 
@@ -2152,6 +2265,17 @@ export type WatchKind = uinteger;
 //---- Diagnostic notification ----
 
 /**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientDiagnosticsTagOptions {
+	/**
+	 * The tags supported by the client.
+	 */
+	valueSet: DiagnosticTag[];
+}
+
+/**
  * The publish diagnostic client capabilities.
  */
 export interface PublishDiagnosticsClientCapabilities {
@@ -2166,12 +2290,7 @@ export interface PublishDiagnosticsClientCapabilities {
 	 *
 	 * @since 3.15.0
 	 */
-	tagSupport?: {
-		/**
-		 * The tags supported by the client.
-		 */
-		valueSet: DiagnosticTag[];
-	};
+	tagSupport?: ClientDiagnosticsTagOptions;
 
 	/**
 	 * Whether the client interprets the version property of the
@@ -2233,6 +2352,155 @@ export namespace PublishDiagnosticsNotification {
 //---- Completion Support --------------------------
 
 /**
+ * The client supports the following `CompletionList` specific
+ * capabilities.
+ *
+ * @since 3.17.0
+ */
+export interface CompletionListCapabilities {
+	/**
+	 * The client supports the following itemDefaults on
+	 * a completion list.
+	 *
+	 * The value lists the supported property names of the
+	 * `CompletionList.itemDefaults` object. If omitted
+	 * no properties are supported.
+	 *
+	 * @since 3.17.0
+	 */
+	itemDefaults?: string[];
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface CompletionItemTagOptions {
+	/**
+	 * The tags supported by the client.
+	 */
+	valueSet: CompletionItemTag[];
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientCompletionItemResolveOptions {
+	/**
+	 * The properties that a client can resolve lazily.
+	 */
+	properties: string[];
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientCompletionItemInsertTextModeOptions {
+	valueSet: InsertTextMode[];
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientCompletionItemOptions {
+	/**
+	 * Client supports snippets as insert text.
+	 *
+	 * A snippet can define tab stops and placeholders with `$1`, `$2`
+	 * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+	 * the end of the snippet. Placeholders with equal identifiers are linked,
+	 * that is typing in one will update others too.
+	 */
+	snippetSupport?: boolean;
+
+	/**
+	 * Client supports commit characters on a completion item.
+	 */
+	commitCharactersSupport?: boolean;
+
+	/**
+	 * Client supports the following content formats for the documentation
+	 * property. The order describes the preferred format of the client.
+	 */
+	documentationFormat?: MarkupKind[];
+
+	/**
+	 * Client supports the deprecated property on a completion item.
+	 */
+	deprecatedSupport?: boolean;
+
+	/**
+	 * Client supports the preselect property on a completion item.
+	 */
+	preselectSupport?: boolean;
+
+	/**
+	 * Client supports the tag property on a completion item. Clients supporting
+	 * tags have to handle unknown tags gracefully. Clients especially need to
+	 * preserve unknown tags when sending a completion item back to the server in
+	 * a resolve call.
+	 *
+	 * @since 3.15.0
+	 */
+	tagSupport?: CompletionItemTagOptions;
+
+	/**
+	 * Client support insert replace edit to control different behavior if a
+	 * completion item is inserted in the text or should replace text.
+	 *
+	 * @since 3.16.0
+	 */
+	insertReplaceSupport?: boolean;
+
+	/**
+	 * Indicates which properties a client can resolve lazily on a completion
+	 * item. Before version 3.16.0 only the predefined properties `documentation`
+	 * and `details` could be resolved lazily.
+	 *
+	 * @since 3.16.0
+	 */
+	resolveSupport?: ClientCompletionItemResolveOptions;
+
+	/**
+	 * The client supports the `insertTextMode` property on
+	 * a completion item to override the whitespace handling mode
+	 * as defined by the client (see `insertTextMode`).
+	 *
+	 * @since 3.16.0
+	 */
+	insertTextModeSupport?: ClientCompletionItemInsertTextModeOptions;
+
+	/**
+	 * The client has support for completion item label
+	 * details (see also `CompletionItemLabelDetails`).
+	 *
+	 * @since 3.17.0
+	 */
+	labelDetailsSupport?: boolean;
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientCompletionItemOptionsKind {
+	/**
+	 * The completion item kind values the client supports. When this
+	 * property exists the client also guarantees that it will
+	 * handle values outside its set gracefully and falls back
+	 * to a default value when unknown.
+	 *
+	 * If this property is not present the client only supports
+	 * the completion items kinds from `Text` to `Reference` as defined in
+	 * the initial version of the protocol.
+	 */
+	valueSet?: CompletionItemKind[];
+}
+
+/**
  * Completion client capabilities
  */
 export interface CompletionClientCapabilities {
@@ -2245,108 +2513,9 @@ export interface CompletionClientCapabilities {
 	 * The client supports the following `CompletionItem` specific
 	 * capabilities.
 	 */
-	completionItem?: {
-		/**
-		 * Client supports snippets as insert text.
-		 *
-		 * A snippet can define tab stops and placeholders with `$1`, `$2`
-		 * and `${3:foo}`. `$0` defines the final tab stop, it defaults to
-		 * the end of the snippet. Placeholders with equal identifiers are linked,
-		 * that is typing in one will update others too.
-		 */
-		snippetSupport?: boolean;
+	completionItem?: ClientCompletionItemOptions;
 
-		/**
-		 * Client supports commit characters on a completion item.
-		 */
-		commitCharactersSupport?: boolean;
-
-		/**
-		 * Client supports the following content formats for the documentation
-		 * property. The order describes the preferred format of the client.
-		 */
-		documentationFormat?: MarkupKind[];
-
-		/**
-		 * Client supports the deprecated property on a completion item.
-		 */
-		deprecatedSupport?: boolean;
-
-		/**
-		 * Client supports the preselect property on a completion item.
-		 */
-		preselectSupport?: boolean;
-
-		/**
-		 * Client supports the tag property on a completion item. Clients supporting
-		 * tags have to handle unknown tags gracefully. Clients especially need to
-		 * preserve unknown tags when sending a completion item back to the server in
-		 * a resolve call.
-		 *
-		 * @since 3.15.0
-		 */
-		tagSupport?: {
-			/**
-			 * The tags supported by the client.
-			 */
-			valueSet: CompletionItemTag[];
-		};
-
-		/**
-		 * Client support insert replace edit to control different behavior if a
-		 * completion item is inserted in the text or should replace text.
-		 *
-		 * @since 3.16.0
-		 */
-		insertReplaceSupport?: boolean;
-
-		/**
-		 * Indicates which properties a client can resolve lazily on a completion
-		 * item. Before version 3.16.0 only the predefined properties `documentation`
-		 * and `details` could be resolved lazily.
-		 *
-		 * @since 3.16.0
-		 */
-		resolveSupport?: {
-			/**
-			 * The properties that a client can resolve lazily.
-			 */
-			properties: string[];
-		};
-
-		/**
-		 * The client supports the `insertTextMode` property on
-		 * a completion item to override the whitespace handling mode
-		 * as defined by the client (see `insertTextMode`).
-		 *
-		 * @since 3.16.0
-		 */
-		insertTextModeSupport?: {
-			valueSet: InsertTextMode[];
-		};
-
-		/**
-		 * The client has support for completion item label
-		 * details (see also `CompletionItemLabelDetails`).
-		 *
-		 * @since 3.17.0
-		 */
-		labelDetailsSupport?: boolean;
-	};
-
-	completionItemKind?: {
-		/**
-		 * The completion item kind values the client supports. When this
-		 * property exists the client also guarantees that it will
-		 * handle values outside its set gracefully and falls back
-		 * to a default value when unknown.
-		 *
-		 * If this property is not present the client only supports
-		 * the completion items kinds from `Text` to `Reference` as defined in
-		 * the initial version of the protocol.
-		 */
-		valueSet?: CompletionItemKind[];
-	};
+	completionItemKind?: ClientCompletionItemOptionsKind;
 
 	/**
 	 * Defines how the client handles whitespace and indentation
@@ -2369,19 +2538,7 @@ export interface CompletionClientCapabilities {
 	 *
 	 * @since 3.17.0
 	 */
-	completionList?: {
-		/**
-		 * The client supports the following itemDefaults on
-		 * a completion list.
-		 *
-		 * The value lists the supported property names of the
-		 * `CompletionList.itemDefaults` object. If omitted
-		 * no properties are supported.
-		 *
-		 * @since 3.17.0
-		 */
-		itemDefaults?: string[];
-	};
+	completionList?: CompletionListCapabilities;
 }
 
 /**
@@ -2438,6 +2595,21 @@ export interface CompletionParams extends TextDocumentPositionParams, WorkDonePr
 }
 
 /**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ServerCompletionItemOptions {
+	/**
+	 * The server has support for completion item label
+	 * details (see also `CompletionItemLabelDetails`) when
+	 * receiving a completion item in a resolve call.
+	 *
+	 * @since 3.17.0
+	 */
+	labelDetailsSupport?: boolean;
+}
+
+/**
  * Completion options.
  */
 export interface CompletionOptions extends WorkDoneProgressOptions {
@@ -2477,16 +2649,7 @@ export interface CompletionOptions extends WorkDoneProgressOptions {
 	 *
 	 * @since 3.17.0
 	 */
-	completionItem?: {
-		/**
-		 * The server has support for completion item label
-		 * details (see also `CompletionItemLabelDetails`) when
-		 * receiving a completion item in a resolve call.
-		 *
-		 * @since 3.17.0
-		 */
-		labelDetailsSupport?: boolean;
-	};
+	completionItem?: ServerCompletionItemOptions;
 }
 
 /**
@@ -2570,6 +2733,45 @@ export namespace HoverRequest {
 //---- SignatureHelp ----------------------------------
 
 /**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientSignatureParameterInformationOptions {
+	/**
+	 * The client supports processing label offsets instead of a
+	 * simple label string.
+	 *
+	 * @since 3.14.0
+	 */
+	labelOffsetSupport?: boolean;
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientSignatureInformationOptions {
+	/**
+	 * Client supports the following content formats for the documentation
+	 * property. The order describes the preferred format of the client.
+	 */
+	documentationFormat?: MarkupKind[];
+
+	/**
+	 * Client capabilities specific to parameter information.
+	 */
+	parameterInformation?: ClientSignatureParameterInformationOptions;
+
+	/**
+	 * The client supports the `activeParameter` property on `SignatureInformation`
+	 * literal.
+	 *
+	 * @since 3.16.0
+	 */
+	activeParameterSupport?: boolean;
+}
+
+/**
  * Client Capabilities for a {@link SignatureHelpRequest}.
  */
 export interface SignatureHelpClientCapabilities {
@@ -2582,34 +2784,7 @@ export interface SignatureHelpClientCapabilities {
 	 * The client supports the following `SignatureInformation`
 	 * specific properties.
 	 */
-	signatureInformation?: {
-		/**
-		 * Client supports the following content formats for the documentation
-		 * property. The order describes the preferred format of the client.
-		 */
-		documentationFormat?: MarkupKind[];
-
-		/**
-		 * Client capabilities specific to parameter information.
-		 */
-		parameterInformation?: {
-			/**
-			 * The client supports processing label offsets instead of a
-			 * simple label string.
-			 *
-			 * @since 3.14.0
-			 */
-			labelOffsetSupport?: boolean;
-		};
-
-		/**
-		 * The client supports the `activeParameter` property on `SignatureInformation`
-		 * literal.
-		 *
-		 * @since 3.16.0
-		 */
-		activeParameterSupport?: boolean;
-	};
+	signatureInformation?: ClientSignatureInformationOptions;
 
 	/**
 	 * The client supports to send additional context information for a
@@ -2762,10 +2937,9 @@ export interface DefinitionRegistrationOptions extends TextDocumentRegistrationO
 
 /**
  * A request to resolve the definition location of a symbol at a given text
- * document position. The request's parameter is of type [TextDocumentPosition]
- * (#TextDocumentPosition) the response is of either type {@link Definition}
- * or a typed array of {@link DefinitionLink} or a Thenable that resolves
- * to such.
+ * document position. The request's parameter is of type {@link TextDocumentPosition}
+ * the response is of either type {@link Definition} or a typed array of
+ * {@link DefinitionLink} or a Thenable that resolves to such.
  */
 export namespace DefinitionRequest {
 	export const method: 'textDocument/definition' = 'textDocument/definition';
@@ -2848,9 +3022,9 @@ export interface DocumentHighlightRegistrationOptions extends TextDocumentRegist
 
 /**
  * Request to resolve a {@link DocumentHighlight} for a given
- * text document position. The request's parameter is of type [TextDocumentPosition]
- * (#TextDocumentPosition) the request response is of type [DocumentHighlight[]]
- * (#DocumentHighlight) or a Thenable that resolves to such.
+ * text document position. The request's parameter is of type {@link TextDocumentPosition}
+ * the request response is an array of type {@link DocumentHighlight}
+ * or a Thenable that resolves to such.
  */
 export namespace DocumentHighlightRequest {
 	export const method: 'textDocument/documentHighlight' = 'textDocument/documentHighlight';
@@ -2873,19 +3047,7 @@ export interface DocumentSymbolClientCapabilities {
 	 * Specific capabilities for the `SymbolKind` in the
 	 * `textDocument/documentSymbol` request.
 	 */
-	symbolKind?: {
-		/**
-		 * The symbol kind values the client supports. When this
-		 * property exists the client also guarantees that it will
-		 * handle values outside its set gracefully and falls back
-		 * to a default value when unknown.
-		 *
-		 * If this property is not present the client only supports
-		 * the symbol kinds from `File` to `Array` as defined in
-		 * the initial version of the protocol.
-		 */
-		valueSet?: SymbolKind[];
-	};
+	symbolKind?: ClientSymbolKindOptions;
 
 	/**
 	 * The client supports hierarchical document symbols.
@@ -2899,12 +3061,7 @@ export interface DocumentSymbolClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	tagSupport?: {
-		/**
-		 * The tags supported by the client.
-		 */
-		valueSet: SymbolTag[];
-	};
+	tagSupport?: ClientSymbolTagOptions;
 
 	/**
 	 * The client supports an additional label presented in the UI when
@@ -2959,6 +3116,43 @@ export namespace DocumentSymbolRequest {
 //---- Code Action Provider ----------------------------------
 
 /**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientCodeActionKindOptions {
+
+	/**
+	 * The code action kind values the client supports. When this
+	 * property exists the client also guarantees that it will
+	 * handle values outside its set gracefully and falls back
+	 * to a default value when unknown.
+	 */
+	valueSet: CodeActionKind[];
+}
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientCodeActionLiteralOptions {
+	/**
+	 * The code action kind is support with the following value
+	 * set.
+	 */
+	codeActionKind: ClientCodeActionKindOptions;
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientCodeActionResolveOptions {
+	/**
+	 * The properties that a client can resolve lazily.
+	 */
+	properties: string[];
+}
+
+/**
  * The Client Capabilities of a {@link CodeActionRequest}.
  */
 export interface CodeActionClientCapabilities {
@@ -2974,22 +3168,7 @@ export interface CodeActionClientCapabilities {
 	 *
 	 * @since 3.8.0
 	 */
-	codeActionLiteralSupport?: {
-		/**
-		 * The code action kind is support with the following value
-		 * set.
-		 */
-		codeActionKind: {
-
-			/**
-			 * The code action kind values the client supports. When this
-			 * property exists the client also guarantees that it will
-			 * handle values outside its set gracefully and falls back
-			 * to a default value when unknown.
-			 */
-			valueSet: CodeActionKind[];
-		};
-	};
+	codeActionLiteralSupport?: ClientCodeActionLiteralOptions;
 
 	/**
 	 * Whether code action supports the `isPreferred` property.
@@ -3020,12 +3199,7 @@ export interface CodeActionClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	resolveSupport?: {
-		/**
-		 * The properties that a client can resolve lazily.
-		 */
-		properties: string[];
-	};
+	resolveSupport?: ClientCodeActionResolveOptions;
 
 	/**
 	 * Whether the client honors the change annotations in
@@ -3109,6 +3283,47 @@ export namespace CodeActionResolveRequest {
 //---- Workspace Symbol Provider ---------------------------
 
 /**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientSymbolKindOptions {
+	/**
+	 * The symbol kind values the client supports. When this
+	 * property exists the client also guarantees that it will
+	 * handle values outside its set gracefully and falls back
+	 * to a default value when unknown.
+	 *
+	 * If this property is not present the client only supports
+	 * the symbol kinds from `File` to `Array` as defined in
+	 * the initial version of the protocol.
+	 */
+	valueSet?: SymbolKind[];
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientSymbolTagOptions {
+	/**
+	 * The tags supported by the client.
+	 */
+	valueSet: SymbolTag[];
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientSymbolResolveOptions {
+	/**
+	 * The properties that a client can resolve lazily. Usually
+	 * `location.range`
+	 */
+	properties: string[];
+}
+
+/**
  * Client capabilities for a {@link WorkspaceSymbolRequest}.
  */
 export interface WorkspaceSymbolClientCapabilities {
@@ -3120,19 +3335,7 @@ export interface WorkspaceSymbolClientCapabilities {
 	/**
 	 * Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
 	 */
-	symbolKind?: {
-		/**
-		 * The symbol kind values the client supports. When this
-		 * property exists the client also guarantees that it will
-		 * handle values outside its set gracefully and falls back
-		 * to a default value when unknown.
-		 *
-		 * If this property is not present the client only supports
-		 * the symbol kinds from `File` to `Array` as defined in
-		 * the initial version of the protocol.
-		 */
-		valueSet?: SymbolKind[];
-	};
+	symbolKind?: ClientSymbolKindOptions;
 
 	/**
 	 * The client supports tags on `SymbolInformation`.
@@ -3140,12 +3343,7 @@ export interface WorkspaceSymbolClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	tagSupport?: {
-		/**
-		 * The tags supported by the client.
-		 */
-		valueSet: SymbolTag[];
-	};
+	tagSupport?: ClientSymbolTagOptions;
 
 	/**
 	 * The client support partial workspace symbols. The client will send the
@@ -3154,13 +3352,7 @@ export interface WorkspaceSymbolClientCapabilities {
 	 *
 	 * @since 3.17.0
 	 */
-	resolveSupport?: {
-		/**
-		 * The properties that a client can resolve lazily. Usually
-		 * `location.range`
-		 */
-		properties: string[];
-	};
+	resolveSupport?: ClientSymbolResolveOptions;
 }
 
 /**
@@ -3426,6 +3618,14 @@ export interface DocumentRangeFormattingClientCapabilities {
 	 * Whether range formatting supports dynamic registration.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Whether the client supports formatting multiple ranges at once.
+	 *
+	 * @since 3.18.0
+ 	 * @proposed
+	 */
+	rangesSupport?: boolean;
 }
 
 /**
@@ -3449,9 +3649,39 @@ export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
 }
 
 /**
+ * The parameters of a {@link DocumentRangesFormattingRequest}.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface DocumentRangesFormattingParams extends WorkDoneProgressParams {
+	/**
+	 * The document to format.
+	 */
+	textDocument: TextDocumentIdentifier;
+
+	/**
+	 * The ranges to format
+	 */
+	ranges: Range[];
+
+	/**
+	 * The format options
+	 */
+	options: FormattingOptions;
+}
+
+/**
  * Provider options for a {@link DocumentRangeFormattingRequest}.
  */
 export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions {
+	/**
+     * Whether the server supports formatting multiple ranges at once.
+	 *
+	 * @since 3.18.0
+ 	 * @proposed
+     */
+	rangesSupport?: boolean;
 }
 
 /**
@@ -3467,6 +3697,18 @@ export namespace DocumentRangeFormattingRequest {
 	export const method: 'textDocument/rangeFormatting' = 'textDocument/rangeFormatting';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentRangeFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
+}
+
+/**
+ * A request to format ranges in a document.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export namespace DocumentRangesFormattingRequest {
+	export const method: 'textDocument/rangesFormatting' = 'textDocument/rangesFormatting';
+	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
+	export const type = new ProtocolRequestType<DocumentRangesFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
 }
 
 /**
@@ -3640,7 +3882,24 @@ export namespace RenameRequest {
 export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 }
 
-export type PrepareRenameResult = Range | { range: Range; placeholder: string } | { defaultBehavior: boolean };
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface PrepareRenamePlaceholder {
+	range: Range;
+	placeholder: string;
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface PrepareRenameDefaultBehavior {
+	defaultBehavior: boolean;
+}
+
+export type PrepareRenameResult = Range | PrepareRenamePlaceholder | PrepareRenameDefaultBehavior;
 
 /**
  * A request to test and perform the setup necessary for a rename.
@@ -3708,6 +3967,19 @@ export namespace ExecuteCommandRequest {
 
 //---- Apply Edit request ----------------------------------------
 
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ChangeAnnotationsSupportOptions {
+	/**
+	 * Whether the client groups edits with equal labels into tree nodes,
+	 * for instance all edits labelled with "Changes in Strings" would
+	 * be a tree node.
+	 */
+	groupsOnLabel?: boolean;
+}
+
 export interface WorkspaceEditClientCapabilities {
 	/**
 	 * The client supports versioned document changes in `WorkspaceEdit`s
@@ -3747,14 +4019,7 @@ export interface WorkspaceEditClientCapabilities {
 	 *
 	 * @since 3.16.0
 	 */
-	changeAnnotationSupport?: {
-		/**
-		 * Whether the client groups edits with equal labels into tree nodes,
-		 * for instance all edits labelled with "Changes in Strings" would
-		 * be a tree node.
-		 */
-		groupsOnLabel?: boolean;
-	};
+	changeAnnotationSupport?: ChangeAnnotationsSupportOptions;
 }
 
 /**
@@ -3812,6 +4077,7 @@ export namespace ApplyWorkspaceEditRequest {
 	export const method: 'workspace/applyEdit' = 'workspace/applyEdit';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, never, void, void>('workspace/applyEdit');
+	export type HandlerSignature = RequestHandler<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, void>;
 }
 
 export {
@@ -3820,7 +4086,7 @@ export {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, WorkspaceFoldersChangeEvent,
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
 	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams, DocumentColorRegistrationOptions,
-	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions,
+	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions, FoldingRangeRefreshRequest,
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationParams, DeclarationRegistrationOptions, DeclarationOptions,
 	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeParams, SelectionRangeRequest, SelectionRangeRegistrationOptions,
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,

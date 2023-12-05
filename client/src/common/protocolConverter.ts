@@ -272,7 +272,7 @@ namespace CodeBlock {
 	}
 }
 
-export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean, supportHtml: boolean): Converter {
+export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean | { readonly enabledCommands: readonly string[] }, supportHtml: boolean): Converter {
 
 	const nullConverter = (value: string) => code.Uri.parse(value);
 

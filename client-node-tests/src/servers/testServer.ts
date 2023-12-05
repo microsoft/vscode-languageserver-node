@@ -11,7 +11,7 @@ import {
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, WorkDoneProgressCreateRequest, WillCreateFilesRequest,
 	WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification,
-	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind, DocumentSymbol, InlineCompletionItem
+	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind, DocumentSymbol, InlineCompletionItem, ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams
 } from 'vscode-languageserver/node';
 
 import { URI } from 'vscode-uri';
@@ -73,7 +73,9 @@ connection.onInitialize((params: InitializeParams): any => {
 			resolveProvider: true
 		},
 		documentFormattingProvider: true,
-		documentRangeFormattingProvider: true,
+		documentRangeFormattingProvider: {
+			rangesSupport: true
+		},
 		documentOnTypeFormattingProvider: {
 			firstTriggerCharacter: ':'
 		},
@@ -541,6 +543,14 @@ connection.onWorkspaceSymbolResolve((symbol) => {
 	symbol.location = Location.create(symbol.location.uri, Range.create(1,2,3,4));
 	return symbol;
 });
+
+connection.onRequest(
+	new ProtocolRequestType<null, null, never, any, any>('testing/sendApplyEdit'),
+	async (_, __) => {
+		const params: ApplyWorkspaceEditParams = { label: 'Apply Edit', edit: {} };
+		await connection.sendRequest(ApplyWorkspaceEditRequest.type, params);
+	}
+);
 
 // Listen on the connection
 connection.listen();

@@ -7,6 +7,7 @@
 'use strict';
 
 const { CompilerOptions } = require('@vscode/tsconfig-gen');
+const { webworker } = require('webpack');
 
 /**
  * @typedef {import('@vscode/tsconfig-gen').SharableOptions} SharableOptions
@@ -309,7 +310,7 @@ const client_node_tests = {
 	sourceFolders: [
 		{
 			path: './src',
-			extends: [ node, vscodeMixin, testMixin ]
+			extends: [ node, vscodeMixin, testMixin, browser ],
 		}
 	],
 	references: [ protocol, client, server ]
@@ -463,7 +464,7 @@ const umdPublishProjectOptions = {
 /** @type CompilerOptions */
 const esmPublishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: false,
-	target: 'es5',
+	target: 'es6',
 	module: 'es6',
 	lib: [ 'es2015' ]
 });

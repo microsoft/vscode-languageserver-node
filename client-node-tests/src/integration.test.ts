@@ -241,7 +241,9 @@ suite('Client integration', () => {
 					resolveProvider: true
 				},
 				documentFormattingProvider: true,
-				documentRangeFormattingProvider: true,
+				documentRangeFormattingProvider: {
+					rangesSupport: true
+				},
 				documentOnTypeFormattingProvider: {
 					firstTriggerCharacter: ':'
 				},
@@ -761,8 +763,9 @@ suite('Client integration', () => {
 	});
 
 	test('Folding Ranges', async () => {
-		const provider = client.getFeature(lsclient.FoldingRangeRequest.method).getProvider(document);
-		isDefined(provider);
+		const providerData = client.getFeature(lsclient.FoldingRangeRequest.method).getProvider(document);
+		isDefined(providerData);
+		const provider = providerData.provider;
 		const result = (await provider.provideFoldingRanges(document, {}, tokenSource.token));
 
 		isArray(result, vscode.FoldingRange, 1);
@@ -1512,6 +1515,34 @@ suite('Client integration', () => {
 		middleware.sendNotification = undefined;
 		assert.strictEqual(middlewareCallCount, 2);
 	});
+
+	test('applyEdit middleware', async () => {
+		const middlewareEvents: Array<lsclient.ApplyWorkspaceEditParams> = [];
+		let currentProgressResolver: (value: unknown) => void | undefined;
+
+		middleware.workspace = middleware.workspace || {};
+		middleware.workspace.handleApplyEdit = async (params, next) => {
+			middlewareEvents.push(params);
+			setImmediate(currentProgressResolver);
+			return next(params, tokenSource.token);
+		};
+
+		// Trigger sample applyEdit event.
+		await new Promise<unknown>((resolve) => {
+			currentProgressResolver = resolve;
+			void client.sendRequest(
+				new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendApplyEdit'),
+				{},
+				tokenSource.token,
+			);
+		});
+
+		middleware.workspace.handleApplyEdit = undefined;
+
+		// Ensure event was handled.
+		assert.deepStrictEqual(middlewareEvents, [{ label: 'Apply Edit', edit: {} }]);
+	});
+
 });
 
 function createNotebookData(): vscode.NotebookData {

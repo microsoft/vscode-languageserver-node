@@ -17,7 +17,7 @@ import {
 	TextEdit, ProposedFeatures, DiagnosticTag, InsertTextFormat, SelectionRangeRequest, SelectionRange, InsertReplaceEdit,
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
-	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DocumentLinkResolveRequest
+	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DocumentLinkResolveRequest, DidChangeConfigurationNotification
 } from 'vscode-languageserver/node';
 
 import {
@@ -143,7 +143,9 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					resolveProvider: true
 				},
 				documentFormattingProvider: true,
-				documentRangeFormattingProvider: true,
+				documentRangeFormattingProvider: {
+					rangesSupport: true
+				},
 				documentOnTypeFormattingProvider: {
 					firstTriggerCharacter: ';',
 					moreTriggerCharacter: ['{', '\n']
@@ -185,6 +187,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 });
 
 connection.onInitialized((params) => {
+	void connection.client.register(DidChangeConfigurationNotification.type, undefined);
 	connection.workspace.onDidChangeWorkspaceFolders((event) => {
 		connection.console.log('Workspace folder changed received');
 	});

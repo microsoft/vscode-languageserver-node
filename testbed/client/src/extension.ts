@@ -27,7 +27,7 @@ export async function activate(context: ExtensionContext) {
 			{ scheme: 'file', pattern: '**/.vscode/test.txt' }
 		],
 		synchronize: {
-			configurationSection: 'testbed'
+			// configurationSection: 'testbed'
 			// fileEvents: workspace.createFileSystemWatcher('**/*'),
 		},
 		diagnosticCollectionName: 'markers',

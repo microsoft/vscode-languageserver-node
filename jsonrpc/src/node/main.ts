@@ -9,6 +9,7 @@ RIL.install();
 
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
 import { ChildProcess } from 'child_process';
 import { randomBytes } from 'crypto';
 import { Server, Socket, createServer, createConnection } from 'net';
@@ -174,23 +175,23 @@ const safeIpcPathLengths: Map<NodeJS.Platform, number> = new Map([
 ]);
 
 export function generateRandomPipeName(): string {
-	const randomSuffix = randomBytes(21).toString('hex');
 	if (process.platform === 'win32') {
-		return `\\\\.\\pipe\\vscode-jsonrpc-${randomSuffix}-sock`;
+		return `\\\\.\\pipe\\lsp-${randomBytes(16).toString('hex')}-sock`;
 	}
 
-	let result: string;
-	if (XDG_RUNTIME_DIR) {
-		result = path.join(XDG_RUNTIME_DIR, `vscode-ipc-${randomSuffix}.sock`);
-	} else {
-		result = path.join(os.tmpdir(), `vscode-${randomSuffix}.sock`);
-	}
-
+	let randomLength: number = 32;
+	const fixedLength = 'lsp-.sock'.length;
+	const tmpDir: string = fs.realpathSync(XDG_RUNTIME_DIR ?? os.tmpdir());
 	const limit = safeIpcPathLengths.get(process.platform);
-	if (limit !== undefined && result.length > limit) {
-		RIL().console.warn(`WARNING: IPC handle "${result}" is longer than ${limit} characters.`);
+	if (limit !== undefined) {
+		randomLength = Math.min(limit - tmpDir.length - fixedLength, randomLength);
 	}
-	return result;
+	if (randomLength < 16) {
+		throw new Error(`Unable to generate a random pipe name with ${randomLength} characters.`);
+	}
+
+	const randomSuffix = randomBytes(Math.floor(randomLength / 2)).toString('hex');
+	return path.join(tmpDir, `lsp-${randomSuffix}.sock`);
 }
 
 export interface PipeTransport {

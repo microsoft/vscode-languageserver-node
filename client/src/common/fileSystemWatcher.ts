@@ -112,7 +112,7 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._watchers.forEach((disposables) => {
 			for (let disposable of disposables) {
 				disposable.dispose();

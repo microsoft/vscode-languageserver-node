@@ -8,7 +8,7 @@ import * as minimatch from 'minimatch';
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
 	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff,
-	TabChangeEvent, Event, TabInputCustom
+	TabChangeEvent, Event, TabInputCustom, workspace
 } from 'vscode';
 
 import {
@@ -907,6 +907,34 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}
 		}));
 
+		disposables.push(tabs.onOpen((opened) => {
+			for (const resource of opened) {
+				// We already know about this document. This can happen via a document open.
+				if (this.diagnosticRequestor.knows(PullState.document, resource)) {
+					continue;
+				}
+				const uriStr = resource.toString();
+				let textDocument: TextDocument | undefined;
+				for (const item of workspace.textDocuments) {
+					if (uriStr === item.uri.toString()) {
+						textDocument = item;
+						break;
+					}
+				}
+				// In VS Code the event timing is as follows:
+				// 1. tab events are fired.
+				// 2. open document events are fired and internal data structures like
+				//    workspace.textDocuments and Window.activeTextEditor are updated.
+				//
+				// This means: for newly created tab/editors we don't find the underlying
+				// document yet. So we do nothing an rely on the underlying open document event
+				// to be fired.
+				if (textDocument !== undefined && matches(textDocument)) {
+					this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument!); });
+				}
+			}
+		}));
+
 		// Pull all diagnostics for documents that are already open
 		const pulledTextDocuments: Set<string> = new Set();
 		for (const textDocument of Workspace.textDocuments) {
@@ -1028,12 +1056,12 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 		this.register({ id: id, registerOptions: options });
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		if (this.tabs !== undefined) {
 			this.tabs.dispose();
 			this.tabs = undefined;
 		}
-		super.dispose();
+		super.clear();
 	}
 
 	protected registerLanguageProvider(options: DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {
