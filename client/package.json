@@ -1,11 +1,11 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "8.1.0",
+	"version": "9.0.2-next.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.67.0"
+		"vscode": "^1.82.0"
 	},
 	"repository": {
 		"type": "git",
@@ -22,15 +22,15 @@
 	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
-		"@types/minimatch": "^3.0.5",
-		"@types/semver": "^7.3.10",
-		"@types/vscode": "1.67.0",
+		"@types/minimatch": "^5.1.2",
+		"@types/semver": "^7.5.4",
+		"@types/vscode": "1.82.0",
 		"shx": "^0.3.4"
 	},
 	"dependencies": {
-		"minimatch": "^5.1.0",
-		"semver": "^7.3.7",
-		"vscode-languageserver-protocol": "3.17.3"
+		"minimatch": "^9.0.3",
+		"semver": "^7.5.4",
+		"vscode-languageserver-protocol": "3.17.6-next.1"
 	},
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
@@ -40,7 +40,7 @@
 		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"test": "cd ../client-node-tests && npm test && cd ../client",
-		"clean": "node ../node_modules/rimraf/bin.js lib",
+		"clean": "node ../node_modules/.bin/rimraf lib",
 		"all": "npm run clean && npm run compile && npm run lint && npm test",
 		"compile:publish": "node ../build/bin/tsc -b ./tsconfig.publish.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
 		"all:publish": "git clean -xfd . && npm install && npm run updateVSCodeVersion && npm run compile:publish && npm run lint && cd ../client-node-tests && npm run all:publish && cd ..",

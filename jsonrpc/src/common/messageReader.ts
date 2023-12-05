@@ -211,46 +211,51 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 	}
 
 	private onData(data: Uint8Array): void {
-		this.buffer.append(data);
-		while (true) {
-			if (this.nextMessageLength === -1) {
-				const headers = this.buffer.tryReadHeaders(true);
-				if (!headers) {
+		try {
+
+			this.buffer.append(data);
+			while (true) {
+				if (this.nextMessageLength === -1) {
+					const headers = this.buffer.tryReadHeaders(true);
+					if (!headers) {
+						return;
+					}
+					const contentLength = headers.get('content-length');
+					if (!contentLength) {
+						this.fireError(new Error(`Header must provide a Content-Length property.\n${JSON.stringify(Object.fromEntries(headers))}`));
+						return;
+					}
+					const length = parseInt(contentLength);
+					if (isNaN(length)) {
+						this.fireError(new Error(`Content-Length value must be a number. Got ${contentLength}`));
+						return;
+					}
+					this.nextMessageLength = length;
+				}
+				const body = this.buffer.tryReadBody(this.nextMessageLength);
+				if (body === undefined) {
+					/** We haven't received the full message yet. */
+					this.setPartialMessageTimer();
 					return;
 				}
-				const contentLength = headers.get('content-length');
-				if (!contentLength) {
-					this.fireError(new Error('Header must provide a Content-Length property.'));
-					return;
-				}
-				const length = parseInt(contentLength);
-				if (isNaN(length)) {
-					this.fireError(new Error('Content-Length value must be a number.'));
-					return;
-				}
-				this.nextMessageLength = length;
+				this.clearPartialMessageTimer();
+				this.nextMessageLength = -1;
+				// Make sure that we convert one received message after the
+				// other. Otherwise it could happen that a decoding of a second
+				// smaller message finished before the decoding of a first larger
+				// message and then we would deliver the second message first.
+				this.readSemaphore.lock(async () => {
+					const bytes: Uint8Array = this.options.contentDecoder !== undefined
+						? await this.options.contentDecoder.decode(body)
+						: body;
+					const message = await this.options.contentTypeDecoder.decode(bytes, this.options);
+					this.callback(message);
+				}).catch((error) => {
+					this.fireError(error);
+				});
 			}
-			const body = this.buffer.tryReadBody(this.nextMessageLength);
-			if (body === undefined) {
-				/** We haven't received the full message yet. */
-				this.setPartialMessageTimer();
-				return;
-			}
-			this.clearPartialMessageTimer();
-			this.nextMessageLength = -1;
-			// Make sure that we convert one received message after the
-			// other. Otherwise it could happen that a decoding of a second
-			// smaller message finished before the decoding of a first larger
-			// message and then we would deliver the second message first.
-			this.readSemaphore.lock(async () => {
-				const bytes: Uint8Array = this.options.contentDecoder !== undefined
-					? await this.options.contentDecoder.decode(body)
-					: body;
-				const message = await this.options.contentTypeDecoder.decode(bytes, this.options);
-				this.callback(message);
-			}).catch((error) => {
-				this.fireError(error);
-			});
+		} catch (error) {
+			this.fireError(error);
 		}
 	}
 

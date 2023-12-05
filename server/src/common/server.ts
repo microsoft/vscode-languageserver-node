@@ -39,6 +39,8 @@ import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperati
 import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
 import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './typeHierarchy';
 import { InlineValueFeatureShape, InlineValueFeature } from './inlineValue';
+import { FoldingRangeFeatureShape, FoldingRangeFeature } from './foldingRange';
+// import { InlineCompletionFeatureShape, InlineCompletionFeature } from './inlineCompletion.proposed';
 import { InlayHintFeatureShape, InlayHintFeature } from './inlayHint';
 import { DiagnosticFeatureShape, DiagnosticFeature } from './diagnostic';
 import { NotebookSyncFeatureShape, NotebookSyncFeature } from './notebook';
@@ -161,6 +163,15 @@ export interface RemoteConsole extends FeatureBase {
 	 * @param message The message to log.
 	 */
 	log(message: string): void;
+
+	/**
+	 * Log a debug message.
+	 *
+	 * @param message The message to log.
+	 *
+	 * @since 3.18.0
+	 */
+	debug(message: string): void;
 }
 
 class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
@@ -206,6 +217,10 @@ class RemoteConsoleImpl implements Logger, RemoteConsole, Remote {
 
 	public log(message: string): void {
 		this.send(MessageType.Log, message);
+	}
+
+	public debug(message: string): void {
+		this.send(MessageType.Debug, message);
 	}
 
 	private send(type: MessageType, message: string): void {
@@ -814,8 +829,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & TypeHierarchyFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & DiagnosticFeatureShape & MonikerFeatureShape;
-const LanguagesImpl: new () => Languages = MonikerFeature(DiagnosticFeature(InlayHintFeature(InlineValueFeature(TypeHierarchyFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))))))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & TypeHierarchyFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & DiagnosticFeatureShape & MonikerFeatureShape & FoldingRangeFeatureShape;
+const LanguagesImpl: new () => Languages = FoldingRangeFeature(MonikerFeature(DiagnosticFeature(InlayHintFeature(InlineValueFeature(TypeHierarchyFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))))))))) as (new () => Languages);
 
 export interface _Notebooks extends FeatureBase {
 	connection: Connection;
@@ -1487,11 +1502,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 
 		sendNotification: (type: string | MessageSignature, param?: any): Promise<void> => {
 			const method = Is.string(type) ? type : type.method;
-			if (arguments.length === 1) {
-				return connection.sendNotification(method);
-			} else {
-				return connection.sendNotification(method, param);
-			}
+			return connection.sendNotification(method, param);
 		},
 		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => (connection as any).onNotification(type, handler),
 
