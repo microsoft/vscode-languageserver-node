@@ -2558,11 +2558,17 @@ export interface SignatureInformation {
 	/**
 	 * The index of the active parameter.
 	 *
-	 * If provided, this is used in place of `SignatureHelp.activeParameter`.
+	 * If `null`, no parameter of the signature is active (for example a named
+	 * argument that does not match any declared parameters). This is only valid
+	 * if the client specifies the client capability
+	 * `textDocument.signatureHelp.noActiveParameterSupport === true`
+	 *
+	 * If provided (or `null`), this is used in place of
+	 * `SignatureHelp.activeParameter`.
 	 *
 	 * @since 3.16.0
 	 */
-	activeParameter?: uinteger;
+	activeParameter?: uinteger | null;
 }
 
 /**
@@ -2609,15 +2615,24 @@ export interface SignatureHelp {
 	activeSignature?: uinteger;
 
 	/**
-	 * The active parameter of the active signature. If omitted or the value
-	 * lies outside the range of `signatures[activeSignature].parameters`
-	 * defaults to 0 if the active signature has parameters. If
-	 * the active signature has no parameters it is ignored.
+	 * The active parameter of the active signature.
+	 *
+	 * If `null`, no parameter of the signature is active (for example a named
+	 * argument that does not match any declared parameters). This is only valid
+	 * if the client specifies the client capability
+	 * `textDocument.signatureHelp.noActiveParameterSupport === true`
+	 *
+	 * If omitted or the value lies outside the range of
+	 * `signatures[activeSignature].parameters` defaults to 0 if the active
+	 * signature has parameters.
+	 *
+	 * If the active signature has no parameters it is ignored.
+	 *
 	 * In future version of the protocol this property might become
-	 * mandatory to better express the active parameter if the
-	 * active signature does have any.
+	 * mandatory (but still nullable) to better express the active parameter if
+	 * the active signature does have any.
 	 */
-	activeParameter?: uinteger;
+	activeParameter?: uinteger | null;
 }
 
 /**

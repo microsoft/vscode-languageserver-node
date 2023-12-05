@@ -694,6 +694,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 		if (Is.number(item.activeParameter)) {
 			result.activeParameter = item.activeParameter;
+		} else if (item.activeParameter === null) {
+			result.activeParameter = -1;
 		} else {
 			// activeParameter was optional in the past
 			result.activeParameter = 0;
@@ -710,7 +712,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		let result = new code.SignatureInformation(item.label);
 		if (item.documentation !== undefined) { result.documentation = asDocumentation(item.documentation); }
 		if (item.parameters !== undefined) { result.parameters = await asParameterInformations(item.parameters, token); }
-		if (item.activeParameter !== undefined) { result.activeParameter = item.activeParameter; }
+		if (item.activeParameter !== undefined) { result.activeParameter = item.activeParameter ?? -1; }
 		{ return result; }
 	}
 

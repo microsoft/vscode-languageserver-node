@@ -888,10 +888,17 @@ suite('Protocol Converter', () => {
 
 		signatureInfo.documentation = 'documentation';
 		signatureInfo.parameters = [{ label: 'label' }];
+		signatureInfo.activeParameter = 1;
 		result = await p2c.asSignatureInformation(signatureInfo);
 		strictEqual(result.label, signatureInfo.label);
 		strictEqual(result.documentation, signatureInfo.documentation);
+		strictEqual(result.activeParameter, signatureInfo.activeParameter);
 		ok(result.parameters.every(value => value instanceof vscode.ParameterInformation));
+
+		// VS Code uses -1 where LSP uses `null`.
+		signatureInfo.activeParameter = null;
+		result = await p2c.asSignatureInformation(signatureInfo);
+		strictEqual(result.activeParameter, -1);
 
 		ok((await p2c.asSignatureInformations([signatureInfo])).every(value => value instanceof vscode.SignatureInformation));
 	});
@@ -909,6 +916,11 @@ suite('Protocol Converter', () => {
 		ok(result.signatures.every(value => value instanceof vscode.SignatureInformation));
 		strictEqual(result.activeSignature, 0);
 		strictEqual(result.activeParameter, 0);
+
+		// VS Code uses -1 where LSP uses `null`.
+		signatureHelp.activeParameter = null;
+		result = await p2c.asSignatureHelp(signatureHelp);
+		strictEqual(result.activeParameter, -1);
 
 		signatureHelp.activeSignature = 1;
 		signatureHelp.activeParameter = 2;
