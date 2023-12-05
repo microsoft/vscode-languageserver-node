@@ -33,6 +33,39 @@ export namespace TokenFormat {
 
 export type TokenFormat = 'relative';
 
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientSemanticTokensRequestFullDelta {
+	/**
+	 * The client will send the `textDocument/semanticTokens/full/delta` request if
+	 * the server provides a corresponding handler.
+	 */
+	delta?: boolean;
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientSemanticTokensRequestOptions  {
+
+	/**
+	 * The client will send the `textDocument/semanticTokens/range` request if
+	 * the server provides a corresponding handler.
+	 */
+	range?: boolean | {
+	};
+
+	/**
+	 * The client will send the `textDocument/semanticTokens/full` request if
+	 * the server provides a corresponding handler.
+	 */
+	full?: boolean | ClientSemanticTokensRequestFullDelta;
+}
+
 /**
  * @since 3.16.0
  */
@@ -54,28 +87,7 @@ export interface SemanticTokensClientCapabilities {
 	 * range provider the client might not render a minimap correctly or might
 	 * even decide to not show any semantic tokens at all.
 	 */
-	requests: {
-
-		/**
-		 * The client will send the `textDocument/semanticTokens/range` request if
-		 * the server provides a corresponding handler.
-		 */
-		range?: boolean | {
-		};
-
-		/**
-		 * The client will send the `textDocument/semanticTokens/full` request if
-		 * the server provides a corresponding handler.
-		 */
-		full?: boolean | {
-
-			/**
-			 * The client will send the `textDocument/semanticTokens/full/delta` request if
-			 * the server provides a corresponding handler.
-			 */
-			delta?: boolean;
-		};
-	};
+	requests: ClientSemanticTokensRequestOptions;
 
 	/**
 	 * The token types that the client supports.
@@ -127,6 +139,20 @@ export interface SemanticTokensClientCapabilities {
 	augmentsSyntaxTokens?: boolean;
 }
 
+
+/**
+ * Semantic tokens options to support deltas for full documents
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface SemanticTokensFullDelta {
+	/**
+	 * The server supports deltas for full documents.
+	 */
+	delta?: boolean;
+}
+
 /**
  * @since 3.16.0
  */
@@ -146,12 +172,7 @@ export interface SemanticTokensOptions extends WorkDoneProgressOptions {
 	/**
 	 * Server supports providing semantic tokens for a full document.
 	 */
-	full?: boolean | {
-		/**
-		 * The server supports deltas for full documents.
-		 */
-		delta?: boolean;
-	};
+	full?: boolean | SemanticTokensFullDelta;
 }
 
 /**

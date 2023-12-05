@@ -17,7 +17,7 @@ import {
 	TextEdit, ProposedFeatures, DiagnosticTag, InsertTextFormat, SelectionRangeRequest, SelectionRange, InsertReplaceEdit,
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
-	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments
+	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DocumentLinkResolveRequest, DidChangeConfigurationNotification
 } from 'vscode-languageserver/node';
 
 import {
@@ -126,7 +126,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 				completionProvider: {
 					triggerCharacters: ['.'],
 					allCommitCharacters: [';'],
-					resolveProvider: false,
+					resolveProvider: true,
 				},
 				signatureHelpProvider: {
 				},
@@ -143,7 +143,9 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					resolveProvider: true
 				},
 				documentFormattingProvider: true,
-				documentRangeFormattingProvider: true,
+				documentRangeFormattingProvider: {
+					rangesSupport: true
+				},
 				documentOnTypeFormattingProvider: {
 					firstTriggerCharacter: ';',
 					moreTriggerCharacter: ['{', '\n']
@@ -185,6 +187,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 });
 
 connection.onInitialized((params) => {
+	void connection.client.register(DidChangeConfigurationNotification.type, undefined);
 	connection.workspace.onDidChangeWorkspaceFolders((event) => {
 		connection.console.log('Workspace folder changed received');
 	});
@@ -372,7 +375,7 @@ connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProg
 	return { items: [] };
 });
 
-connection.onCompletion((params, token): CompletionItem[] => {
+connection.onCompletion((params, token): CompletionList => {
 	const result: CompletionItem[] = [];
 	let item = CompletionItem.create('foo');
 	result.push(item);
@@ -407,7 +410,9 @@ connection.onCompletion((params, token): CompletionItem[] => {
 	item.kind = CompletionItemKind.Field;
 	result.push(item);
 
-	return result;
+	const list = CompletionList.create(result, true);
+	list.itemDefaults = { data: 'abc' };
+	return list;
 });
 
 connection.onCompletionResolve((item): CompletionItem => {

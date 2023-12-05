@@ -7,6 +7,8 @@ import { _, Features, _Connection, _LanguagesImpl } from './server';
 import { SemanticTokensBuilder } from './semanticTokens';
 import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress';
 
+import * as ic from './inlineCompletion.proposed';
+
 export * from 'vscode-languageserver-protocol/';
 export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter };
 export { SemanticTokensBuilder };
@@ -17,9 +19,10 @@ export { NotebookDocuments };
 export * from './server';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, _, _> = {
+	export const all: Features<_, _, _, _, _, _, ic.InlineCompletionFeatureShape, _> = {
 		__brand: 'features',
+		languages: ic.InlineCompletionFeature
 	};
 
-	export type Connection = _Connection<_, _, _, _, _, _, _, _>;
+	export type Connection = _Connection<_, _, _, _, _, _, ic.InlineCompletionFeatureShape, _>;
 }

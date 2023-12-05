@@ -964,7 +964,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 		provider && provider.dispose();
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		for (const provider of this.registrations.values()) {
 			provider.dispose();
 		}

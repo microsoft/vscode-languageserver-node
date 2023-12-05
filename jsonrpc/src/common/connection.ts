@@ -59,8 +59,8 @@ export class ProgressType<PR> {
 	 * Clients must not use these properties. They are here to ensure correct typing.
 	 * in TypeScript
 	 */
-	public readonly __?: [PR, _EM];
-	public readonly _pr?: PR;
+	public readonly __: [PR, _EM] | undefined;
+	public readonly _pr: PR | undefined;
 
 	constructor() {
 	}

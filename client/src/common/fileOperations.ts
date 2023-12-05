@@ -58,7 +58,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 	private _listener: code.Disposable | undefined;
 	// This property must stay private. Otherwise the type `minimatch.IMinimatch` becomes public and as a consequence we would need to
 	// ship the d.ts files for minimatch to make the compiler happy when compiling against the vscode-languageclient library
-	private readonly _filters: Map<string, Array<{ scheme?: string; matcher: minimatch.IMinimatch; kind?: proto.FileOperationPatternKind }>>;
+	private readonly _filters: Map<string, Array<{ scheme?: string; matcher: minimatch.Minimatch; kind?: proto.FileOperationPatternKind }>>;
 
 	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>, event: code.Event<E>,
 		registrationType: proto.RegistrationType<proto.FileOperationRegistrationOptions>,
@@ -130,7 +130,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._filters.clear();
 		if (this._listener) {
 			this._listener.dispose();
@@ -195,14 +195,14 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		}
 	}
 
-	private static asMinimatchOptions(options: proto.FileOperationPatternOptions | undefined): minimatch.IOptions | undefined {
-		if (options === undefined) {
-			return undefined;
+	private static asMinimatchOptions(options: proto.FileOperationPatternOptions | undefined): minimatch.MinimatchOptions | undefined {
+		// The spec doesn't state that dot files don't match. So we make
+		// matching those the default.
+		const result: minimatch.MinimatchOptions = { dot: true };
+		if (options?.ignoreCase === true) {
+			result.nocase = true;
 		}
-		if (options.ignoreCase === true) {
-			return { nocase: true };
-		}
-		return undefined;
+		return result;
 	}
 }
 
@@ -276,8 +276,8 @@ abstract class CachingNotificationFileOperationFeature<I, E extends { readonly f
 		}
 	}
 
-	public dispose(): void {
-		super.dispose();
+	public clear(): void {
+		super.clear();
 		if (this._willListener) {
 			this._willListener.dispose();
 			this._willListener = undefined;

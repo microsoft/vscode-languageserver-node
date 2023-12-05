@@ -241,7 +241,9 @@ suite('Client integration', () => {
 					resolveProvider: true
 				},
 				documentFormattingProvider: true,
-				documentRangeFormattingProvider: true,
+				documentRangeFormattingProvider: {
+					rangesSupport: true
+				},
 				documentOnTypeFormattingProvider: {
 					firstTriggerCharacter: ':'
 				},
@@ -273,6 +275,7 @@ suite('Client integration', () => {
 						delta: true
 					}
 				},
+				inlineCompletionProvider: {},
 				workspace: {
 					fileOperations: {
 						didCreate: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/created-static/**{/,/*.txt}' } }] },
@@ -760,8 +763,9 @@ suite('Client integration', () => {
 	});
 
 	test('Folding Ranges', async () => {
-		const provider = client.getFeature(lsclient.FoldingRangeRequest.method).getProvider(document);
-		isDefined(provider);
+		const providerData = client.getFeature(lsclient.FoldingRangeRequest.method).getProvider(document);
+		isDefined(providerData);
+		const provider = providerData.provider;
 		const result = (await provider.provideFoldingRanges(document, {}, tokenSource.token));
 
 		isArray(result, vscode.FoldingRange, 1);
@@ -1435,8 +1439,35 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 		assert.ok(typeof provider.resolveInlayHint === 'function');
 
+		assert.strictEqual(hint.textEdits, undefined);
 		const resolvedHint = await provider.resolveInlayHint!(hint, tokenSource.token);
 		assert.strictEqual((resolvedHint?.label as vscode.InlayHintLabelPart[])[0].tooltip, 'tooltip');
+		assert.strictEqual(resolvedHint?.textEdits?.length, 1);
+		const edit = resolvedHint?.textEdits![0];
+		isDefined(edit);
+		rangeEqual(edit.range, 1, 1, 1, 1);
+		assert.strictEqual(edit.newText, 'number');
+	});
+
+	test('Inline Completions', async () => {
+		const providerData = client.getFeature(lsclient.InlineCompletionRequest.method).getProvider(document);
+		isDefined(providerData);
+		const results = (await providerData.provideInlineCompletionItems(document, position, { triggerKind: 1, selectedCompletionInfo: {range, text: 'text'} }, tokenSource.token)) as vscode.InlineCompletionItem[];
+
+		isArray(results, vscode.InlineCompletionItem, 1);
+
+		rangeEqual(results[0].range!, 1, 2, 3, 4);
+		assert.strictEqual(results[0].filterText!, 'te');
+		assert.strictEqual(results[0].insertText, 'text inline');
+
+		let middlewareCalled: boolean = false;
+		middleware.provideInlineCompletionItems = (d, r, c, t, n) => {
+			middlewareCalled = true;
+			return n(d, r, c, t);
+		};
+		await providerData.provideInlineCompletionItems(document, position, { triggerKind: 0, selectedCompletionInfo: undefined }, tokenSource.token);
+		middleware.provideInlineCompletionItems = undefined;
+		assert.strictEqual(middlewareCalled, true);
 	});
 
 	test('Workspace symbols', async () => {
@@ -1454,6 +1485,64 @@ suite('Client integration', () => {
 		isDefined(symbol);
 		rangeEqual(symbol.location.range, 1, 2, 3, 4);
 	});
+
+	test('General middleware', async () => {
+		let middlewareCallCount = 0;
+
+		// Add a general middleware for both requests and notifications
+		middleware.sendRequest = (type, param, token, next) => {
+			middlewareCallCount++;
+			return next(type, param, token);
+		};
+
+		middleware.sendNotification = (type, next, params) => {
+			middlewareCallCount++;
+			return next(type, params);
+		};
+
+		// Send a request
+		const definitionProvider = client.getFeature(lsclient.DefinitionRequest.method).getProvider(document);
+		isDefined(definitionProvider);
+		await definitionProvider.provideDefinition(document, position, tokenSource.token);
+
+		// Send a notification
+		const notificationProvider = client.getFeature(lsclient.DidSaveTextDocumentNotification.method).getProvider(document);
+		isDefined(notificationProvider);
+		await notificationProvider.send(document);
+
+		// Verify that both the request and notification went through the middleware
+		middleware.sendRequest = undefined;
+		middleware.sendNotification = undefined;
+		assert.strictEqual(middlewareCallCount, 2);
+	});
+
+	test('applyEdit middleware', async () => {
+		const middlewareEvents: Array<lsclient.ApplyWorkspaceEditParams> = [];
+		let currentProgressResolver: (value: unknown) => void | undefined;
+
+		middleware.workspace = middleware.workspace || {};
+		middleware.workspace.handleApplyEdit = async (params, next) => {
+			middlewareEvents.push(params);
+			setImmediate(currentProgressResolver);
+			return next(params, tokenSource.token);
+		};
+
+		// Trigger sample applyEdit event.
+		await new Promise<unknown>((resolve) => {
+			currentProgressResolver = resolve;
+			void client.sendRequest(
+				new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendApplyEdit'),
+				{},
+				tokenSource.token,
+			);
+		});
+
+		middleware.workspace.handleApplyEdit = undefined;
+
+		// Ensure event was handled.
+		assert.deepStrictEqual(middlewareEvents, [{ label: 'Apply Edit', edit: {} }]);
+	});
+
 });
 
 function createNotebookData(): vscode.NotebookData {

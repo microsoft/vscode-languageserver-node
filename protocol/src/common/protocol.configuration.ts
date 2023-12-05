@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { RequestHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc';
-import { LSPAny } from 'vscode-languageserver-types';
+import { LSPAny, URI } from 'vscode-languageserver-types';
 
 import { MessageDirection, ProtocolRequestType } from './messages';
 
@@ -32,7 +32,7 @@ export interface ConfigurationItem {
 	/**
 	 * The scope to get the configuration section for.
 	 */
-	scopeUri?: string;
+	scopeUri?: URI;
 
 	/**
 	 * The configuration section asked for.

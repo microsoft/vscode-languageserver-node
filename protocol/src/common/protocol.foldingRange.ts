@@ -3,15 +3,43 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestHandler } from 'vscode-jsonrpc';
+import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, uinteger, FoldingRange, FoldingRangeKind } from 'vscode-languageserver-types';
 
-import { MessageDirection, ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
 import type {
 	TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions
 } from './protocol';
 
 // ---- capabilities
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientFoldingRangeKindOptions {
+	/**
+	 * The folding range kind values the client supports. When this
+	 * property exists the client also guarantees that it will
+	 * handle values outside its set gracefully and falls back
+	 * to a default value when unknown.
+	 */
+	valueSet?: FoldingRangeKind[];
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export interface ClientFoldingRangeOptions {
+	/**
+	* If set, the client signals that it supports setting collapsedText on
+	* folding ranges to display custom labels instead of the default text.
+	*
+	* @since 3.17.0
+	*/
+	collapsedText?: boolean;
+}
 
 export interface FoldingRangeClientCapabilities {
 
@@ -42,30 +70,37 @@ export interface FoldingRangeClientCapabilities {
 	 *
 	 * @since 3.17.0
 	 */
-	foldingRangeKind?: {
-		/**
-		 * The folding range kind values the client supports. When this
-		 * property exists the client also guarantees that it will
-		 * handle values outside its set gracefully and falls back
-		 * to a default value when unknown.
-		 */
-		valueSet?: FoldingRangeKind[];
-	};
+	foldingRangeKind?: ClientFoldingRangeKindOptions;
 
 	/**
 	 * Specific options for the folding range.
 	 *
 	 * @since 3.17.0
 	 */
-	foldingRange?: {
-		/**
-		* If set, the client signals that it supports setting collapsedText on
-		* folding ranges to display custom labels instead of the default text.
-		*
-		* @since 3.17.0
-		*/
-		collapsedText?: boolean;
-	};
+	foldingRange?: ClientFoldingRangeOptions;
+}
+
+/**
+ * Client workspace capabilities specific to folding ranges
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface FoldingRangeWorkspaceClientCapabilities {
+
+	/**
+	 * Whether the client implementation supports a refresh request sent from the
+	 * server to the client.
+	 *
+	 * Note that this event is global and will force the client to refresh all
+	 * folding ranges currently shown. It should be used with absolute care and is
+	 * useful for situation where a server for example detects a project wide
+	 * change that requires such a calculation.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	refreshSupport?: boolean;
 }
 
 export interface FoldingRangeOptions extends WorkDoneProgressOptions {
@@ -95,4 +130,15 @@ export namespace FoldingRangeRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<FoldingRangeParams, FoldingRange[] | null, FoldingRange[], void, FoldingRangeRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<FoldingRangeParams, FoldingRange[] | null, void>;
+}
+
+/**
+ * @since 3.18.0
+ * @proposed
+ */
+export namespace FoldingRangeRefreshRequest {
+	export const method: `workspace/foldingRange/refresh` = `workspace/foldingRange/refresh`;
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType0<void, void, void, void>(method);
+	export type HandlerSignature = RequestHandler0<void, void>;
 }
