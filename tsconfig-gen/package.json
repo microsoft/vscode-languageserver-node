@@ -18,10 +18,10 @@
 		"tsconfig-gen": "./bin/tsconfig-gen"
 	},
 	"dependencies": {
-		"yargs": "^17.6.2"
+		"yargs": "^17.7.2"
 	},
 	"devDependencies": {
-		"@types/yargs": "^17.0.13"
+		"@types/yargs": "^17.0.29"
 	},
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",

@@ -1,7 +1,7 @@
 {
 	"name": "vscode-jsonrpc",
 	"description": "A json rpc implementation over streams",
-	"version": "8.2.0-next.1",
+	"version": "8.2.1-next.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -21,7 +21,7 @@
 	},
 	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
-		"@types/msgpack-lite": "^0.1.7",
+		"@types/msgpack-lite": "^0.1.10",
 		"msgpack-lite": "^0.1.26"
 	},
 	"scripts": {

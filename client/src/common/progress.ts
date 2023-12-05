@@ -45,7 +45,7 @@ export class ProgressFeature implements StaticFeature {
 		client.onRequest(WorkDoneProgressCreateRequest.type, createHandler);
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		for (const part of this.activeParts) {
 			part.done();
 		}

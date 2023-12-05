@@ -143,6 +143,7 @@ export interface Converter {
 	asInlayHint(value: code.InlayHint): proto.InlayHint;
 
 	asInlineCompletionParams(document: code.TextDocument, position: code.Position, context: code.InlineCompletionContext): proto.InlineCompletionParams;
+	asInlineCompletionContext(context: code.InlineCompletionContext): proto.InlineCompletionContext;
 }
 
 export interface URIConverter {
@@ -799,15 +800,37 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asInlineValueContext(context: code.InlineValueContext): proto.InlineValueContext {
-		if (context === undefined || context === null) {
-			return context;
-		}
 		return proto.InlineValueContext.create(context.frameId, asRange(context.stoppedLocation));
 	}
 
 	function asInlineCompletionParams(document: code.TextDocument, position: code.Position, context: code.InlineCompletionContext): proto.InlineCompletionParams {
-		return {context: proto.InlineCompletionContext.create(context.triggerKind, context.selectedCompletionInfo),
-			textDocument: asTextDocumentIdentifier(document), position: asPosition(position)};
+		return {
+			textDocument: asTextDocumentIdentifier(document), position: asPosition(position),
+			context: asInlineCompletionContext(context)
+		};
+	}
+
+	function asInlineCompletionContext(context: code.InlineCompletionContext): proto.InlineCompletionContext {
+		return {
+			triggerKind: asInlineCompletionTriggerKind(context.triggerKind),
+			selectedCompletionInfo: asSelectedCompletionInfo(context.selectedCompletionInfo)
+		};
+	}
+
+	function asInlineCompletionTriggerKind(kind: code.InlineCompletionTriggerKind): proto.InlineCompletionTriggerKind {
+		switch (kind) {
+			case code.InlineCompletionTriggerKind.Invoke:
+				return proto.InlineCompletionTriggerKind.Invoked;
+			case code.InlineCompletionTriggerKind.Automatic:
+				return proto.InlineCompletionTriggerKind.Automatic;
+		}
+	}
+
+	function asSelectedCompletionInfo(info: code.SelectedCompletionInfo | null | undefined): proto.SelectedCompletionInfo  | undefined {
+		if (info === undefined || info === null) {
+			return undefined;
+		}
+		return { range: asRange(info.range), text: info.text };
 	}
 
 	function asCommand(item: code.Command): proto.Command {
@@ -997,6 +1020,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asTypeHierarchyItem,
 		asInlayHint,
 		asWorkspaceSymbol,
-		asInlineCompletionParams
+		asInlineCompletionParams,
+		asInlineCompletionContext
 	};
 }

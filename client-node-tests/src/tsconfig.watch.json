@@ -1,13 +1,17 @@
 {
     "compilerOptions": {
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "rootDir": ".",
         "types": [
             "node",
             "vscode",
             "mocha"
         ],
-        "module": "commonjs",
-        "moduleResolution": "node",
-        "rootDir": ".",
+        "lib": [
+            "es2020",
+            "webworker"
+        ],
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
@@ -19,9 +23,6 @@
         "noUnusedParameters": false,
         "assumeChangesOnlyAffectDirectDependencies": true,
         "target": "es2020",
-        "lib": [
-            "es2020"
-        ],
         "outDir": "../lib",
         "tsBuildInfoFile": "../lib/watch.tsbuildInfo",
         "incremental": true

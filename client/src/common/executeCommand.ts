@@ -92,7 +92,7 @@ export class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegis
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._commands.forEach((value) => {
 			value.forEach(disposable => disposable.dispose());
 		});

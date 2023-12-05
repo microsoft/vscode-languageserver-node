@@ -8,17 +8,17 @@ import {
 	Disposable, CancellationToken, ProviderResult, TextEdit as VTextEdit, ReferenceProvider, DefinitionProvider, SignatureHelpProvider,
 	HoverProvider, CompletionItemProvider, WorkspaceSymbolProvider, DocumentHighlightProvider, CodeActionProvider, DocumentFormattingEditProvider,
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DocumentColorProvider,
-	DeclarationProvider, FoldingRangeProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider,
+	DeclarationProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider,
 	LinkedEditingRangeProvider, TypeHierarchyProvider, FileCreateEvent, FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent,
-	FileWillDeleteEvent, CancellationError
+	FileWillDeleteEvent, CancellationError, InlineCompletionItemProvider
 } from 'vscode';
 
 import {
 	CallHierarchyPrepareRequest, ClientCapabilities, CodeActionRequest, CodeLensRequest, CompletionRequest, DeclarationRequest, DefinitionRequest,
 	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, DidCreateFilesNotification, DidDeleteFilesNotification, DidOpenTextDocumentNotification,
 	DidRenameFilesNotification, DidSaveTextDocumentNotification, DocumentColorRequest, DocumentDiagnosticRequest, DocumentFormattingRequest, DocumentHighlightRequest,
-	DocumentLinkRequest, DocumentOnTypeFormattingRequest, DocumentRangeFormattingRequest, DocumentSelector, DocumentSymbolRequest, FileOperationRegistrationOptions,
-	FoldingRangeRequest, GenericNotificationHandler, GenericRequestHandler, HoverRequest, ImplementationRequest, InitializeParams, InlayHintRequest, InlineValueRequest,
+	DocumentLinkRequest, DocumentOnTypeFormattingRequest, DocumentRangeFormattingRequest, DocumentSelector, DocumentSymbolRequest, ExecuteCommandOptions, ExecuteCommandRequest, FileOperationRegistrationOptions,
+	FoldingRangeRequest, GenericNotificationHandler, GenericRequestHandler, HoverRequest, ImplementationRequest, InitializeParams, InlayHintRequest, InlineCompletionRegistrationOptions, InlineCompletionRequest, InlineValueRequest,
 	LinkedEditingRangeRequest, MessageSignature, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType, NotificationHandler, NotificationHandler0,
 	NotificationType, NotificationType0, ProgressType,  ProtocolNotificationType, ProtocolNotificationType0, ProtocolRequestType, ProtocolRequestType0, ReferencesRequest,
 	RegistrationType, RenameRequest, RequestHandler, RequestHandler0, RequestType, RequestType0, SelectionRangeRequest, SemanticTokensRegistrationType, ServerCapabilities,
@@ -155,17 +155,18 @@ export interface StaticFeature {
 	getState(): FeatureState;
 
 	/**
-	 * Called when the client is stopped to dispose this feature. Usually a feature
-	 * un-registers listeners registered hooked up with the VS Code extension host.
+	 * Called when the client is stopped or re-started to clear this feature.
+	 * Usually a feature un-registers listeners registered hooked up with the
+	 * VS Code extension host.
 	 */
-	dispose(): void;
+	clear(): void;
 }
 
 export namespace StaticFeature {
 	export function is (value: any): value is StaticFeature {
 		const candidate: StaticFeature = value;
 		return candidate !== undefined && candidate !== null &&
-			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.dispose) &&
+			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.clear) &&
 			(candidate.fillInitializeParams === undefined || Is.func(candidate.fillInitializeParams));
 	}
 }
@@ -237,17 +238,18 @@ export interface DynamicFeature<RO> {
 	unregister(id: string): void;
 
 	/**
-	 * Called when the client is stopped to dispose this feature. Usually a feature
-	 * un-registers listeners registered hooked up with the VS Code extension host.
+	 * Called when the client is stopped or re-started to clear this feature.
+	 * Usually a feature un-registers listeners registered hooked up with the
+	 * VS Code extension host.
 	 */
-	dispose(): void;
+	clear(): void;
 }
 
 export namespace DynamicFeature {
 	export function is<T>(value: any): value is DynamicFeature<T> {
 		const candidate: DynamicFeature<T> = value;
 		return candidate !== undefined && candidate !== null &&
-			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.dispose) &&
+			Is.func(candidate.fillClientCapabilities) && Is.func(candidate.initialize) && Is.func(candidate.getState) && Is.func(candidate.clear) &&
 			(candidate.fillInitializeParams === undefined || Is.func(candidate.fillInitializeParams)) && Is.func(candidate.register) &&
 			Is.func(candidate.unregister) && candidate.registrationType !== undefined;
 	}
@@ -285,7 +287,7 @@ export abstract class DynamicDocumentFeature<RO, MW, CO = object> implements Dyn
 	public abstract registrationType: RegistrationType<RO>;
 	public abstract register(data: RegistrationData<RO>): void;
 	public abstract unregister(id: string): void;
-	public abstract dispose(): void;
+	public abstract clear(): void;
 
 	/**
 	 * Returns the state the feature is in.
@@ -424,7 +426,7 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._selectors.clear();
 		this._onNotificationSent.dispose();
 		if (this._listener) {
@@ -518,7 +520,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._registrations.forEach((value) => {
 			value.disposable.dispose();
 		});
@@ -618,7 +620,7 @@ export abstract class WorkspaceFeature<RO, PR, M> implements DynamicFeature<RO> 
 		}
 	}
 
-	public dispose(): void {
+	public clear(): void {
 		this._registrations.forEach((registration) => {
 			registration.disposable.dispose();
 		});
@@ -648,6 +650,7 @@ import type { InlineValueProviderShape } from './inlineValue';
 import type { InlayHintsProviderShape } from './inlayHint';
 import type { DiagnosticProviderShape } from './diagnostic';
 import type { NotebookDocumentProviderShape } from './notebook';
+import { FoldingRangeProviderShape } from './foldingRange';
 
 export interface FeatureClient<M, CO = object> {
 
@@ -725,7 +728,7 @@ export interface FeatureClient<M, CO = object> {
 	getFeature(request: typeof DocumentLinkRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentLinkProvider>;
 	getFeature(request: typeof DocumentColorRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DocumentColorProvider>;
 	getFeature(request: typeof DeclarationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DeclarationProvider>;
-	getFeature(request: typeof FoldingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<FoldingRangeProvider>;
+	getFeature(request: typeof FoldingRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<FoldingRangeProviderShape>;
 	getFeature(request: typeof ImplementationRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<ImplementationProvider>;
 	getFeature(request: typeof SelectionRangeRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<SelectionRangeProvider>;
 	getFeature(request: typeof TypeDefinitionRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<TypeDefinitionProvider>;
@@ -738,4 +741,6 @@ export interface FeatureClient<M, CO = object> {
 	getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
 	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> | undefined;
 	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape | undefined;
+	getFeature(request: typeof InlineCompletionRequest.method): DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>;
+	getFeature(request: typeof ExecuteCommandRequest.method): DynamicFeature<ExecuteCommandOptions>;
 }

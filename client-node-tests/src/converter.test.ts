@@ -1568,4 +1568,18 @@ suite('Code Converter', () => {
 		strictEqual(result.kind, proto.InlayHintKind.Type);
 		strictEqual(result.data, '1');
 	});
+
+	test('InlineCompletionContext', () => {
+		const item: vscode.InlineCompletionContext = {
+			triggerKind: vscode.InlineCompletionTriggerKind.Invoke,
+			selectedCompletionInfo: { range: new vscode.Range(1, 2, 3, 4), text: 'text' }
+		};
+
+		const result: proto.InlineCompletionContext = c2p.asInlineCompletionContext(item);
+
+		strictEqual(result.triggerKind, proto.InlineCompletionTriggerKind.Invoked);
+		assertDefined(result.selectedCompletionInfo);
+		rangeEqual(result.selectedCompletionInfo.range, item.selectedCompletionInfo!.range);
+		strictEqual(result.selectedCompletionInfo.text, item.selectedCompletionInfo!.text);
+	});
 });
