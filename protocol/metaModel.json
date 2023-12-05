@@ -13199,6 +13199,17 @@
 					"optional": true,
 					"documentation": "The client supports the `activeParameter` property on `SignatureInformation`\nliteral.\n\n@since 3.16.0",
 					"since": "3.16.0"
+				},
+				{
+					"name": "noActiveParameterSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "The client supports the `activeParameter` property on\n`SignatureHelp`/`SignatureInformation` being set to `null` to\nindicate that no parameter should be active.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			],
 			"documentation": "@since 3.18.0\n@proposed",
@@ -14012,8 +14023,9 @@
 				{
 					"name": "Debug",
 					"value": 5,
-					"documentation": "A debug message.\n\n@since 3.18.0",
-					"since": "3.18.0"
+					"documentation": "A debug message.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			],
 			"documentation": "The message type"
@@ -14293,6 +14305,13 @@
 					"documentation": "Base kind for refactoring inline actions: 'refactor.inline'\n\nExample inline actions:\n\n- Inline function\n- Inline variable\n- Inline constant\n- ..."
 				},
 				{
+					"name": "RefactorMove",
+					"value": "refactor.move",
+					"documentation": "Base kind for refactoring move actions: `refactor.move`\n\nExample move actions:\n\n- Move a function to a new file\n- Move a property between classes\n- Move method to base class\n- ...\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
+				},
+				{
 					"name": "RefactorRewrite",
 					"value": "refactor.rewrite",
 					"documentation": "Base kind for refactoring rewrite actions: 'refactor.rewrite'\n\nExample rewrite actions:\n\n- Convert JavaScript function to class\n- Add or remove parameter\n- Encapsulate field\n- Make method static\n- Move method to base class\n- ..."
@@ -14370,12 +14389,12 @@
 			"values": [
 				{
 					"name": "Invoked",
-					"value": 0,
+					"value": 1,
 					"documentation": "Completion was triggered explicitly by a user gesture."
 				},
 				{
 					"name": "Automatic",
-					"value": 1,
+					"value": 2,
 					"documentation": "Completion was triggered automatically while editing."
 				}
 			],
