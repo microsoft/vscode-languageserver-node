@@ -4245,15 +4245,15 @@ export namespace InlineCompletionTriggerKind {
 	/**
 	 * Completion was triggered explicitly by a user gesture.
 	 */
-	export const Invoked: 0 = 0;
+	export const Invoked: 1 = 1;
 
 	/**
 	 * Completion was triggered automatically while editing.
 	 */
-	export const Automatic: 1 = 1;
+	export const Automatic: 2 = 2;
 }
 
-export type InlineCompletionTriggerKind = 0 | 1;
+export type InlineCompletionTriggerKind = 1 | 2;
 
 /**
  * Describes the currently selected completion item.
