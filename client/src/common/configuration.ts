@@ -43,17 +43,17 @@ export class ConfigurationFeature implements StaticFeature {
 	}
 
 	public initialize(): void {
-		let client = this._client;
+		const client = this._client;
 		client.onRequest(ConfigurationRequest.type, (params, token) => {
-			let configuration: ConfigurationRequest.HandlerSignature = (params) => {
-				let result: any[] = [];
-				for (let item of params.items) {
-					let resource = item.scopeUri !== void 0 && item.scopeUri !== null ? this._client.protocol2CodeConverter.asUri(item.scopeUri) : undefined;
+			const configuration: ConfigurationRequest.HandlerSignature = (params) => {
+				const result: any[] = [];
+				for (const item of params.items) {
+					const resource = item.scopeUri !== void 0 && item.scopeUri !== null ? this._client.protocol2CodeConverter.asUri(item.scopeUri) : undefined;
 					result.push(this.getConfiguration(resource, item.section !== null ? item.section : undefined));
 				}
 				return result;
 			};
-			let middleware = client.middleware.workspace;
+			const middleware = client.middleware.workspace;
 			return middleware && middleware.configuration
 				? middleware.configuration(params, token, configuration)
 				: configuration(params, token);
@@ -63,19 +63,19 @@ export class ConfigurationFeature implements StaticFeature {
 	private getConfiguration(resource: Uri | undefined, section: string | undefined): any {
 		let result: any = null;
 		if (section) {
-			let index = section.lastIndexOf('.');
+			const index = section.lastIndexOf('.');
 			if (index === -1) {
 				result = toJSONObject(workspace.getConfiguration(undefined, resource).get(section));
 			} else {
-				let config = workspace.getConfiguration(section.substr(0, index), resource);
+				const config = workspace.getConfiguration(section.substr(0, index), resource);
 				if (config) {
 					result = toJSONObject(config.get(section.substr(index + 1)));
 				}
 			}
 		} else {
-			let config = workspace.getConfiguration(undefined, resource);
+			const config = workspace.getConfiguration(undefined, resource);
 			result = {};
-			for (let key of Object.keys(config)) {
+			for (const key of Object.keys(config)) {
 				if (config.has(key)) {
 					result[key] = toJSONObject(config.get(key));
 				}
@@ -171,7 +171,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 
 	public initialize(): void {
 		this.isCleared = false;
-		let section = this._client.clientOptions.synchronize?.configurationSection;
+		const section = this._client.clientOptions.synchronize?.configurationSection;
 		if (section !== undefined) {
 			this.register({
 				id: UUID.generateUuid(),
@@ -183,7 +183,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 	}
 
 	public register(data: RegistrationData<DidChangeConfigurationRegistrationOptions>): void {
-		let disposable = workspace.onDidChangeConfiguration((event) => {
+		const disposable = workspace.onDidChangeConfiguration((event) => {
 			this.onDidChangeConfiguration(data.registerOptions.section, event);
 		});
 		this._listeners.set(data.id, disposable);
@@ -193,7 +193,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 	}
 
 	public unregister(id: string): void {
-		let disposable = this._listeners.get(id);
+		const disposable = this._listeners.get(id);
 		if (disposable) {
 			this._listeners.delete(id);
 			disposable.dispose();
@@ -219,7 +219,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 			sections = configurationSection;
 		}
 		if (sections !== undefined && event !== undefined) {
-			let affected = sections.some((section) => event.affectsConfiguration(section));
+			const affected = sections.some((section) => event.affectsConfiguration(section));
 			if (!affected) {
 				return;
 			}
@@ -231,7 +231,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 				return this._client.sendNotification(DidChangeConfigurationNotification.type, { settings: this.extractSettingsInformation(sections) });
 			}
 		};
-		let middleware = this._client.middleware.workspace?.didChangeConfiguration;
+		const middleware = this._client.middleware.workspace?.didChangeConfiguration;
 		(middleware ? middleware(sections, didChangeConfiguration) : didChangeConfiguration(sections)).catch((error) => {
 			this._client.error(`Sending notification ${DidChangeConfigurationNotification.type.method} failed`, error);
 		});
@@ -250,13 +250,13 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 			}
 			return current;
 		}
-		let resource: Uri | undefined = this._client.clientOptions.workspaceFolder
+		const resource: Uri | undefined = this._client.clientOptions.workspaceFolder
 			? this._client.clientOptions.workspaceFolder.uri
 			: undefined;
-		let result = Object.create(null);
+		const result = Object.create(null);
 		for (let i = 0; i < keys.length; i++) {
-			let key = keys[i];
-			let index: number = key.indexOf('.');
+			const key = keys[i];
+			const index: number = key.indexOf('.');
 			let config: any = null;
 			if (index >= 0) {
 				config = workspace.getConfiguration(key.substr(0, index), resource).get(key.substr(index + 1));
@@ -264,7 +264,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 				config = workspace.getConfiguration(undefined, resource).get(key);
 			}
 			if (config) {
-				let path = keys[i].split('.');
+				const path = keys[i].split('.');
 				ensurePath(result, path)[path[path.length - 1]] = toJSONObject(config);
 			}
 		}

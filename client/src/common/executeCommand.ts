@@ -60,7 +60,7 @@ export class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegis
 		const client = this._client;
 		const middleware = client.middleware;
 		const executeCommand: ExecuteCommandSignature = (command: string, args: any[]): any => {
-			let params: ExecuteCommandParams = {
+			const params: ExecuteCommandParams = {
 				command,
 				arguments: args
 			};
@@ -86,7 +86,7 @@ export class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegis
 	}
 
 	public unregister(id: string): void {
-		let disposables = this._commands.get(id);
+		const disposables = this._commands.get(id);
 		if (disposables) {
 			disposables.forEach(disposable => disposable.dispose());
 		}

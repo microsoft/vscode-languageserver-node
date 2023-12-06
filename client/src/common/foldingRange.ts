@@ -34,7 +34,7 @@ export class FoldingRangeFeature extends TextDocumentLanguageFeature<boolean | F
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let capability = ensure(ensure(capabilities, 'textDocument')!, 'foldingRange')!;
+		const capability = ensure(ensure(capabilities, 'textDocument')!, 'foldingRange')!;
 		capability.dynamicRegistration = true;
 		capability.rangeLimit = 5000;
 		capability.lineFoldingOnly = true;
@@ -50,7 +50,7 @@ export class FoldingRangeFeature extends TextDocumentLanguageFeature<boolean | F
 			}
 		});
 
-		let [id, options] = this.getRegistration(documentSelector, capabilities.foldingRangeProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.foldingRangeProvider);
 		if (!id || !options) {
 			return;
 		}

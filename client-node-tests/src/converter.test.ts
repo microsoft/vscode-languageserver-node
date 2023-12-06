@@ -1249,7 +1249,7 @@ suite('Protocol Converter', () => {
 
 		const result = await p2c.asInlayHints(items);
 		ok(result.every(hint => hint instanceof ProtocolInlayHint));
-		for (var i = 0; i < result.length; i++) {
+		for (let i = 0; i < result.length; i++) {
 			positionEqual(result[i].position, items[i].position);
 		}
 		strictEqual((result[0] as ProtocolInlayHint).data, '1');

@@ -199,7 +199,7 @@ export class DocumentOnTypeFormattingFeature extends TextDocumentLanguageFeature
 			provideOnTypeFormattingEdits: (document, position, ch, options, token) => {
 				const client = this._client;
 				const provideOnTypeFormattingEdits: ProvideOnTypeFormattingEditsSignature = (document, position, ch, options, token) => {
-					let params: DocumentOnTypeFormattingParams = {
+					const params: DocumentOnTypeFormattingParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						position: client.code2ProtocolConverter.asPosition(position),
 						ch: ch,

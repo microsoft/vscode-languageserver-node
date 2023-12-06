@@ -32,7 +32,7 @@ export const ConfigurationFeature: Feature<_RemoteWorkspace, Configuration> = (B
 		}
 
 		private _getConfiguration(arg: ConfigurationItem | ConfigurationItem[]): Promise<any> {
-			let params: ConfigurationParams = {
+			const params: ConfigurationParams = {
 				items: Array.isArray(arg) ? arg : [arg]
 			};
 			return this.connection.sendRequest(ConfigurationRequest.type, params).then((result) => {

@@ -153,7 +153,7 @@ export class Symbols {
 		if (result !== undefined) {
 			return result;
 		}
-		let declarations = symbol.getDeclarations();
+		const declarations = symbol.getDeclarations();
 		if (declarations === undefined) {
 			if (this.typeChecker.isUnknownSymbol(symbol)) {
 				return Symbols.Unknown;
@@ -163,8 +163,8 @@ export class Symbols {
 				return Symbols.None;
 			}
 		}
-		let fragments: { f: string; s: number; e: number; k: number }[] = [];
-		for (let declaration of declarations) {
+		const fragments: { f: string; s: number; e: number; k: number }[] = [];
+		for (const declaration of declarations) {
 			fragments.push({
 				f: declaration.getSourceFile().fileName,
 				s: declaration.getStart(),
@@ -235,8 +235,8 @@ export class Symbols {
 		}
 		const baseTypes = tsType.getBaseTypes();
 		if (baseTypes !== undefined) {
-			for (let base of baseTypes) {
-				let symbol = base.getSymbol();
+			for (const base of baseTypes) {
+				const symbol = base.getSymbol();
 				if (symbol) {
 					result.push(symbol);
 				}

@@ -160,7 +160,7 @@ export namespace Position {
 	 * Checks whether the given literal conforms to the {@link Position} interface.
 	 */
 	export function is(value: any): value is Position {
-		let candidate = value as Position;
+		const candidate = value as Position;
 		return Is.objectLiteral(candidate) && Is.uinteger(candidate.line) && Is.uinteger(candidate.character);
 	}
 }
@@ -222,7 +222,7 @@ export namespace Range {
 	 * Checks whether the given literal conforms to the {@link Range} interface.
 	 */
 	export function is(value: any): value is Range {
-		let candidate = value as Range;
+		const candidate = value as Range;
 		return Is.objectLiteral(candidate) && Position.is(candidate.start) && Position.is(candidate.end);
 	}
 }
@@ -253,7 +253,7 @@ export namespace Location {
 	 * Checks whether the given literal conforms to the {@link Location} interface.
 	 */
 	export function is(value: any): value is Location {
-		let candidate = value as Location;
+		const candidate = value as Location;
 		return Is.objectLiteral(candidate) && Range.is(candidate.range) && (Is.string(candidate.uri) || Is.undefined(candidate.uri));
 	}
 }
@@ -311,7 +311,7 @@ export namespace LocationLink {
 	 * Checks whether the given literal conforms to the {@link LocationLink} interface.
 	 */
 	export function is(value: any): value is LocationLink {
-		let candidate = value as LocationLink;
+		const candidate = value as LocationLink;
 		return Is.objectLiteral(candidate) && Range.is(candidate.targetRange) && Is.string(candidate.targetUri)
 			&& Range.is(candidate.targetSelectionRange)
 			&& (Range.is(candidate.originSelectionRange) || Is.undefined(candidate.originSelectionRange));
@@ -609,7 +609,7 @@ export namespace DiagnosticRelatedInformation {
 	 * Checks whether the given literal conforms to the {@link DiagnosticRelatedInformation} interface.
 	 */
 	export function is(value: any): value is DiagnosticRelatedInformation {
-		let candidate: DiagnosticRelatedInformation = value as DiagnosticRelatedInformation;
+		const candidate: DiagnosticRelatedInformation = value as DiagnosticRelatedInformation;
 		return Is.defined(candidate) && Location.is(candidate.location) && Is.string(candidate.message);
 	}
 }
@@ -759,7 +759,7 @@ export namespace Diagnostic {
 	 * Creates a new Diagnostic literal.
 	 */
 	export function create(range: Range, message: string, severity?: DiagnosticSeverity, code?: integer | string, source?: string, relatedInformation?: DiagnosticRelatedInformation[]): Diagnostic {
-		let result: Diagnostic = { range, message };
+		const result: Diagnostic = { range, message };
 		if (Is.defined(severity)) {
 			result.severity = severity;
 		}
@@ -779,7 +779,7 @@ export namespace Diagnostic {
 	 * Checks whether the given literal conforms to the {@link Diagnostic} interface.
 	 */
 	export function is(value: any): value is Diagnostic {
-		let candidate = value as Diagnostic;
+		const candidate = value as Diagnostic;
 		return Is.defined(candidate)
 			&& Range.is(candidate.range)
 			&& Is.string(candidate.message)
@@ -824,7 +824,7 @@ export namespace Command {
 	 * Creates a new Command literal.
 	 */
 	export function create(title: string, command: string, ...args: any[]): Command {
-		let result: Command = { title, command };
+		const result: Command = { title, command };
 		if (Is.defined(args) && args.length > 0) {
 			result.arguments = args;
 		}
@@ -834,7 +834,7 @@ export namespace Command {
 	 * Checks whether the given literal conforms to the {@link Command} interface.
 	 */
 	export function is(value: any): value is Command {
-		let candidate = value as Command;
+		const candidate = value as Command;
 		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.command);
 	}
 }
@@ -1034,7 +1034,7 @@ export namespace TextDocumentEdit {
 	}
 
 	export function is(value: any): value is TextDocumentEdit {
-		let candidate = value as TextDocumentEdit;
+		const candidate = value as TextDocumentEdit;
 		return Is.defined(candidate)
 			&& OptionalVersionedTextDocumentIdentifier.is(candidate.textDocument)
 			&& Array.isArray(candidate.edits);
@@ -1095,7 +1095,7 @@ export interface CreateFile extends ResourceOperation {
 
 export namespace CreateFile {
 	export function create(uri: DocumentUri, options?: CreateFileOptions, annotation?: ChangeAnnotationIdentifier): CreateFile {
-		let result: CreateFile = {
+		const result: CreateFile = {
 			kind: 'create',
 			uri
 		};
@@ -1109,7 +1109,7 @@ export namespace CreateFile {
 	}
 
 	export function is(value: any): value is CreateFile {
-		let candidate: CreateFile = value;
+		const candidate: CreateFile = value;
 		return candidate && candidate.kind === 'create' && Is.string(candidate.uri) && (
 			candidate.options === undefined ||
 			((candidate.options.overwrite === undefined || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === undefined || Is.boolean(candidate.options.ignoreIfExists)))
@@ -1161,7 +1161,7 @@ export interface RenameFile extends ResourceOperation {
 
 export namespace RenameFile {
 	export function create(oldUri: DocumentUri, newUri: DocumentUri, options?: RenameFileOptions, annotation?: ChangeAnnotationIdentifier): RenameFile {
-		let result: RenameFile = {
+		const result: RenameFile = {
 			kind: 'rename',
 			oldUri,
 			newUri
@@ -1176,7 +1176,7 @@ export namespace RenameFile {
 	}
 
 	export function is(value: any): value is RenameFile {
-		let candidate: RenameFile = value;
+		const candidate: RenameFile = value;
 		return candidate && candidate.kind === 'rename' && Is.string(candidate.oldUri) && Is.string(candidate.newUri) && (
 			candidate.options === undefined ||
 			((candidate.options.overwrite === undefined || Is.boolean(candidate.options.overwrite)) && (candidate.options.ignoreIfExists === undefined || Is.boolean(candidate.options.ignoreIfExists)))
@@ -1223,7 +1223,7 @@ export interface DeleteFile extends ResourceOperation {
 
 export namespace DeleteFile {
 	export function create(uri: DocumentUri, options?: DeleteFileOptions, annotation?: ChangeAnnotationIdentifier): DeleteFile {
-		let result: DeleteFile = {
+		const result: DeleteFile = {
 			kind: 'delete',
 			uri
 		};
@@ -1237,7 +1237,7 @@ export namespace DeleteFile {
 	}
 
 	export function is(value: any): value is DeleteFile {
-		let candidate: DeleteFile = value;
+		const candidate: DeleteFile = value;
 		return candidate && candidate.kind === 'delete' && Is.string(candidate.uri) && (
 			candidate.options === undefined ||
 			((candidate.options.recursive === undefined || Is.boolean(candidate.options.recursive)) && (candidate.options.ignoreIfNotExists === undefined || Is.boolean(candidate.options.ignoreIfNotExists)))
@@ -1297,7 +1297,7 @@ export interface WorkspaceEdit {
 
 export namespace WorkspaceEdit {
 	export function is(value: any): value is WorkspaceEdit {
-		let candidate: WorkspaceEdit = value;
+		const candidate: WorkspaceEdit = value;
 		return candidate &&
 			(candidate.changes !== undefined || candidate.documentChanges !== undefined) &&
 			(candidate.documentChanges === undefined || candidate.documentChanges.every((change) => {
@@ -1592,7 +1592,7 @@ export class WorkspaceChange {
 			}
 			let result: TextEditChange = this._textEditChanges[key];
 			if (!result) {
-				let edits: (TextEdit | AnnotatedTextEdit)[] = [];
+				const edits: (TextEdit | AnnotatedTextEdit)[] = [];
 				this._workspaceEdit.changes[key] = edits;
 				result = new TextEditChangeImpl(edits);
 				this._textEditChanges[key] = result;
@@ -1726,7 +1726,7 @@ export namespace TextDocumentIdentifier {
 	 * Checks whether the given literal conforms to the {@link TextDocumentIdentifier} interface.
 	 */
 	export function is(value: any): value is TextDocumentIdentifier {
-		let candidate = value as TextDocumentIdentifier;
+		const candidate = value as TextDocumentIdentifier;
 		return Is.defined(candidate) && Is.string(candidate.uri);
 	}
 }
@@ -1759,7 +1759,7 @@ export namespace VersionedTextDocumentIdentifier {
 	 * Checks whether the given literal conforms to the {@link VersionedTextDocumentIdentifier} interface.
 	 */
 	export function is(value: any): value is VersionedTextDocumentIdentifier {
-		let candidate = value as VersionedTextDocumentIdentifier;
+		const candidate = value as VersionedTextDocumentIdentifier;
 		return Is.defined(candidate) && Is.string(candidate.uri) && Is.integer(candidate.version);
 	}
 }
@@ -1796,7 +1796,7 @@ export namespace OptionalVersionedTextDocumentIdentifier {
 	 * Checks whether the given literal conforms to the {@link OptionalVersionedTextDocumentIdentifier} interface.
 	 */
 	export function is(value: any): value is OptionalVersionedTextDocumentIdentifier {
-		let candidate = value as OptionalVersionedTextDocumentIdentifier;
+		const candidate = value as OptionalVersionedTextDocumentIdentifier;
 		return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.integer(candidate.version));
 	}
 }
@@ -1848,7 +1848,7 @@ export namespace TextDocumentItem {
 	 * Checks whether the given literal conforms to the {@link TextDocumentItem} interface.
 	 */
 	export function is(value: any): value is TextDocumentItem {
-		let candidate = value as TextDocumentItem;
+		const candidate = value as TextDocumentItem;
 		return Is.defined(candidate) && Is.string(candidate.uri) && Is.string(candidate.languageId) && Is.integer(candidate.version) && Is.string(candidate.text);
 	}
 }
@@ -2480,7 +2480,7 @@ export namespace Hover {
 	 * Checks whether the given value conforms to the {@link Hover} interface.
 	 */
 	export function is(value: any): value is Hover {
-		let candidate = value as Hover;
+		const candidate = value as Hover;
 		return !!candidate && Is.objectLiteral(candidate) && (
 			MarkupContent.is(candidate.contents) ||
 			MarkedString.is(candidate.contents) ||
@@ -2577,7 +2577,7 @@ export interface SignatureInformation {
  */
 export namespace SignatureInformation {
 	export function create(label: string, documentation?: string, ...parameters: ParameterInformation[]): SignatureInformation {
-		let result: SignatureInformation = { label };
+		const result: SignatureInformation = { label };
 		if (Is.defined(documentation)) {
 			result.documentation = documentation;
 		}
@@ -2730,7 +2730,7 @@ export namespace DocumentHighlight {
 	 * @param kind The highlight kind
 	 */
 	export function create(range: Range, kind?: DocumentHighlightKind): DocumentHighlight {
-		let result: DocumentHighlight = { range };
+		const result: DocumentHighlight = { range };
 		if (Is.number(kind)) {
 			result.kind = kind;
 		}
@@ -2855,7 +2855,7 @@ export namespace SymbolInformation {
 	 * @param containerName The name of the symbol containing the symbol.
 	 */
 	export function create(name: string, kind: SymbolKind, range: Range, uri: DocumentUri, containerName?: string): SymbolInformation {
-		let result: SymbolInformation = {
+		const result: SymbolInformation = {
 			name,
 			kind,
 			location: { uri, range }
@@ -2986,7 +2986,7 @@ export namespace DocumentSymbol {
 	 * @param children Children of the symbol.
 	 */
 	export function create(name: string, detail: string | undefined, kind: SymbolKind, range: Range, selectionRange: Range, children?: DocumentSymbol[]): DocumentSymbol {
-		let result: DocumentSymbol = {
+		const result: DocumentSymbol = {
 			name,
 			detail,
 			kind,
@@ -3002,7 +3002,7 @@ export namespace DocumentSymbol {
 	 * Checks whether the given literal conforms to the {@link DocumentSymbol} interface.
 	 */
 	export function is(value: any): value is DocumentSymbol {
-		let candidate: DocumentSymbol = value;
+		const candidate: DocumentSymbol = value;
 		return candidate &&
 			Is.string(candidate.name) && Is.number(candidate.kind) &&
 			Range.is(candidate.range) && Range.is(candidate.selectionRange) &&
@@ -3182,7 +3182,7 @@ export namespace CodeActionContext {
 	 * Creates a new CodeActionContext literal.
 	 */
 	export function create(diagnostics: Diagnostic[], only?: CodeActionKind[], triggerKind?: CodeActionTriggerKind): CodeActionContext {
-		let result: CodeActionContext = { diagnostics };
+		const result: CodeActionContext = { diagnostics };
 		if (only !== undefined && only !== null) {
 			result.only = only;
 		}
@@ -3195,7 +3195,7 @@ export namespace CodeActionContext {
 	 * Checks whether the given literal conforms to the {@link CodeActionContext} interface.
 	 */
 	export function is(value: any): value is CodeActionContext {
-		let candidate = value as CodeActionContext;
+		const candidate = value as CodeActionContext;
 		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is)
 			&& (candidate.only === undefined || Is.typedArray(candidate.only, Is.string))
 			&& (candidate.triggerKind === undefined || candidate.triggerKind === CodeActionTriggerKind.Invoked || candidate.triggerKind === CodeActionTriggerKind.Automatic);
@@ -3323,7 +3323,7 @@ export namespace CodeAction {
 	export function create(title: string, edit: WorkspaceEdit, kind?: CodeActionKind): CodeAction;
 
 	export function create(title: string, kindOrCommandOrEdit?: CodeActionKind | Command | WorkspaceEdit, kind?: CodeActionKind): CodeAction {
-		let result: CodeAction = { title };
+		const result: CodeAction = { title };
 		let checkKind: boolean = true;
 		if (typeof kindOrCommandOrEdit === 'string') {
 			checkKind = false;
@@ -3339,7 +3339,7 @@ export namespace CodeAction {
 		return result;
 	}
 	export function is(value: any): value is CodeAction {
-		let candidate: CodeAction = value;
+		const candidate: CodeAction = value;
 		return candidate && Is.string(candidate.title) &&
 			(candidate.diagnostics === undefined || Is.typedArray(candidate.diagnostics, Diagnostic.is)) &&
 			(candidate.kind === undefined || Is.string(candidate.kind)) &&
@@ -3384,7 +3384,7 @@ export namespace CodeLens {
 	 * Creates a new CodeLens literal.
 	 */
 	export function create(range: Range, data?: LSPAny): CodeLens {
-		let result: CodeLens = { range };
+		const result: CodeLens = { range };
 		if (Is.defined(data)) { result.data = data; }
 		return result;
 	}
@@ -3392,7 +3392,7 @@ export namespace CodeLens {
 	 * Checks whether the given literal conforms to the {@link CodeLens} interface.
 	 */
 	export function is(value: any): value is CodeLens {
-		let candidate = value as CodeLens;
+		const candidate = value as CodeLens;
 		return Is.defined(candidate) && Range.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
 	}
 }
@@ -3453,7 +3453,7 @@ export namespace FormattingOptions {
 	 * Checks whether the given literal conforms to the {@link FormattingOptions} interface.
 	 */
 	export function is(value: any): value is FormattingOptions {
-		let candidate = value as FormattingOptions;
+		const candidate = value as FormattingOptions;
 		return Is.defined(candidate) && Is.uinteger(candidate.tabSize) && Is.boolean(candidate.insertSpaces);
 	}
 }
@@ -3508,7 +3508,7 @@ export namespace DocumentLink {
 	 * Checks whether the given literal conforms to the {@link DocumentLink} interface.
 	 */
 	export function is(value: any): value is DocumentLink {
-		let candidate = value as DocumentLink;
+		const candidate = value as DocumentLink;
 		return Is.defined(candidate) && Range.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
 	}
 }
@@ -3546,7 +3546,7 @@ export namespace SelectionRange {
 	}
 
 	export function is(value: any): value is SelectionRange {
-		let candidate = value as SelectionRange;
+		const candidate = value as SelectionRange;
 		return Is.objectLiteral(candidate) && Range.is(candidate.range) && (candidate.parent === undefined || SelectionRange.is(candidate.parent));
 	}
 }
@@ -4435,15 +4435,15 @@ export namespace TextDocument {
 	 * Checks whether the given literal conforms to the {@link ITextDocument} interface.
 	 */
 	export function is(value: any): value is TextDocument {
-		let candidate = value as TextDocument;
+		const candidate = value as TextDocument;
 		return Is.defined(candidate) && Is.string(candidate.uri) && (Is.undefined(candidate.languageId) || Is.string(candidate.languageId)) && Is.uinteger(candidate.lineCount)
 			&& Is.func(candidate.getText) && Is.func(candidate.positionAt) && Is.func(candidate.offsetAt) ? true : false;
 	}
 
 	export function applyEdits(document: TextDocument, edits: TextEdit[]): string {
 		let text = document.getText();
-		let sortedEdits = mergeSort(edits, (a, b) => {
-			let diff = a.range.start.line - b.range.start.line;
+		const sortedEdits = mergeSort(edits, (a, b) => {
+			const diff = a.range.start.line - b.range.start.line;
 			if (diff === 0) {
 				return a.range.start.character - b.range.start.character;
 			}
@@ -4451,9 +4451,9 @@ export namespace TextDocument {
 		});
 		let lastModifiedOffset = text.length;
 		for (let i = sortedEdits.length - 1; i >= 0; i--) {
-			let e = sortedEdits[i];
-			let startOffset = document.offsetAt(e.range.start);
-			let endOffset = document.offsetAt(e.range.end);
+			const e = sortedEdits[i];
+			const startOffset = document.offsetAt(e.range.start);
+			const endOffset = document.offsetAt(e.range.end);
 			if (endOffset <= lastModifiedOffset) {
 				text = text.substring(0, startOffset) + e.newText + text.substring(endOffset, text.length);
 			} else {
@@ -4480,7 +4480,7 @@ export namespace TextDocument {
 		let rightIdx = 0;
 		let i = 0;
 		while (leftIdx < left.length && rightIdx < right.length) {
-			let ret = compare(left[leftIdx], right[rightIdx]);
+			const ret = compare(left[leftIdx], right[rightIdx]);
 			if (ret <= 0) {
 				// smaller_equal -> take left to preserve order
 				data[i++] = left[leftIdx++];
@@ -4562,8 +4562,8 @@ class FullTextDocument implements TextDocument {
 
 	public getText(range?: Range): string {
 		if (range) {
-			let start = this.offsetAt(range.start);
-			let end = this.offsetAt(range.end);
+			const start = this.offsetAt(range.start);
+			const end = this.offsetAt(range.end);
 			return this._content.substring(start, end);
 		}
 		return this._content;
@@ -4577,15 +4577,15 @@ class FullTextDocument implements TextDocument {
 
 	private getLineOffsets(): uinteger[] {
 		if (this._lineOffsets === undefined) {
-			let lineOffsets: uinteger[] = [];
-			let text = this._content;
+			const lineOffsets: uinteger[] = [];
+			const text = this._content;
 			let isLineStart = true;
 			for (let i = 0; i < text.length; i++) {
 				if (isLineStart) {
 					lineOffsets.push(i);
 					isLineStart = false;
 				}
-				let ch = text.charAt(i);
+				const ch = text.charAt(i);
 				isLineStart = (ch === '\r' || ch === '\n');
 				if (ch === '\r' && i + 1 < text.length && text.charAt(i + 1) === '\n') {
 					i++;
@@ -4602,13 +4602,13 @@ class FullTextDocument implements TextDocument {
 	public positionAt(offset: uinteger) {
 		offset = Math.max(Math.min(offset, this._content.length), 0);
 
-		let lineOffsets = this.getLineOffsets();
+		const lineOffsets = this.getLineOffsets();
 		let low = 0, high = lineOffsets.length;
 		if (high === 0) {
 			return Position.create(0, offset);
 		}
 		while (low < high) {
-			let mid = Math.floor((low + high) / 2);
+			const mid = Math.floor((low + high) / 2);
 			if (lineOffsets[mid] > offset) {
 				high = mid;
 			} else {
@@ -4617,19 +4617,19 @@ class FullTextDocument implements TextDocument {
 		}
 		// low is the least x for which the line offset is larger than the current offset
 		// or array.length if no line offset is larger than the current offset
-		let line = low - 1;
+		const line = low - 1;
 		return Position.create(line, offset - lineOffsets[line]);
 	}
 
 	public offsetAt(position: Position) {
-		let lineOffsets = this.getLineOffsets();
+		const lineOffsets = this.getLineOffsets();
 		if (position.line >= lineOffsets.length) {
 			return this._content.length;
 		} else if (position.line < 0) {
 			return 0;
 		}
-		let lineOffset = lineOffsets[position.line];
-		let nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : this._content.length;
+		const lineOffset = lineOffsets[position.line];
+		const nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : this._content.length;
 		return Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset);
 	}
 

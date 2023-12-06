@@ -136,7 +136,7 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.openClose) {
 			this.register({ id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
 		}
@@ -164,8 +164,8 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 		const selectors = this._selectors.values();
 		this._syncedDocuments.forEach((textDocument) => {
 			if (Languages.match(selector, textDocument) > 0 && !this._selectorFilter!(selectors, textDocument) && !this._client.hasDedicatedTextSynchronizationFeature(textDocument)) {
-				let middleware = this._client.middleware;
-				let didClose = (textDocument: TextDocument): Promise<void> => {
+				const middleware = this._client.middleware;
+				const didClose = (textDocument: TextDocument): Promise<void> => {
 					return this._client.sendNotification(this._type, this._createParams(textDocument));
 				};
 				this._syncedDocuments.delete(textDocument.uri.toString());
@@ -224,7 +224,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.change !== undefined && textDocumentSyncOptions.change !== TextDocumentSyncKind.None) {
 			this.register({
 				id: UUID.generateUuid(),
@@ -396,12 +396,12 @@ export class WillSaveFeature extends TextDocumentEventFeature<WillSaveTextDocume
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let value = ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!;
+		const value = ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!;
 		value.willSave = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSave) {
 			this.register({
 				id: UUID.generateUuid(),
@@ -434,12 +434,12 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let value = ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!;
+		const value = ensure(ensure(capabilities, 'textDocument')!, 'synchronization')!;
 		value.willSaveWaitUntil = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
+		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSaveWaitUntil) {
 			this.register({
 				id: UUID.generateUuid(),
@@ -460,11 +460,11 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 
 	private callback(event: TextDocumentWillSaveEvent): void {
 		if (TextDocumentEventFeature.textDocumentFilter(this._selectors.values(), event.document) && !this._client.hasDedicatedTextSynchronizationFeature(event.document)) {
-			let middleware = this._client.middleware;
-			let willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
+			const middleware = this._client.middleware;
+			const willSaveWaitUntil = (event: TextDocumentWillSaveEvent): Thenable<VTextEdit[]> => {
 				return this._client.sendRequest(WillSaveTextDocumentWaitUntilRequest.type,
 					this._client.code2ProtocolConverter.asWillSaveTextDocumentParams(event)).then(async (edits) => {
-					let vEdits = await this._client.protocol2CodeConverter.asTextEdits(edits);
+					const vEdits = await this._client.protocol2CodeConverter.asTextEdits(edits);
 					return vEdits === undefined ? [] : vEdits;
 				});
 			};

@@ -46,7 +46,7 @@ export interface MessageWriter {
 
 export namespace MessageWriter {
 	export function is(value: any): value is MessageWriter {
-		let candidate: MessageWriter = value;
+		const candidate: MessageWriter = value;
 		return candidate && Is.func(candidate.dispose) && Is.func(candidate.onClose) &&
 			Is.func(candidate.onError) && Is.func(candidate.write);
 	}
