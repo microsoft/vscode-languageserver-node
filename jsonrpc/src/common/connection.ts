@@ -1277,7 +1277,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					paramStart = 1;
 					parameterStructures = first;
 				}
-				let paramEnd: number = args.length;
+				const paramEnd: number = args.length;
 				const numberOfParams = paramEnd - paramStart;
 				switch (numberOfParams) {
 					case 0:
@@ -1423,6 +1423,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				cancellationStrategy.sender.enableCancellation(requestMessage);
 			}
 
+			// eslint-disable-next-line no-async-promise-executor
 			return new Promise<R | ResponseError<E>>(async (resolve, reject) => {
 				const resolveWithCleanup = (r: any) => {
 					resolve(r);

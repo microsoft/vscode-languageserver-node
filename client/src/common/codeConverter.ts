@@ -243,7 +243,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asSaveTextDocumentParams(textDocument: code.TextDocument, includeContent: boolean = false): proto.DidSaveTextDocumentParams {
-		let result: proto.DidSaveTextDocumentParams = {
+		const result: proto.DidSaveTextDocumentParams = {
 			textDocument: asTextDocumentIdentifier(textDocument)
 		};
 		if (includeContent) {
@@ -478,9 +478,9 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (!tags) {
 			return undefined;
 		}
-		let result: code.DiagnosticTag[] = [];
-		for (let tag of tags) {
-			let converted = asDiagnosticTag(tag);
+		const result: code.DiagnosticTag[] = [];
+		for (const tag of tags) {
+			const converted = asDiagnosticTag(tag);
 			if (converted !== undefined) {
 				result.push(converted);
 			}
@@ -584,7 +584,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 			return tags;
 		}
 		const result: proto.CompletionItemTag[] = [];
-		for (let tag of tags) {
+		for (const tag of tags) {
 			const converted = asCompletionItemTag(tag);
 			if (converted !== undefined) {
 				result.push(converted);
@@ -611,11 +611,11 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 				labelDetails = { detail: item.label.detail, description: item.label.description };
 			}
 		}
-		let result: proto.CompletionItem = { label: label };
+		const result: proto.CompletionItem = { label: label };
 		if (labelDetails !== undefined) {
 			result.labelDetails = labelDetails;
 		}
-		let protocolItem = item instanceof ProtocolCompletionItem ? item as ProtocolCompletionItem : undefined;
+		const protocolItem = item instanceof ProtocolCompletionItem ? item as ProtocolCompletionItem : undefined;
 		if (item.detail) { result.detail = item.detail; }
 		// We only send items back we created. So this can't be something else than
 		// a string right now.
@@ -732,7 +732,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	async function asCodeAction(item: code.CodeAction, token?: code.CancellationToken): Promise<proto.CodeAction> {
-		let result = proto.CodeAction.create(item.title);
+		const result = proto.CodeAction.create(item.title);
 		if (item instanceof ProtocolCodeAction && item.data !== undefined) {
 			result.data = item.data;
 		}
@@ -746,7 +746,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCodeActionSync(item: code.CodeAction): proto.CodeAction {
-		let result = proto.CodeAction.create(item.title);
+		const result = proto.CodeAction.create(item.title);
 		if (item instanceof ProtocolCodeAction && item.data !== undefined) {
 			result.data = item.data;
 		}
@@ -834,13 +834,13 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asCommand(item: code.Command): proto.Command {
-		let result = proto.Command.create(item.title, item.command);
+		const result = proto.Command.create(item.title, item.command);
 		if (item.arguments) { result.arguments = item.arguments; }
 		return result;
 	}
 
 	function asCodeLens(item: code.CodeLens): proto.CodeLens {
-		let result = proto.CodeLens.create(asRange(item.range));
+		const result = proto.CodeLens.create(asRange(item.range));
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item instanceof ProtocolCodeLens) {
 			if (item.data) { result.data = item.data; }
@@ -875,10 +875,10 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asDocumentLink(item: code.DocumentLink): proto.DocumentLink {
-		let result = proto.DocumentLink.create(asRange(item.range));
+		const result = proto.DocumentLink.create(asRange(item.range));
 		if (item.target) { result.target = asUri(item.target); }
 		if (item.tooltip !== undefined) { result.tooltip = item.tooltip; }
-		let protocolItem = item instanceof ProtocolDocumentLink ? item as ProtocolDocumentLink : undefined;
+		const protocolItem = item instanceof ProtocolDocumentLink ? item as ProtocolDocumentLink : undefined;
 		if (protocolItem && protocolItem.data) {
 			result.data = protocolItem.data;
 		}

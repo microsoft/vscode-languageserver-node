@@ -225,7 +225,7 @@ suite('Client integration', () => {
 	});
 
 	test('InitializeResult', () => {
-		let expected = {
+		const expected = {
 			capabilities: {
 				textDocumentSync: 1,
 				definitionProvider: true,
@@ -955,6 +955,7 @@ suite('Client integration', () => {
 			const feature = client.getFeature(lsclient.WillCreateFilesRequest.method);
 			isDefined(feature);
 
+			// eslint-disable-next-line no-async-promise-executor
 			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				await feature.send({ files: createFiles, waitUntil: resolve, token: tokenSource.token });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
@@ -1039,6 +1040,7 @@ suite('Client integration', () => {
 			const feature = client.getFeature(lsclient.WillRenameFilesRequest.method);
 			isDefined(feature);
 
+			// eslint-disable-next-line no-async-promise-executor
 			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				await feature.send({ files: renameFiles, waitUntil: resolve, token: tokenSource.token });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
@@ -1087,6 +1089,7 @@ suite('Client integration', () => {
 			// DidRename relies on WillRename firing first and the items existing on disk in their correct locations
 			// so that the type of the items can be checked and stashed before they're actually renamed.
 			await createTestItems(renameFiles.map((f) => f.oldUri));
+			// eslint-disable-next-line no-async-promise-executor
 			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				const featureWithWillRename = feature as any as { willRename(e: vscode.FileWillRenameEvent): void };
 				featureWithWillRename.willRename({ files: renameFiles, waitUntil: resolve, token: tokenSource.token });
@@ -1137,6 +1140,7 @@ suite('Client integration', () => {
 			const feature = client.getFeature(lsclient.WillDeleteFilesRequest.method);
 			isDefined(feature);
 
+			// eslint-disable-next-line no-async-promise-executor
 			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				await feature.send({ files: deleteFiles, waitUntil: resolve, token: tokenSource.token });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
@@ -1185,6 +1189,7 @@ suite('Client integration', () => {
 			// DidDelete relies on WillDelete firing first and the items actually existing on disk
 			// so that the type of the items can be checked and stashed before they're actually deleted.
 			await createTestItems(deleteFiles);
+			// eslint-disable-next-line no-async-promise-executor
 			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				const featureWithWillDelete = feature as any as { willDelete(e: vscode.FileWillDeleteEvent): void };
 				featureWithWillDelete.willDelete({ files: deleteFiles, waitUntil: resolve, token: tokenSource.token });

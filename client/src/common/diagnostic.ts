@@ -1032,7 +1032,7 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let capability = ensure(ensure(capabilities, 'textDocument')!, 'diagnostic')!;
+		const capability = ensure(ensure(capabilities, 'textDocument')!, 'diagnostic')!;
 		capability.dynamicRegistration = true;
 		// We first need to decide how a UI will look with related documents.
 		// An easy implementation would be to only show related diagnostics for
@@ -1049,7 +1049,7 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 				provider.onDidChangeDiagnosticsEmitter.fire();
 			}
 		});
-		let [id, options] = this.getRegistration(documentSelector, capabilities.diagnosticProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.diagnosticProvider);
 		if (!id || !options) {
 			return;
 		}

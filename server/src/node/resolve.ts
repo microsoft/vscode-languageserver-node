@@ -15,7 +15,7 @@ process.on('message', (message: Message) => {
 		process.exit(0);
 	} else if (message.command === 'resolve') {
 		try {
-			let result = (<any>require).resolve(message.args);
+			const result = (<any>require).resolve(message.args);
 			process.send!({ command: 'resolve', success: true, result: result });
 		} catch (err) {
 			process.send!({ command: 'resolve', success: false });

@@ -76,6 +76,7 @@ namespace TypeInfo {
 
 	const baseSet = new Set(['null', 'void', 'string', 'boolean', 'URI', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
 	export function asJsonType(info: TypeInfo): JsonType {
+		const literal: StructureLiteral = { properties: [] };
 		switch (info.kind) {
 			case 'base':
 				if (baseSet.has(info.name)) {
@@ -98,7 +99,6 @@ namespace TypeInfo {
 			case 'tuple':
 				return { kind: 'tuple', items: info.items.map(info => asJsonType(info)) };
 			case 'literal':
-				const literal: StructureLiteral = { properties: [] };
 				for (const entry of info.items) {
 					const property: Property = { name: entry[0], type: asJsonType(entry[1].type) };
 					const value = entry[1];

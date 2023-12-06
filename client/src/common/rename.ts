@@ -39,7 +39,7 @@ export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameO
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let rename = ensure(ensure(capabilities, 'textDocument')!, 'rename')!;
+		const rename = ensure(ensure(capabilities, 'textDocument')!, 'rename')!;
 		rename.dynamicRegistration = true;
 		rename.prepareSupport = true;
 		rename.prepareSupportDefaultBehavior = PrepareSupportDefaultBehavior.Identifier;
@@ -63,7 +63,7 @@ export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameO
 			provideRenameEdits: (document, position, newName, token) => {
 				const client = this._client;
 				const provideRenameEdits: ProvideRenameEditsSignature = (document, position, newName, token) => {
-					let params: RenameParams = {
+					const params: RenameParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						position: client.code2ProtocolConverter.asPosition(position),
 						newName: newName
@@ -86,7 +86,7 @@ export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameO
 				? (document, position, token) => {
 					const client = this._client;
 					const prepareRename: PrepareRenameSignature = (document, position, token) => {
-						let params: TextDocumentPositionParams = {
+						const params: TextDocumentPositionParams = {
 							textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 							position: client.code2ProtocolConverter.asPosition(position),
 						};

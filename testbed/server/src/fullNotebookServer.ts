@@ -79,7 +79,7 @@ connection.onDeclaration((params, token) => {
 
 connection.onCompletion((params, token): CompletionItem[] => {
 	const result: CompletionItem[] = [];
-	let item = CompletionItem.create('foo');
+	const item = CompletionItem.create('foo');
 	result.push(item);
 	return result;
 });

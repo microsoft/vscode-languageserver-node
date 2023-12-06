@@ -342,7 +342,7 @@ export namespace DocumentSelector {
 		if (!Array.isArray(value)) {
 			return false;
 		}
-		for (let elem of value) {
+		for (const elem of value) {
 			if (!Is.string(elem) && !TextDocumentFilter.is(elem) && !NotebookCellTextDocumentFilter.is(elem)) {
 				return false;
 			}
@@ -1915,7 +1915,7 @@ export namespace TextDocumentContentChangeEvent {
 	 * Checks whether the information describes a delta event.
 	 */
 	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: uinteger; text: string } {
-		let candidate: { range: Range; rangeLength?: uinteger; text: string } = event as any;
+		const candidate: { range: Range; rangeLength?: uinteger; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range !== undefined &&
 			(candidate.rangeLength === undefined || typeof candidate.rangeLength === 'number');
@@ -1925,7 +1925,7 @@ export namespace TextDocumentContentChangeEvent {
 	 * Checks whether the information describes a full replacement event.
 	 */
 	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string } {
-		let candidate: { range?: Range; rangeLength?: uinteger; text: string } = event as any;
+		const candidate: { range?: Range; rangeLength?: uinteger; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range === undefined && candidate.rangeLength === undefined;
 	}
@@ -2769,7 +2769,7 @@ export interface ClientSignatureInformationOptions {
 	 * @since 3.16.0
 	 */
 	activeParameterSupport?: boolean;
-  
+
 	/**
 	 * The client supports the `activeParameter` property on
 	 * `SignatureHelp`/`SignatureInformation` being set to `null` to
@@ -2778,7 +2778,7 @@ export interface ClientSignatureInformationOptions {
 	 * @since 3.18.0
    * @proposed
 	 */
-	noActiveParameterSupport?: boolean;  
+	noActiveParameterSupport?: boolean;
 }
 
 /**

@@ -44,7 +44,7 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 	}
 
 	public begin(title: string, percentage?: number, message?: string, cancellable?: boolean): void {
-		let param: WorkDoneProgressBegin = {
+		const param: WorkDoneProgressBegin = {
 			kind: 'begin',
 			title,
 			percentage,
@@ -55,7 +55,7 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 	}
 
 	report(arg0: number | string, arg1?: string): void {
-		let param: WorkDoneProgressReport = {
+		const param: WorkDoneProgressReport = {
 			kind: 'report'
 		};
 		if (typeof arg0 === 'number') {
@@ -158,7 +158,7 @@ export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) =>
 			if (capabilities?.window?.workDoneProgress === true) {
 				this._progressSupported = true;
 				this.connection.onNotification(WorkDoneProgressCancelNotification.type, (params) => {
-					let progress = WorkDoneProgressReporterImpl.Instances.get(params.token);
+					const progress = WorkDoneProgressReporterImpl.Instances.get(params.token);
 					if (progress instanceof WorkDoneProgressServerReporterImpl || progress instanceof NullProgressServerReporter) {
 						progress.cancel();
 					}

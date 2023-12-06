@@ -70,44 +70,29 @@ import { DocumentHighlightFeature, DocumentHighlightMiddleware } from './documen
 import { DocumentSymbolFeature, DocumentSymbolMiddleware } from './documentSymbol';
 import { WorkspaceSymbolFeature, WorkspaceSymbolMiddleware } from './workspaceSymbol';
 import { ReferencesFeature, ReferencesMiddleware } from './reference';
-import { TypeDefinitionMiddleware } from './typeDefinition';
-import { ImplementationMiddleware } from './implementation';
-import { ColorProviderMiddleware } from './colorProvider';
+import { TypeDefinitionFeature, TypeDefinitionMiddleware } from './typeDefinition';
+import { ImplementationFeature, ImplementationMiddleware } from './implementation';
+import { ColorProviderFeature, ColorProviderMiddleware } from './colorProvider';
 import { CodeActionFeature, CodeActionMiddleware } from './codeAction';
 import { CodeLensFeature, CodeLensMiddleware, CodeLensProviderShape } from './codeLens';
 import { DocumentFormattingFeature, DocumentOnTypeFormattingFeature, DocumentRangeFormattingFeature, FormattingMiddleware } from './formatting';
 import { RenameFeature, RenameMiddleware } from './rename';
 import { DocumentLinkFeature, DocumentLinkMiddleware } from './documentLink';
 import { ExecuteCommandFeature, ExecuteCommandMiddleware } from './executeCommand';
-import { FoldingRangeProviderMiddleware, FoldingRangeProviderShape } from './foldingRange';
-import { DeclarationMiddleware } from './declaration';
-import { SelectionRangeProviderMiddleware } from './selectionRange';
-import { CallHierarchyMiddleware } from './callHierarchy';
-import { SemanticTokensMiddleware, SemanticTokensProviderShape } from './semanticTokens';
-import { LinkedEditingRangeMiddleware } from './linkedEditingRange';
-import { TypeHierarchyMiddleware } from './typeHierarchy';
-import { InlineValueMiddleware, InlineValueProviderShape } from './inlineValue';
-import { InlayHintsMiddleware, InlayHintsProviderShape } from './inlayHint';
-import { WorkspaceFolderMiddleware } from './workspaceFolder';
-import { FileOperationsMiddleware } from './fileOperations';
-import { InlineCompletionMiddleware } from './inlineCompletion';
+import { FoldingRangeFeature, FoldingRangeProviderMiddleware, FoldingRangeProviderShape } from './foldingRange';
+import { DeclarationFeature, DeclarationMiddleware } from './declaration';
+import { SelectionRangeFeature, SelectionRangeProviderMiddleware } from './selectionRange';
+import { CallHierarchyFeature, CallHierarchyMiddleware } from './callHierarchy';
+import { SemanticTokensFeature, SemanticTokensMiddleware, SemanticTokensProviderShape } from './semanticTokens';
+import { LinkedEditingFeature, LinkedEditingRangeMiddleware } from './linkedEditingRange';
+import { TypeHierarchyFeature, TypeHierarchyMiddleware } from './typeHierarchy';
+import { InlineValueFeature, InlineValueMiddleware, InlineValueProviderShape } from './inlineValue';
+import { InlayHintsFeature, InlayHintsMiddleware, InlayHintsProviderShape } from './inlayHint';
+import { WorkspaceFoldersFeature, WorkspaceFolderMiddleware } from './workspaceFolder';
+import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature, FileOperationsMiddleware } from './fileOperations';
+import { InlineCompletionItemFeature, InlineCompletionMiddleware } from './inlineCompletion';
 import { FileSystemWatcherFeature } from './fileSystemWatcher';
-import { ColorProviderFeature } from './colorProvider';
-import { ImplementationFeature } from './implementation';
-import { TypeDefinitionFeature } from './typeDefinition';
-import { WorkspaceFoldersFeature } from './workspaceFolder';
-import { FoldingRangeFeature } from './foldingRange';
-import { DeclarationFeature } from './declaration';
-import { SelectionRangeFeature } from './selectionRange';
 import { ProgressFeature } from './progress';
-import { CallHierarchyFeature } from './callHierarchy';
-import { SemanticTokensFeature } from './semanticTokens';
-import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature } from './fileOperations';
-import { LinkedEditingFeature } from './linkedEditingRange';
-import { TypeHierarchyFeature } from './typeHierarchy';
-import { InlineValueFeature } from './inlineValue';
-import { InlayHintsFeature } from './inlayHint';
-import { InlineCompletionItemFeature } from './inlineCompletion';
 
 /**
  * Controls when the output channel is revealed.
@@ -448,7 +433,7 @@ class DefaultErrorHandler implements ErrorHandler {
 		if (this.restarts.length <= this.maxRestartCount) {
 			return { action: CloseAction.Restart };
 		} else {
-			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
+			const diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 3 * 60 * 1000) {
 				return { action: CloseAction.DoNotRestart, message: `The ${this.client.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted. See the output for more information.` };
 			} else {
@@ -476,7 +461,7 @@ export interface MessageTransports {
 
 export namespace MessageTransports {
 	export function is(value: any): value is MessageTransports {
-		let candidate: MessageTransports = value;
+		const candidate: MessageTransports = value;
 		return candidate && MessageReader.is(value.reader) && MessageWriter.is(value.writer);
 	}
 }
@@ -684,9 +669,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private set $state(value: ClientState) {
-		let oldState = this.getPublicState();
+		const oldState = this.getPublicState();
 		this._state = value;
-		let newState = this.getPublicState();
+		const newState = this.getPublicState();
 		if (newState !== oldState) {
 			this._stateChangeEmitter.fire({ oldState, newState });
 		}
@@ -1150,7 +1135,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					default:
 						messageFunc = Window.showInformationMessage;
 				}
-				let actions = params.actions || [];
+				const actions = params.actions || [];
 				return messageFunc(params.message, ...actions);
 			});
 			connection.onNotification(TelemetryEventNotification.type, (data) => {
@@ -1341,11 +1326,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private _clientGetRootPath(): string | undefined {
-		let folders = Workspace.workspaceFolders;
+		const folders = Workspace.workspaceFolders;
 		if (!folders || folders.length === 0) {
 			return undefined;
 		}
-		let folder = folders[0];
+		const folder = folders[0];
 		if (folder.uri.scheme === 'file') {
 			return folder.uri.fsPath;
 		}
@@ -1582,11 +1567,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private async createConnection(): Promise<Connection> {
-		let errorHandler = (error: Error, message: Message | undefined, count: number | undefined) => {
+		const errorHandler = (error: Error, message: Message | undefined, count: number | undefined) => {
 			this.handleConnectionError(error, message, count).catch((error) => this.error(`Handling connection error failed`, error));
 		};
 
-		let closeHandler = () => {
+		const closeHandler = () => {
 			this.handleConnectionClosed().catch((error) => this.error(`Handling connection close failed`, error));
 		};
 
@@ -1679,7 +1664,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 
 	private hookFileEvents(_connection: Connection): void {
-		let fileEvents = this._clientOptions.synchronize.fileEvents;
+		const fileEvents = this._clientOptions.synchronize.fileEvents;
 		if (!fileEvents) {
 			return;
 		}
@@ -1699,7 +1684,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private readonly _dynamicFeatures: Map<string, DynamicFeature<any>> = new Map<string, DynamicFeature<any>>();
 
 	public registerFeatures(features: (StaticFeature | DynamicFeature<any>)[]): void {
-		for (let feature of features) {
+		for (const feature of features) {
 			this.registerFeature(feature);
 		}
 	}
@@ -1831,7 +1816,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	protected fillInitializeParams(params: InitializeParams): void {
-		for (let feature of this._features) {
+		for (const feature of this._features) {
 			if (Is.func(feature.fillInitializeParams)) {
 				feature.fillInitializeParams(params);
 			}
@@ -1880,7 +1865,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			generalCapabilities.markdown.allowedTags = ['ul', 'li', 'p', 'code', 'blockquote', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'em', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'del', 'a', 'strong', 'br', 'img', 'span'];
 		}
 
-		for (let feature of this._features) {
+		for (const feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}
 		return result;
@@ -2246,7 +2231,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 export namespace ProposedFeatures {
 	export function createAll(_client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
-		let result: (StaticFeature | DynamicFeature<any>)[] = [
+		const result: (StaticFeature | DynamicFeature<any>)[] = [
 			new InlineCompletionItemFeature(_client)
 		];
 		return result;

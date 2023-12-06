@@ -36,7 +36,7 @@ export class Delayer<T> {
 			}).then(() => {
 				this.completionPromise = undefined;
 				this.onSuccess = undefined;
-				var result = this.task!();
+				const result = this.task!();
 				this.task = undefined;
 				return result;
 			});
@@ -57,7 +57,7 @@ export class Delayer<T> {
 			return undefined;
 		}
 		this.cancelTimeout();
-		let result: T = this.task!();
+		const result: T = this.task!();
 		this.completionPromise = undefined;
 		this.onSuccess = undefined;
 		this.task = undefined;

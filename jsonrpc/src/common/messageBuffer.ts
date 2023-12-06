@@ -48,7 +48,7 @@ export abstract class AbstractMessageBuffer implements RAL.MessageBuffer {
 		row: while (chunkIndex < this._chunks.length) {
 			const chunk = this._chunks[chunkIndex];
 			offset = 0;
-			column: while (offset < chunk.length) {
+			while (offset < chunk.length) {
 				const value = chunk[offset];
 				switch (value) {
 					case CR:
@@ -150,7 +150,7 @@ export abstract class AbstractMessageBuffer implements RAL.MessageBuffer {
 
 		const result = this.allocNative(byteCount);
 		let resultOffset = 0;
-		let chunkIndex = 0;
+		const chunkIndex = 0;
 		while (byteCount > 0) {
 			const chunk = this._chunks[chunkIndex];
 			if (chunk.byteLength > byteCount) {

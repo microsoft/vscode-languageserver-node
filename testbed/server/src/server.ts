@@ -109,7 +109,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 
 	const workspaceFolders = params.workspaceFolders;
 	if (workspaceFolders !== undefined && workspaceFolders !== null) {
-		for (let folder of workspaceFolders) {
+		for (const folder of workspaceFolders) {
 			connection.console.log(`${folder.name} ${folder.uri}`);
 		}
 		if (workspaceFolders.length > 0) {
@@ -119,7 +119,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 
 	semanticTokensLegend = computeLegend(params.capabilities.textDocument!.semanticTokens!);
 	return new Promise((resolve, reject) => {
-		let result: InitializeResult = {
+		const result: InitializeResult = {
 			capabilities: {
 				textDocumentSync: TextDocumentSyncKind.Full,
 				hoverProvider: true,
@@ -192,7 +192,7 @@ connection.onInitialized((params) => {
 		connection.console.log('Workspace folder changed received');
 	});
 	void connection.workspace.getWorkspaceFolders().then(folders => {
-		for (let folder of folders) {
+		for (const folder of folders) {
 			connection.console.log(`Get workspace folders: ${folder.name} ${folder.uri}`);
 		}
 	});
@@ -476,7 +476,7 @@ connection.onReferences((params): Location[] => {
 });
 
 connection.onDocumentHighlight((textPosition) => {
-	let position = textPosition.position;
+	const position = textPosition.position;
 	return [
 		DocumentHighlight.create({
 			start: { line: position.line + 1, character: position.character },
@@ -594,13 +594,13 @@ connection.onRequest('addTwenty', (param) => {
 	return { value: param.value + 20 };
 });
 
-let not: ProtocolNotificationType<string[], void> = new ProtocolNotificationType<string[], void>('testbed/notification');
+const not: ProtocolNotificationType<string[], void> = new ProtocolNotificationType<string[], void>('testbed/notification');
 connection.onNotification(not, (arr) => {
 	connection.console.log('Is array: ' + Array.isArray(arr));
 });
 
 connection.onRequest(SelectionRangeRequest.type, (params) => {
-	let result: SelectionRange = {
+	const result: SelectionRange = {
 		range: {
 			start: {
 				line: params.positions[0].line,
@@ -637,7 +637,7 @@ connection.languages.callHierarchy.onOutgoingCalls((params) => {
 	return [];
 });
 
-let tokenBuilders: Map<string, SemanticTokensBuilder> = new Map();
+const tokenBuilders: Map<string, SemanticTokensBuilder> = new Map();
 documents.onDidClose((event) => {
 	tokenBuilders.delete(event.document.uri);
 });
