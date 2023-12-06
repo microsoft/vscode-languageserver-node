@@ -2769,6 +2769,16 @@ export interface ClientSignatureInformationOptions {
 	 * @since 3.16.0
 	 */
 	activeParameterSupport?: boolean;
+  
+	/**
+	 * The client supports the `activeParameter` property on
+	 * `SignatureHelp`/`SignatureInformation` being set to `null` to
+	 * indicate that no parameter should be active.
+	 *
+	 * @since 3.18.0
+   * @proposed
+	 */
+	noActiveParameterSupport?: boolean;  
 }
 
 /**
