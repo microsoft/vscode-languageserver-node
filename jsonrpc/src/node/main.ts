@@ -30,7 +30,7 @@ export class IPCMessageReader extends AbstractMessageReader {
 	public constructor(process: NodeJS.Process | ChildProcess) {
 		super();
 		this.process = process;
-		let eventEmitter: NodeJS.EventEmitter = this.process;
+		const eventEmitter: NodeJS.EventEmitter = this.process;
 		eventEmitter.on('error', (error: any) => this.fireError(error));
 		eventEmitter.on('close', () => this.fireClose());
 	}
@@ -203,7 +203,7 @@ export function createClientPipeTransport(pipeName: string, encoding: RAL.Messag
 		connectResolve = resolve;
 	});
 	return new Promise<PipeTransport>((resolve, reject) => {
-		let server: Server = createServer((socket: Socket) => {
+		const server: Server = createServer((socket: Socket) => {
 			server.close();
 			connectResolve([
 				new SocketMessageReader(socket, encoding),

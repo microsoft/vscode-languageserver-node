@@ -38,7 +38,7 @@ export class InlineCompletionItemFeature extends TextDocumentLanguageFeature<boo
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let inlineCompletion = ensure(ensure(capabilities, 'textDocument')!, 'inlineCompletion')!;
+		const inlineCompletion = ensure(ensure(capabilities, 'textDocument')!, 'inlineCompletion')!;
 		inlineCompletion.dynamicRegistration = true;
 	}
 

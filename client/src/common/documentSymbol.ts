@@ -68,7 +68,7 @@ export class DocumentSymbolFeature extends TextDocumentLanguageFeature<boolean |
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let symbolCapabilities = ensure(ensure(capabilities, 'textDocument')!, 'documentSymbol')!;
+		const symbolCapabilities = ensure(ensure(capabilities, 'textDocument')!, 'documentSymbol')!;
 		symbolCapabilities.dynamicRegistration = true;
 		symbolCapabilities.symbolKind = {
 			valueSet: SupportedSymbolKinds

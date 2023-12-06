@@ -304,7 +304,7 @@ suite('Text Document Incremental Updates', () => {
 	});
 
 	test('Basic append', () => {
-		let document = newDocument('foooo\nbar\nbaz');
+		const document = newDocument('foooo\nbar\nbaz');
 
 		assert.equal(document.offsetAt(Positions.create(2, 0)), 10);
 
@@ -316,7 +316,7 @@ suite('Text Document Incremental Updates', () => {
 	});
 
 	test('Multi-line append', () => {
-		let document = newDocument('foooo\nbar\nbaz');
+		const document = newDocument('foooo\nbar\nbaz');
 
 		assert.equal(document.offsetAt(Positions.create(2, 0)), 10);
 
@@ -329,7 +329,7 @@ suite('Text Document Incremental Updates', () => {
 	});
 
 	test('Basic delete', () => {
-		let document = newDocument('foooo\nbar\nbaz');
+		const document = newDocument('foooo\nbar\nbaz');
 
 		assert.equal(document.offsetAt(Positions.create(2, 0)), 10);
 
@@ -341,7 +341,7 @@ suite('Text Document Incremental Updates', () => {
 	});
 
 	test('Multi-line delete', () => {
-		let lm = newDocument('foooo\nbar\nbaz');
+		const lm = newDocument('foooo\nbar\nbaz');
 
 		assert.equal(lm.offsetAt(Positions.create(2, 0)), 10);
 
@@ -353,7 +353,7 @@ suite('Text Document Incremental Updates', () => {
 	});
 
 	test('Single character replace', () => {
-		let document = newDocument('foooo\nbar\nbaz');
+		const document = newDocument('foooo\nbar\nbaz');
 
 		assert.equal(document.offsetAt(Positions.create(2, 0)), 10);
 
@@ -365,7 +365,7 @@ suite('Text Document Incremental Updates', () => {
 	});
 
 	test('Multi-character replace', () => {
-		let lm = newDocument('foo\nbar');
+		const lm = newDocument('foo\nbar');
 
 		assert.equal(lm.offsetAt(Positions.create(1, 0)), 4);
 

@@ -13,17 +13,17 @@ import { spawnSync, fork, ChildProcess, SpawnSyncOptionsWithStringEncoding } fro
  * complete implementation of handling VS Code URIs.
  */
 export function uriToFilePath(uri: string): string | undefined {
-	let parsed = url.parse(uri);
+	const parsed = url.parse(uri);
 	if (parsed.protocol !== 'file:' || !parsed.path) {
 		return undefined;
 	}
-	let segments = parsed.path.split('/');
-	for (var i = 0, len = segments.length; i < len; i++) {
+	const segments = parsed.path.split('/');
+	for (let i = 0, len = segments.length; i < len; i++) {
 		segments[i] = decodeURIComponent(segments[i]);
 	}
 	if (process.platform === 'win32' && segments.length > 1) {
-		let first = segments[0];
-		let second = segments[1];
+		const first = segments[0];
+		const second = segments[1];
 		// Do we have a drive letter and we started with a / which is the
 		// case if the first segement is empty (see split above)
 		if (first.length === 0 && second.length > 1 && second[1] === ':') {
@@ -67,8 +67,8 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 	].join('');
 
 	return new Promise<any>((resolve, reject) => {
-		let env = process.env;
-		let newEnv = Object.create(null);
+		const env = process.env;
+		const newEnv = Object.create(null);
 		Object.keys(env).forEach(key => newEnv[key] = env[key]);
 
 		if (nodePath && fs.existsSync(nodePath) /* see issue 545 */) {
@@ -83,7 +83,7 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 		}
 		newEnv['ELECTRON_RUN_AS_NODE'] = '1';
 		try {
-			let cp: ChildProcess = fork('', [], <any>{
+			const cp: ChildProcess = fork('', [], <any>{
 				cwd: cwd,
 				env: newEnv,
 				execArgv: ['-e', app]
@@ -105,7 +105,7 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
 					}
 				}
 			});
-			let message: Message = {
+			const message: Message = {
 				c: 'rs',
 				a: moduleName
 			};
@@ -137,10 +137,10 @@ export function resolveGlobalNodePath(tracer?: (message: string) => void): strin
 		options.shell = true;
 	}
 
-	let handler = () => {};
+	const handler = () => {};
 	try {
 		process.on('SIGPIPE', handler);
-		let stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], options).stdout;
+		const stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], options).stdout;
 
 		if (!stdout) {
 			if (tracer) {
@@ -148,7 +148,7 @@ export function resolveGlobalNodePath(tracer?: (message: string) => void): strin
 			}
 			return undefined;
 		}
-		let prefix = stdout.trim();
+		const prefix = stdout.trim();
 		if (tracer) {
 			tracer(`'npm config get prefix' value is: ${prefix}`);
 		}
@@ -181,7 +181,7 @@ interface YarnJsonFormat {
  */
 export function resolveGlobalYarnPath(tracer?: (message: string) => void): string | undefined {
 	let yarnCommand = 'yarn';
-	let options: SpawnSyncOptionsWithStringEncoding = {
+	const options: SpawnSyncOptionsWithStringEncoding = {
 		encoding: 'utf8'
 	};
 
@@ -190,12 +190,12 @@ export function resolveGlobalYarnPath(tracer?: (message: string) => void): strin
 		options.shell = true;
 	}
 
-	let handler = () => {};
+	const handler = () => {};
 	try {
 		process.on('SIGPIPE', handler);
-		let results = spawnSync(yarnCommand, ['global', 'dir', '--json'], options);
+		const results = spawnSync(yarnCommand, ['global', 'dir', '--json'], options);
 
-		let stdout = results.stdout;
+		const stdout = results.stdout;
 		if (!stdout) {
 			if (tracer) {
 				tracer(`'yarn global dir' didn't return a value.`);
@@ -205,10 +205,10 @@ export function resolveGlobalYarnPath(tracer?: (message: string) => void): strin
 			}
 			return undefined;
 		}
-		let lines = stdout.trim().split(/\r?\n/);
-		for (let line of lines) {
+		const lines = stdout.trim().split(/\r?\n/);
+		for (const line of lines) {
 			try {
-				let yarn: YarnJsonFormat = JSON.parse(line);
+				const yarn: YarnJsonFormat = JSON.parse(line);
 				if (yarn.type === 'log') {
 					return path.join(yarn.data, 'node_modules');
 				}

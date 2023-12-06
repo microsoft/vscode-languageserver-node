@@ -32,7 +32,7 @@ export class DefinitionFeature extends TextDocumentLanguageFeature<boolean | Def
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let definitionSupport = ensure(ensure(capabilities, 'textDocument')!, 'definition')!;
+		const definitionSupport = ensure(ensure(capabilities, 'textDocument')!, 'definition')!;
 		definitionSupport.dynamicRegistration = true;
 		definitionSupport.linkSupport = true;
 	}

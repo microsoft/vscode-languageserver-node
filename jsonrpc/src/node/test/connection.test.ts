@@ -655,13 +655,13 @@ suite('Connection', () => {
 	});
 
 	test('Uses custom message handler', (done) => {
-		let type = new RequestType<number, number, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
 		const asyncLocalStorage = new AsyncLocalStorage();
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
 			messageStrategy: {
 				handleMessage(message, next) {
 					asyncLocalStorage.run(1, () => next(message));
@@ -673,7 +673,7 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendRequest(type, 0).then((res) => {
 			assert.strictEqual(res, 1);

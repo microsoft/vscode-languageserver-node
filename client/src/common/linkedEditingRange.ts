@@ -33,7 +33,7 @@ export class LinkedEditingFeature extends TextDocumentLanguageFeature<boolean | 
 	}
 
 	public initialize(capabilities: proto.ServerCapabilities, documentSelector: proto.DocumentSelector): void {
-		let [id, options] = this.getRegistration(documentSelector, capabilities.linkedEditingRangeProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.linkedEditingRangeProvider);
 		if (!id || !options) {
 			return;
 		}

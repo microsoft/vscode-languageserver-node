@@ -303,17 +303,17 @@ class _RemoteWindowImpl implements _RemoteWindow, Remote {
 	}
 
 	public showErrorMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
-		let params: ShowMessageRequestParams = { type: MessageType.Error, message, actions };
+		const params: ShowMessageRequestParams = { type: MessageType.Error, message, actions };
 		return this.connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 
 	public showWarningMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
-		let params: ShowMessageRequestParams = { type: MessageType.Warning, message, actions };
+		const params: ShowMessageRequestParams = { type: MessageType.Warning, message, actions };
 		return this.connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 
 	public showInformationMessage(message: string, ...actions: MessageActionItem[]): Promise<MessageActionItem | undefined> {
-		let params: ShowMessageRequestParams = { type: MessageType.Info, message, actions };
+		const params: ShowMessageRequestParams = { type: MessageType.Info, message, actions };
 		return this.connection.sendRequest(ShowMessageRequest.type, params).then(null2Undefined);
 	}
 }
@@ -428,11 +428,11 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 	}
 
 	public dispose(): any {
-		let unregistrations: Unregistration[] = [];
-		for (let unregistration of this._unregistrations.values()) {
+		const unregistrations: Unregistration[] = [];
+		for (const unregistration of this._unregistrations.values()) {
 			unregistrations.push(unregistration);
 		}
-		let params: UnregistrationParams = {
+		const params: UnregistrationParams = {
 			unregisterations: unregistrations
 		};
 		this._connection!.sendRequest(UnregistrationRequest.type, params).catch(() => {
@@ -448,7 +448,7 @@ class BulkUnregistrationImpl implements BulkUnregistration {
 			return false;
 		}
 
-		let params: UnregistrationParams = {
+		const params: UnregistrationParams = {
 			unregisterations: [unregistration]
 		};
 		this._connection!.sendRequest(UnregistrationRequest.type, params).then(() => {
@@ -574,7 +574,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | MethodType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
-		let params: RegistrationParams = {
+		const params: RegistrationParams = {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
 		};
 		if (!unregistration.isAttached) {
@@ -592,7 +592,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 	private registerSingle2(type: string | MethodType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
 		const id = UUID.generateUuid();
-		let params: RegistrationParams = {
+		const params: RegistrationParams = {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
 		};
 		return this.connection.sendRequest(RegistrationRequest.type, params).then((_result) => {
@@ -606,7 +606,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 	}
 
 	private unregisterSingle(id: string, method: string): Promise<void> {
-		let params: UnregistrationParams = {
+		const params: UnregistrationParams = {
 			unregisterations: [{ id, method }]
 		};
 
@@ -616,7 +616,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 	}
 
 	private registerMany(registrations: BulkRegistrationImpl): Promise<BulkUnregistration> {
-		let params = registrations.asRegistrationParams();
+		const params = registrations.asRegistrationParams();
 		return this.connection.sendRequest(RegistrationRequest.type, params).then(() => {
 			return new BulkUnregistrationImpl(this._connection, params.registrations.map(registration => { return { id: registration.id, method: registration.method }; }));
 		}, (_error) => {
@@ -674,7 +674,7 @@ class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 			return value && !!(value as ApplyWorkspaceEditParams).edit;
 		}
 
-		let params: ApplyWorkspaceEditParams = isApplyWorkspaceEditParams(paramOrEdit) ? paramOrEdit : { edit: paramOrEdit };
+		const params: ApplyWorkspaceEditParams = isApplyWorkspaceEditParams(paramOrEdit) ? paramOrEdit : { edit: paramOrEdit };
 		return this.connection.sendRequest(ApplyWorkspaceEditRequest.type, params);
 	}
 }
@@ -1439,7 +1439,7 @@ export function combineFeatures<OConsole, OTracer, OTelemetry, OClient, OWindow,
 			return two;
 		}
 	}
-	let result: Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace, OLanguages & TLanguages, ONotebooks & TNotebooks> = {
+	const result: Features<OConsole & TConsole, OTracer & TTracer, OTelemetry & TTelemetry, OClient & TClient, OWindow & TWindow, OWorkspace & TWorkspace, OLanguages & TLanguages, ONotebooks & TNotebooks> = {
 		__brand: 'features',
 		console: combine(one.console, two.console, combineConsoleFeatures),
 		tracer: combine(one.tracer, two.tracer, combineTracerFeatures),
@@ -1494,7 +1494,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 	let shutdownHandler: RequestHandler0<void, void> | undefined = undefined;
 	let initializeHandler: ServerRequestHandler<InitializeParams, InitializeResult, never, InitializeError> | undefined = undefined;
 	let exitHandler: NotificationHandler0 | undefined = undefined;
-	let protocolConnection: _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks> & ConnectionState = {
+	const protocolConnection: _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks> & ConnectionState = {
 		listen: (): void => connection.listen(),
 
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
@@ -1643,7 +1643,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 
 		dispose: () => connection.dispose()
 	};
-	for (let remote of allRemotes) {
+	for (const remote of allRemotes) {
 		remote.attach(protocolConnection);
 	}
 
@@ -1652,11 +1652,11 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		if (Is.string(params.trace)) {
 			tracer.trace = Trace.fromString(params.trace);
 		}
-		for (let remote of allRemotes) {
+		for (const remote of allRemotes) {
 			remote.initialize(params.capabilities);
 		}
 		if (initializeHandler) {
-			let result = initializeHandler(params, new CancellationTokenSource().token, attachWorkDone(connection, params), undefined);
+			const result = initializeHandler(params, new CancellationTokenSource().token, attachWorkDone(connection, params), undefined);
 			return asPromise(result).then((value) => {
 				if (value instanceof ResponseError) {
 					return value;
@@ -1675,14 +1675,14 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 				} else if (!Is.number(capabilities.textDocumentSync) && !Is.number(capabilities.textDocumentSync.change)) {
 					capabilities.textDocumentSync.change = Is.number(protocolConnection.__textDocumentSync) ? protocolConnection.__textDocumentSync : TextDocumentSyncKind.None;
 				}
-				for (let remote of allRemotes) {
+				for (const remote of allRemotes) {
 					remote.fillServerCapabilities(capabilities);
 				}
 				return result;
 			});
 		} else {
-			let result: InitializeResult = { capabilities: { textDocumentSync: TextDocumentSyncKind.None } };
-			for (let remote of allRemotes) {
+			const result: InitializeResult = { capabilities: { textDocumentSync: TextDocumentSyncKind.None } };
+			for (const remote of allRemotes) {
 				remote.fillServerCapabilities(result.capabilities);
 			}
 			return result;

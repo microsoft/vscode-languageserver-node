@@ -29,13 +29,13 @@ export class TypeDefinitionFeature extends TextDocumentLanguageFeature<boolean |
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		ensure(ensure(capabilities, 'textDocument')!, 'typeDefinition')!.dynamicRegistration = true;
-		let typeDefinitionSupport = ensure(ensure(capabilities, 'textDocument')!, 'typeDefinition')!;
+		const typeDefinitionSupport = ensure(ensure(capabilities, 'textDocument')!, 'typeDefinition')!;
 		typeDefinitionSupport.dynamicRegistration = true;
 		typeDefinitionSupport.linkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let [id, options] = this.getRegistration(documentSelector, capabilities.typeDefinitionProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.typeDefinitionProvider);
 		if (!id || !options) {
 			return;
 		}

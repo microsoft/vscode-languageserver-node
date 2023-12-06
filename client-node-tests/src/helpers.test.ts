@@ -20,14 +20,14 @@ suite('Protocol Helper Tests', () => {
 	}
 
 	test('Position', () => {
-		let position: Position = Position.create(1, 2);
+		const position: Position = Position.create(1, 2);
 		strictEqual(position.line, 1);
 		strictEqual(position.character, 2);
 		ok(Position.is(position));
 	});
 
 	test('Range - start/end', () => {
-		let range: Range = Range.create(Position.create(1, 2), Position.create(8,9));
+		const range: Range = Range.create(Position.create(1, 2), Position.create(8,9));
 		strictEqual(range.start.line, 1);
 		strictEqual(range.start.character, 2);
 		strictEqual(range.end.line, 8);
@@ -36,7 +36,7 @@ suite('Protocol Helper Tests', () => {
 	});
 
 	test('Range - line/character', () => {
-		let range: Range = Range.create(1,2,8,9);
+		const range: Range = Range.create(1,2,8,9);
 		strictEqual(range.start.line, 1);
 		strictEqual(range.start.character, 2);
 		strictEqual(range.end.line, 8);
@@ -45,15 +45,15 @@ suite('Protocol Helper Tests', () => {
 	});
 
 	test('TextDocumentIdentifier', () => {
-		let uri = 'file:///folder/file.txt';
-		let identifier = TextDocumentIdentifier.create(uri);
+		const uri = 'file:///folder/file.txt';
+		const identifier = TextDocumentIdentifier.create(uri);
 		strictEqual(identifier.uri, uri);
 		ok(TextDocumentIdentifier.is(identifier));
 	});
 
 	test('VersionedTextDocumentIdentifier', () => {
-		let uri = 'file:///folder/file.txt';
-		let identifier = VersionedTextDocumentIdentifier.create(uri, 9);
+		const uri = 'file:///folder/file.txt';
+		const identifier = VersionedTextDocumentIdentifier.create(uri, 9);
 		strictEqual(identifier.uri, uri);
 		strictEqual(identifier.version, 9);
 		ok(VersionedTextDocumentIdentifier.is(identifier));
@@ -68,8 +68,8 @@ suite('Protocol Helper Tests', () => {
 	// });
 
 	test('TextDocumentItem', () => {
-		let uri = 'file:///folder/file.txt';
-		let item = TextDocumentItem.create(uri, 'pain-text', 9, 'content');
+		const uri = 'file:///folder/file.txt';
+		const item = TextDocumentItem.create(uri, 'pain-text', 9, 'content');
 		strictEqual(item.uri, uri);
 		strictEqual(item.languageId, 'pain-text');
 		strictEqual(item.version, 9);
@@ -78,7 +78,7 @@ suite('Protocol Helper Tests', () => {
 	});
 
 	test('Diagnostic', () => {
-		let diagnostic = Diagnostic.create(Range.create(1,2,8,9), 'message', DiagnosticSeverity.Warning, 99, 'source');
+		const diagnostic = Diagnostic.create(Range.create(1,2,8,9), 'message', DiagnosticSeverity.Warning, 99, 'source');
 		ok(Range.is(diagnostic.range));
 		strictEqual(diagnostic.message, 'message');
 		strictEqual(diagnostic.severity, DiagnosticSeverity.Warning);
@@ -87,15 +87,15 @@ suite('Protocol Helper Tests', () => {
 	});
 
 	test('Command', () => {
-		let command = Command.create('title', 'command', 'arg');
+		const command = Command.create('title', 'command', 'arg');
 		strictEqual(command.title, 'title');
 		strictEqual(command.command, 'command');
 		strictEqual(command.arguments![0], 'arg');
 	});
 
 	test('CodeLens', () => {
-		let codeLens = CodeLens.create(Range.create(1,2,8,9), 'data');
-		let range = codeLens.range;
+		const codeLens = CodeLens.create(Range.create(1,2,8,9), 'data');
+		const range = codeLens.range;
 		strictEqual(range.start.line, 1);
 		strictEqual(range.start.character, 2);
 		strictEqual(range.end.line, 8);
@@ -104,22 +104,22 @@ suite('Protocol Helper Tests', () => {
 	});
 
 	test('CodeActionContext', () => {
-		let codeActionContext = CodeActionContext.create([Diagnostic.create(Range.create(1, 2, 8, 9), 'message')]);
+		const codeActionContext = CodeActionContext.create([Diagnostic.create(Range.create(1, 2, 8, 9), 'message')]);
 		strictEqual(codeActionContext.diagnostics.length, 1);
 		ok(Diagnostic.is(codeActionContext.diagnostics[0]));
 	});
 
 	test('WorkspaceEdit - documentChanges', () => {
-		let workspaceChange = new WorkspaceChange();
-		let uri = 'file:///abc.txt';
-		let change1 = workspaceChange.getTextEditChange({uri: uri, version: 10});
+		const workspaceChange = new WorkspaceChange();
+		const uri = 'file:///abc.txt';
+		const change1 = workspaceChange.getTextEditChange({uri: uri, version: 10});
 		change1.insert(Position.create(0,1), 'insert');
 		change1.replace(Range.create(0,1,2,3), 'replace');
 		change1.delete(Range.create(0,1,2,3));
-		let change2 = workspaceChange.getTextEditChange({ uri: 'file:///xyz.txt', version: 20 });
+		const change2 = workspaceChange.getTextEditChange({ uri: 'file:///xyz.txt', version: 20 });
 		change2.insert(Position.create(2,3), 'insert');
 
-		let workspaceEdit = workspaceChange.edit;
+		const workspaceEdit = workspaceChange.edit;
 		strictEqual(workspaceEdit.changeAnnotations, undefined);
 		strictEqual(workspaceEdit.documentChanges!.length, 2);
 		let edits = (workspaceEdit.documentChanges![0] as TextDocumentEdit).edits;
@@ -151,16 +151,16 @@ suite('Protocol Helper Tests', () => {
 	});
 
 	test('WorkspaceEdit - changes', () => {
-		let workspaceChange = new WorkspaceChange();
-		let uri = 'file:///abc.txt';
-		let change1 = workspaceChange.getTextEditChange(uri);
+		const workspaceChange = new WorkspaceChange();
+		const uri = 'file:///abc.txt';
+		const change1 = workspaceChange.getTextEditChange(uri);
 		change1.insert(Position.create(0,1), 'insert');
 		change1.replace(Range.create(0,1,2,3), 'replace');
 		change1.delete(Range.create(0,1,2,3));
-		let change2 = workspaceChange.getTextEditChange('file:///xyz.txt');
+		const change2 = workspaceChange.getTextEditChange('file:///xyz.txt');
 		change2.insert(Position.create(2,3), 'insert');
 
-		let workspaceEdit = workspaceChange.edit;
+		const workspaceEdit = workspaceChange.edit;
 		strictEqual(workspaceEdit.changeAnnotations, undefined);
 		strictEqual(Object.keys(workspaceEdit.changes!).length, 2);
 		let edits = workspaceEdit.changes![uri];

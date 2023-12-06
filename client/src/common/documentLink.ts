@@ -72,7 +72,7 @@ export class DocumentLinkFeature extends TextDocumentLanguageFeature<DocumentLin
 			resolveDocumentLink: options.resolveProvider
 				? (link, token) => {
 					const client = this._client;
-					let resolveDocumentLink: ResolveDocumentLinkSignature = (link, token) => {
+					const resolveDocumentLink: ResolveDocumentLinkSignature = (link, token) => {
 						return client.sendRequest(DocumentLinkResolveRequest.type, client.code2ProtocolConverter.asDocumentLink(link), token).then((result) => {
 							if (token.isCancellationRequested) {
 								return link;

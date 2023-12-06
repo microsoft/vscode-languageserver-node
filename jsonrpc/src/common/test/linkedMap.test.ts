@@ -9,7 +9,7 @@ import { LinkedMap, Touch, LRUCache } from '../linkedMap';
 
 suite('Linked Map', () => {
 	test('Simple', () => {
-		let map = new LinkedMap<string, string>();
+		const map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');
 		assert.deepStrictEqual([...map.keys()], ['ak', 'bk']);
@@ -17,7 +17,7 @@ suite('Linked Map', () => {
 	});
 
 	test('Touch First one', () => {
-		let map = new LinkedMap<string, string>();
+		const map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('ak', 'av', Touch.First);
 		assert.deepStrictEqual([...map.keys()], ['ak']);
@@ -25,7 +25,7 @@ suite('Linked Map', () => {
 	});
 
 	test('Touch Last one', () => {
-		let map = new LinkedMap<string, string>();
+		const map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('ak', 'av', Touch.Last);
 		assert.deepStrictEqual([...map.keys()], ['ak']);
@@ -33,7 +33,7 @@ suite('Linked Map', () => {
 	});
 
 	test('Touch First two', () => {
-		let map = new LinkedMap<string, string>();
+		const map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');
 		map.set('bk', 'bv', Touch.First);
@@ -42,7 +42,7 @@ suite('Linked Map', () => {
 	});
 
 	test('Touch Last two', () => {
-		let map = new LinkedMap<string, string>();
+		const map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');
 		map.set('ak', 'av', Touch.Last);
@@ -51,7 +51,7 @@ suite('Linked Map', () => {
 	});
 
 	test('Touch Frist from middle', () => {
-		let map = new LinkedMap<string, string>();
+		const map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');
 		map.set('ck', 'cv');
@@ -61,7 +61,7 @@ suite('Linked Map', () => {
 	});
 
 	test('Touch Last from middle', () => {
-		let map = new LinkedMap<string, string>();
+		const map = new LinkedMap<string, string>();
 		map.set('ak', 'av');
 		map.set('bk', 'bv');
 		map.set('ck', 'cv');
@@ -136,7 +136,7 @@ suite('Linked Map', () => {
 		cache.set(7, 7);
 		assert.strictEqual(cache.size, 5);
 		assert.deepStrictEqual([...cache.keys()], [3, 4, 5, 6, 7]);
-		let values: number[] = [];
+		const values: number[] = [];
 		[3, 4, 5, 6, 7].forEach(key => values.push(cache.get(key)!));
 		assert.deepStrictEqual(values, [3, 4, 5, 6, 7]);
 	});
@@ -151,7 +151,7 @@ suite('Linked Map', () => {
 		assert.deepStrictEqual([...cache.keys()], [1, 2, 4, 5, 3]);
 		cache.peek(4);
 		assert.deepStrictEqual([...cache.keys()], [1, 2, 4, 5, 3]);
-		let values: number[] = [];
+		const values: number[] = [];
 		[1, 2, 3, 4, 5].forEach(key => values.push(cache.get(key)!));
 		assert.deepStrictEqual(values, [1, 2, 3, 4, 5]);
 	});
@@ -172,7 +172,7 @@ suite('Linked Map', () => {
 			cache.set(i, i);
 		}
 		assert.deepEqual(cache.size, 15);
-		let values: number[] = [];
+		const values: number[] = [];
 		for (let i = 6; i <= 20; i++) {
 			values.push(cache.get(i)!);
 			assert.strictEqual(cache.get(i), i);
@@ -190,7 +190,7 @@ suite('Linked Map', () => {
 		cache.set(11, 11);
 		assert.strictEqual(cache.size, 5);
 		assert.deepStrictEqual([...cache.keys()], [7, 8, 9, 10, 11]);
-		let values: number[] = [];
+		const values: number[] = [];
 		[...cache.keys()].forEach(key => values.push(cache.get(key)!));
 		assert.deepStrictEqual(values, [7, 8, 9, 10, 11]);
 		assert.deepStrictEqual([...cache.values()], values);

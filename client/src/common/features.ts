@@ -507,14 +507,14 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
-		let registration = this.registerLanguageProvider(data.registerOptions, data.id);
+		const registration = this.registerLanguageProvider(data.registerOptions, data.id);
 		this._registrations.set(data.id, { disposable: registration[0], data, provider: registration[1] });
 	}
 
 	protected abstract registerLanguageProvider(options: RO, id: string): [Disposable, PR];
 
 	public unregister(id: string): void {
-		let registration = this._registrations.get(id);
+		const registration = this._registrations.get(id);
 		if (registration !== undefined) {
 			registration.disposable.dispose();
 		}
@@ -555,7 +555,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 
 	public getProvider(textDocument: TextDocument): PR | undefined {
 		for (const registration of this._registrations.values()) {
-			let selector = registration.data.registerOptions.documentSelector;
+			const selector = registration.data.registerOptions.documentSelector;
 			if (selector !== null && Languages.match(this._client.protocol2CodeConverter.asDocumentSelector(selector), textDocument) > 0) {
 				return registration.provider;
 			}
@@ -614,7 +614,7 @@ export abstract class WorkspaceFeature<RO, PR, M> implements DynamicFeature<RO> 
 	protected abstract registerLanguageProvider(options: RO): [Disposable, PR];
 
 	public unregister(id: string): void {
-		let registration = this._registrations.get(id);
+		const registration = this._registrations.get(id);
 		if (registration !== undefined) {
 			registration.disposable.dispose();
 		}

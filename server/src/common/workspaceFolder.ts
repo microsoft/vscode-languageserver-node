@@ -28,7 +28,7 @@ export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders
 		}
 		public initialize(capabilities: ClientCapabilities): void {
 			super.initialize(capabilities);
-			let workspaceCapabilities = capabilities.workspace;
+			const workspaceCapabilities = capabilities.workspace;
 			if (workspaceCapabilities && workspaceCapabilities.workspaceFolders) {
 				this._onDidChangeWorkspaceFolders = new Emitter<WorkspaceFoldersChangeEvent>();
 				this.connection.onNotification(DidChangeWorkspaceFoldersNotification.type, (params) => {

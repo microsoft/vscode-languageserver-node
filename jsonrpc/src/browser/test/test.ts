@@ -93,7 +93,6 @@ suite('Browser IPC Reader / Writer', () => {
 	});
 
 	test('Cancellation via SharedArrayBuffer', async () => {
-		debugger;
 		const worker = new Worker('/jsonrpc/dist/cancelWorker.js');
 		const reader = new BrowserMessageReader(worker);
 		const writer = new BrowserMessageWriter(worker);
