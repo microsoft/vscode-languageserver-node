@@ -1814,7 +1814,7 @@ export interface TextDocumentItem {
 	/**
 	 * The text document's language identifier.
 	 */
-	languageId: string;
+	languageId: LanguageKind;
 
 	/**
 	 * The version number of this document (it will increase after each
@@ -1829,6 +1829,73 @@ export interface TextDocumentItem {
 }
 
 /**
+ * Predefined Language kinds
+ * @since 3.18.0
+ * @proposed
+ */
+export namespace LanguageKind {
+	export const ABAP = 'abap' as const;
+	export const WindowsBat	= 'bat' as const;
+	export const BibTeX	= 'bibtex' as const;
+	export const Clojure = 'clojure' as const;
+	export const Coffeescript = 'coffeescript' as const;
+	export const C = 'c' as const;
+	export const CPP = 'cpp' as const;
+	export const CSharp	= 'csharp' as const;
+	export const CSS = 'css' as const;
+	export const Diff = 'diff' as const;
+	export const Dart = 'dart' as const;
+	export const Dockerfile	= 'dockerfile' as const;
+	export const Elixir	= 'elixir' as const;
+	export const Erlang	= 'erlang' as const;
+	export const FSharp	= 'fsharp' as const;
+	export const GitCommit = 'git-commit' as const;
+	export const GitRebase = 'rebase' as const;
+	export const Go	= 'go' as const;
+	export const Groovy	= 'groovy' as const;
+	export const Handlebars	= 'handlebars' as const;
+	export const HTML = 'html' as const;
+	export const Ini = 'ini' as const;
+	export const Java = 'java' as const;
+	export const JavaScript	= 'javascript' as const;
+	export const JavaScriptReact = 'javascriptreact' as const;
+	export const JSON = 'json' as const;
+	export const LaTeX = 'latex' as const;
+	export const Less = 'less' as const;
+	export const Lua = 'lua' as const;
+	export const Makefile = 'makefile' as const;
+	export const Markdown = 'markdown' as const;
+	export const ObjectiveC	= 'objective-c' as const;
+	export const ObjectiveCPP = 'objective-cpp' as const;
+	export const Perl = 'perl' as const;
+	export const Perl6 = 'perl6' as const;
+	export const PHP = 'php' as const;
+	export const Powershell	= 'powershell' as const;
+	export const Pug = 'jade' as const;
+	export const Python	= 'python' as const;
+	export const R	= 'r' as const;
+	export const Razor = 'razor' as const;
+	export const Ruby = 'ruby' as const;
+	export const Rust = 'rust' as const;
+	export const SCSS = 'scss' as const;
+	export const SASS = 'sass' as const;
+	export const Scala = 'scala' as const;
+	export const ShaderLab = 'shaderlab' as const;
+	export const ShellScript = 'shellscript' as const;
+	export const SQL = 'sql' as const;
+	export const Swift = 'swift' as const;
+	export const TypeScript	= 'typescript' as const;
+	export const TypeScriptReact = 'typescriptreact' as const;
+	export const TeX = 'tex' as const;
+	export const VisualBasic = 'vb' as const;
+	export const XML = 'xml' as const;
+	export const XSL = 'xsl' as const;
+	export const YAML = 'yaml' as const;
+}
+export type LanguageKind = string;
+
+
+/**
  * The TextDocumentItem namespace provides helper functions to work with
  * {@link TextDocumentItem} literals.
  */
@@ -1840,7 +1907,7 @@ export namespace TextDocumentItem {
 	 * @param version The document's version number.
 	 * @param text The document's text.
 	 */
-	export function create(uri: DocumentUri, languageId: string, version: integer, text: string): TextDocumentItem {
+	export function create(uri: DocumentUri, languageId: LanguageKind, version: integer, text: string): TextDocumentItem {
 		return { uri, languageId, version, text };
 	}
 
@@ -4368,7 +4435,7 @@ export interface TextDocument {
 	 *
 	 * @readonly
 	 */
-	readonly languageId: string;
+	readonly languageId: LanguageKind;
 
 	/**
 	 * The version number of this document (it will increase after each
@@ -4431,7 +4498,7 @@ export namespace TextDocument {
 	 * @param version The document's version.
 	 * @param content The document's content.
 	 */
-	export function create(uri: DocumentUri, languageId: string, version: integer, content: string): TextDocument {
+	export function create(uri: DocumentUri, languageId: LanguageKind, version: integer, content: string): TextDocument {
 		return new FullTextDocument(uri, languageId, version, content);
 	}
 	/**
@@ -4538,12 +4605,12 @@ type TextDocumentContentChangeEvent = {
 class FullTextDocument implements TextDocument {
 
 	private _uri: DocumentUri;
-	private _languageId: string;
+	private _languageId: LanguageKind;
 	private _version: integer;
 	private _content: string;
 	private _lineOffsets: uinteger[] | undefined;
 
-	public constructor(uri: DocumentUri, languageId: string, version: integer, content: string) {
+	public constructor(uri: DocumentUri, languageId: LanguageKind, version: integer, content: string) {
 		this._uri = uri;
 		this._languageId = languageId;
 		this._version = version;
