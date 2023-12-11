@@ -7,7 +7,7 @@ import {
 	NotificationHandler, DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
 	WillSaveTextDocumentParams, RequestHandler, TextEdit, DidSaveTextDocumentParams, DocumentUri,
 	TextDocumentContentChangeEvent, TextDocumentSaveReason, Emitter, Event, TextDocumentSyncKind,
-	CancellationToken, Disposable
+	CancellationToken, Disposable, LanguageKind
 } from 'vscode-languageserver-protocol';
 
 /**
@@ -27,7 +27,7 @@ export interface ConnectionState {
 }
 
 export interface TextDocumentsConfiguration<T extends { uri: DocumentUri }> {
-	create(uri: DocumentUri, languageId: string, version: number, content: string): T;
+	create(uri: DocumentUri, languageId: LanguageKind, version: number, content: string): T;
 	update(document: T, changes: TextDocumentContentChangeEvent[], version: number): T;
 }
 
