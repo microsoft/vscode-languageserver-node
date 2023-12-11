@@ -837,6 +837,17 @@ export interface WindowClientCapabilities {
 }
 
 /**
+ * Regular Expression Engines
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export namespace RegularExpressionEngineKind {
+	export const ES2020 = 'ES2020' as const;
+}
+export type RegularExpressionEngineKind = string;
+
+/**
  * Client capabilities specific to regular expressions.
  *
  * @since 3.16.0
@@ -845,7 +856,7 @@ export interface RegularExpressionsClientCapabilities {
 	/**
 	 * The engine's name.
 	 */
-	engine: string;
+	engine: RegularExpressionEngineKind;
 
 	/**
 	 * The engine's version.
