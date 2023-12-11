@@ -516,6 +516,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 	public unregister(id: string): void {
 		const registration = this._registrations.get(id);
 		if (registration !== undefined) {
+			this._registrations.delete(id);
 			registration.disposable.dispose();
 		}
 	}
@@ -616,6 +617,7 @@ export abstract class WorkspaceFeature<RO, PR, M> implements DynamicFeature<RO> 
 	public unregister(id: string): void {
 		const registration = this._registrations.get(id);
 		if (registration !== undefined) {
+			this._registrations.delete(id);
 			registration.disposable.dispose();
 		}
 	}

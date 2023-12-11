@@ -106,6 +106,7 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 	public unregister(id: string): void {
 		const disposables = this._watchers.get(id);
 		if (disposables) {
+			this._watchers.delete(id);
 			for (const disposable of disposables) {
 				disposable.dispose();
 			}

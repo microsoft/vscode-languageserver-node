@@ -961,7 +961,10 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 
 	public unregister(id: string): void {
 		const provider = this.registrations.get(id);
-		provider && provider.dispose();
+		if (provider !== undefined) {
+			this.registrations.delete(id);
+			provider.dispose();
+		}
 	}
 
 	public clear(): void {
