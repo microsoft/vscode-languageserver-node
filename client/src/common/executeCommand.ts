@@ -88,6 +88,7 @@ export class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegis
 	public unregister(id: string): void {
 		const disposables = this._commands.get(id);
 		if (disposables) {
+			this._commands.delete(id);
 			disposables.forEach(disposable => disposable.dispose());
 		}
 	}
