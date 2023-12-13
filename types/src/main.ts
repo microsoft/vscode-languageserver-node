@@ -1843,6 +1843,16 @@ export namespace LanguageKind {
 	export const CPP = 'cpp' as const;
 	export const CSharp	= 'csharp' as const;
 	export const CSS = 'css' as const;
+	/**
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	export const D = 'd' as const;
+	/**
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	export const Delphi = 'pascal' as const;
 	export const Diff = 'diff' as const;
 	export const Dart = 'dart' as const;
 	export const Dockerfile	= 'dockerfile' as const;
@@ -1867,6 +1877,11 @@ export namespace LanguageKind {
 	export const Markdown = 'markdown' as const;
 	export const ObjectiveC	= 'objective-c' as const;
 	export const ObjectiveCPP = 'objective-cpp' as const;
+	/**
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	export const Pascal = 'pascal' as const;
 	export const Perl = 'perl' as const;
 	export const Perl6 = 'perl6' as const;
 	export const PHP = 'php' as const;
