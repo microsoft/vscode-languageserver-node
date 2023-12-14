@@ -87,7 +87,7 @@ suite('Async Array', () => {
 	});
 
 	test('map', async() => {
-		const ranges: proto.Range[] = new Array(10000);
+		const ranges: proto.Range[] = new Array(20000);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
@@ -123,7 +123,7 @@ suite('Async Array', () => {
 	}).timeout(5000);
 
 	test('forEach', async() => {
-		const ranges: proto.Range[] = new Array(7500);
+		const ranges: proto.Range[] = new Array(20000);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i + 1, 0, i + 2, 1);
 		}
@@ -134,7 +134,7 @@ suite('Async Array', () => {
 			sum += codeRange.start.line;
 		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
 		ok(yielded > 0);
-		strictEqual(sum, 28128750);
+		strictEqual(sum, 200010000);
 	}).timeout(5000);
 });
 
@@ -1149,14 +1149,16 @@ suite('Protocol Converter', () => {
 
 	test('Command', async () => {
 		const command = proto.Command.create('title', 'commandId');
+		command.tooltip = 'tooltip';
 		command.arguments = ['args'];
 
 		const result = p2c.asCommand(command);
 		strictEqual(result.title, command.title);
+		strictEqual(result.tooltip, command.tooltip);
 		strictEqual(result.command, command.command);
 		strictEqual(result.arguments, command.arguments);
 
-		ok((await p2c.asCommands([command])).every(elem => !!elem.title && !!elem.command));
+		ok((await p2c.asCommands([command])).every(elem => !!elem.title && !!elem.tooltip && !!elem.command));
 		strictEqual(await p2c.asCommands(undefined), undefined);
 		strictEqual(await p2c.asCommands(null), undefined);
 		deepEqual(await p2c.asCommands([]), []);

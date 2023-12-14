@@ -835,6 +835,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asCommand(item: code.Command): proto.Command {
 		const result = proto.Command.create(item.title, item.command);
+		if (item.tooltip) { result.tooltip = item.tooltip; }
 		if (item.arguments) { result.arguments = item.arguments; }
 		return result;
 	}

@@ -791,7 +791,6 @@ export namespace Diagnostic {
 	}
 }
 
-
 /**
  * Represents a reference to a command. Provides a title which
  * will be used to represent a command in the UI and, optionally,
@@ -803,10 +802,20 @@ export interface Command {
 	 * Title of the command, like `save`.
 	 */
 	title: string;
+
+	/**
+	 * An optional tooltip.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	tooltip?: string;
+
 	/**
 	 * The identifier of the actual command handler.
 	 */
 	command: string;
+
 	/**
 	 * Arguments that the command handler should be
 	 * invoked with.
@@ -835,7 +844,7 @@ export namespace Command {
 	 */
 	export function is(value: any): value is Command {
 		const candidate = value as Command;
-		return Is.defined(candidate) && Is.string(candidate.title) && Is.string(candidate.command);
+		return Is.defined(candidate) && Is.string(candidate.title) && (candidate.tooltip === undefined || Is.string(candidate.tooltip)) && Is.string(candidate.command);
 	}
 }
 

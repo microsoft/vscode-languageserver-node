@@ -142,6 +142,10 @@ export interface Converter {
 	asCodeActionKinds(items: ls.CodeActionKind[]): code.CodeActionKind[];
 	asCodeActionKinds(item: ls.CodeActionKind[] | null | undefined): code.CodeActionKind[] | undefined;
 
+	asCodeActionDocumentations(items: null | undefined): undefined;
+	asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[]): code.CodeActionProviderMetadata['documentation'];
+	asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[] | null | undefined): code.CodeActionProviderMetadata['documentation'] | undefined;
+
 	asCodeActionResult(items: (ls.Command | ls.CodeAction)[], token?: code.CancellationToken): Promise<(code.Command | code.CodeAction)[]>;
 
 	asCodeLens(item: ls.CodeLens): code.CodeLens;
@@ -932,6 +936,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 
 	function asCommand(item: ls.Command): code.Command {
 		const result: code.Command = { title: item.title, command: item.command };
+		if (item.tooltip) { result.tooltip = item.tooltip; }
 		if (item.arguments) { result.arguments = item.arguments; }
 		return result;
 	}
@@ -983,6 +988,16 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			return undefined;
 		}
 		return items.map(kind => asCodeActionKind(kind));
+	}
+
+	function asCodeActionDocumentations(items: null | undefined): undefined;
+	function asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[]): code.CodeActionProviderMetadata['documentation'];
+	function asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[] | null | undefined): code.CodeActionProviderMetadata['documentation'] | undefined;
+	function asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[] | null | undefined): code.CodeActionProviderMetadata['documentation'] | undefined {
+		if (items === undefined || items === null) {
+			return undefined;
+		}
+		return items.map(doc => ({ kind: asCodeActionKind(doc.kind), command: asCommand(doc.command) }));
 	}
 
 	function asCodeAction(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
@@ -1504,6 +1519,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asCodeAction,
 		asCodeActionKind,
 		asCodeActionKinds,
+		asCodeActionDocumentations,
 		asCodeActionResult,
 		asCodeLens,
 		asCodeLenses,
