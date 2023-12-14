@@ -196,7 +196,7 @@ export enum Trace {
 	Off, Messages, Compact, Verbose
 }
 
-export namespace TraceValues {
+export namespace TraceValue {
 	/**
 	 * Turn tracing off.
 	 */
@@ -217,7 +217,13 @@ export namespace TraceValues {
 	 */
 	export const Verbose: 'verbose' = 'verbose';
 }
-export type TraceValues = 'off' | 'messages' | 'compact' | 'verbose';
+export type TraceValue = 'off' | 'messages' | 'compact' | 'verbose';
+
+/**
+ * @deprecated Use TraceValue instead
+ */
+export const TraceValues = TraceValue;
+export type TraceValues = TraceValue;
 
 export namespace Trace {
 	export function fromString(value: string): Trace {
@@ -239,7 +245,7 @@ export namespace Trace {
 		}
 	}
 
-	export function toString(value: Trace): TraceValues {
+	export function toString(value: Trace): TraceValue {
 		switch (value) {
 			case Trace.Off:
 				return 'off';
@@ -279,7 +285,7 @@ export interface TraceOptions {
 }
 
 export interface SetTraceParams {
-	value: TraceValues;
+	value: TraceValue;
 }
 
 export namespace SetTraceNotification {

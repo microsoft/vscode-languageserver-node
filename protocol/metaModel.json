@@ -6318,7 +6318,7 @@
 					"name": "value",
 					"type": {
 						"kind": "reference",
-						"name": "TraceValues"
+						"name": "TraceValue"
 					}
 				}
 			]
@@ -7571,8 +7571,8 @@
 				{
 					"name": "languageId",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "LanguageKind"
 					},
 					"documentation": "The text document's language identifier."
 				},
@@ -12890,8 +12890,8 @@
 				{
 					"name": "engine",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "RegularExpressionEngineKind"
 					},
 					"documentation": "The engine's name."
 				},
@@ -14337,7 +14337,7 @@
 			"documentation": "A set of predefined code action kinds"
 		},
 		{
-			"name": "TraceValues",
+			"name": "TraceValue",
 			"type": {
 				"kind": "base",
 				"name": "string"
@@ -14379,6 +14379,268 @@
 				}
 			],
 			"documentation": "Describes the content type that a client supports in various\nresult literals like `Hover`, `ParameterInfo` or `CompletionItem`.\n\nPlease note that `MarkupKinds` must not start with a `$`. This kinds\nare reserved for internal usage."
+		},
+		{
+			"name": "LanguageKind",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "ABAP",
+					"value": "abap"
+				},
+				{
+					"name": "WindowsBat",
+					"value": "bat"
+				},
+				{
+					"name": "BibTeX",
+					"value": "bibtex"
+				},
+				{
+					"name": "Clojure",
+					"value": "clojure"
+				},
+				{
+					"name": "Coffeescript",
+					"value": "coffeescript"
+				},
+				{
+					"name": "C",
+					"value": "c"
+				},
+				{
+					"name": "CPP",
+					"value": "cpp"
+				},
+				{
+					"name": "CSharp",
+					"value": "csharp"
+				},
+				{
+					"name": "CSS",
+					"value": "css"
+				},
+				{
+					"name": "D",
+					"value": "d",
+					"documentation": "@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
+				},
+				{
+					"name": "Delphi",
+					"value": "pascal",
+					"documentation": "@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
+				},
+				{
+					"name": "Diff",
+					"value": "diff"
+				},
+				{
+					"name": "Dart",
+					"value": "dart"
+				},
+				{
+					"name": "Dockerfile",
+					"value": "dockerfile"
+				},
+				{
+					"name": "Elixir",
+					"value": "elixir"
+				},
+				{
+					"name": "Erlang",
+					"value": "erlang"
+				},
+				{
+					"name": "FSharp",
+					"value": "fsharp"
+				},
+				{
+					"name": "GitCommit",
+					"value": "git-commit"
+				},
+				{
+					"name": "GitRebase",
+					"value": "rebase"
+				},
+				{
+					"name": "Go",
+					"value": "go"
+				},
+				{
+					"name": "Groovy",
+					"value": "groovy"
+				},
+				{
+					"name": "Handlebars",
+					"value": "handlebars"
+				},
+				{
+					"name": "HTML",
+					"value": "html"
+				},
+				{
+					"name": "Ini",
+					"value": "ini"
+				},
+				{
+					"name": "Java",
+					"value": "java"
+				},
+				{
+					"name": "JavaScript",
+					"value": "javascript"
+				},
+				{
+					"name": "JavaScriptReact",
+					"value": "javascriptreact"
+				},
+				{
+					"name": "JSON",
+					"value": "json"
+				},
+				{
+					"name": "LaTeX",
+					"value": "latex"
+				},
+				{
+					"name": "Less",
+					"value": "less"
+				},
+				{
+					"name": "Lua",
+					"value": "lua"
+				},
+				{
+					"name": "Makefile",
+					"value": "makefile"
+				},
+				{
+					"name": "Markdown",
+					"value": "markdown"
+				},
+				{
+					"name": "ObjectiveC",
+					"value": "objective-c"
+				},
+				{
+					"name": "ObjectiveCPP",
+					"value": "objective-cpp"
+				},
+				{
+					"name": "Pascal",
+					"value": "pascal",
+					"documentation": "@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
+				},
+				{
+					"name": "Perl",
+					"value": "perl"
+				},
+				{
+					"name": "Perl6",
+					"value": "perl6"
+				},
+				{
+					"name": "PHP",
+					"value": "php"
+				},
+				{
+					"name": "Powershell",
+					"value": "powershell"
+				},
+				{
+					"name": "Pug",
+					"value": "jade"
+				},
+				{
+					"name": "Python",
+					"value": "python"
+				},
+				{
+					"name": "R",
+					"value": "r"
+				},
+				{
+					"name": "Razor",
+					"value": "razor"
+				},
+				{
+					"name": "Ruby",
+					"value": "ruby"
+				},
+				{
+					"name": "Rust",
+					"value": "rust"
+				},
+				{
+					"name": "SCSS",
+					"value": "scss"
+				},
+				{
+					"name": "SASS",
+					"value": "sass"
+				},
+				{
+					"name": "Scala",
+					"value": "scala"
+				},
+				{
+					"name": "ShaderLab",
+					"value": "shaderlab"
+				},
+				{
+					"name": "ShellScript",
+					"value": "shellscript"
+				},
+				{
+					"name": "SQL",
+					"value": "sql"
+				},
+				{
+					"name": "Swift",
+					"value": "swift"
+				},
+				{
+					"name": "TypeScript",
+					"value": "typescript"
+				},
+				{
+					"name": "TypeScriptReact",
+					"value": "typescriptreact"
+				},
+				{
+					"name": "TeX",
+					"value": "tex"
+				},
+				{
+					"name": "VisualBasic",
+					"value": "vb"
+				},
+				{
+					"name": "XML",
+					"value": "xml"
+				},
+				{
+					"name": "XSL",
+					"value": "xsl"
+				},
+				{
+					"name": "YAML",
+					"value": "yaml"
+				}
+			],
+			"supportsCustomValues": true,
+			"documentation": "Predefined Language kinds\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "InlineCompletionTriggerKind",
@@ -15089,6 +15351,13 @@
 			},
 			"documentation": "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:\n- `*` to match one or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@since 3.17.0",
 			"since": "3.17.0"
+		},
+		{
+			"name": "RegularExpressionEngineKind",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			}
 		}
 	]
 }

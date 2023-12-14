@@ -166,6 +166,9 @@ export default class Visitor {
 	private readonly typeAliases: TypeAlias[];
 	private readonly symbolQueue: Map<string, ts.Symbol>;
 	private readonly processedStructures: Map<string, ts.Symbol>;
+	private readonly filter: Map<string, (symbol: ts.Symbol) => boolean> = new Map([
+		['TraceValues', Symbols.isTypeAlias]
+	]);
 
 	constructor(program: ts.Program) {
 		this.program = program;
@@ -178,6 +181,7 @@ export default class Visitor {
 		this.typeAliases = [];
 		this.symbolQueue = new Map();
 		this.processedStructures = new Map();
+
 	}
 
 	protected get currentSourceFile(): ts.SourceFile {
@@ -196,19 +200,21 @@ export default class Visitor {
 	public async endVisitProgram(): Promise<void> {
 		while (this.symbolQueue.size > 0) {
 			const toProcess = new Map(this.symbolQueue);
-			for (const entry of toProcess) {
-				const element = this.processSymbol(entry[0], entry[1]);
-				if (element === undefined) {
-					throw new Error(`Can't create structure for type ${entry[0]}`);
-				} else if (Array.isArray((element as Structure).properties)) {
-					this.structures.push(element as Structure);
-				} else if (Array.isArray((element as Enumeration).values)) {
-					this.enumerations.push(element as Enumeration);
-				} else {
-					this.typeAliases.push(element as TypeAlias);
+			for (const [name, symbol] of toProcess) {
+				if (!(this.filter.has(name) && this.filter.get(name)!(symbol))) {
+					const element = this.processSymbol(name, symbol);
+					if (element === undefined) {
+						throw new Error(`Can't create structure for type ${name}`);
+					} else if (Array.isArray((element as Structure).properties)) {
+						this.structures.push(element as Structure);
+					} else if (Array.isArray((element as Enumeration).values)) {
+						this.enumerations.push(element as Enumeration);
+					} else {
+						this.typeAliases.push(element as TypeAlias);
+					}
 				}
-				this.symbolQueue.delete(entry[0]);
-				this.processedStructures.set(entry[0], entry[1]);
+				this.symbolQueue.delete(name);
+				this.processedStructures.set(name, symbol);
 			}
 		}
 	}
@@ -773,7 +779,7 @@ export default class Visitor {
 
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
 	private static readonly PropertyFilters: Map<string, Set<string>> = new Map([
-		['TraceValues', new Set(['Compact'])],
+		['TraceValue', new Set(['Compact'])],
 		['ErrorCodes', new Set(['jsonrpcReservedErrorRangeStart', 'serverErrorStart', 'MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive', 'jsonrpcReservedErrorRangeEnd', 'serverErrorEnd'])],
 		['LSPErrorCodes', new Set(['lspReservedErrorRangeStart', 'lspReservedErrorRangeEnd'])]
 	]);
