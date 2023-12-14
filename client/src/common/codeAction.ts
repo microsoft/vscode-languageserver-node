@@ -5,7 +5,7 @@
 
 import {
 	languages as Languages, Disposable, TextDocument, ProviderResult, Range as VRange, Command as VCommand, CodeAction as VCodeAction,
-	CodeActionContext as VCodeActionContext, CodeActionProvider
+	CodeActionContext as VCodeActionContext, CodeActionProvider, CodeActionProviderMetadata
 } from 'vscode';
 
 import {
@@ -60,6 +60,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 			}
 		};
 		cap.honorsChangeAnnotations = true;
+		cap.documentationSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
@@ -115,9 +116,16 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 				}
 				: undefined
 		};
-		return [Languages.registerCodeActionsProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider,
-			(options.codeActionKinds
-				? { providedCodeActionKinds: this._client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds) }
-				: undefined)), provider];
+		return [Languages.registerCodeActionsProvider(this._client.protocol2CodeConverter.asDocumentSelector(selector), provider, this.getMetadata(options)), provider];
+	}
+
+	private getMetadata(options: CodeActionRegistrationOptions): CodeActionProviderMetadata | undefined {
+		if (options.codeActionKinds === undefined && options.documentation === undefined) {
+			return undefined;
+		}
+		return {
+			providedCodeActionKinds: this._client.protocol2CodeConverter.asCodeActionKinds(options.codeActionKinds),
+			documentation: this._client.protocol2CodeConverter.asCodeActionDocumentations(options.documentation)
+		};
 	}
 }
