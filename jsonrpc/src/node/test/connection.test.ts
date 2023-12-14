@@ -627,6 +627,34 @@ suite('Connection', () => {
 		source.cancel();
 	});
 
+	test('Already cancelled token', (done) => {
+		const type = new hostConnection.RequestType0<void, void>('cancelTest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		function delay(ms: number) {
+			return new Promise(resolve => setTimeout(resolve, ms));
+		}
+
+		const source = new CancellationTokenSource();
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, async t => {
+
+			while (!t.isCancellationRequested) {
+				// regular cancellation requires async for it to work
+				await delay(0);
+			}
+
+			done();
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		source.cancel();
+		void client.sendRequest(type, source.token);
+	});
+
 	test('Custom Cancellation', (done) => {
 		const type = new hostConnection.RequestType0<void, void>('cancelTest');
 		const duplexStream1 = new TestDuplex('ds1');
