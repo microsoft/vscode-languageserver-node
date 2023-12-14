@@ -1360,6 +1360,17 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			throwIfClosedOrDisposed();
 			throwIfNotListening();
 
+			function sendCancellation(connection: MessageConnection, id: CancellationId): void {
+				const p = cancellationStrategy.sender.sendCancellation(connection, id);
+				if (p === undefined) {
+					logger.log(`Received no promise from cancellation strategy when cancelling id ${id}`);
+				} else {
+					p.catch(() => {
+						logger.log(`Sending cancellation messages for id ${id} failed.`);
+					});
+				}
+			}
+
 			let method: string;
 			let messageParams: object | [] | undefined;
 			let token: CancellationToken | undefined = undefined;
@@ -1403,18 +1414,15 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 			const id = sequenceNumber++;
 			let disposable: Disposable;
-			if (token) {
-				disposable = token.onCancellationRequested(() => {
-					const p = cancellationStrategy.sender.sendCancellation(connection, id);
-					if (p === undefined) {
-						logger.log(`Received no promise from cancellation strategy when cancelling id ${id}`);
-						return Promise.resolve();
-					} else {
-						return p.catch(() => {
-							logger.log(`Sending cancellation messages for id ${id} failed`);
-						});
-					}
-				});
+			let tokenWasCancelled = false;
+			if (token !== undefined) {
+				if (token.isCancellationRequested) {
+					tokenWasCancelled = true;
+				} else {
+					disposable = token.onCancellationRequested(() => {
+						sendCancellation(connection, id);
+					});
+				}
 			}
 
 			const requestMessage: RequestMessage = {
@@ -1446,6 +1454,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				try {
 					await messageWriter.write(requestMessage);
 					responsePromises.set(id, responsePromise);
+					if (tokenWasCancelled) {
+						sendCancellation(connection, id);
+					}
 				} catch (error: any) {
 					logger.error(`Sending request failed.`);
 					// Writing the message failed. So we need to reject the promise.

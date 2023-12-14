@@ -711,24 +711,25 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			await this.sendPendingFullTextDocumentChanges(connection);
 		}
 
+		let param: any | undefined = undefined;
+		let token: CancellationToken | undefined = undefined;
+		// Separate cancellation tokens from other parameters for a better client interface
+		if (params.length === 1) {
+			// CancellationToken is an interface, so we need to check if the first param complies to it
+			if (ProtocolCancellationToken.is(params[0])) {
+				token = params[0];
+			} else {
+				param = params[0];
+			}
+		} else if (params.length === 2) {
+			param = params[0];
+			token = params[1];
+		}
+		if (token !== undefined && token.isCancellationRequested) {
+			return Promise.reject(new ResponseError(LSPErrorCodes.RequestCancelled, 'Request got cancelled'));
+		}
 		const _sendRequest = this._clientOptions.middleware?.sendRequest;
 		if (_sendRequest !== undefined) {
-			let param: any | undefined = undefined;
-			let token: CancellationToken | undefined = undefined;
-
-			// Separate cancellation tokens from other parameters for a better client interface
-			if (params.length === 1) {
-				// CancellationToken is an interface, so we need to check if the first param complies to it
-				if (ProtocolCancellationToken.is(params[0])) {
-					token = params[0];
-				} else {
-					param = params[0];
-				}
-			} else if (params.length === 2) {
-				param = params[0];
-				token = params[1];
-			}
-
 			// Return the general middleware invocation defining `next` as a utility function that reorganizes parameters to
 			// pass them to the original sendRequest function.
 			return _sendRequest(type, param, token, (type, param, token) => {
