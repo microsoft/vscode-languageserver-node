@@ -16,7 +16,7 @@
 	"typings": "./lib/umd/main",
 	"exports": {
 		".": {
-			"browser": "./lib/esm/main.js",
+			"module": "./lib/esm/main.js",
 			"import": "./lib/esm/main.js",
 			"default": "./lib/umd/main.js"
 		}
