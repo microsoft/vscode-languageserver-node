@@ -1991,7 +1991,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (versionMismatch) {
 			return Promise.resolve({ applied: false });
 		}
-		return Is.asPromise(Workspace.applyEdit(converted).then((value) => { return { applied: value }; }));
+		return Is.asPromise(Workspace.applyEdit(converted, { isRefactoring: params.metadata?.isRefactoring }).then((value) => { return { applied: value }; }));
 	}
 
 	private static RequestsToCancelOnContentModified: Set<string> = new Set([
