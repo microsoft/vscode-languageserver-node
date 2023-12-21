@@ -22,6 +22,7 @@
 		"eslint": "^8.52.0",
 		"http-server": "^14.1.1",
 		"mocha": "^10.2.0",
+		"node-polyfill-webpack-plugin": "^2.0.1",
 		"playwright": "^1.39.0",
 		"rimraf": "^5.0.5",
 		"shelljs": "^0.8.5",
@@ -30,8 +31,7 @@
 		"ts-json-schema-generator": "^1.4.0",
 		"typescript": "^5.2.2",
 		"webpack": "^5.89.0",
-		"webpack-cli": "^5.1.4",
-		"node-polyfill-webpack-plugin": "^2.0.1"
+		"webpack-cli": "^5.1.4"
 	},
 	"scripts": {
 		"postinstall": "node ./build/bin/all.js install && cd testbed && npm install && cd .. && npm run symlink:testbed && npx playwright install",
@@ -63,5 +63,8 @@
 		"validate:version": "node ./tools/lib/validate-main.js",
 		"update:lock": "git clean -xfd . && npm install && cd ./client && npm run updateVSCodeVersion && cd ..",
 		"tsconfig-gen": "cd tsconfig-gen && npm run compile && cd .. && node ./tsconfig-gen/lib/main.js -f .tsconfigrc.js"
+	},
+	"dependencies": {
+		"all": "^0.0.0"
 	}
 }
