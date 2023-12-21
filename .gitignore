@@ -3,7 +3,8 @@ logs
 *.log
 *.lsif
 *.db
-
+.DS_Store
+.venv
 # Runtime data
 pids
 *.pid
