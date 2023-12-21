@@ -65,6 +65,7 @@
 		"tsconfig-gen": "cd tsconfig-gen && npm run compile && cd .. && node ./tsconfig-gen/lib/main.js -f .tsconfigrc.js"
 	},
 	"dependencies": {
-		"all": "^0.0.0"
+		"all": "^0.0.0",
+		"vscode-languageclient": "^9.0.1"
 	}
 }
