@@ -2,7 +2,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/vscode-languageserver-types.svg)](https://npmjs.org/package/vscode-languageserver-types)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver-types.svg)](https://npmjs.org/package/vscode-languageserver-types)
-[![Build Status](https://travis-ci.org/Microsoft/vscode-languageserver-types-node.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-languageserver-types-node)
+[![Build Status](https://dev.azure.com/ms/vscode-languageserver-node/_apis/build/status/microsoft.vscode-languageserver-node?branchName=main)](https://dev.azure.com/ms/vscode-languageserver-node/_build/latest?definitionId=439&branchName=main)
 
 Npm module containing the types used by the VSCode language client and [Node.js](https://nodejs.org/) language server
 
