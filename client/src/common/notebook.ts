@@ -476,7 +476,17 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	}
 
 	public handles(textDocument: vscode.TextDocument): boolean {
-		return vscode.languages.match(this.selector, textDocument) > 0;
+		if (vscode.languages.match(this.selector, textDocument) > 0) {
+			return true;
+		}
+		// Work around for https://github.com/microsoft/vscode/issues/202163
+		const key = textDocument.uri.toString();
+		for (const syncInfo of this.notebookSyncInfo.values()) {
+			if (syncInfo.uris.has(key)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public didOpenNotebookCellTextDocument(notebookDocument: vscode.NotebookDocument, cell: vscode.NotebookCell): void {
