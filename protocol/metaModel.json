@@ -5504,6 +5504,17 @@
 					"documentation": "Title of the command, like `save`."
 				},
 				{
+					"name": "tooltip",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "An optional tooltip.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
+				},
+				{
 					"name": "command",
 					"type": {
 						"kind": "base",
@@ -7907,7 +7918,7 @@
 					"name": "trace",
 					"type": {
 						"kind": "reference",
-						"name": "TraceValues"
+						"name": "TraceValue"
 					},
 					"optional": true,
 					"documentation": "The initial trace setting. If omitted trace is disabled ('off')."
@@ -9329,6 +9340,20 @@
 					"documentation": "CodeActionKinds that this server may return.\n\nThe list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server\nmay list out every specific kind they provide."
 				},
 				{
+					"name": "documentation",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "CodeActionKindDocumentation"
+						}
+					},
+					"optional": true,
+					"documentation": "Static documentation for a class of code actions.\n\nDocumentation from the provider should be shown in the code actions menu if either:\n\n- Code actions of `kind` are requested by the editor. In this case, the editor will show the documentation that\n  most closely matches the requested code action kind. For example, if a provider has documentation for\n  both `Refactor` and `RefactorExtract`, when the user requests code actions for `RefactorExtract`,\n  the editor will use the documentation for `RefactorExtract` instead of the documentation for `Refactor`.\n\n- Any code actions of `kind` are returned by the provider.\n\nAt most one documentation entry should be shown per provider.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
+				},
+				{
 					"name": "resolveProvider",
 					"type": {
 						"kind": "base",
@@ -10452,7 +10477,7 @@
 							}
 						]
 					},
-					"documentation": "The label of this parameter information.\n\nEither a string or an inclusive start and exclusive end offsets within its containing\nsignature label. (see SignatureInformation.label). The offsets are based on a UTF-16\nstring representation as `Position` and `Range` does.\n\n*Note*: a label of type string should be a substring of its containing signature label.\nIts intended use case is to highlight the parameter label part in the `SignatureInformation.label`."
+					"documentation": "The label of this parameter information.\n\nEither a string or an inclusive start and exclusive end offsets within its containing\nsignature label. (see SignatureInformation.label). The offsets are based on a UTF-16\nstring representation as `Position` and `Range` does.\n\nTo avoid ambiguities a server should use the [start, end] offset value instead of using\na substring. Whether a client support this is controlled via `labelOffsetSupport` client\ncapability.\n\n*Note*: a label of type string should be a substring of its containing signature label.\nIts intended use case is to highlight the parameter label part in the `SignatureInformation.label`."
 				},
 				{
 					"name": "documentation",
@@ -10474,6 +10499,30 @@
 				}
 			],
 			"documentation": "Represents a parameter of a callable-signature. A parameter can\nhave a label and a doc-comment."
+		},
+		{
+			"name": "CodeActionKindDocumentation",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "reference",
+						"name": "CodeActionKind"
+					},
+					"documentation": "The kind of the code action being documented.\n\nIf the kind is generic, such as `CodeActionKind.Refactor`, the documentation will be shown whenever any\nrefactorings are returned. If the kind if more specific, such as `CodeActionKind.RefactorExtract`, the\ndocumentation will only be shown when extract refactoring code actions are returned."
+				},
+				{
+					"name": "command",
+					"type": {
+						"kind": "reference",
+						"name": "Command"
+					},
+					"documentation": "Command that is ued to display the documentation to the user.\n\nThe title of this documentation code action is taken from {@linkcode Command.title}"
+				}
+			],
+			"documentation": "Documentation for a class of code actions.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "NotebookCellTextDocumentFilter",
@@ -12281,6 +12330,17 @@
 					"optional": true,
 					"documentation": "Whether the client honors the change annotations in\ntext edits and resource operations returned via the\n`CodeAction#edit` property by for example presenting\nthe workspace edit in the user interface and asking\nfor confirmation.\n\n@since 3.16.0",
 					"since": "3.16.0"
+				},
+				{
+					"name": "documentationSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports documentation for a class of\ncode actions.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			],
 			"documentation": "The Client Capabilities of a {@link CodeActionRequest}."
@@ -14331,6 +14391,12 @@
 					"value": "source.fixAll",
 					"documentation": "Base kind for auto-fix source actions: `source.fixAll`.\n\nFix all actions automatically fix errors that have a clear fix that do not require user input.\nThey should not suppress errors or perform unsafe fixes such as generating new types or classes.\n\n@since 3.15.0",
 					"since": "3.15.0"
+				},
+				{
+					"name": "Notebook",
+					"value": "notebook",
+					"documentation": "Base kind for all code actions applying to the entire notebook's scope. CodeActionKinds using\nthis should always begin with `notebook.`\n\n@since 3.18.0",
+					"since": "3.18.0"
 				}
 			],
 			"supportsCustomValues": true,
