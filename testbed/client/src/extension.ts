@@ -13,7 +13,7 @@ let client: LanguageClient;
 export async function activate(context: ExtensionContext) {
 	// We need to go one level up since an extension compile the js code into
 	// the output folder.
-	const module = path.join(__dirname, '..', '..', 'server', 'out', 'server.js');
+	const module = path.join(__dirname, '..', '..', 'server', 'out', 'fullNotebookServer.js');
 	const debugOptions = { execArgv: ['--nolazy', '--inspect=6012'] };
 	const serverOptions: ServerOptions = {
 		run: { module, transport: TransportKind.ipc },
@@ -22,9 +22,9 @@ export async function activate(context: ExtensionContext) {
 
 	const clientOptions: LanguageClientOptions = {
 		documentSelector: [
-			{ language: 'bat' },
-			{ language: 'bat', notebook: '*' },
-			{ scheme: 'file', pattern: '**/.vscode/test.txt' }
+			{ language: 'python' }
+			// { language: 'bat', notebook: '*' },
+			// { scheme: 'file', pattern: '**/.vscode/test.txt' }
 		],
 		synchronize: {
 			// configurationSection: 'testbed'

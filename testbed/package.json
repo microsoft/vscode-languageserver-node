@@ -12,6 +12,12 @@
 	],
 	"enabledApiProposals": [
 	],
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": "limited",
+			"description": "The extension supports untrusted workspaces."
+		}
+	},
 	"contributes": {
 		"commands": [
 			{

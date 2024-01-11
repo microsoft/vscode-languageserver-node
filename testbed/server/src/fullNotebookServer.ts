@@ -51,7 +51,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 			notebookDocumentSync: {
 				notebookSelector: [{
 					notebook: { pattern: '**/*.ipynb'},
-					cells: [{ language: 'bat' }, { language: 'c' }]
+					cells: [{ language: 'python' } ]
 				}]
 			}
 		}
