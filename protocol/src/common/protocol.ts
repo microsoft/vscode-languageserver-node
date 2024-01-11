@@ -4094,6 +4094,14 @@ export interface WorkspaceEditClientCapabilities {
 	 * @since 3.16.0
 	 */
 	changeAnnotationSupport?: ChangeAnnotationsSupportOptions;
+
+	/**
+	 * Whether the client supports `WorkspaceEditMetadata` in `WorkspaceEdit`s.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	metadataSupport?: boolean;
 }
 
 /**
@@ -4114,6 +4122,9 @@ export interface ApplyWorkspaceEditParams {
 
 	/**
 	 * Additional data about the edit.
+	 *
+	 * @since 3.18.0
+	 * @proposed
 	 */
 	metadata?: WorkspaceEditMetadata;
 }

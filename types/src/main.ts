@@ -1321,6 +1321,9 @@ export namespace WorkspaceEdit {
 
 /**
  * Additional data about a workspace edit.
+ *
+ * @since 3.18.0
+ * @proposed
  */
 export interface WorkspaceEditMetadata {
 	/**
