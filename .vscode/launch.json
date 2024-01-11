@@ -108,16 +108,11 @@
 			"name": "Launch TestBed Client",
 			"runtimeExecutable": "${execPath}",
 			"args": ["--extensionDevelopmentPath=${workspaceRoot}/testbed"],
-			"outFiles": ["${workspaceRoot}/testbed/client/out/**/*.js"],
-			"sourceMaps": true
-		},
-		{
-			"type": "node",
-			"request": "attach",
-			"name": "Attach to Server",
-			"port": 6012,
-			"restart": true,
-			"outFiles": ["${workspaceRoot}/testbed/server/out/**/*.js"],
+			"outFiles": [
+				"${workspaceRoot}/testbed/server/out/**/*.js",
+				"${workspaceRoot}/testbed/client/out/**/*.js"
+			],
+			"autoAttachChildProcesses": true,
 			"sourceMaps": true
 		},
 		{
