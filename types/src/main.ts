@@ -1026,8 +1026,11 @@ export interface TextDocumentEdit {
 	 *
 	 * @since 3.16.0 - support for AnnotatedTextEdit. This is guarded using a
 	 * client capability.
+	 *
+	 * @since 3.18.0 - support for SnippetTextEdit. This is guarded using a
+	 * client capability.
 	 */
-	edits: (TextEdit | AnnotatedTextEdit)[];
+	edits: (TextEdit | AnnotatedTextEdit | SnippetTextEdit)[];
 }
 
 /**
@@ -1038,7 +1041,7 @@ export namespace TextDocumentEdit {
 	/**
 	 * Creates a new `TextDocumentEdit`
 	 */
-	export function create(textDocument: OptionalVersionedTextDocumentIdentifier, edits: (TextEdit | AnnotatedTextEdit)[]): TextDocumentEdit {
+	export function create(textDocument: OptionalVersionedTextDocumentIdentifier, edits: (TextEdit | AnnotatedTextEdit | SnippetTextEdit)[]): TextDocumentEdit {
 		return { textDocument, edits };
 	}
 
@@ -1343,8 +1346,11 @@ export interface TextEditChange {
 	 *
 	 * @since 3.16.0 - support for annotated text edits. This is usually
 	 * guarded using a client capability.
+	 *
+	 * @since 3.18.0 - support for snippet text edits. This is usually
+	 * guarded using a client capability.
 	 */
-	all(): (TextEdit | AnnotatedTextEdit)[];
+	all(): (TextEdit | AnnotatedTextEdit | SnippetTextEdit)[];
 
 	/**
 	 * Clears the edits for this change.
@@ -1358,8 +1364,11 @@ export interface TextEditChange {
 	 *
 	 * @since 3.16.0 - support for annotated text edits. This is usually
 	 * guarded using a client capability.
+	 *
+	 * @since 3.18.0 - support for snippet text edits. This is usually
+	 * guarded using a client capability.
 	 */
-	add(edit: TextEdit | AnnotatedTextEdit): void;
+	add(edit: TextEdit | AnnotatedTextEdit | SnippetTextEdit): void;
 
 	/**
 	 * Insert the given text at the given position.
@@ -1393,10 +1402,10 @@ export interface TextEditChange {
 
 class TextEditChangeImpl implements TextEditChange {
 
-	private edits: (TextEdit | AnnotatedTextEdit)[];
+	private edits: (TextEdit | AnnotatedTextEdit | SnippetTextEdit)[];
 	private changeAnnotations: ChangeAnnotations | undefined;
 
-	public constructor(edits: (TextEdit | AnnotatedTextEdit)[], changeAnnotations?: ChangeAnnotations) {
+	public constructor(edits: (TextEdit | AnnotatedTextEdit | SnippetTextEdit)[], changeAnnotations?: ChangeAnnotations) {
 		this.edits = edits;
 		this.changeAnnotations = changeAnnotations;
 	}
@@ -1464,11 +1473,11 @@ class TextEditChangeImpl implements TextEditChange {
 		}
 	}
 
-	public add(edit: TextEdit | AnnotatedTextEdit): void {
+	public add(edit: TextEdit | AnnotatedTextEdit | SnippetTextEdit): void {
 		this.edits.push(edit);
 	}
 
-	public all(): (TextEdit | AnnotatedTextEdit)[] {
+	public all(): (TextEdit | AnnotatedTextEdit | SnippetTextEdit)[] {
 		return this.edits;
 	}
 
@@ -1480,6 +1489,39 @@ class TextEditChangeImpl implements TextEditChange {
 		if (value === undefined) {
 			throw new Error(`Text edit change is not configured to manage change annotations.`);
 		}
+	}
+}
+
+/**
+ * An interactive text edit.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface SnippetTextEdit {
+	/**
+	 * The range of the text document to be manipulated.
+	 */
+	range: Range;
+
+	/**
+	 * The snippet to be inserted.
+	 */
+	snippet: StringValue;
+
+	/**
+	 * The actual identifier of the snippet edit.
+	 */
+	annotationId?: ChangeAnnotationIdentifier;
+}
+
+export namespace SnippetTextEdit {
+	export function is(value: any): value is SnippetTextEdit {
+		const candidate = value as SnippetTextEdit;
+		return Is.objectLiteral(candidate)
+			&& Range.is(candidate.range)
+			&& StringValue.isSnippet(candidate.snippet)
+			&& (ChangeAnnotation.is(candidate.annotationId) || ChangeAnnotationIdentifier.is(candidate.annotationId));
 	}
 }
 
@@ -4304,6 +4346,7 @@ export interface StringValue {
 	 * The kind of string value.
 	 */
 	kind: 'snippet';
+
 	/**
 	 * The snippet string.
 	 */
@@ -4313,6 +4356,13 @@ export interface StringValue {
 export namespace StringValue {
 	export function createSnippet(value: string): StringValue {
 		return { kind: 'snippet', value };
+	}
+
+	export function isSnippet(value: any): value is StringValue {
+		const candidate = value as StringValue;
+		return Is.objectLiteral(candidate)
+			&& candidate.kind === 'snippet'
+			&& Is.string(candidate.value);
 	}
 }
 
