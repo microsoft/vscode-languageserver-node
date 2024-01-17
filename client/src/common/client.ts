@@ -1836,6 +1836,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		workspaceEdit.changeAnnotationSupport = {
 			groupsOnLabel: true
 		};
+		workspaceEdit.snippetEditSupport = true;
 
 		const diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
