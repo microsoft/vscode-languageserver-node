@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ProgressToken, RequestHandler, TraceValues } from 'vscode-jsonrpc';
+import { ProgressToken, RequestHandler, TraceValue } from 'vscode-jsonrpc';
 
 import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
 
@@ -1484,7 +1484,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * The initial trace setting. If omitted trace is disabled ('off').
 	 */
-	trace?: TraceValues;
+	trace?: TraceValue;
 }
 
 export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams;
