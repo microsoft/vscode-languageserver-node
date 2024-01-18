@@ -8,7 +8,7 @@ import { ProgressToken, RequestHandler, TraceValue } from 'vscode-jsonrpc';
 import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
 
 import {
-	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, DocumentUri,
+	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, WorkspaceEditMetadata, DocumentUri,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, CompletionItem, CompletionList,
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
@@ -4096,6 +4096,14 @@ export interface WorkspaceEditClientCapabilities {
 	changeAnnotationSupport?: ChangeAnnotationsSupportOptions;
 
 	/**
+	 * Whether the client supports `WorkspaceEditMetadata` in `WorkspaceEdit`s.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	metadataSupport?: boolean;
+  
+	/**
 	 * Whether the client supports snippets as text edits.
 	 *
 	 * @since 3.18.0
@@ -4119,6 +4127,14 @@ export interface ApplyWorkspaceEditParams {
 	 * The edits to apply.
 	 */
 	edit: WorkspaceEdit;
+
+	/**
+	 * Additional data about the edit.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	metadata?: WorkspaceEditMetadata;
 }
 
 /**
