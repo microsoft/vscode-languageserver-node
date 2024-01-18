@@ -1521,7 +1521,8 @@ export namespace SnippetTextEdit {
 		return Is.objectLiteral(candidate)
 			&& Range.is(candidate.range)
 			&& StringValue.isSnippet(candidate.snippet)
-			&& (ChangeAnnotation.is(candidate.annotationId) || ChangeAnnotationIdentifier.is(candidate.annotationId));
+			&& (candidate.annotationId === undefined ||
+				(ChangeAnnotation.is(candidate.annotationId) || ChangeAnnotationIdentifier.is(candidate.annotationId)));
 	}
 }
 
