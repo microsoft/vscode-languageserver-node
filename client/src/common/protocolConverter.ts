@@ -1088,6 +1088,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 					for (const edit of change.edits) {
 						if (ls.AnnotatedTextEdit.is(edit)) {
 							result.replace(uri, asRange(edit.range), edit.newText, asMetadata(edit.annotationId));
+						} else if (ls.SnippetTextEdit.is(edit)) {
+							result.replace(uri, asRange(edit.range), edit.snippet.value, asMetadata(edit.annotationId));
 						} else {
 							result.replace(uri, asRange(edit.range), edit.newText);
 						}

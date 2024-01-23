@@ -1836,6 +1836,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		workspaceEdit.changeAnnotationSupport = {
 			groupsOnLabel: true
 		};
+		workspaceEdit.metadataSupport = true;
+		workspaceEdit.snippetEditSupport = false;
 
 		const diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
@@ -1991,7 +1993,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (versionMismatch) {
 			return Promise.resolve({ applied: false });
 		}
-		return Is.asPromise(Workspace.applyEdit(converted).then((value) => { return { applied: value }; }));
+		return Is.asPromise(Workspace.applyEdit(converted, { isRefactoring: params.metadata?.isRefactoring }).then((value) => { return { applied: value }; }));
 	}
 
 	private static RequestsToCancelOnContentModified: Set<string> = new Set([

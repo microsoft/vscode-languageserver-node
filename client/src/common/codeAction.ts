@@ -53,9 +53,11 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 					CodeActionKind.Refactor,
 					CodeActionKind.RefactorExtract,
 					CodeActionKind.RefactorInline,
+					CodeActionKind.RefactorMove,
 					CodeActionKind.RefactorRewrite,
 					CodeActionKind.Source,
-					CodeActionKind.SourceOrganizeImports
+					CodeActionKind.SourceOrganizeImports,
+					CodeActionKind.Notebook
 				]
 			}
 		};

@@ -505,7 +505,9 @@ export class LanguageClient extends BaseLanguageClient {
 		}).finally(() => {
 			if (this._serverProcess !== undefined) {
 				this._serverProcess.on('exit', (code, signal) => {
-					if (code !== null) {
+					if (code === 0) {
+						this.info('Server process exited successfully', undefined, false);
+					} else if (code !== null) {
 						this.error(`Server process exited with code ${code}.`, undefined, false);
 					}
 					if (signal !== null) {

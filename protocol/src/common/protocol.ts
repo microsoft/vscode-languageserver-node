@@ -3,12 +3,12 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ProgressToken, RequestHandler, TraceValues } from 'vscode-jsonrpc';
+import { ProgressToken, RequestHandler, TraceValue } from 'vscode-jsonrpc';
 
 import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
 
 import {
-	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, DocumentUri,
+	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, WorkspaceEditMetadata, DocumentUri,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, CompletionItem, CompletionList,
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
@@ -1484,7 +1484,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * The initial trace setting. If omitted trace is disabled ('off').
 	 */
-	trace?: TraceValues;
+	trace?: TraceValue;
 }
 
 export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams;
@@ -4094,6 +4094,22 @@ export interface WorkspaceEditClientCapabilities {
 	 * @since 3.16.0
 	 */
 	changeAnnotationSupport?: ChangeAnnotationsSupportOptions;
+
+	/**
+	 * Whether the client supports `WorkspaceEditMetadata` in `WorkspaceEdit`s.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	metadataSupport?: boolean;
+  
+	/**
+	 * Whether the client supports snippets as text edits.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	snippetEditSupport?: boolean;
 }
 
 /**
@@ -4111,6 +4127,14 @@ export interface ApplyWorkspaceEditParams {
 	 * The edits to apply.
 	 */
 	edit: WorkspaceEdit;
+
+	/**
+	 * Additional data about the edit.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	metadata?: WorkspaceEditMetadata;
 }
 
 /**
@@ -4207,7 +4231,7 @@ export {
 	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
 	DidCloseNotebookDocumentNotification,
 	// Inline Completions
-	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest
+	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest,
 };
 
 // To be backwards compatible
