@@ -566,6 +566,40 @@ suite('Client integration', () => {
 		);
 	});
 
+	test('Progress percentage is an integer', async () => {
+		const progressToken = 'TEST-PROGRESS-PERCENTAGE';
+		const percentages: Array<number | undefined> = [];
+		let currentProgressResolver: (value: unknown) => void | undefined;
+
+		// Set up middleware that calls the current resolve function when it gets its 'end' progress event.
+		middleware.handleWorkDoneProgress = (token: lsclient.ProgressToken, params: lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd, next) => {
+			if (token === progressToken) {
+				const percentage = params.kind === 'report' || params.kind === 'begin' ? params.percentage : undefined;
+				percentages.push(percentage);
+
+				if (params.kind === 'end') {
+					setImmediate(currentProgressResolver);
+				}
+			}
+			return next(token, params);
+		};
+
+		// Trigger a progress event.
+		await new Promise<unknown>((resolve) => {
+			currentProgressResolver = resolve;
+			void client.sendRequest(
+				new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
+				{},
+				tokenSource.token,
+			);
+		});
+
+		middleware.handleWorkDoneProgress = undefined;
+
+		// Ensure percentages are rounded according to the spec
+		assert.deepStrictEqual(percentages, [0, 50, undefined]);
+	});
+
 	test('Document Formatting', async () => {
 		const provider = client.getFeature(lsclient.DocumentFormattingRequest.method).getProvider(document);
 		isDefined(provider);
