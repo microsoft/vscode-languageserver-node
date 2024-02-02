@@ -1085,15 +1085,17 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 					result.deleteFile(_uriConverter(change.uri), change.options, asMetadata(change.annotationId));
 				} else if (ls.TextDocumentEdit.is(change)) {
 					const uri = _uriConverter(change.textDocument.uri);
+					const edits: [code.TextEdit | code.SnippetTextEdit, code.WorkspaceEditEntryMetadata | undefined][] = [];
 					for (const edit of change.edits) {
 						if (ls.AnnotatedTextEdit.is(edit)) {
-							result.replace(uri, asRange(edit.range), edit.newText, asMetadata(edit.annotationId));
+							edits.push([new code.TextEdit(asRange(edit.range), edit.newText), asMetadata(edit.annotationId)]);
 						} else if (ls.SnippetTextEdit.is(edit)) {
-							result.replace(uri, asRange(edit.range), edit.snippet.value, asMetadata(edit.annotationId));
+							edits.push([new code.SnippetTextEdit(asRange(edit.range), new code.SnippetString(edit.snippet.value)), asMetadata(edit.annotationId)]);
 						} else {
-							result.replace(uri, asRange(edit.range), edit.newText);
+							edits.push([new code.TextEdit(asRange(edit.range), edit.newText), undefined])
 						}
 					}
+					result.set(uri, edits);
 				} else {
 					throw new Error(`Unknown workspace edit change received:\n${JSON.stringify(change, undefined, 4)}`);
 				}
