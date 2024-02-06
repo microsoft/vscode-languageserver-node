@@ -130,7 +130,6 @@ let __noDynamicImport: LocationLink | undefined;
  * A document filter where `language` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentFilterLanguage {
 	/** A language id, like `typescript`. */
@@ -145,7 +144,6 @@ export interface TextDocumentFilterLanguage {
  * A document filter where `scheme` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentFilterScheme {
 	/** A language id, like `typescript`. */
@@ -160,7 +158,6 @@ export interface TextDocumentFilterScheme {
  * A document filter where `pattern` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentFilterPattern {
 	/** A language id, like `typescript`. */
@@ -208,7 +205,6 @@ export namespace TextDocumentFilter {
  * A notebook document filter where `notebookType` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface NotebookDocumentFilterNotebookType {
 	/** The type of the enclosing notebook. */
@@ -225,7 +221,6 @@ export interface NotebookDocumentFilterNotebookType {
  * A notebook document filter where `scheme` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface NotebookDocumentFilterScheme {
 	/** The type of the enclosing notebook. */
@@ -242,7 +237,6 @@ export interface NotebookDocumentFilterScheme {
  * A notebook document filter where `pattern` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface NotebookDocumentFilterPattern {
 	/** The type of the enclosing notebook. */
@@ -930,7 +924,6 @@ export type PositionEncodingKind = string;
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface StaleRequestSupportOptions {
 	/**
@@ -1130,7 +1123,6 @@ export namespace WorkDoneProgressOptions {
  * Defines workspace specific capabilities of the server.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface WorkspaceOptions {
 	/**
@@ -1375,7 +1367,6 @@ export interface ServerCapabilities<T = LSPAny> {
  *
  * @since 3.15.0
  * @since 3.18.0 ServerInfo type name added.
- * @proposed
  */
 export interface ServerInfo {
 	/**
@@ -1395,7 +1386,6 @@ export interface ServerInfo {
  *
  * @since 3.15.0
  * @since 3.18.0 ClientInfo type name added.
- * @proposed
  */
 export interface ClientInfo {
 	/**
@@ -1675,7 +1665,6 @@ export namespace ShowMessageNotification {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientShowMessageActionItemOptions {
 	/**
@@ -1882,7 +1871,6 @@ export namespace DidOpenTextDocumentNotification {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentContentChangeWholeDocument {
 	/**
@@ -1893,7 +1881,6 @@ export interface TextDocumentContentChangeWholeDocument {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentContentChangePartial {
 	/**
@@ -2277,7 +2264,6 @@ export type WatchKind = uinteger;
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientDiagnosticsTagOptions {
 	/**
@@ -2384,7 +2370,6 @@ export interface CompletionListCapabilities {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface CompletionItemTagOptions {
 	/**
@@ -2395,7 +2380,6 @@ export interface CompletionItemTagOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCompletionItemResolveOptions {
 	/**
@@ -2406,7 +2390,6 @@ export interface ClientCompletionItemResolveOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCompletionItemInsertTextModeOptions {
 	valueSet: InsertTextMode[];
@@ -2414,7 +2397,6 @@ export interface ClientCompletionItemInsertTextModeOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCompletionItemOptions {
 	/**
@@ -2495,7 +2477,6 @@ export interface ClientCompletionItemOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCompletionItemOptionsKind {
 	/**
@@ -2607,7 +2588,6 @@ export interface CompletionParams extends TextDocumentPositionParams, WorkDonePr
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ServerCompletionItemOptions {
 	/**
@@ -2745,7 +2725,6 @@ export namespace HoverRequest {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSignatureParameterInformationOptions {
 	/**
@@ -2759,7 +2738,6 @@ export interface ClientSignatureParameterInformationOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSignatureInformationOptions {
 	/**
@@ -3138,7 +3116,6 @@ export namespace DocumentSymbolRequest {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCodeActionKindOptions {
 
@@ -3152,7 +3129,6 @@ export interface ClientCodeActionKindOptions {
 }
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCodeActionLiteralOptions {
 	/**
@@ -3164,7 +3140,6 @@ export interface ClientCodeActionLiteralOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCodeActionResolveOptions {
 	/**
@@ -3358,7 +3333,6 @@ export namespace CodeActionResolveRequest {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSymbolKindOptions {
 	/**
@@ -3376,7 +3350,6 @@ export interface ClientSymbolKindOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSymbolTagOptions {
 	/**
@@ -3387,7 +3360,6 @@ export interface ClientSymbolTagOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSymbolResolveOptions {
 	/**
@@ -3958,7 +3930,6 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface PrepareRenamePlaceholder {
 	range: Range;
@@ -3967,7 +3938,6 @@ export interface PrepareRenamePlaceholder {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface PrepareRenameDefaultBehavior {
 	defaultBehavior: boolean;
@@ -4043,7 +4013,6 @@ export namespace ExecuteCommandRequest {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ChangeAnnotationsSupportOptions {
 	/**
