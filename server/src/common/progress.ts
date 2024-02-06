@@ -47,10 +47,14 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 		const param: WorkDoneProgressBegin = {
 			kind: 'begin',
 			title,
-			percentage,
 			message,
 			cancellable
 		};
+		if (typeof percentage === 'number') {
+			// Round to the nearest integer, because the percentage
+			// is a uinteger according to the specification
+			param.percentage = Math.round(percentage);
+		}
 		this._connection.sendProgress(WorkDoneProgress.type, this._token, param);
 	}
 
@@ -59,7 +63,9 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 			kind: 'report'
 		};
 		if (typeof arg0 === 'number') {
-			param.percentage = arg0;
+			// Round to the nearest integer, because the percentage
+			// is a uinteger according to the specification
+			param.percentage = Math.round(arg0);
 			if (arg1 !== undefined) {
 				param.message = arg1;
 			}
