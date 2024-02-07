@@ -1929,6 +1929,7 @@ export namespace LanguageKind {
 	export const Go	= 'go' as const;
 	export const Groovy	= 'groovy' as const;
 	export const Handlebars	= 'handlebars' as const;
+	export const Haskell	= 'haskell' as const;
 	export const HTML = 'html' as const;
 	export const Ini = 'ini' as const;
 	export const Java = 'java' as const;
