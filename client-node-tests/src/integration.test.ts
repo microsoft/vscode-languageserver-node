@@ -588,7 +588,7 @@ suite('Client integration', () => {
 		await new Promise<unknown>((resolve) => {
 			currentProgressResolver = resolve;
 			void client.sendRequest(
-				new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendSampleProgress'),
+				new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendPercentageProgress'),
 				{},
 				tokenSource.token,
 			);

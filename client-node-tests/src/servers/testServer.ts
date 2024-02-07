@@ -530,10 +530,16 @@ connection.onRequest(
 		void connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'begin', title: 'Test Progress' });
 		void connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'report', percentage: 50, message: 'Halfway!' });
 		void connection.sendProgress(WorkDoneProgress.type, progressToken, { kind: 'end', message: 'Completed!' });
+	},
+);
 
+connection.onRequest(
+	new ProtocolRequestType<null, null, never, any, any>('testing/sendPercentageProgress'),
+	async (_, __) => {
 		// According to the spec, the reported percentage has to be an integer.
 		// Because JS doesn't have integer support, we have rounding code in place.
 		const progressToken2 = 'TEST-PROGRESS-PERCENTAGE';
+		await connection.sendRequest(WorkDoneProgressCreateRequest.type, { token: progressToken2 });
 		const progress = connection.window.attachWorkDoneProgress(progressToken2);
 		progress.begin('Test Progress', 0.1);
 		progress.report(49.9, 'Halfway!');
