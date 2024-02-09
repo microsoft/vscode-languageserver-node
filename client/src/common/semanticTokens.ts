@@ -75,7 +75,7 @@ export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean |
     		SemanticTokenTypes.regexp,
     		SemanticTokenTypes.operator,
 			SemanticTokenTypes.decorator,
-			SemanticTokenTypes.label,
+			SemanticTokenTypes.label
 		];
 		capability.tokenModifiers = [
     		SemanticTokenModifiers.declaration,

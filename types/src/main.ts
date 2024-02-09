@@ -3837,7 +3837,6 @@ export enum SemanticTokenTypes {
 	 * @since 3.18.0
 	 */
 	label = 'label'
-
 }
 
 /**
