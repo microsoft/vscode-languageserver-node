@@ -1837,7 +1837,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			groupsOnLabel: true
 		};
 		workspaceEdit.metadataSupport = true;
-		workspaceEdit.snippetEditSupport = false;
+		workspaceEdit.snippetEditSupport = true;
 
 		const diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
