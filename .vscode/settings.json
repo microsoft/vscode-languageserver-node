@@ -101,5 +101,6 @@
 		"vsdiag",
 		"whitespaces",
 		"XCOPY"
-	]
+	],
+	"githubPullRequests.createDefaultBaseBranch": "repositoryDefault"
 }
