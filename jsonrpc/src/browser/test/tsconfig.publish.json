@@ -17,6 +17,7 @@
         "declaration": true,
         "stripInternal": true,
         "sourceMap": false,
+        "declarationMap": false,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "target": "es2020",

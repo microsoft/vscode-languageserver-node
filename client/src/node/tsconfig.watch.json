@@ -14,6 +14,7 @@
         "declaration": true,
         "stripInternal": true,
         "sourceMap": true,
+        "declarationMap": true,
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "assumeChangesOnlyAffectDirectDependencies": true,

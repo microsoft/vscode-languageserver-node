@@ -364,6 +364,7 @@ const defaultCompilerOptions = {
 /** @type CompilerOptions */
 const compileCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: true,
+	declarationMap: true,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
 	target: 'es2020',
@@ -381,6 +382,7 @@ const compileProjectOptions = {
 /** @type CompilerOptions */
 const watchCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: true,
+	declarationMap: true,
 	noUnusedLocals: false,
 	noUnusedParameters: false,
 	assumeChangesOnlyAffectDirectDependencies: true,
@@ -399,6 +401,7 @@ const watchProjectOptions = {
 /** @type CompilerOptions */
 const publishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: false,
+	declarationMap: false,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
 	target: 'es2020',
@@ -417,6 +420,7 @@ const publishProjectOptions = {
 /** @type CompilerOptions */
 const umdCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: true,
+	declarationMap: true,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
 	target: 'es5',
@@ -449,7 +453,8 @@ const umdWatchProjectOptions = {
 
 /** @type CompilerOptions */
 const umdPublishCompilerOptions = CompilerOptions.assign(umdCompilerOptions, {
-	sourceMap: false
+	sourceMap: false,
+	declarationMap: false
 });
 
 /** @type ProjectOptions */
