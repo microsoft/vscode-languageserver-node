@@ -50,6 +50,7 @@ export async function activate(context: ExtensionContext) {
 		diagnosticPullOptions: {
 			onTabs: true,
 			onChange: true,
+			onFocus: true,
 			match: (selector, resource) => {
 				const fsPath = resource.fsPath;
 				return path.extname(fsPath) === '.bat';

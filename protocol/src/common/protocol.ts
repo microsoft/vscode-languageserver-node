@@ -2272,10 +2272,11 @@ export interface ClientDiagnosticsTagOptions {
 	valueSet: DiagnosticTag[];
 }
 
+
 /**
- * The publish diagnostic client capabilities.
+ * General diagnostics capabilities for pull and push model.
  */
-export interface PublishDiagnosticsClientCapabilities {
+export interface DiagnosticsCapabilities {
 	/**
 	 * Whether the clients accepts diagnostics with related information.
 	 */
@@ -2288,14 +2289,6 @@ export interface PublishDiagnosticsClientCapabilities {
 	 * @since 3.15.0
 	 */
 	tagSupport?: ClientDiagnosticsTagOptions;
-
-	/**
-	 * Whether the client interprets the version property of the
-	 * `textDocument/publishDiagnostics` notification's parameter.
-	 *
-	 * @since 3.15.0
-	 */
-	versionSupport?: boolean;
 
 	/**
 	 * Client supports a codeDescription property
@@ -2312,6 +2305,19 @@ export interface PublishDiagnosticsClientCapabilities {
 	 * @since 3.16.0
 	 */
 	dataSupport?: boolean;
+}
+
+/**
+ * The publish diagnostic client capabilities.
+ */
+export interface PublishDiagnosticsClientCapabilities extends DiagnosticsCapabilities {
+	/**
+	 * Whether the client interprets the version property of the
+	 * `textDocument/publishDiagnostics` notification's parameter.
+	 *
+	 * @since 3.15.0
+	 */
+	versionSupport?: boolean;
 }
 
 /**
@@ -4071,7 +4077,7 @@ export interface WorkspaceEditClientCapabilities {
 	 * @proposed
 	 */
 	metadataSupport?: boolean;
-  
+
 	/**
 	 * Whether the client supports snippets as text edits.
 	 *

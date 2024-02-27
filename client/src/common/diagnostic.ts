@@ -15,7 +15,7 @@ import {
 	ClientCapabilities, ServerCapabilities, DocumentSelector, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
 	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL, TextDocumentFilter, PreviousResultId,
 	DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams, DocumentDiagnosticRequest, DocumentDiagnosticReportKind,
-	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticRequest, WorkspaceDiagnosticParams, DiagnosticOptions, DiagnosticRefreshRequest
+	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticRequest, WorkspaceDiagnosticParams, DiagnosticOptions, DiagnosticRefreshRequest, DiagnosticTag
 } from 'vscode-languageserver-protocol';
 
 import { generateUuid } from './utils/uuid';
@@ -108,7 +108,8 @@ export type DiagnosticProviderMiddleware = {
 
 export enum DiagnosticPullMode {
 	onType = 'onType',
-	onSave = 'onSave'
+	onSave = 'onSave',
+	onFocus = 'onFocus'
 }
 
 export type DiagnosticPullOptions = {
@@ -124,8 +125,14 @@ export type DiagnosticPullOptions = {
 	onSave?: boolean;
 
 	/**
+	 * Whether to pull for diagnostics on editor focus.
+	 */
+	onFocus?: boolean;
+
+	/**
 	 * An optional filter method that is consulted when triggering a
-	 * diagnostic pull during document change or document save.
+	 * diagnostic pull during document change, document save or editor
+	 * focus.
 	 *
 	 * The document gets filtered if the method returns `true`.
 	 *
@@ -816,7 +823,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	private readonly backgroundScheduler: BackgroundScheduler;
 
 	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
-		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false };
+		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false, onFocus: false };
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
 
@@ -875,6 +882,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			this.backgroundScheduler.add(document);
 		};
 
+		const considerDocument = (textDocument: TextDocument, mode: DiagnosticPullMode): boolean => {
+			return (diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, mode)) && this.diagnosticRequestor.knows(PullState.document, textDocument);
+		};
+
 		this.activeTextDocument = Window.activeTextEditor?.document;
 		Window.onDidChangeActiveTextEditor((editor) => {
 			const oldActive = this.activeTextDocument;
@@ -884,6 +895,9 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}
 			if (this.activeTextDocument !== undefined) {
 				this.backgroundScheduler.remove(this.activeTextDocument);
+				if (diagnosticPullOptions.onFocus === true && matches(this.activeTextDocument) && considerDocument(this.activeTextDocument, DiagnosticPullMode.onFocus)) {
+					this.diagnosticRequestor.pull(this.activeTextDocument, () => { this.backgroundScheduler.trigger(); });
+				}
 			}
 		});
 
@@ -961,7 +975,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			const changeFeature = client.getFeature(DidChangeTextDocumentNotification.method);
 			disposables.push(changeFeature.onNotificationSent(async (event) => {
 				const textDocument = event.textDocument;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onType)) && this.diagnosticRequestor.knows(PullState.document, textDocument)) {
+				if (considerDocument(textDocument, DiagnosticPullMode.onType)) {
 					this.diagnosticRequestor.pull(textDocument, () => { this.backgroundScheduler.trigger(); });
 				}
 			}));
@@ -971,7 +985,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			const saveFeature = client.getFeature(DidSaveTextDocumentNotification.method);
 			disposables.push(saveFeature.onNotificationSent((event) => {
 				const textDocument = event.textDocument;
-				if ((diagnosticPullOptions.filter === undefined || !diagnosticPullOptions.filter(textDocument, DiagnosticPullMode.onSave)) && this.diagnosticRequestor.knows(PullState.document, textDocument)) {
+				if (considerDocument(textDocument, DiagnosticPullMode.onSave)) {
 					this.diagnosticRequestor.pull(event.textDocument, () => { this.backgroundScheduler.trigger(); });
 				}
 			}));
@@ -1033,6 +1047,11 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
 		const capability = ensure(ensure(capabilities, 'textDocument')!, 'diagnostic')!;
+
+		capability.relatedInformation = true;
+		capability.tagSupport = { valueSet: [ DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated ] };
+		capability.codeDescriptionSupport = true;
+		capability.dataSupport = true;
 		capability.dynamicRegistration = true;
 		// We first need to decide how a UI will look with related documents.
 		// An easy implementation would be to only show related diagnostics for
