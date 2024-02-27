@@ -397,11 +397,7 @@ export namespace RequestCancellationReceiverStrategy {
 	}
 }
 
-/**
- * This will break with the next major version and will become
- * export type CancellationReceiverStrategy = IdCancellationReceiverStrategy | RequestCancellationReceiverStrategy;
- */
-export type CancellationReceiverStrategy = IdCancellationReceiverStrategy;
+export type CancellationReceiverStrategy = IdCancellationReceiverStrategy | RequestCancellationReceiverStrategy;
 
 export namespace CancellationReceiverStrategy {
 	export const Message: CancellationReceiverStrategy = Object.freeze({
@@ -500,8 +496,7 @@ export namespace ConnectionOptions {
 	export function is(value: any): value is ConnectionOptions {
 		const candidate: ConnectionOptions = value;
 		return candidate
-			&& (CancellationStrategy.is(candidate.cancellationStrategy) || ConnectionStrategy.is(candidate.connectionStrategy) || MessageStrategy.is(candidate.messageStrategy))
-			&& (candidate.maxParallelism === undefined || Is.number(candidate.maxParallelism));
+			&& (CancellationStrategy.is(candidate.cancellationStrategy) || ConnectionStrategy.is(candidate.connectionStrategy) || MessageStrategy.is(candidate.messageStrategy) || Is.number(candidate.maxParallelism));
 	}
 }
 

@@ -10,7 +10,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DocumentColorProvider,
 	DeclarationProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider,
 	LinkedEditingRangeProvider, TypeHierarchyProvider, FileCreateEvent, FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent,
-	FileWillDeleteEvent, CancellationError, InlineCompletionItemProvider
+	FileWillDeleteEvent, CancellationError, InlineCompletionItemProvider, Uri
 } from 'vscode';
 
 import {
@@ -654,13 +654,24 @@ import type { DiagnosticProviderShape } from './diagnostic';
 import type { NotebookDocumentProviderShape } from './notebook';
 import { FoldingRangeProviderShape } from './foldingRange';
 
+export interface TabsModel {
+	readonly onClose: Event<Set<Uri>>;
+	readonly onOpen: Event<Set<Uri>>;
+	dispose(): void;
+	isActive(document: TextDocument | Uri): boolean;
+	isVisible(document: TextDocument | Uri): boolean;
+	getTabResources(): Set<Uri>;
+}
+
 export interface FeatureClient<M, CO = object> {
 
-	protocol2CodeConverter: p2c.Converter;
-	code2ProtocolConverter: c2p.Converter;
+	readonly protocol2CodeConverter: p2c.Converter;
+	readonly code2ProtocolConverter: c2p.Converter;
 
-	clientOptions: CO;
-	middleware: M;
+	readonly clientOptions: CO;
+	readonly middleware: M;
+
+	readonly tabsModel: TabsModel;
 
 	start(): Promise<void>;
 	isRunning(): boolean;

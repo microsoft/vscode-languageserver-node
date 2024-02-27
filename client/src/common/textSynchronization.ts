@@ -22,6 +22,21 @@ import {
 
 import * as UUID from './utils/uuid';
 
+export enum TextDocumentSynchronizationMode {
+	editor = 1,
+	all = 2,
+}
+export interface $TextDocumentSynchronizationOptions {
+	textDocumentSynchronization?: {
+		/**
+		 * What kind of text documents are synchronized to the server.
+		 * If omitted all open text documents are synchronized, even if
+		 * they are not visible in an editor.
+		 */
+		mode?: TextDocumentSynchronizationMode;
+	};
+}
+
 export interface TextDocumentSynchronizationMiddleware {
 	didOpen?: NextSignature<TextDocument, Promise<void>>;
 	didChange?: NextSignature<TextDocumentChangeEvent, Promise<void>>;
