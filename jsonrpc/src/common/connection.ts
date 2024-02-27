@@ -725,18 +725,28 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				return;
 			}
 			const message = messageQueue.shift()!;
-			inFlight++;
+			let result: NotificationResult | undefined;
 			try {
+				inFlight++;
 				const messageStrategy = options?.messageStrategy;
 				if (MessageStrategy.is(messageStrategy)) {
-					await messageStrategy.handleMessage(message, handleMessage);
+					result = messageStrategy.handleMessage(message, handleMessage);
 				} else {
-					await handleMessage(message);
+					result = handleMessage(message);
 				}
 			} catch (error: any) {
 				logger.error(`Processing message queue failed: ${error.toString()}`);
 			} finally {
-				inFlight--;
+				if (result instanceof Promise) {
+					result.then(() => {
+						inFlight--;
+						triggerMessageQueue();
+					}).catch((error) => {
+						logger.error(`Processing message queue failed: ${error.toString()}`);
+					});
+				} else {
+					inFlight--;
+				}
 				triggerMessageQueue();
 			}
 		});

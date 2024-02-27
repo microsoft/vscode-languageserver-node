@@ -692,7 +692,7 @@ suite('Connection', () => {
 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
 			messageStrategy: {
 				handleMessage(message, next) {
-					asyncLocalStorage.run(1, () => next(message));
+					void asyncLocalStorage.run(1, () => next(message));
 				}
 			}
 		});
@@ -727,5 +727,59 @@ suite('Connection', () => {
 		assert.strictEqual(result, 'foo');
 		clientPort.unref();
 		serverPort.unref();
+	});
+
+	test('Parallelism - unlimited', async () => {
+		const requestOne = new hostConnection.RequestType0<void, void>('test/parallelism_one');
+		const requestTwo = new hostConnection.RequestType0<void, void>('test/parallelism_two');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const log: string[] = [];
+		server.onRequest(requestOne, async () => {
+			log.push('one-start');
+			await new Promise(resolve => setTimeout(resolve, 100));
+			log.push('one-end');
+		});
+		server.onRequest(requestTwo, async () => {
+			log.push('two-start');
+			log.push('two-end');
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		const r1 = client.sendRequest(requestOne);
+		const r2 = client.sendRequest(requestTwo);
+		await Promise.all([r1, r2]);
+		assert.deepStrictEqual(log, ['one-start', 'two-start', 'two-end', 'one-end']);
+	});
+
+	test('Parallelism - limited', async () => {
+		const requestOne = new hostConnection.RequestType0<void, void>('test/parallelism_one');
+		const requestTwo = new hostConnection.RequestType0<void, void>('test/parallelism_two');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, { maxParallelism: 1 });
+		const log: string[] = [];
+		server.onRequest(requestOne, async () => {
+			log.push('one-start');
+			await new Promise(resolve => setTimeout(resolve, 100));
+			log.push('one-end');
+		});
+		server.onRequest(requestTwo, async () => {
+			log.push('two-start');
+			log.push('two-end');
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, { maxParallelism: 1 });
+		client.listen();
+		const r1 = client.sendRequest(requestOne);
+		const r2 = client.sendRequest(requestTwo);
+		await Promise.all([r1, r2]);
+		assert.deepStrictEqual(log, ['one-start', 'one-end', 'two-start', 'two-end']);
 	});
 });
