@@ -1701,7 +1701,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 	connection.onNotification(ExitNotification.type, () => {
 		try {
 			if (exitHandler) {
-				exitHandler();
+				return exitHandler();
 			}
 		} finally {
 			if (watchDog.shutdownReceived) {
