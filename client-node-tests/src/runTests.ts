@@ -10,7 +10,7 @@ import * as os from 'os';
 import * as uuid from 'uuid';
 
 import find = require('find-process');
-import { runTests } from 'vscode-test';
+import { runTests } from '@vscode/test-electron';
 
 function rimraf(location: string) {
 	const stat = fs.lstatSync(location);
@@ -79,7 +79,7 @@ async function go() {
 		});
 		rimraf(testDir);
 	} catch (err) {
-		console.error('Failed to run tests');
+		console.error('Failed to run tests', err);
 		process.exitCode = 1;
 	}
 }
