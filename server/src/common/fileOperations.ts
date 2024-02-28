@@ -30,17 +30,17 @@ export const FileOperationsFeature: Feature<_RemoteWorkspace, FileOperationsFeat
 	return class extends Base {
 		public onDidCreateFiles(handler: NotificationHandler<CreateFilesParams>): Disposable {
 			return this.connection.onNotification(DidCreateFilesNotification.type, (params) => {
-				handler(params);
+				return handler(params);
 			});
 		}
 		public onDidRenameFiles(handler: NotificationHandler<RenameFilesParams>): Disposable {
 			return this.connection.onNotification(DidRenameFilesNotification.type, (params) => {
-				handler(params);
+				return handler(params);
 			});
 		}
 		public onDidDeleteFiles(handler: NotificationHandler<DeleteFilesParams>): Disposable {
 			return this.connection.onNotification(DidDeleteFilesNotification.type, (params) => {
-				handler(params);
+				return handler(params);
 			});
 		}
 		public onWillCreateFiles(handler: RequestHandler<CreateFilesParams, WorkspaceEdit | null, never>): Disposable {

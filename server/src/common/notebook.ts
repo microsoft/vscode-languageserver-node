@@ -35,22 +35,22 @@ export const NotebookSyncFeature: Feature<_Notebooks, NotebookSyncFeatureShape> 
 			return {
 				onDidOpenNotebookDocument: (handler: NotificationHandler1<DidOpenNotebookDocumentParams>): Disposable => {
 					return this.connection.onNotification(DidOpenNotebookDocumentNotification.type, (params) => {
-						handler(params);
+						return handler(params);
 					});
 				},
 				onDidChangeNotebookDocument: (handler: NotificationHandler1<DidChangeNotebookDocumentParams>): Disposable => {
 					return this.connection.onNotification(DidChangeNotebookDocumentNotification.type, (params) => {
-						handler(params);
+						return handler(params);
 					});
 				},
 				onDidSaveNotebookDocument: (handler: NotificationHandler1<DidSaveNotebookDocumentParams>): Disposable => {
 					return this.connection.onNotification(DidSaveNotebookDocumentNotification.type, (params) => {
-						handler(params);
+						return handler(params);
 					});
 				},
 				onDidCloseNotebookDocument: (handler: NotificationHandler1<DidCloseNotebookDocumentParams>): Disposable => {
 					return this.connection.onNotification(DidCloseNotebookDocumentNotification.type, (params) => {
-						handler(params);
+						return handler(params);
 					});
 				}
 			};
@@ -119,8 +119,8 @@ class CellTextDocumentConnection implements TextDocumentConnection {
 		return Disposable.create(() => { this.openHandler = undefined; });
 	}
 
-	public openTextDocument(params: DidOpenTextDocumentParams): void {
-		this.openHandler && this.openHandler(params);
+	public openTextDocument(params: DidOpenTextDocumentParams): void | Promise<void> {
+		return this.openHandler && this.openHandler(params);
 	}
 
 	public onDidChangeTextDocument(handler: NotificationHandler<DidChangeTextDocumentParams>): Disposable {
@@ -128,8 +128,8 @@ class CellTextDocumentConnection implements TextDocumentConnection {
 		return Disposable.create(() => { this.changeHandler = handler; });
 	}
 
-	public changeTextDocument(params: DidChangeTextDocumentParams): void {
-		this.changeHandler && this.changeHandler(params);
+	public changeTextDocument(params: DidChangeTextDocumentParams): void | Promise<void> {
+		return this.changeHandler && this.changeHandler(params);
 	}
 
 	public onDidCloseTextDocument(handler: NotificationHandler<DidCloseTextDocumentParams>): Disposable {
@@ -137,8 +137,8 @@ class CellTextDocumentConnection implements TextDocumentConnection {
 		return Disposable.create(() => { this.closeHandler = undefined; });
 	}
 
-	public closeTextDocument(params: DidCloseTextDocumentParams): void {
-		this.closeHandler && this.closeHandler(params);
+	public closeTextDocument(params: DidCloseTextDocumentParams): void | Promise<void> {
+		return this.closeHandler && this.closeHandler(params);
 	}
 
 	public onWillSaveTextDocument(): Disposable {
@@ -235,15 +235,15 @@ export class NotebookDocuments<T extends { uri: DocumentUri }> {
 		const disposables: Disposable[] = [];
 
 		disposables.push(this.cellTextDocuments.listen(cellTextDocumentConnection));
-		disposables.push(connection.notebooks.synchronization.onDidOpenNotebookDocument((params) => {
+		disposables.push(connection.notebooks.synchronization.onDidOpenNotebookDocument(async (params) => {
 			this.notebookDocuments.set(params.notebookDocument.uri, params.notebookDocument);
 			for (const cellTextDocument of params.cellTextDocuments) {
-				cellTextDocumentConnection.openTextDocument({ textDocument: cellTextDocument });
+				await cellTextDocumentConnection.openTextDocument({ textDocument: cellTextDocument });
 			}
 			this.updateCellMap(params.notebookDocument);
 			this._onDidOpen.fire(params.notebookDocument);
 		}));
-		disposables.push(connection.notebooks.synchronization.onDidChangeNotebookDocument((params) => {
+		disposables.push(connection.notebooks.synchronization.onDidChangeNotebookDocument(async (params) => {
 			const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
 			if (notebookDocument === undefined) {
 				return;
@@ -269,14 +269,14 @@ export class NotebookDocuments<T extends { uri: DocumentUri }> {
 					// Additional open cell text documents.
 					if (changedCells.structure.didOpen !== undefined) {
 						for (const open of changedCells.structure.didOpen) {
-							cellTextDocumentConnection.openTextDocument({ textDocument: open });
+							await cellTextDocumentConnection.openTextDocument({ textDocument: open });
 							opened.push(open.uri);
 						}
 					}
 					// Additional closed cell test documents.
 					if (changedCells.structure.didClose) {
 						for (const close of changedCells.structure.didClose) {
-							cellTextDocumentConnection.closeTextDocument({ textDocument: close });
+							await cellTextDocumentConnection.closeTextDocument({ textDocument: close });
 							closed.push(close.uri);
 						}
 					}
@@ -297,7 +297,7 @@ export class NotebookDocuments<T extends { uri: DocumentUri }> {
 				}
 				if (changedCells.textContent !== undefined) {
 					for (const cellTextDocument of changedCells.textContent) {
-						cellTextDocumentConnection.changeTextDocument({ textDocument: cellTextDocument.document, contentChanges: cellTextDocument.changes });
+						await cellTextDocumentConnection.changeTextDocument({ textDocument: cellTextDocument.document, contentChanges: cellTextDocument.changes });
 						text.push(cellTextDocument.document.uri);
 					}
 				}
@@ -337,14 +337,14 @@ export class NotebookDocuments<T extends { uri: DocumentUri }> {
 			}
 			this._onDidSave.fire(notebookDocument);
 		}));
-		disposables.push(connection.notebooks.synchronization.onDidCloseNotebookDocument((params) => {
+		disposables.push(connection.notebooks.synchronization.onDidCloseNotebookDocument(async (params) => {
 			const notebookDocument = this.notebookDocuments.get(params.notebookDocument.uri);
 			if (notebookDocument === undefined) {
 				return;
 			}
 			this._onDidClose.fire(notebookDocument);
 			for (const cellTextDocument of params.cellTextDocuments) {
-				cellTextDocumentConnection.closeTextDocument({ textDocument: cellTextDocument });
+				await cellTextDocumentConnection.closeTextDocument({ textDocument: cellTextDocument });
 			}
 			this.notebookDocuments.delete(params.notebookDocument.uri);
 			for (const cell of notebookDocument.cells) {
