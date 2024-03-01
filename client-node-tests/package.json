@@ -17,7 +17,7 @@
 	"main": "./extension.js",
 	"contributes": {},
 	"scripts": {
-		"clean": "node ../node_modules/.bin/rimraf lib",
+		"clean": "node ../node_modules/rimraf/dist/esm/bin.mjs lib",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",

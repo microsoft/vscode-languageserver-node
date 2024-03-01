@@ -17,7 +17,7 @@
 	"scripts": {
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
 		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
-		"clean": "node ../node_modules/.bin/rimraf lib && node ../node_modules/.bin/rimraf dist",
+		"clean": "node ../node_modules/rimraf/dist/esm/bin.mjs lib && node ../node_modules/rimraf/dist/esm/bin.mjs dist",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src"
 	}
 }

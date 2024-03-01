@@ -728,8 +728,23 @@ class DiagnosticRequestor implements Disposable {
 }
 
 export type DiagnosticProviderShape = {
+	/**
+	 * An event that signals that the diagnostics should be refreshed for
+	 * all documents.
+	 */
 	onDidChangeDiagnosticsEmitter: EventEmitter<void>;
+
+	/**
+	 * The provider of diagnostics.
+	 */
 	diagnostics: vsdiag.DiagnosticProvider;
+
+	/**
+	 * Forget the given document and remove all diagnostics.
+	 *
+	 * @param document The document to forget.
+	 */
+	forget(document: TextDocument): void;
 };
 
 class BackgroundScheduler implements Disposable {
@@ -823,7 +838,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	private readonly backgroundScheduler: BackgroundScheduler;
 
 	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
-		const diagnosticPullOptions = client.clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false, onFocus: false };
+		const diagnosticPullOptions = Object.assign({ onChange: true, onSave: false, onFocus: false }, client.clientOptions.diagnosticPullOptions);
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
 
@@ -1027,6 +1042,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 
 	public get diagnostics(): vsdiag.DiagnosticProvider {
 		return this.diagnosticRequestor.provider;
+	}
+
+	public forget(document: TextDocument): void {
+		this.cleanUpDocument(document);
 	}
 
 	private cleanUpDocument(document: TextDocument | Uri): void {
