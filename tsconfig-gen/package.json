@@ -27,7 +27,7 @@
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
 		"prepack": "git clean -xfd . && npm install && npm run all",
 		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
-		"clean": "node ../node_modules/.bin/rimraf lib",
+		"clean": "node ../node_modules/rimraf/dist/esm/bin.mjs lib",
 		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
 		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
 		"all": "npm run compile && npm run lint",
