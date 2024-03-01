@@ -34,9 +34,11 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## Next
+## Next (10.0.0-next.* Client and 10.0.0-next.* Server)
 
 - added proposed CodeActionKind.RefactorMove
+- snippet support in Workspace edits
+- support to control the parallelism of the dispatch requests and notification. This is a breaking change since it allows notification handlers to return a promise to control this.
 
 ## 3.17.5 Protocol, 9.0.1 Client and 9.0.1 Server
 
