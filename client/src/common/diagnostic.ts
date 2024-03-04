@@ -838,7 +838,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	private readonly backgroundScheduler: BackgroundScheduler;
 
 	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
-		const diagnosticPullOptions = Object.assign({ onChange: true, onSave: false, onFocus: false }, client.clientOptions.diagnosticPullOptions);
+		const diagnosticPullOptions = Object.assign({ onChange: false, onSave: false, onFocus: false }, client.clientOptions.diagnosticPullOptions);
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
 
@@ -891,7 +891,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		this.backgroundScheduler = new BackgroundScheduler(this.diagnosticRequestor);
 
 		const addToBackgroundIfNeeded = (document: TextDocument | Uri): void => {
-			if (!matches(document) || !options.interFileDependencies || isActiveDocument(document)) {
+			if (!matches(document) || !options.interFileDependencies || isActiveDocument(document) || @@@diagnosticPullOptions.onChange) {
 				return;
 			}
 			this.backgroundScheduler.add(document);
