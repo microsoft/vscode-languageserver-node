@@ -698,7 +698,15 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (Message.isRequest(message)) {
 			queue.set(createRequestQueueKey(message.id), message);
 		} else if (Message.isResponse(message)) {
-			queue.set(createResponseQueueKey(message.id), message);
+			// If we have unlimited parallelism we queue the response to keep
+			// the previous semantics.
+			if (maxParallelism === -1) {
+				queue.set(createResponseQueueKey(message.id), message);
+			} else {
+				// If we have limited parallelism we resolve responses to avoid
+				// dead locks.
+				handleResponse(message);
+			}
 		} else {
 			queue.set(createNotificationQueueKey(), message);
 		}
@@ -889,10 +897,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
-	function handleResponse(responseMessage: ResponseMessage): Promise<void> {
+	function handleResponse(responseMessage: ResponseMessage): void {
 		if (isDisposed()) {
 			// See handle request.
-			return Promise.resolve();
+			return;
 		}
 
 		if (responseMessage.id === null) {
@@ -925,7 +933,6 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				}
 			}
 		}
-		return Promise.resolve();
 	}
 
 	async function handleNotification(message: NotificationMessage): Promise<void> {

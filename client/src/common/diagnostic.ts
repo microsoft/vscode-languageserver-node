@@ -774,7 +774,6 @@ class BackgroundScheduler implements Disposable {
 			return;
 		}
 		this.documents.set(key, document, Touch.Last);
-		this.trigger();
 	}
 
 	public remove(document: TextDocument | Uri): void {
@@ -891,7 +890,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		this.backgroundScheduler = new BackgroundScheduler(this.diagnosticRequestor);
 
 		const addToBackgroundIfNeeded = (document: TextDocument | Uri): void => {
-			if (!matches(document) || !options.interFileDependencies || isActiveDocument(document) || @@@diagnosticPullOptions.onChange) {
+			if (!matches(document) || !options.interFileDependencies || isActiveDocument(document) || diagnosticPullOptions.onChange === false) {
 				return;
 			}
 			this.backgroundScheduler.add(document);
@@ -911,7 +910,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			if (this.activeTextDocument !== undefined) {
 				this.backgroundScheduler.remove(this.activeTextDocument);
 				if (diagnosticPullOptions.onFocus === true && matches(this.activeTextDocument) && considerDocument(this.activeTextDocument, DiagnosticPullMode.onFocus)) {
-					this.diagnosticRequestor.pull(this.activeTextDocument, () => { this.backgroundScheduler.trigger(); });
+					this.diagnosticRequestor.pull(this.activeTextDocument);
 				}
 			}
 		});
@@ -1001,7 +1000,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			disposables.push(saveFeature.onNotificationSent((event) => {
 				const textDocument = event.textDocument;
 				if (considerDocument(textDocument, DiagnosticPullMode.onSave)) {
-					this.diagnosticRequestor.pull(event.textDocument, () => { this.backgroundScheduler.trigger(); });
+					this.diagnosticRequestor.pull(event.textDocument);
 				}
 			}));
 		}
