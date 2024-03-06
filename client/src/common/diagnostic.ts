@@ -1091,7 +1091,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	}
 }
 
-export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, $DiagnosticPullOptions> {
+export interface DiagnosticFeatureShape {
+	refresh(): void;
+}
+
+export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, $DiagnosticPullOptions> implements DiagnosticFeatureShape {
 
 	private tabs: Tabs | undefined;
 
@@ -1135,6 +1139,12 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 			this.tabs = undefined;
 		}
 		super.clear();
+	}
+
+	public refresh(): void {
+		for (const provider of this.getAllProviders()) {
+			provider.onDidChangeDiagnosticsEmitter.fire();
+		}
 	}
 
 	protected registerLanguageProvider(options: DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {
