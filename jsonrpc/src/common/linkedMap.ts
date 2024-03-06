@@ -63,6 +63,16 @@ export class LinkedMap<K, V> implements Map<K, V> {
 		return this._tail?.value;
 	}
 
+	public before(key: K): V | undefined {
+		const item = this._map.get(key);
+		return item ? item.previous?.value : undefined;
+	}
+
+	public after(key: K): V | undefined {
+		const item = this._map.get(key);
+		return item ? item.next?.value : undefined;
+	}
+
 	public has(key: K): boolean {
 		return this._map.has(key);
 	}

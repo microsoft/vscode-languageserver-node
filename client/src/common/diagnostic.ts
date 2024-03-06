@@ -428,7 +428,7 @@ class DiagnosticRequestor implements Disposable {
 		return this.documentStates.tracks(kind, document) || this.openRequests.has(uri.toString());
 	}
 
-	public forget(kind: PullState, document: TextDocument | Uri): void {
+	private forget(kind: PullState, document: TextDocument | Uri): void {
 		this.documentStates.unTrack(kind, document);
 	}
 
@@ -446,7 +446,7 @@ class DiagnosticRequestor implements Disposable {
 		});
 	}
 
-	private async pullAsync(document: TextDocument | Uri, version?: number | undefined): Promise<void> {
+	public async pullAsync(document: TextDocument | Uri, version?: number | undefined): Promise<void> {
 		if (this.isDisposed) {
 			return;
 		}
@@ -749,17 +749,19 @@ export type DiagnosticProviderShape = {
 
 class BackgroundScheduler implements Disposable {
 
+	private readonly client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>;
 	private readonly diagnosticRequestor: DiagnosticRequestor;
-	private endDocument: TextDocument | Uri | undefined;
+	private lastDocumentToPull: TextDocument | Uri | undefined;
 	private readonly documents: LinkedMap<string, TextDocument | Uri>;
-	private intervalHandle: Disposable | undefined;
+	private timeoutHandle: Disposable | undefined;
 	// The problem is that there could be outstanding diagnostic requests
 	// when we shutdown which when we receive the result will trigger a
 	// reschedule. So we remember if the background scheduler got disposed
 	// and ignore those re-schedules
 	private isDisposed: boolean;
 
-	public constructor(diagnosticRequestor: DiagnosticRequestor) {
+	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, diagnosticRequestor: DiagnosticRequestor) {
+		this.client = client;
 		this.diagnosticRequestor = diagnosticRequestor;
 		this.documents = new LinkedMap();
 		this.isDisposed = false;
@@ -774,7 +776,11 @@ class BackgroundScheduler implements Disposable {
 			return;
 		}
 		this.documents.set(key, document, Touch.Last);
-		this.trigger();
+		// Make sure we run up to that document. We could
+		// consider inserting it after the current last
+		// document for performance reasons but it might not catch
+		// all interfile dependencies.
+		this.lastDocumentToPull = document;
 	}
 
 	public remove(document: TextDocument | Uri): void {
@@ -783,50 +789,79 @@ class BackgroundScheduler implements Disposable {
 		// No more documents. Stop background activity.
 		if (this.documents.size === 0) {
 			this.stop();
-		} else if (key === this.endDocumentKey()) {
-			// Make sure we have a correct last document. It could have
-			this.endDocument = this.documents.last;
+			return;
+		} else if (key === this.lastDocumentToPullKey()) {
+			// The remove document was the one we would run up to. So
+			// take the one before it.
+			const before = this.documents.before(key);
+			if (before === undefined) {
+				this.stop();
+			} else {
+				this.lastDocumentToPull = before;
+			}
 		}
 	}
 
 	public trigger(): void {
+		this.lastDocumentToPull = this.documents.last;
+		this.runLoop();
+	}
+
+	private runLoop(): void {
 		if (this.isDisposed === true) {
 			return;
 		}
-		// We have a round running. So simply make sure we run up to the
-		// last document
-		if (this.intervalHandle !== undefined) {
-			this.endDocument = this.documents.last;
+
+		// We have an empty background list. Make sure we stop
+		// background activity.
+		if (this.documents.size === 0) {
+			this.stop();
 			return;
 		}
-		this.endDocument = this.documents.last;
-		this.intervalHandle = RAL().timer.setInterval(() => {
+
+		// We have no last document anymore so stop the loop
+		if (this.lastDocumentToPull === undefined) {
+			return;
+		}
+
+		// We have a timeout in the loop. So we should not schedule
+		// another run.
+		if (this.timeoutHandle !== undefined) {
+			return;
+		}
+		this.timeoutHandle = RAL().timer.setTimeout(() => {
 			const document = this.documents.first;
-			if (document !== undefined) {
-				const key = DocumentOrUri.asKey(document);
-				this.diagnosticRequestor.pull(document);
-				this.documents.set(key, document, Touch.Last);
-				if (key === this.endDocumentKey()) {
-					this.stop();
-				}
+			if (document === undefined) {
+				return;
 			}
-		}, 200);
+			const key = DocumentOrUri.asKey(document);
+			this.diagnosticRequestor.pullAsync(document).catch((error) => {
+				this.client.error(`Document pull failed for text document ${key}`, error, false);
+			}).finally(() => {
+				this.timeoutHandle = undefined;
+				this.documents.set(key, document, Touch.Last);
+				if (key !== this.lastDocumentToPullKey()) {
+					this.runLoop();
+				}
+			});
+		}, 500);
 	}
 
 	public dispose(): void {
 		this.isDisposed = true;
 		this.stop();
 		this.documents.clear();
+		this.lastDocumentToPull = undefined;
 	}
 
 	private stop(): void {
-		this.intervalHandle?.dispose();
-		this.intervalHandle = undefined;
-		this.endDocument = undefined;
+		this.timeoutHandle?.dispose();
+		this.timeoutHandle = undefined;
+		this.lastDocumentToPull = undefined;
 	}
 
-	private endDocumentKey(): string | undefined {
-		return this.endDocument !== undefined ? DocumentOrUri.asKey(this.endDocument) : undefined;
+	private lastDocumentToPullKey(): string | undefined {
+		return this.lastDocumentToPull !== undefined ? DocumentOrUri.asKey(this.lastDocumentToPull) : undefined;
 	}
 }
 
@@ -838,7 +873,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	private readonly backgroundScheduler: BackgroundScheduler;
 
 	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
-		const diagnosticPullOptions = Object.assign({ onChange: true, onSave: false, onFocus: false }, client.clientOptions.diagnosticPullOptions);
+		const diagnosticPullOptions = Object.assign({ onChange: false, onSave: false, onFocus: false }, client.clientOptions.diagnosticPullOptions);
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
 
@@ -888,10 +923,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		};
 
 		this.diagnosticRequestor = new DiagnosticRequestor(client, tabs, options);
-		this.backgroundScheduler = new BackgroundScheduler(this.diagnosticRequestor);
+		this.backgroundScheduler = new BackgroundScheduler(client, this.diagnosticRequestor);
 
 		const addToBackgroundIfNeeded = (document: TextDocument | Uri): void => {
-			if (!matches(document) || !options.interFileDependencies || isActiveDocument(document)) {
+			if (!matches(document) || !options.interFileDependencies || isActiveDocument(document) || diagnosticPullOptions.onChange === false) {
 				return;
 			}
 			this.backgroundScheduler.add(document);
@@ -911,7 +946,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			if (this.activeTextDocument !== undefined) {
 				this.backgroundScheduler.remove(this.activeTextDocument);
 				if (diagnosticPullOptions.onFocus === true && matches(this.activeTextDocument) && considerDocument(this.activeTextDocument, DiagnosticPullMode.onFocus)) {
-					this.diagnosticRequestor.pull(this.activeTextDocument, () => { this.backgroundScheduler.trigger(); });
+					this.diagnosticRequestor.pull(this.activeTextDocument);
 				}
 			}
 		});
@@ -1001,7 +1036,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			disposables.push(saveFeature.onNotificationSent((event) => {
 				const textDocument = event.textDocument;
 				if (considerDocument(textDocument, DiagnosticPullMode.onSave)) {
-					this.diagnosticRequestor.pull(event.textDocument, () => { this.backgroundScheduler.trigger(); });
+					this.diagnosticRequestor.pull(event.textDocument);
 				}
 			}));
 		}
@@ -1049,14 +1084,18 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	}
 
 	private cleanUpDocument(document: TextDocument | Uri): void {
+		this.backgroundScheduler.remove(document);
 		if (this.diagnosticRequestor.knows(PullState.document, document)) {
 			this.diagnosticRequestor.forgetDocument(document);
-			this.backgroundScheduler.remove(document);
 		}
 	}
 }
 
-export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, $DiagnosticPullOptions> {
+export interface DiagnosticFeatureShape {
+	refresh(): void;
+}
+
+export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, $DiagnosticPullOptions> implements DiagnosticFeatureShape {
 
 	private tabs: Tabs | undefined;
 
@@ -1100,6 +1139,12 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 			this.tabs = undefined;
 		}
 		super.clear();
+	}
+
+	public refresh(): void {
+		for (const provider of this.getAllProviders()) {
+			provider.onDidChangeDiagnosticsEmitter.fire();
+		}
 	}
 
 	protected registerLanguageProvider(options: DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {

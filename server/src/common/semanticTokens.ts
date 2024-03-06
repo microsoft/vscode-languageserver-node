@@ -18,7 +18,7 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
  */
 export interface SemanticTokensFeatureShape {
 	semanticTokens: {
-		refresh(): void;
+		refresh(): Promise<void>;
 		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable;
 		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensPartialResult, void>): Disposable;
 		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable;

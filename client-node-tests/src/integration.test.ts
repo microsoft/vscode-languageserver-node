@@ -1489,7 +1489,7 @@ suite('Client integration', () => {
 	});
 
 	test('Inline Completions', async () => {
-		const providerData = client.getFeature(lsclient.InlineCompletionRequest.method).getProvider(document);
+		const providerData = client.getFeature(lsclient.InlineCompletionRequest.method)?.getProvider(document);
 		isDefined(providerData);
 		const results = (await providerData.provideInlineCompletionItems(document, position, { triggerKind: 1, selectedCompletionInfo: {range, text: 'text'} }, tokenSource.token)) as vscode.InlineCompletionItem[];
 
