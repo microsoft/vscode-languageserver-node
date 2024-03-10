@@ -189,7 +189,7 @@ export class Symbols {
 				return a.k - b.k;
 			});
 		}
-		const hash = crypto.createHash('md5');
+		const hash = crypto.createHash('sha256');
 		if ((symbol.flags & ts.SymbolFlags.Transient) !== 0) {
 			hash.update(JSON.stringify({ trans: true }, undefined, 0));
 		}
