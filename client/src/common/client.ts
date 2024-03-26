@@ -466,6 +466,11 @@ export namespace MessageTransports {
 	}
 }
 
+export enum ShutdownMode {
+	Restart = 'restart',
+	Stop = 'stop'
+}
+
 export abstract class BaseLanguageClient implements FeatureClient<Middleware, LanguageClientOptions> {
 
 	private _id: string;
@@ -1340,7 +1345,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	public stop(timeout: number = 2000): Promise<void> {
 		// Wait 2 seconds on stop
-		return this.shutdown('stop', timeout);
+		return this.shutdown(ShutdownMode.Stop, timeout);
 	}
 
 	public dispose(timeout: number = 2000): Promise<void> {
@@ -1352,7 +1357,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 	}
 
-	private async shutdown(mode: 'suspend' | 'stop', timeout: number): Promise<void> {
+	protected async shutdown(mode: ShutdownMode, timeout: number = 2000): Promise<void> {
 		// If the client is stopped or in its initial state return.
 		if (this.$state === ClientState.Stopped || this.$state === ClientState.Initial) {
 			return;
@@ -1400,7 +1405,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			throw error;
 		}).finally(() => {
 			this.$state = ClientState.Stopped;
-			mode === 'stop' && this.cleanUpChannel();
+			mode === ShutdownMode.Stop && this.cleanUpChannel();
 			this._onStart = undefined;
 			this._onStop = undefined;
 			this._connection = undefined;
@@ -1408,7 +1413,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		});
 	}
 
-	private cleanUp(mode: 'restart' | 'suspend' | 'stop'): void {
+	private cleanUp(mode: ShutdownMode): void {
 		// purge outstanding file events.
 		this._fileEvents = [];
 		this._fileEventDelayer.cancel();
@@ -1425,7 +1430,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
 			feature.clear();
 		}
-		if (mode === 'stop' && this._diagnostics !== undefined) {
+		if ((mode === ShutdownMode.Stop || mode === ShutdownMode.Restart) && this._diagnostics !== undefined) {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
@@ -1604,7 +1609,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._connection = undefined;
 		if (handlerResult.action === CloseAction.DoNotRestart) {
 			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, handlerResult.handled === true ? false : 'force');
-			this.cleanUp('stop');
+			this.cleanUp(ShutdownMode.Stop);
 			if (this.$state === ClientState.Starting) {
 				this.$state = ClientState.StartFailed;
 			} else {
@@ -1614,7 +1619,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._onStart = undefined;
 		} else if (handlerResult.action === CloseAction.Restart) {
 			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.', !handlerResult.handled);
-			this.cleanUp('restart');
+			this.cleanUp(ShutdownMode.Restart);
 			this.$state = ClientState.Initial;
 			this._onStop = Promise.resolve();
 			this._onStart = undefined;
