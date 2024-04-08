@@ -223,6 +223,10 @@ export enum State {
 	 */
 	Starting = 3,
 	/**
+	 * The start has failed.
+	 */
+	StartFailed = 4,
+	/**
 	 * The client is running and ready.
 	 */
 	Running = 2,
@@ -688,6 +692,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				return State.Starting;
 			case ClientState.Running:
 				return State.Running;
+			case ClientState.StartFailed:
+				return State.StartFailed;
 			default:
 				return State.Stopped;
 		}
