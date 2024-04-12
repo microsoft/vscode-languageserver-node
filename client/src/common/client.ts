@@ -2132,6 +2132,21 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	// }
 }
 
+export type ServerOptions = () => Promise<MessageTransports>;
+export class LanguageClient extends BaseLanguageClient {
+
+	private readonly options: ServerOptions;
+
+	constructor(id: string, name: string, clientOptions: LanguageClientOptions, options: ServerOptions) {
+		super(id, name, clientOptions);
+		this.options = options;
+	}
+
+	protected async createMessageTransports(_encoding: string): Promise<MessageTransports> {
+		return this.options();
+	}
+}
+
 interface Connection {
 
 	listen(): void;
