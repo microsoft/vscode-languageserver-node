@@ -15,8 +15,7 @@ import {
 
 import {
 	CallHierarchyPrepareRequest, ClientCapabilities, CodeActionRequest, CodeLensRequest, CompletionRequest, DeclarationRequest, DefinitionRequest,
-	DidChangeNotebookDocumentNotification,
-	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, DidCreateFilesNotification, DidDeleteFilesNotification, DidOpenNotebookDocumentNotification, DidOpenTextDocumentNotification,
+	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, DidCreateFilesNotification, DidDeleteFilesNotification, DidOpenTextDocumentNotification,
 	DidRenameFilesNotification, DidSaveTextDocumentNotification, DocumentColorRequest, DocumentDiagnosticRequest, DocumentFormattingRequest, DocumentHighlightRequest,
 	DocumentLinkRequest, DocumentOnTypeFormattingRequest, DocumentRangeFormattingRequest, DocumentSelector, DocumentSymbolRequest, ExecuteCommandOptions, ExecuteCommandRequest, FileOperationRegistrationOptions,
 	FoldingRangeRequest, GenericNotificationHandler, GenericRequestHandler, HoverRequest, ImplementationRequest, InitializeParams, InlayHintRequest, InlineCompletionRegistrationOptions, InlineCompletionRequest, InlineValueRequest,

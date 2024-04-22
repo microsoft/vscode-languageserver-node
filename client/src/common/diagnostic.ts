@@ -8,7 +8,8 @@ import * as minimatch from 'minimatch';
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
 	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff,
-	TabChangeEvent, Event, TabInputCustom, workspace
+	TabChangeEvent, Event, TabInputCustom, workspace,
+	TabInputNotebook
 } from 'vscode';
 
 import {
@@ -16,7 +17,6 @@ import {
 	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL, TextDocumentFilter, PreviousResultId,
 	DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams, DocumentDiagnosticRequest, DocumentDiagnosticReportKind,
 	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticRequest, WorkspaceDiagnosticParams, DiagnosticOptions, DiagnosticRefreshRequest, DiagnosticTag,
-	DidChangeNotebookDocumentNotification,
 	NotebookDocumentSyncRegistrationType
 } from 'vscode-languageserver-protocol';
 
@@ -24,6 +24,7 @@ import { generateUuid } from './utils/uuid';
 import {
 	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError
 } from './features';
+import { NotebookDocumentSyncFeature } from './notebook';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -270,6 +271,16 @@ class Tabs {
 
 	public isVisible(document: TextDocument | Uri): boolean {
 		const uri = document instanceof Uri ? document : document.uri;
+		if (uri.scheme === NotebookDocumentSyncFeature.CellScheme) {
+			// Notebook cells aren't in the list of tabs, but the notebook should be.
+			return Workspace.notebookDocuments.some(notebook => {
+				if (this.open.has(notebook.uri.toString())) {
+					const cell = notebook.getCells().find(cell => cell.document.uri.toString() === uri.toString());
+					return cell !== undefined;
+				}
+				return false;
+			});
+		}
 		return this.open.has(uri.toString());
 	}
 
@@ -290,6 +301,8 @@ class Tabs {
 				} else if (input instanceof TabInputTextDiff) {
 					uri = input.modified;
 				} else if (input instanceof TabInputCustom) {
+					uri = input.uri;
+				} else if (input instanceof TabInputNotebook) {
 					uri = input.uri;
 				}
 				if (uri !== undefined && !seen.has(uri.toString())) {
