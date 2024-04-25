@@ -42,5 +42,6 @@ export { TextDocumentSynchronizationMiddleware, DidOpenTextDocumentFeatureShape,
 export { ProvideTypeDefinitionSignature, TypeDefinitionMiddleware } from './typeDefinition';
 export { WorkspaceFolderMiddleware } from './workspaceFolder';
 export { ProvideWorkspaceSymbolsSignature, ResolveWorkspaceSymbolSignature, WorkspaceSymbolMiddleware } from './workspaceSymbol';
+export { PrepareTypeHierarchySignature, TypeHierarchySupertypesSignature, TypeHierarchySubtypesSignature, TypeHierarchyMiddleware } from './typeHierarchy';
 
 export * from './client';
