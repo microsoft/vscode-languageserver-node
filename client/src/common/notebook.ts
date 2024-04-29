@@ -413,23 +413,10 @@ export type NotebookDocumentMiddleware = {
 };
 
 export interface NotebookDocumentSyncFeatureShape {
-	onOpenNotificationSent: vscode.Event<vscode.NotebookDocument>;
-	onChangeNotificationSent: vscode.Event<VNotebookDocumentChangeEvent>;
-	onCloseNotificationSent: vscode.Event<vscode.NotebookDocument>;
-	onSaveNotificationSent: vscode.Event<vscode.NotebookDocument>;
 	sendDidOpenNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendDidSaveNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendDidChangeNotebookDocument(event: VNotebookDocumentChangeEvent): Promise<void>;
 	sendDidCloseNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
-}
-
-export interface NotificationNotebookSendEvent<P> {
-	type: proto.ProtocolNotificationType<P, proto.TextDocumentRegistrationOptions>;
-	params: P;
-}
-
-export interface NotifyingNotebookFeature<P> {
-	onNotificationSent: vscode.Event<NotificationNotebookSendEvent<P>>;
 }
 
 
@@ -441,22 +428,21 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private readonly notebookDidOpen: Set<string>;
 	private readonly disposables: vscode.Disposable[];
 	private readonly selector: vscode.DocumentSelector;
-	private readonly _onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>;
-	private readonly _onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
-	private readonly _onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
-	private readonly _onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
 
-	constructor(client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>, options: proto.NotebookDocumentSyncOptions) {
+	constructor(
+		client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>,
+		options: proto.NotebookDocumentSyncOptions,
+		private readonly _onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>,
+		private readonly _onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>,
+		private readonly _onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>,
+		private readonly _onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>
+	) {
 		this.client = client;
 		this.options = options;
 		this.notebookSyncInfo = new Map();
 		this.notebookDidOpen = new Set();
 		this.disposables = [];
 		this.selector = client.protocol2CodeConverter.asDocumentSelector($NotebookDocumentSyncOptions.asDocumentSelector(options));
-		this._onChangeNotificationSent = new vscode.EventEmitter<VNotebookDocumentChangeEvent>();
-		this._onOpenNotificationSent = new vscode.EventEmitter<vscode.NotebookDocument>();
-		this._onCloseNotificationSent = new vscode.EventEmitter<vscode.NotebookDocument>();
-		this._onSaveNotificationSent = new vscode.EventEmitter<vscode.NotebookDocument>();
 
 		// open
 		vscode.workspace.onDidOpenNotebookDocument((notebookDocument) => {
@@ -495,26 +481,6 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 
 	public get mode(): 'notebook' {
 		return 'notebook';
-	}
-
-	public get onChangeNotificationSent(): vscode.Event<VNotebookDocumentChangeEvent> {
-		return this._onChangeNotificationSent.event;
-	}
-
-	public get onOpenNotificationSent(): vscode.Event<vscode.NotebookDocument> {
-		return this._onOpenNotificationSent.event;
-	}
-
-	public get onCloseNotificationSent(): vscode.Event<vscode.NotebookDocument> {
-		return this._onCloseNotificationSent.event;
-	}
-
-	public get onSaveNotificationSent(): vscode.Event<vscode.NotebookDocument> {
-		return this._onSaveNotificationSent.event;
-	}
-
-	public addDisposables(disposables: vscode.Disposable[]): void {
-		this.disposables.push(...disposables);
 	}
 
 	public handles(textDocument: vscode.TextDocument): boolean {
@@ -710,11 +676,11 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		const send = async (notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): Promise<void> => {
 			const cellDocuments: TextDocumentItem[] = cells.map(cell => this.client.code2ProtocolConverter.asTextDocumentItem(cell.document));
 			try {
-				this._onOpenNotificationSent.fire(notebookDocument);
 				await this.client.sendNotification(proto.DidOpenNotebookDocumentNotification.type, {
 					notebookDocument: Converter.c2p.asNotebookDocument(notebookDocument, cells, this.client.code2ProtocolConverter),
 					cellTextDocuments: cellDocuments
 				});
+				this._onOpenNotificationSent.fire(notebookDocument);
 			} catch (error) {
 				this.client.error('Sending DidOpenNotebookDocumentNotification failed', error);
 				throw error;
@@ -732,11 +698,11 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private async doSendChange(event: VNotebookDocumentChangeEvent, cells: vscode.NotebookCell[] | undefined = this.getMatchingCells(event.notebook)): Promise<void> {
 		const send = async (event: VNotebookDocumentChangeEvent): Promise<void> => {
 			try {
-				this._onChangeNotificationSent.fire(event);
 				await this.client.sendNotification(proto.DidChangeNotebookDocumentNotification.type, {
 					notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(event.notebook, this.client.code2ProtocolConverter),
 					change: Converter.c2p.asNotebookDocumentChangeEvent(event, this.client.code2ProtocolConverter)
 				});
+				this._onChangeNotificationSent.fire(event);
 			} catch (error) {
 				this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
 				throw error;
@@ -756,10 +722,10 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private async doSendSave(notebookDocument: vscode.NotebookDocument): Promise<void> {
 		const send = async (notebookDocument: vscode.NotebookDocument): Promise<void> => {
 			try {
-				this._onSaveNotificationSent.fire(notebookDocument);
 				await this.client.sendNotification(proto.DidSaveNotebookDocumentNotification.type, {
 					notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) }
 				});
+				this._onSaveNotificationSent.fire(notebookDocument);
 			} catch (error) {
 				this.client.error('Sending DidSaveNotebookDocumentNotification failed', error);
 				throw error;
@@ -776,11 +742,11 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private async doSendClose(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): Promise<void> {
 		const send = async (notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): Promise<void> => {
 			try {
-				this._onCloseNotificationSent.fire(notebookDocument);
 				await this.client.sendNotification(proto.DidCloseNotebookDocumentNotification.type,  {
 					notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) },
 					cellTextDocuments: cells.map(cell => this.client.code2ProtocolConverter.asTextDocumentIdentifier(cell.document))
 				});
+				this._onCloseNotificationSent.fire(notebookDocument);
 			} catch (error) {
 				this.client.error('Sending DidCloseNotebookDocumentNotification failed', error);
 				throw error;
@@ -1039,13 +1005,13 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 	}
 
 	public register(data: RegistrationData<proto.NotebookDocumentSyncRegistrationOptions>): void {
-		const provider = new NotebookDocumentSyncFeatureProvider(this.client, data.registerOptions);
-		const disposables: vscode.Disposable[] = [];
-		disposables.push(provider.onChangeNotificationSent((p) => this._onChangeNotificationSent.fire(p)));
-		disposables.push(provider.onOpenNotificationSent((p) => this._onOpenNotificationSent.fire(p)));
-		disposables.push(provider.onCloseNotificationSent((p) => this._onCloseNotificationSent.fire(p)));
-		disposables.push(provider.onSaveNotificationSent((p) => this._onSaveNotificationSent.fire(p)));
-		provider.addDisposables(disposables);
+		const provider = new NotebookDocumentSyncFeatureProvider(
+			this.client,
+			data.registerOptions,
+			this._onChangeNotificationSent,
+			this._onOpenNotificationSent,
+			this._onCloseNotificationSent,
+			this._onSaveNotificationSent);
 		this.registrations.set(data.id, provider);
 	}
 

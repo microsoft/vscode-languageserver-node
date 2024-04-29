@@ -8,8 +8,7 @@ import * as minimatch from 'minimatch';
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
 	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff,
-	TabChangeEvent, Event, TabInputCustom, workspace,
-	TabInputNotebook
+	TabChangeEvent, Event, TabInputCustom, workspace, TabInputNotebook,	NotebookCell
 } from 'vscode';
 
 import {
@@ -931,6 +930,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				: Languages.match(documentSelector, document) > 0 && tabs.isVisible(document);
 		};
 
+		const matchesCell = (cell: NotebookCell): boolean => {
+			// Cells match if the language is allowed and if the containing notebook is visible.
+			return Languages.match(documentSelector, cell.document) > 0 && tabs.isVisible(cell.notebook.uri);
+		};
+
 		const isActiveDocument = (document: TextDocument | Uri): boolean => {
 			return document instanceof Uri
 				? this.activeTextDocument?.uri.toString() === document.toString()
@@ -989,7 +993,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		disposables.push(notebookFeature.onOpenNotificationSent((event) => {
 			// Send a pull for all opened cells in the notebook.
 			for (const cell of event.getCells()) {
-				if (matches(cell.document)) {
+				if (matchesCell(cell)) {
 					this.diagnosticRequestor.pull(cell.document, () => { addToBackgroundIfNeeded(cell.document); });
 				}
 			}
@@ -1034,7 +1038,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		// Do the same for already open notebook cells.
 		for (const notebookDocument of Workspace.notebookDocuments) {
 			for (const cell of notebookDocument.getCells()) {
-				if (matches(cell.document)) {
+				if (matchesCell(cell)) {
 					this.diagnosticRequestor.pull(cell.document, () => { addToBackgroundIfNeeded(cell.document); });
 					pulledTextDocuments.add(cell.document.uri.toString());
 				}
@@ -1064,9 +1068,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}));
 			disposables.push(notebookFeature.onChangeNotificationSent(async (event) => {
 				// Send a pull for all changed cells in the notebook.
-				const changedCells = event.cells?.textContent || [];
+				const textEvents = event.cells?.textContent || [];
+				const changedCells = textEvents.map(
+					(c) => event.notebook.getCells().find(cell => cell.document.uri.toString() === c.document.uri.toString()));
 				for (const cell of changedCells) {
-					if (matches(cell.document)) {
+					if (cell && matchesCell(cell)) {
 						this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
 					}
 				}
@@ -1080,7 +1086,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				// Send a pull for any new opened cells.
 				const openedCells = event.cells?.structure?.didOpen || [];
 				for (const cell of openedCells) {
-					if (matches(cell.document)) {
+					if (matchesCell(cell)) {
 						this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
 					}
 				}
@@ -1097,7 +1103,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}));
 			disposables.push(notebookFeature.onSaveNotificationSent((event) => {
 				for (const cell of event.getCells()) {
-					if (matches(cell.document)) {
+					if (matchesCell(cell)) {
 						this.diagnosticRequestor.pull(cell.document);
 					}
 				}

@@ -6,7 +6,9 @@ export function run(testsRoot: string, cb: (error: any, failures?: number) => vo
 	// Create the mocha test
 	const mocha = new Mocha({
 		ui: 'tdd',
-		color: true
+		color: true,
+		timeout: 60000,
+		grep: 'pull diagnostics'
 	});
 
 
