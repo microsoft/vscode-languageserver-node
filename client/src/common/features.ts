@@ -698,7 +698,7 @@ export interface FeatureClient<M, CO = object> {
 	warn(message: string, data?: any, showNotification?: boolean): void;
 	error(message: string, data?: any, showNotification?: boolean | 'force'): void;
 
-	handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification?: boolean): T;
+	handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification?: boolean, throwOnCancel?: boolean): T;
 
 	hasDedicatedTextSynchronizationFeature(textDocument: TextDocument): boolean;
 
