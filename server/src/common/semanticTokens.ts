@@ -144,7 +144,7 @@ export class SemanticTokensBuilder {
 			// push calls were ordered and are no longer ordered
 			this._dataIsSortedAndDeltaEncoded = false;
 
-			this._dataNonDelta = SemanticTokensBuilder._DeltaDecode(this._data);
+			this._dataNonDelta = SemanticTokensBuilder._deltaDecode(this._data);
 		}
 
 		let pushLine = line;
@@ -172,7 +172,7 @@ export class SemanticTokensBuilder {
 		return this._id.toString();
 	}
 
-	private static _DeltaDecode(data: number[]): number[] {
+	private static _deltaDecode(data: number[]): number[] {
 		// Remove delta encoding from data
 		const tokenCount = (data.length / 5) | 0;
 		let prevLine = 0;
@@ -253,7 +253,7 @@ export class SemanticTokensBuilder {
 		return result;
 	}
 
-	private get _finalDataDelta(): number[] {
+	private getFinalDataDelta(): number[] {
 		if (this._dataIsSortedAndDeltaEncoded) {
 			return this._data;
 		} else {
@@ -263,7 +263,7 @@ export class SemanticTokensBuilder {
 
 	public previousResult(id: string) {
 		if (this.id === id) {
-			this._prevData = this._finalDataDelta;
+			this._prevData = this.getFinalDataDelta();
 		}
 		this.initialize();
 	}
@@ -273,7 +273,7 @@ export class SemanticTokensBuilder {
 
 		return {
 			resultId: this.id,
-			data: this._finalDataDelta
+			data: this.getFinalDataDelta()
 		};
 	}
 
@@ -285,7 +285,7 @@ export class SemanticTokensBuilder {
 		if (this._prevData !== undefined) {
 			return {
 				resultId: this.id,
-				edits: (new SemanticTokensDiff(this._prevData, this._finalDataDelta)).computeDiff()
+				edits: (new SemanticTokensDiff(this._prevData, this.getFinalDataDelta())).computeDiff()
 			};
 		} else {
 			return this.build();
