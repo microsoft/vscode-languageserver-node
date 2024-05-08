@@ -631,7 +631,7 @@ class DiagnosticRequestor implements Disposable {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
 						}
 					}, (error) => {
-						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] });
+						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] }, true, true);
 					});
 				};
 				const middleware: DiagnosticProviderMiddleware = this.client.middleware;
