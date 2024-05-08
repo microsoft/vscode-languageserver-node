@@ -428,14 +428,18 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private readonly notebookDidOpen: Set<string>;
 	private readonly disposables: vscode.Disposable[];
 	private readonly selector: vscode.DocumentSelector;
+	private readonly onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>;
+	private readonly onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
+	private readonly onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
+	private readonly onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
 
 	constructor(
 		client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>,
 		options: proto.NotebookDocumentSyncOptions,
-		private readonly _onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>,
-		private readonly _onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>,
-		private readonly _onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>,
-		private readonly _onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>
+		onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>,
+		onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>,
+		onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>,
+		onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>
 	) {
 		this.client = client;
 		this.options = options;
@@ -443,6 +447,10 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		this.notebookDidOpen = new Set();
 		this.disposables = [];
 		this.selector = client.protocol2CodeConverter.asDocumentSelector($NotebookDocumentSyncOptions.asDocumentSelector(options));
+		this.onChangeNotificationSent = onChangeNotificationSent;
+		this.onOpenNotificationSent = onOpenNotificationSent;
+		this.onCloseNotificationSent = onCloseNotificationSent;
+		this.onSaveNotificationSent = onSaveNotificationSent;
 
 		// open
 		vscode.workspace.onDidOpenNotebookDocument((notebookDocument) => {
@@ -680,7 +688,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 					notebookDocument: Converter.c2p.asNotebookDocument(notebookDocument, cells, this.client.code2ProtocolConverter),
 					cellTextDocuments: cellDocuments
 				});
-				this._onOpenNotificationSent.fire(notebookDocument);
+				this.onOpenNotificationSent.fire(notebookDocument);
 			} catch (error) {
 				this.client.error('Sending DidOpenNotebookDocumentNotification failed', error);
 				throw error;
@@ -702,7 +710,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 					notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(event.notebook, this.client.code2ProtocolConverter),
 					change: Converter.c2p.asNotebookDocumentChangeEvent(event, this.client.code2ProtocolConverter)
 				});
-				this._onChangeNotificationSent.fire(event);
+				this.onChangeNotificationSent.fire(event);
 			} catch (error) {
 				this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
 				throw error;
@@ -725,7 +733,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 				await this.client.sendNotification(proto.DidSaveNotebookDocumentNotification.type, {
 					notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) }
 				});
-				this._onSaveNotificationSent.fire(notebookDocument);
+				this.onSaveNotificationSent.fire(notebookDocument);
 			} catch (error) {
 				this.client.error('Sending DidSaveNotebookDocumentNotification failed', error);
 				throw error;
@@ -746,7 +754,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 					notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) },
 					cellTextDocuments: cells.map(cell => this.client.code2ProtocolConverter.asTextDocumentIdentifier(cell.document))
 				});
-				this._onCloseNotificationSent.fire(notebookDocument);
+				this.onCloseNotificationSent.fire(notebookDocument);
 			} catch (error) {
 				this.client.error('Sending DidCloseNotebookDocumentNotification failed', error);
 				throw error;
