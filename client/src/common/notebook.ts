@@ -629,7 +629,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		} else {
 			// The notebook is synced. First check if we have no matching
 			// cells anymore and if so close the notebook
-			const cells = this.getMatchingCells(notebookDocument);
+			const cells = this.getMatchingCells2(notebookDocument, syncInfo, event);
 			if (cells === undefined) {
 				this.didClose(notebookDocument, syncInfo);
 				return;
@@ -868,8 +868,22 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 				added = this.filterCells(notebookDocument, new Array(...item.addedCells), selector.cells);
 			}
 		}
+		if (cells === undefined && added === undefined) {
+			return syncInfo.cells;
+		}
+
 		const result: vscode.NotebookCell[] = [];
-		
+		if (cells !== undefined) {
+			for (const item of syncInfo.cells) {
+				if (cells.has(item.document.uri.toString())) {
+					result.push(item);
+				}
+			}
+		}
+		if (added !== undefined) {
+			result.push(...added);
+		}
+
 		return result;
 	}
 
