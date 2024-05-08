@@ -17,6 +17,7 @@ import * as Is from './utils/is';
 import * as _c2p from './codeConverter';
 import * as _p2c from './protocolConverter';
 import { DynamicFeature, FeatureClient, RegistrationData, FeatureState } from './features';
+import { NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook } from 'vscode-languageserver-protocol/lib/common/protocol.notebook';
 
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -821,6 +822,55 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		}
 		// The notebook is a property as well.
 		return Object.keys(result).length > 1 ? result : undefined;
+	}
+
+	private getMatchingCells2(notebookDocument: vscode.NotebookDocument, syncInfo: SyncInfo, event: vscode.NotebookDocumentChangeEvent): vscode.NotebookCell[] | undefined {
+		if (this.options.notebookSelector === undefined) {
+			return undefined;
+		}
+		let selector: NotebookDocumentFilterWithNotebook | NotebookDocumentFilterWithCells | undefined;
+		for (const item of this.options.notebookSelector) {
+			if (item.notebook === undefined || $NotebookDocumentFilter.matchNotebook(item.notebook, notebookDocument)) {
+				selector = item;
+				break;
+			}
+		}
+		if (selector === undefined) {
+			return undefined;
+		}
+
+		if ((event.cellChanges === undefined || event.cellChanges.length === 0) && (event.contentChanges === undefined || event.contentChanges.length === 0)) {
+			return syncInfo.cells;
+		}
+		let cells: Set<string> | undefined;
+		if (event.cellChanges !== undefined && event.cellChanges.length > 0) {
+			const changedCells = event.cellChanges.map(item => item.cell);
+			const filtered = this.filterCells(notebookDocument, changedCells, selector.cells);
+			if (filtered.length !== changedCells.length) {
+				cells = new Set(syncInfo.uris);
+				for (const cell of changedCells) {
+					cells.delete(cell.document.uri.toString());
+				}
+				for (const cell of filtered) {
+					cells.add(cell.document.uri.toString());
+				}
+			}
+		}
+		let added: vscode.NotebookCell[] | undefined;
+		if (event.contentChanges !== undefined && event.contentChanges.length > 0) {
+			if (cells === undefined) {
+				cells = new Set(syncInfo.uris);
+			}
+			for (const item of event.contentChanges) {
+				for (const cell of item.removedCells) {
+					cells.delete(cell.document.uri.toString());
+				}
+				added = this.filterCells(notebookDocument, new Array(...item.addedCells), selector.cells);
+			}
+		}
+		const result: vscode.NotebookCell[] = [];
+		
+		return result;
 	}
 
 	private getMatchingCells(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[] = notebookDocument.getCells()): vscode.NotebookCell[] | undefined {
