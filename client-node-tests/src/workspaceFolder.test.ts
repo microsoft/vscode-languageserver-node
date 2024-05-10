@@ -106,6 +106,3 @@ suite('Workspace Folder Feature Tests', () => {
 		testNoEvent(undefined, undefined);
 	});
 });
-
-
-
