@@ -418,6 +418,7 @@ export interface NotebookDocumentSyncFeatureShape {
 	sendDidSaveNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
 	sendDidChangeNotebookDocument(event: VNotebookDocumentChangeEvent): Promise<void>;
 	sendDidCloseNotebookDocument(notebookDocument: vscode.NotebookDocument): Promise<void>;
+	getSynchronizedCells(notebookDocument: vscode.NotebookDocument): vscode.NotebookCell[] | undefined;
 }
 
 class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeatureShape {
@@ -766,6 +767,11 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		const middleware = this.client.middleware?.notebooks;
 		this.notebookSyncInfo.delete(notebookDocument.uri.toString());
 		return middleware?.didClose !== undefined ? middleware.didClose(notebookDocument, cells, send) : send(notebookDocument, cells);
+	}
+
+	public getSynchronizedCells(notebookDocument: vscode.NotebookDocument): vscode.NotebookCell[] | undefined {
+		const syncInfo = this.getSyncInfo(notebookDocument);
+		return syncInfo?.cells;
 	}
 
 	private asNotebookDocumentChangeEvent(notebook: vscode.NotebookDocument, event: vscode.NotebookDocumentChangeEvent | undefined, syncInfo: SyncInfo, matchingCells: vscode.NotebookCell[]): VNotebookDocumentChangeEvent | undefined {
