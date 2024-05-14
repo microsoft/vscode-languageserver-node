@@ -20,6 +20,11 @@ namespace GotNotifiedRequest {
 	export const type = new RequestType<string, boolean, void>(method);
 }
 
+namespace ClearNotifiedRequest {
+	export const method: 'testing/clearNotified' = 'testing/clearNotified';
+	export const type = new RequestType<string, void, void>(method);
+}
+
 connection.onInitialize((_params: InitializeParams): any => {
 	const capabilities: ServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Full,
@@ -52,6 +57,10 @@ connection.onRequest(GotNotifiedRequest.type, (method: string) => {
 		receivedNotifications.delete(method);
 	}
 	return result;
+});
+
+connection.onRequest(ClearNotifiedRequest.type, (method: string) => {
+	receivedNotifications.delete(method);
 });
 
 // Listen on the connection

@@ -16,6 +16,11 @@ namespace GotNotifiedRequest {
 	export const type = new lsclient.RequestType<string, boolean, void>(method);
 }
 
+namespace ClearNotifiedRequest {
+	export const method: 'testing/clearNotified' = 'testing/clearNotified';
+	export const type = new lsclient.RequestType<string, void, void>(method);
+}
+
 async function revertAllDirty(): Promise<void> {
 	return vscode.commands.executeCommand('_workbench.revertAllDirty');
 }
@@ -1675,6 +1680,69 @@ suite('Full notebook tests', () => {
 		client.middleware.notebooks = undefined;
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
+		await revertAllDirty();
+	});
+
+	test('Notebook document: add unmonitored cell', async(): Promise<void> => {
+		await client.sendRequest(ClearNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		let onlyCellChanges: boolean = true;
+		client.middleware.notebooks = {
+			didChange: (ne, n) => {
+				onlyCellChanges = ne.cells?.structure === undefined && ne.cells?.textContent === undefined;
+				return n(ne);
+			}
+		};
+		const edit = new vscode.WorkspaceEdit;
+		const notebookEdit = vscode.NotebookEdit.insertCells(0, [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'console.log("Hello, world!")', 'typescript')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		client.middleware.notebooks = undefined;
+		assert.strictEqual(onlyCellChanges, true, 'Only cell changes');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: add monitored cell', async(): Promise<void> => {
+		await client.sendRequest(ClearNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		let structuralChange: boolean = false;
+		client.middleware.notebooks = {
+			didOpen(notebookDocument, cells, next) {
+				return next(notebookDocument, cells);
+			},
+			didChange: (ne, n) => {
+				structuralChange = structuralChange || ne.cells?.structure !== undefined;
+				return n(ne);
+			}
+		};
+		const edit = new vscode.WorkspaceEdit;
+		const notebookEdit = vscode.NotebookEdit.insertCells(0, [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'print("Hello, world!")', 'python')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		client.middleware.notebooks = undefined;
+		assert.strictEqual(structuralChange, true, 'Structural changes');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: change language id', async(): Promise<void> => {
+		await client.sendRequest(ClearNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		let structuralChange: boolean = false;
+		client.middleware.notebooks = {
+			didOpen(notebookDocument, cells, next) {
+				return next(notebookDocument, cells);
+			},
+			didChange: (ne, n) => {
+				structuralChange = structuralChange || ne.cells?.structure !== undefined;
+				return n(ne);
+			}
+		};
+		const edit = new vscode.WorkspaceEdit;
+		const notebookEdit = vscode.NotebookEdit.replaceCells(new vscode.NotebookRange(0, 1), [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, notebookDocument.cellAt(0).document.getText(), 'typescript')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		client.middleware.notebooks = undefined;
+		assert.strictEqual(structuralChange, true, 'Structural changes');
 		await revertAllDirty();
 	});
 

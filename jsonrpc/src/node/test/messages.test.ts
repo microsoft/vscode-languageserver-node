@@ -148,7 +148,7 @@ suite('Messages', () => {
 		}
 		const msg: RequestMessage = { jsonrpc: '2.0', id: 1, method: 'example' };
 		const zipped = await gzipEncoder.encode(Buffer.from(JSON.stringify(msg), 'utf8'));
-		assert.strictEqual(Buffer.from(zipped).toString('base64'), 'H4sIAAAAAAAAA6tWyirOzysqSFayUjLSM1DSUcpMUbIy1FHKTS3JyAcylVIrEnMLclKVagH7JiWtKwAAAA==');
+		assert.strictEqual(Buffer.from(zipped).toString('base64'), 'H4sIAAAAAAAAA6tWyirOzysqSFayUjLSM1DSUcpMUbIy1FHKTS3JyE9RslJKrUjMLchJVaoFAPsmJa0rAAAA');
 		const unzipped: RequestMessage = JSON.parse(Buffer.from(await gzipDecoder.decode(zipped)).toString('utf-8')) as RequestMessage;
 		assert.strictEqual(unzipped.id, 1);
 		assert.strictEqual(unzipped.method, 'example');
@@ -204,9 +204,10 @@ suite('Messages', () => {
 			assert.strictEqual(message.method, 'example');
 			done();
 		});
+		const zipped = zlib.gzipSync(Buffer.from('{"jsonrpc":"2.0","id":1,"method":"example"}', 'utf8'));
 		const payload = Buffer.concat([
-			Buffer.from('Content-Encoding: gzip\r\nContent-Length: 61\r\n\r\n', 'ascii'),
-			zlib.gzipSync(Buffer.from('{"jsonrpc":"2.0","id":1,"method":"example"}', 'utf8'))
+			Buffer.from(`Content-Encoding: gzip\r\nContent-Length: ${zipped.byteLength}\r\n\r\n`, 'ascii'),
+			zipped
 		]);
 		readable.push(payload);
 		readable.push(null);
