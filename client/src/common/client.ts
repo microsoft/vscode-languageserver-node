@@ -2021,7 +2021,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		WorkspaceSymbolResolveRequest.method
 	]);
 
-	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true): T {
+	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true, throwOnCancel: boolean = false): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
 			// The connection got disposed while we were waiting for a response.
@@ -2030,7 +2030,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				return defaultValue;
 			}
 			if (error.code === LSPErrorCodes.RequestCancelled || error.code === LSPErrorCodes.ServerCancelled) {
-				if (token !== undefined && token.isCancellationRequested) {
+				if (token !== undefined && token.isCancellationRequested && !throwOnCancel) {
 					return defaultValue;
 				} else {
 					if (error.data !== undefined) {

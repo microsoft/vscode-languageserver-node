@@ -8,20 +8,22 @@ import * as minimatch from 'minimatch';
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
 	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff,
-	TabChangeEvent, Event, TabInputCustom, workspace
+	TabChangeEvent, Event, TabInputCustom, workspace, TabInputNotebook,	NotebookCell
 } from 'vscode';
 
 import {
 	ClientCapabilities, ServerCapabilities, DocumentSelector, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
 	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL, TextDocumentFilter, PreviousResultId,
 	DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams, DocumentDiagnosticRequest, DocumentDiagnosticReportKind,
-	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticRequest, WorkspaceDiagnosticParams, DiagnosticOptions, DiagnosticRefreshRequest, DiagnosticTag
+	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticRequest, WorkspaceDiagnosticParams, DiagnosticOptions, DiagnosticRefreshRequest, DiagnosticTag,
+	NotebookDocumentSyncRegistrationType
 } from 'vscode-languageserver-protocol';
 
 import { generateUuid } from './utils/uuid';
 import {
 	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError
 } from './features';
+import { NotebookDocumentSyncFeature } from './notebook';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -268,6 +270,16 @@ class Tabs {
 
 	public isVisible(document: TextDocument | Uri): boolean {
 		const uri = document instanceof Uri ? document : document.uri;
+		if (uri.scheme === NotebookDocumentSyncFeature.CellScheme) {
+			// Notebook cells aren't in the list of tabs, but the notebook should be.
+			return Workspace.notebookDocuments.some(notebook => {
+				if (this.open.has(notebook.uri.toString())) {
+					const cell = notebook.getCells().find(cell => cell.document.uri.toString() === uri.toString());
+					return cell !== undefined;
+				}
+				return false;
+			});
+		}
 		return this.open.has(uri.toString());
 	}
 
@@ -288,6 +300,8 @@ class Tabs {
 				} else if (input instanceof TabInputTextDiff) {
 					uri = input.modified;
 				} else if (input instanceof TabInputCustom) {
+					uri = input.uri;
+				} else if (input instanceof TabInputNotebook) {
 					uri = input.uri;
 				}
 				if (uri !== undefined && !seen.has(uri.toString())) {
@@ -617,7 +631,7 @@ class DiagnosticRequestor implements Disposable {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.unChanged, resultId: result.resultId };
 						}
 					}, (error) => {
-						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] });
+						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] }, true, true);
 					});
 				};
 				const middleware: DiagnosticProviderMiddleware = this.client.middleware;
@@ -916,6 +930,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				: Languages.match(documentSelector, document) > 0 && tabs.isVisible(document);
 		};
 
+		const matchesCell = (cell: NotebookCell): boolean => {
+			// Cells match if the language is allowed and if the containing notebook is visible.
+			return Languages.match(documentSelector, cell.document) > 0 && tabs.isVisible(cell.notebook.uri);
+		};
+
 		const isActiveDocument = (document: TextDocument | Uri): boolean => {
 			return document instanceof Uri
 				? this.activeTextDocument?.uri.toString() === document.toString()
@@ -970,6 +989,15 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
 			}
 		}));
+		const notebookFeature = client.getFeature(NotebookDocumentSyncRegistrationType.method);
+		disposables.push(notebookFeature.onOpenNotificationSent((event) => {
+			// Send a pull for all opened cells in the notebook.
+			for (const cell of event.getCells()) {
+				if (matchesCell(cell)) {
+					this.diagnosticRequestor.pull(cell.document, () => { addToBackgroundIfNeeded(cell.document); });
+				}
+			}
+		}));
 
 		disposables.push(tabs.onOpen((opened) => {
 			for (const resource of opened) {
@@ -1007,6 +1035,15 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				pulledTextDocuments.add(textDocument.uri.toString());
 			}
 		}
+		// Do the same for already open notebook cells.
+		for (const notebookDocument of Workspace.notebookDocuments) {
+			for (const cell of notebookDocument.getCells()) {
+				if (matchesCell(cell)) {
+					this.diagnosticRequestor.pull(cell.document, () => { addToBackgroundIfNeeded(cell.document); });
+					pulledTextDocuments.add(cell.document.uri.toString());
+				}
+			}
+		}
 
 		// Pull all tabs if not already pulled as text document
 		if (diagnosticPullOptions.onTabs === true) {
@@ -1029,6 +1066,31 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 					this.diagnosticRequestor.pull(textDocument, () => { this.backgroundScheduler.trigger(); });
 				}
 			}));
+			disposables.push(notebookFeature.onChangeNotificationSent(async (event) => {
+				// Send a pull for all changed cells in the notebook.
+				const textEvents = event.cells?.textContent || [];
+				const changedCells = textEvents.map(
+					(c) => event.notebook.getCells().find(cell => cell.document.uri.toString() === c.document.uri.toString()));
+				for (const cell of changedCells) {
+					if (cell && matchesCell(cell)) {
+						this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
+					}
+				}
+
+				// Clear out any closed cells.
+				const closedCells = event.cells?.structure?.didClose || [];
+				for (const cell of closedCells) {
+					this.diagnosticRequestor.forgetDocument(cell.document);
+				}
+
+				// Send a pull for any new opened cells.
+				const openedCells = event.cells?.structure?.didOpen || [];
+				for (const cell of openedCells) {
+					if (matchesCell(cell)) {
+						this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
+					}
+				}
+			}));
 		}
 
 		if (diagnosticPullOptions.onSave === true) {
@@ -1039,12 +1101,24 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 					this.diagnosticRequestor.pull(event.textDocument);
 				}
 			}));
+			disposables.push(notebookFeature.onSaveNotificationSent((event) => {
+				for (const cell of event.getCells()) {
+					if (matchesCell(cell)) {
+						this.diagnosticRequestor.pull(cell.document);
+					}
+				}
+			}));
 		}
 
 		// When the document closes clear things up
 		const closeFeature = client.getFeature(DidCloseTextDocumentNotification.method);
 		disposables.push(closeFeature.onNotificationSent((event) => {
 			this.cleanUpDocument(event.textDocument);
+		}));
+		disposables.push(notebookFeature.onCloseNotificationSent((event) => {
+			for (const cell of event.getCells()) {
+				this.cleanUpDocument(cell.document);
+			}
 		}));
 
 		// Same when a tabs closes.
