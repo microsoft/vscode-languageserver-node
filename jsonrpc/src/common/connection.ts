@@ -1446,8 +1446,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				};
 				const responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				try {
-					await messageWriter.write(requestMessage);
 					responsePromises.set(id, responsePromise);
+					await messageWriter.write(requestMessage);
 					if (tokenWasCancelled) {
 						sendCancellation(connection, id);
 					}
@@ -1455,6 +1455,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					logger.error(`Sending request failed.`);
 					// Writing the message failed. So we need to reject the promise.
 					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, error.message ? error.message : 'Unknown reason'));
+					responsePromises.delete(id);
 					throw error;
 				}
 			});
