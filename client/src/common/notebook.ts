@@ -421,6 +421,7 @@ export interface NotebookDocumentSyncFeatureShape {
 	getSynchronizedCells(notebookDocument: vscode.NotebookDocument): vscode.NotebookCell[] | undefined;
 }
 
+
 class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeatureShape {
 
 	private readonly client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>;
@@ -429,14 +430,29 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 	private readonly notebookDidOpen: Set<string>;
 	private readonly disposables: vscode.Disposable[];
 	private readonly selector: vscode.DocumentSelector;
+	private readonly onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>;
+	private readonly onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
+	private readonly onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
+	private readonly onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
 
-	constructor(client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>, options: proto.NotebookDocumentSyncOptions) {
+	constructor(
+		client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>,
+		options: proto.NotebookDocumentSyncOptions,
+		onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>,
+		onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>,
+		onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>,
+		onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>
+	) {
 		this.client = client;
 		this.options = options;
 		this.notebookSyncInfo = new Map();
 		this.notebookDidOpen = new Set();
 		this.disposables = [];
 		this.selector = client.protocol2CodeConverter.asDocumentSelector($NotebookDocumentSyncOptions.asDocumentSelector(options));
+		this.onChangeNotificationSent = onChangeNotificationSent;
+		this.onOpenNotificationSent = onOpenNotificationSent;
+		this.onCloseNotificationSent = onCloseNotificationSent;
+		this.onSaveNotificationSent = onSaveNotificationSent;
 
 		// open
 		vscode.workspace.onDidOpenNotebookDocument((notebookDocument) => {
@@ -681,13 +697,13 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 
 	private async doSendOpen(notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): Promise<void> {
 		const send = async (notebookDocument: vscode.NotebookDocument, cells: vscode.NotebookCell[]): Promise<void> => {
-			const nb = Converter.c2p.asNotebookDocument(notebookDocument, cells, this.client.code2ProtocolConverter);
 			const cellDocuments: TextDocumentItem[] = cells.map(cell => this.client.code2ProtocolConverter.asTextDocumentItem(cell.document));
 			try {
 				await this.client.sendNotification(proto.DidOpenNotebookDocumentNotification.type, {
-					notebookDocument: nb,
+					notebookDocument: Converter.c2p.asNotebookDocument(notebookDocument, cells, this.client.code2ProtocolConverter),
 					cellTextDocuments: cellDocuments
 				});
+				this.onOpenNotificationSent.fire(notebookDocument);
 			} catch (error) {
 				this.client.error('Sending DidOpenNotebookDocumentNotification failed', error);
 				throw error;
@@ -713,6 +729,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 					notebookDocument: Converter.c2p.asVersionedNotebookDocumentIdentifier(event.notebook, this.client.code2ProtocolConverter),
 					change: Converter.c2p.asNotebookDocumentChangeEvent(event, this.client.code2ProtocolConverter)
 				});
+				this.onChangeNotificationSent.fire(event);
 			} catch (error) {
 				this.client.error('Sending DidChangeNotebookDocumentNotification failed', error);
 				throw error;
@@ -735,6 +752,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 				await this.client.sendNotification(proto.DidSaveNotebookDocumentNotification.type, {
 					notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) }
 				});
+				this.onSaveNotificationSent.fire(notebookDocument);
 			} catch (error) {
 				this.client.error('Sending DidSaveNotebookDocumentNotification failed', error);
 				throw error;
@@ -759,6 +777,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 					notebookDocument: { uri: this.client.code2ProtocolConverter.asUri(notebookDocument.uri) },
 					cellTextDocuments: cells.map(cell => this.client.code2ProtocolConverter.asTextDocumentIdentifier(cell.document))
 				});
+				this.onCloseNotificationSent.fire(notebookDocument);
 			} catch (error) {
 				this.client.error('Sending DidCloseNotebookDocumentNotification failed', error);
 				throw error;
@@ -976,6 +995,10 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 export type $NotebookCellTextDocumentFilter = NotebookCellTextDocumentFilter & { sync: true };
 
 export type NotebookDocumentProviderShape = {
+	onOpenNotificationSent: vscode.Event<vscode.NotebookDocument>;
+	onChangeNotificationSent: vscode.Event<VNotebookDocumentChangeEvent>;
+	onCloseNotificationSent: vscode.Event<vscode.NotebookDocument>;
+	onSaveNotificationSent: vscode.Event<vscode.NotebookDocument>;
 	getProvider(notebookCell: vscode.NotebookCell): NotebookDocumentSyncFeatureShape |undefined;
 };
 
@@ -986,11 +1009,20 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 	private readonly client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>;
 	private readonly registrations: Map<string, NotebookDocumentSyncFeatureProvider>;
 	private dedicatedChannel: vscode.DocumentSelector | undefined;
+	private readonly _onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>;
+	private readonly _onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
+	private readonly _onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
+	private readonly _onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
 
 	constructor(client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>) {
 		this.client = client;
 		this.registrations = new Map();
 		this.registrationType = proto.NotebookDocumentSyncRegistrationType.type;
+		this._onChangeNotificationSent = new vscode.EventEmitter<VNotebookDocumentChangeEvent>();
+		this._onOpenNotificationSent = new vscode.EventEmitter<vscode.NotebookDocument>();
+		this._onCloseNotificationSent = new vscode.EventEmitter<vscode.NotebookDocument>();
+		this._onSaveNotificationSent = new vscode.EventEmitter<vscode.NotebookDocument>();
+
 		// We don't receive an event for cells where the document changes its language mode
 		// Since we allow servers to filter on the language mode we fire such an event ourselves.
 		vscode.workspace.onDidOpenTextDocument((textDocument) => {
@@ -1061,6 +1093,22 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 
 	public readonly registrationType: proto.RegistrationType<proto.NotebookDocumentSyncRegistrationOptions>;
 
+	public get onOpenNotificationSent(): vscode.Event<vscode.NotebookDocument> {
+		return this._onOpenNotificationSent.event;
+	}
+
+	public get onChangeNotificationSent(): vscode.Event<VNotebookDocumentChangeEvent> {
+		return this._onChangeNotificationSent.event;
+	}
+
+	public get onCloseNotificationSent(): vscode.Event<vscode.NotebookDocument> {
+		return this._onCloseNotificationSent.event;
+	}
+
+	public get onSaveNotificationSent(): vscode.Event<vscode.NotebookDocument> {
+		return this._onSaveNotificationSent.event;
+	}
+
 	public fillClientCapabilities(capabilities: proto.ClientCapabilities): void {
 		const synchronization = ensure(ensure(capabilities, 'notebookDocument')!, 'synchronization')!;
 		synchronization.dynamicRegistration = true;
@@ -1085,7 +1133,13 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 	}
 
 	public register(data: RegistrationData<proto.NotebookDocumentSyncRegistrationOptions>): void {
-		const provider = new NotebookDocumentSyncFeatureProvider(this.client, data.registerOptions);
+		const provider = new NotebookDocumentSyncFeatureProvider(
+			this.client,
+			data.registerOptions,
+			this._onChangeNotificationSent,
+			this._onOpenNotificationSent,
+			this._onCloseNotificationSent,
+			this._onSaveNotificationSent);
 		this.registrations.set(data.id, provider);
 	}
 
@@ -1140,3 +1194,4 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 		return [undefined, undefined];
 	}
 }
+

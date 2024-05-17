@@ -8,6 +8,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
+import * as proto from 'vscode-languageserver-protocol';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/diagnostic';
 
@@ -19,6 +20,11 @@ namespace GotNotifiedRequest {
 namespace ClearNotifiedRequest {
 	export const method: 'testing/clearNotified' = 'testing/clearNotified';
 	export const type = new lsclient.RequestType<string, void, void>(method);
+}
+
+namespace SetDiagnosticsNotification {
+	export const method: 'testing/setDiagnostics' = 'testing/setDiagnostics';
+	export const type = new lsclient.NotificationType<proto.DocumentDiagnosticReport>(method);
 }
 
 async function revertAllDirty(): Promise<void> {
@@ -1774,6 +1780,47 @@ suite('Full notebook tests', () => {
 		await provider.sendDidCloseNotebookDocument(notebookDocument);
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidCloseNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
+		await revertAllDirty();
+	});
+
+	test('Notebook document: pull diagnostics', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+
+		// Send the diagnostics for the first cell.
+		const report: proto.DocumentDiagnosticReport = {
+			kind: 'full',
+			items: [
+				{ message: 'notebook-error', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 }} }
+			]
+		};
+		await client.sendNotification(SetDiagnosticsNotification.method, { uri: notebook.cellAt(0).document.uri.toString(), report });
+
+		// notebook has to be visible for diagnostics to be published.
+		await vscode.window.showNotebookDocument(notebook);
+
+		const promise = new Promise<void>((resolve) => {
+			client.middleware.provideDiagnostics = async (doc, p, token, next) => {
+				const result = await next(doc, p, token);
+				if (result?.kind === 'full' && result?.items.length > 0) {
+					// Need to be async so that the diagnostics are published.
+					setTimeout(() => resolve(), 10);
+				}
+				return result;
+			};
+		});
+
+		// Change the notebook cell, this should cause the diagnostics to be published.
+		const edit = new vscode.WorkspaceEdit();
+		edit.insert(notebook.cellAt(0).document.uri, new vscode.Position(0, 0), '# a comment\n');
+		await vscode.workspace.applyEdit(edit);
+
+		// Wait for the diagnostics to be published.
+		await promise;
+		const diagnostics = vscode.languages.getDiagnostics(notebook.cellAt(0).document.uri);
+		assert.strictEqual(diagnostics.length, 1);
+		const diagnostic = diagnostics[0];
+		assert.strictEqual(diagnostic.message, 'notebook-error');
+
 		await revertAllDirty();
 	});
 });
