@@ -23,6 +23,11 @@ namespace GotNotifiedRequest {
 	export const type = new RequestType<string, boolean, void>(method);
 }
 
+namespace ClearNotifiedRequest {
+	export const method: 'testing/clearNotified' = 'testing/clearNotified';
+	export const type = new RequestType<string, void, void>(method);
+}
+
 namespace SetDiagnosticsNotification {
 	export const method: 'testing/setDiagnostics' = 'testing/setDiagnostics';
 	export const type = new NotificationType<DocumentDiagnosticReport>(method);
@@ -73,6 +78,10 @@ connection.onRequest(GotNotifiedRequest.type, (method: string) => {
 		receivedNotifications.delete(method);
 	}
 	return result;
+});
+
+connection.onRequest(ClearNotifiedRequest.type, (method: string) => {
+	receivedNotifications.delete(method);
 });
 
 connection.onNotification(SetDiagnosticsNotification.method, (params) => {
