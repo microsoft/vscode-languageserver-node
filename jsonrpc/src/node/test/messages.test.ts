@@ -204,9 +204,10 @@ suite('Messages', () => {
 			assert.strictEqual(message.method, 'example');
 			done();
 		});
+		const zipped = zlib.gzipSync(Buffer.from('{"jsonrpc":"2.0","id":1,"method":"example"}', 'utf8'));
 		const payload = Buffer.concat([
-			Buffer.from('Content-Encoding: gzip\r\nContent-Length: 61\r\n\r\n', 'ascii'),
-			zlib.gzipSync(Buffer.from('{"jsonrpc":"2.0","id":1,"method":"example"}', 'utf8'))
+			Buffer.from(`Content-Encoding: gzip\r\nContent-Length: ${zipped.byteLength}\r\n\r\n`, 'ascii'),
+			zipped
 		]);
 		readable.push(payload);
 		readable.push(null);
