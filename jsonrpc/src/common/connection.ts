@@ -1437,12 +1437,14 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				};
 				const responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				try {
-					await messageWriter.write(requestMessage);
 					responsePromises.set(id, responsePromise);
+					await messageWriter.write(requestMessage);
 				} catch (error: any) {
-					logger.error(`Sending request failed.`);
-					// Writing the message failed. So we need to reject the promise.
+					// Writing the message failed. So we need to delete it from the response promises and
+					// reject it.
+					responsePromises.delete(id);
 					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, error.message ? error.message : 'Unknown reason'));
+					logger.error(`Sending request failed.`);
 					throw error;
 				}
 			});
