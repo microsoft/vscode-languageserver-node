@@ -14,23 +14,23 @@ export type ServerOptions = Worker | (() => Promise<Worker | MessageTransports>)
 
 export class LanguageClient extends BaseLanguageClient {
 
-	private readonly options: ServerOptions;
+	private readonly serverOptions: ServerOptions;
 
-	constructor(id: string, name: string, clientOptions: LanguageClientOptions, options: ServerOptions) {
+	constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions) {
 		super(id, name, clientOptions);
-		this.options = options;
+		this.serverOptions = serverOptions;
 	}
 
 	protected async createMessageTransports(_encoding: string): Promise<MessageTransports> {
-		if (typeof this.options === 'function') {
-			const result = await this.options();
+		if (typeof this.serverOptions === 'function') {
+			const result = await this.serverOptions();
 			if (result instanceof Worker) {
 				return this.createMessageTransportsFromWorker(result);
 			} else {
 				return result;
 			}
 		} else {
-			return this.createMessageTransportsFromWorker(this.options);
+			return this.createMessageTransportsFromWorker(this.serverOptions);
 		}
 	}
 
