@@ -292,7 +292,7 @@ type _WorkspaceMiddleware = {
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware;
 
 interface _WindowMiddleware {
-	showDocument?: (this: void, params: ShowDocumentParams, next: ShowDocumentRequest.HandlerSignature) => Promise<ShowDocumentResult>;
+	showDocument?: ShowDocumentRequest.MiddlewareSignature;
 }
 export type WindowMiddleware = _WindowMiddleware;
 
@@ -1153,7 +1153,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			connection.onNotification(TelemetryEventNotification.type, (data) => {
 				this._telemetryEmitter.fire(data);
 			});
-			connection.onRequest(ShowDocumentRequest.type, async (params): Promise<ShowDocumentResult> => {
+			connection.onRequest(ShowDocumentRequest.type, async (params, token) => {
 				const showDocument = async (params: ShowDocumentParams): Promise<ShowDocumentResult> => {
 					const uri = this.protocol2CodeConverter.asUri(params.uri);
 					try {
@@ -1179,7 +1179,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				};
 				const middleware = this._clientOptions.middleware.window?.showDocument;
 				if (middleware !== undefined)  {
-					return middleware(params, showDocument);
+					return middleware(params, token, showDocument);
 				} else {
 					return showDocument(params);
 				}
@@ -2151,12 +2151,30 @@ interface Connection {
 
 	listen(): void;
 
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
+
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
 	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
 
 	hasPendingResponse(): boolean;
 
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
 	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
+
+	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
