@@ -1183,12 +1183,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.outputChannel.appendLine(this.data2String(data));
 		}
 		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= reveal)) {
-			this.showNotificationMessage(type, message);
+			this.showNotificationMessage(type, message, data);
 		}
 	}
 
-	private showNotificationMessage(type: MessageType, message?: string) {
+	private showNotificationMessage(type: MessageType, message?: string, data? : any ) {
 		message = message ?? 'A request has failed. See the output for more information.';
+		if (data?.message) {
+			message += '\n' + data.message;
+		}
 		const messageFunc = type === MessageType.Error
 			? Window.showErrorMessage
 			: type === MessageType.Warning
