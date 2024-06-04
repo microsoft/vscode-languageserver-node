@@ -1189,8 +1189,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private showNotificationMessage(type: MessageType, message?: string, data? : any ) {
 		message = message ?? 'A request has failed. See the output for more information.';
-		if (data?.message) {
-			message += '\n' + data.message;
+		if (data) {
+			message += '\n' + this.data2String(data);
 		}
 		const messageFunc = type === MessageType.Error
 			? Window.showErrorMessage
