@@ -956,7 +956,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		};
 
 		this.activeTextDocument = Window.activeTextEditor?.document;
-		Window.onDidChangeActiveTextEditor((editor) => {
+		disposables.push(Window.onDidChangeActiveTextEditor((editor) => {
 			const oldActive = this.activeTextDocument;
 			this.activeTextDocument = editor?.document;
 			if (oldActive !== undefined) {
@@ -968,7 +968,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 					this.diagnosticRequestor.pull(this.activeTextDocument);
 				}
 			}
-		});
+		}));
 
 		// For pull model diagnostics we pull for documents visible in the UI.
 		// From an eventing point of view we still rely on open document events

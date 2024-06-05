@@ -339,7 +339,7 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 
 	private _listener: Disposable | undefined;
 	protected readonly _selectors: Map<string, VDocumentSelector>;
-	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<P>>;
+	private _onNotificationSent: EventEmitter<NotificationSendEvent<P>>;
 
 	public static textDocumentFilter(selectors: IterableIterator<VDocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
@@ -429,6 +429,7 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 	public clear(): void {
 		this._selectors.clear();
 		this._onNotificationSent.dispose();
+		this._onNotificationSent = new EventEmitter<NotificationSendEvent<P>>();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
