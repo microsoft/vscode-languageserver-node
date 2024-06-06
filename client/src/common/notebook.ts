@@ -1009,10 +1009,10 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 	private readonly client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>;
 	private readonly registrations: Map<string, NotebookDocumentSyncFeatureProvider>;
 	private dedicatedChannel: vscode.DocumentSelector | undefined;
-	private readonly _onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>;
-	private readonly _onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
-	private readonly _onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
-	private readonly _onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
+	private _onChangeNotificationSent: vscode.EventEmitter<VNotebookDocumentChangeEvent>;
+	private _onOpenNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
+	private _onCloseNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
+	private _onSaveNotificationSent: vscode.EventEmitter<vscode.NotebookDocument>;
 
 	constructor(client: FeatureClient<NotebookDocumentMiddleware, $NotebookDocumentOptions>) {
 		this.client = client;
@@ -1156,6 +1156,14 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 			provider.dispose();
 		}
 		this.registrations.clear();
+		this._onChangeNotificationSent.dispose();
+		this._onChangeNotificationSent = new vscode.EventEmitter<VNotebookDocumentChangeEvent>();
+		this._onOpenNotificationSent.dispose();
+		this._onOpenNotificationSent = new vscode.EventEmitter<vscode.NotebookDocument>();
+		this._onCloseNotificationSent.dispose();
+		this._onCloseNotificationSent = new vscode.EventEmitter<vscode.NotebookDocument>();
+		this._onSaveNotificationSent.dispose();
+		this._onSaveNotificationSent = new vscode.EventEmitter<vscode.NotebookDocument>();
 	}
 
 	public handles(textDocument: vscode.TextDocument): boolean {
