@@ -63,23 +63,32 @@ suite('Text Document Lines Model Validator', () => {
 	});
 
 	test('New line characters', () => {
-		let str = 'ABCDE\rFGHIJ';
-		assert.equal(newDocument(str).lineCount, 2);
+		let document = newDocument('ABCDE\rFGHIJ');
+		assert.equal(document.lineCount, 2);
+		assert.equal(document.offsetAt(Positions.create(1, 0)), 6);
 
-		str = 'ABCDE\nFGHIJ';
-		assert.equal(newDocument(str).lineCount, 2);
+		document = newDocument('ABCDE\nFGHIJ');
+		assert.equal(document.lineCount, 2);
+		assert.equal(document.offsetAt(Positions.create(1, 0)), 6);
 
-		str = 'ABCDE\r\nFGHIJ';
-		assert.equal(newDocument(str).lineCount, 2);
+		document = newDocument('ABCDE\r\nFGHIJ');
+		assert.equal(document.lineCount, 2);
+		assert.equal(document.offsetAt(Positions.create(1, 0)), 7);
 
-		str = 'ABCDE\n\nFGHIJ';
-		assert.equal(newDocument(str).lineCount, 3);
+		document = newDocument('ABCDE\n\nFGHIJ');
+		assert.equal(document.lineCount, 3);
+		assert.equal(document.offsetAt(Positions.create(1, 0)), 6);
+		assert.equal(document.offsetAt(Positions.create(2, 0)), 7);
 
-		str = 'ABCDE\r\rFGHIJ';
-		assert.equal(newDocument(str).lineCount, 3);
+		document = newDocument('ABCDE\r\rFGHIJ');
+		assert.equal(document.lineCount, 3);
+		assert.equal(document.offsetAt(Positions.create(1, 0)), 6);
+		assert.equal(document.offsetAt(Positions.create(2, 0)), 7);
 
-		str = 'ABCDE\n\rFGHIJ';
-		assert.equal(newDocument(str).lineCount, 3);
+		document = newDocument('ABCDE\n\rFGHIJ');
+		assert.equal(document.lineCount, 3);
+		assert.equal(document.offsetAt(Positions.create(1, 0)), 6);
+		assert.equal(document.offsetAt(Positions.create(2, 0)), 7);
 	});
 
 	test('getText(Range)', () => {
@@ -94,22 +103,48 @@ suite('Text Document Lines Model Validator', () => {
 		assert.equal(document.getText(Ranges.create(0, 0, 3, 5)), str);
 	});
 
-	test('Invalid inputs', () => {
-		const str = 'Hello World';
-		const document = newDocument(str);
-
-		// invalid position
-		assert.equal(document.offsetAt(Positions.create(0, str.length)), str.length);
-		assert.equal(document.offsetAt(Positions.create(0, str.length + 3)), str.length);
-		assert.equal(document.offsetAt(Positions.create(2, 3)), str.length);
-		assert.equal(document.offsetAt(Positions.create(-1, 3)), 0);
-		assert.equal(document.offsetAt(Positions.create(0, -3)), 0);
-		assert.equal(document.offsetAt(Positions.create(1, -3)), str.length);
-
-		// invalid offsets
+	test('Invalid inputs at beginning of file', () => {
+		let document = newDocument('ABCDE');
+		assert.equal(document.offsetAt(Positions.create(-1, 0)), 0);
+		assert.equal(document.offsetAt(Positions.create(0, -1)), 0);
 		assert.deepEqual(document.positionAt(-1), Positions.create(0, 0));
-		assert.deepEqual(document.positionAt(str.length), Positions.create(0, str.length));
-		assert.deepEqual(document.positionAt(str.length + 3), Positions.create(0, str.length));
+	});
+
+	test('Invalid inputs at end of file', () => {
+		let str = 'ABCDE\n';
+		let document = newDocument(str);
+		assert.equal(document.offsetAt(Positions.create(1, 1)), str.length);
+		assert.equal(document.offsetAt(Positions.create(2, 0)), str.length);
+		assert.deepEqual(document.positionAt(str.length), Positions.create(1, 0));
+		assert.deepEqual(document.positionAt(str.length + 3), Positions.create(1, 0));
+
+		str = 'ABCDE';
+		document = newDocument(str);
+		assert.equal(document.offsetAt(Positions.create(0, 10)), str.length);
+		assert.equal(document.offsetAt(Positions.create(1, 1)), str.length);
+		assert.deepEqual(document.positionAt(str.length), Positions.create(0, 5));
+		assert.deepEqual(document.positionAt(str.length + 3), Positions.create(0, 5));
+	});
+
+	test('Invalid inputs at beginning of line', () => {
+		let document = newDocument('A\nB\rC\r\nD');
+		assert.equal(document.offsetAt(Positions.create(0, -1)), 0);
+		assert.equal(document.offsetAt(Positions.create(1, -1)), 2);
+		assert.equal(document.offsetAt(Positions.create(2, -1)), 4);
+		assert.equal(document.offsetAt(Positions.create(3, -1)), 7);
+	});
+
+	test('Invalid inputs at end of line', () => {
+		let document = newDocument('A\nB\rC\r\nD');
+		assert.equal(document.offsetAt(Positions.create(0, 10)), 2);
+		assert.equal(document.offsetAt(Positions.create(1, 10)), 4);
+		assert.equal(document.offsetAt(Positions.create(2, 2)), 6); // between \r and \n
+		assert.equal(document.offsetAt(Positions.create(2, 3)), 7);
+		assert.equal(document.offsetAt(Positions.create(2, 10)), 7);
+		assert.equal(document.offsetAt(Positions.create(3, 10)), 8);
+
+		// TODO: this should be (2, 1)!
+		assert.deepEqual(document.positionAt(6), Positions.create(2, 2)); // between \r and \n
 	});
 });
 
