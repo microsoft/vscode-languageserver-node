@@ -10,17 +10,33 @@ import { BrowserMessageReader, BrowserMessageWriter } from 'vscode-languageserve
 export * from 'vscode-languageserver-protocol/browser';
 export * from '../common/api';
 
-export class LanguageClient extends BaseLanguageClient {
-	private readonly worker: Worker;
+export type ServerOptions = Worker | (() => Promise<Worker | MessageTransports>);
 
-	constructor(id: string, name: string, clientOptions: LanguageClientOptions, worker: Worker) {
+export class LanguageClient extends BaseLanguageClient {
+
+	private readonly serverOptions: ServerOptions;
+
+	constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions) {
 		super(id, name, clientOptions);
-		this.worker = worker;
+		this.serverOptions = serverOptions;
 	}
 
-	protected createMessageTransports(_encoding: string): Promise<MessageTransports> {
-		const reader = new BrowserMessageReader(this.worker);
-		const writer = new BrowserMessageWriter(this.worker);
+	protected async createMessageTransports(_encoding: string): Promise<MessageTransports> {
+		if (typeof this.serverOptions === 'function') {
+			const result = await this.serverOptions();
+			if (result instanceof Worker) {
+				return this.createMessageTransportsFromWorker(result);
+			} else {
+				return result;
+			}
+		} else {
+			return this.createMessageTransportsFromWorker(this.serverOptions);
+		}
+	}
+
+	private createMessageTransportsFromWorker(worker: Worker): Promise<MessageTransports> {
+		const reader = new BrowserMessageReader(worker);
+		const writer = new BrowserMessageWriter(worker);
 		return Promise.resolve({ reader, writer });
 	}
 }

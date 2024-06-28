@@ -223,6 +223,10 @@ export enum State {
 	 */
 	Starting = 3,
 	/**
+	 * The start has failed.
+	 */
+	StartFailed = 4,
+	/**
 	 * The client is running and ready.
 	 */
 	Running = 2,
@@ -288,7 +292,7 @@ type _WorkspaceMiddleware = {
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware;
 
 interface _WindowMiddleware {
-	showDocument?: (this: void, params: ShowDocumentParams, next: ShowDocumentRequest.HandlerSignature) => Promise<ShowDocumentResult>;
+	showDocument?: ShowDocumentRequest.MiddlewareSignature;
 }
 export type WindowMiddleware = _WindowMiddleware;
 
@@ -464,6 +468,11 @@ export namespace MessageTransports {
 		const candidate: MessageTransports = value;
 		return candidate && MessageReader.is(value.reader) && MessageWriter.is(value.writer);
 	}
+}
+
+export enum ShutdownMode {
+	Restart = 'restart',
+	Stop = 'stop'
 }
 
 export abstract class BaseLanguageClient implements FeatureClient<Middleware, LanguageClientOptions> {
@@ -683,6 +692,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				return State.Starting;
 			case ClientState.Running:
 				return State.Running;
+			case ClientState.StartFailed:
+				return State.StartFailed;
 			default:
 				return State.Stopped;
 		}
@@ -1140,7 +1151,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			connection.onNotification(TelemetryEventNotification.type, (data) => {
 				this._telemetryEmitter.fire(data);
 			});
-			connection.onRequest(ShowDocumentRequest.type, async (params): Promise<ShowDocumentResult> => {
+			connection.onRequest(ShowDocumentRequest.type, async (params, token) => {
 				const showDocument = async (params: ShowDocumentParams): Promise<ShowDocumentResult> => {
 					const uri = this.protocol2CodeConverter.asUri(params.uri);
 					try {
@@ -1166,7 +1177,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				};
 				const middleware = this._clientOptions.middleware.window?.showDocument;
 				if (middleware !== undefined)  {
-					return middleware(params, showDocument);
+					return middleware(params, token, showDocument);
 				} else {
 					return showDocument(params);
 				}
@@ -1338,7 +1349,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	public stop(timeout: number = 2000): Promise<void> {
 		// Wait 2 seconds on stop
-		return this.shutdown('stop', timeout);
+		return this.shutdown(ShutdownMode.Stop, timeout);
 	}
 
 	public dispose(timeout: number = 2000): Promise<void> {
@@ -1350,7 +1361,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 	}
 
-	private async shutdown(mode: 'suspend' | 'stop', timeout: number): Promise<void> {
+	protected async shutdown(mode: ShutdownMode, timeout: number = 2000): Promise<void> {
 		// If the client is stopped or in its initial state return.
 		if (this.$state === ClientState.Stopped || this.$state === ClientState.Initial) {
 			return;
@@ -1398,7 +1409,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			throw error;
 		}).finally(() => {
 			this.$state = ClientState.Stopped;
-			mode === 'stop' && this.cleanUpChannel();
+			mode === ShutdownMode.Stop && this.cleanUpChannel();
 			this._onStart = undefined;
 			this._onStop = undefined;
 			this._connection = undefined;
@@ -1406,7 +1417,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		});
 	}
 
-	private cleanUp(mode: 'restart' | 'suspend' | 'stop'): void {
+	private cleanUp(mode: ShutdownMode): void {
 		// purge outstanding file events.
 		this._fileEvents = [];
 		this._fileEventDelayer.cancel();
@@ -1423,7 +1434,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
 			feature.clear();
 		}
-		if (mode === 'stop' && this._diagnostics !== undefined) {
+		if ((mode === ShutdownMode.Stop || mode === ShutdownMode.Restart) && this._diagnostics !== undefined) {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
@@ -1602,7 +1613,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._connection = undefined;
 		if (handlerResult.action === CloseAction.DoNotRestart) {
 			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, handlerResult.handled === true ? false : 'force');
-			this.cleanUp('stop');
+			this.cleanUp(ShutdownMode.Stop);
 			if (this.$state === ClientState.Starting) {
 				this.$state = ClientState.StartFailed;
 			} else {
@@ -1612,7 +1623,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._onStart = undefined;
 		} else if (handlerResult.action === CloseAction.Restart) {
 			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.', !handlerResult.handled);
-			this.cleanUp('restart');
+			this.cleanUp(ShutdownMode.Restart);
 			this.$state = ClientState.Initial;
 			this._onStop = Promise.resolve();
 			this._onStart = undefined;
@@ -2008,7 +2019,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		WorkspaceSymbolResolveRequest.method
 	]);
 
-	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true): T {
+	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true, throwOnCancel: boolean = false): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
 			// The connection got disposed while we were waiting for a response.
@@ -2017,7 +2028,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				return defaultValue;
 			}
 			if (error.code === LSPErrorCodes.RequestCancelled || error.code === LSPErrorCodes.ServerCancelled) {
-				if (token !== undefined && token.isCancellationRequested) {
+				if (token !== undefined && token.isCancellationRequested && !throwOnCancel) {
 					return defaultValue;
 				} else {
 					if (error.data !== undefined) {
@@ -2119,16 +2130,49 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	// }
 }
 
+export type ServerOptions = () => Promise<MessageTransports>;
+export class LanguageClient extends BaseLanguageClient {
+
+	private readonly serverOptions: ServerOptions;
+
+	constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions) {
+		super(id, name, clientOptions);
+		this.serverOptions = serverOptions;
+	}
+
+	protected async createMessageTransports(_encoding: string): Promise<MessageTransports> {
+		return this.serverOptions();
+	}
+}
+
 interface Connection {
 
 	listen(): void;
 
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
+
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
 	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
 
 	hasPendingResponse(): boolean;
 
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
 	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
+
+	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;

@@ -11,7 +11,7 @@ import * as path from 'path';
 import { workspace as Workspace, Disposable, version as VSCodeVersion } from 'vscode';
 
 import * as Is from '../common/utils/is';
-import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '../common/client';
+import { BaseLanguageClient, LanguageClientOptions, MessageTransports, ShutdownMode } from '../common/client';
 
 import { terminate } from './processes';
 import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
@@ -201,8 +201,8 @@ export class LanguageClient extends BaseLanguageClient {
 		}
 	}
 
-	public stop(timeout: number = 2000): Promise<void> {
-		return super.stop(timeout).finally(() => {
+	protected shutdown(mode: ShutdownMode, timeout: number = 2000): Promise<void> {
+		return super.shutdown(mode, timeout).finally(() => {
 			if (this._serverProcess) {
 				const toCheck = this._serverProcess;
 				this._serverProcess = undefined;

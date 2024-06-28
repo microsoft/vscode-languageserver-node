@@ -123,7 +123,7 @@ suite('Async Array', () => {
 	}).timeout(5000);
 
 	test('forEach', async() => {
-		const ranges: proto.Range[] = new Array(20000);
+		const ranges: proto.Range[] = new Array(30000);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i + 1, 0, i + 2, 1);
 		}
@@ -134,7 +134,7 @@ suite('Async Array', () => {
 			sum += codeRange.start.line;
 		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
 		ok(yielded > 0);
-		strictEqual(sum, 200010000);
+		strictEqual(sum, 450015000);
 	}).timeout(5000);
 });
 

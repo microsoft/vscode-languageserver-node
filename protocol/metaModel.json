@@ -6178,6 +6178,17 @@
 						"name": "WorkspaceEdit"
 					},
 					"documentation": "The edits to apply."
+				},
+				{
+					"name": "metadata",
+					"type": {
+						"kind": "reference",
+						"name": "WorkspaceEditMetadata"
+					},
+					"optional": true,
+					"documentation": "Additional data about the edit.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			],
 			"documentation": "The parameters passed via an apply workspace edit request."
@@ -6865,12 +6876,16 @@
 								{
 									"kind": "reference",
 									"name": "AnnotatedTextEdit"
+								},
+								{
+									"kind": "reference",
+									"name": "SnippetTextEdit"
 								}
 							]
 						}
 					},
-					"documentation": "The edits to be applied.\n\n@since 3.16.0 - support for AnnotatedTextEdit. This is guarded using a\nclient capability.",
-					"since": "3.16.0 - support for AnnotatedTextEdit. This is guarded using a\nclient capability."
+					"documentation": "The edits to be applied.\n\n@since 3.16.0 - support for AnnotatedTextEdit. This is guarded using a\nclient capability.\n\n@since 3.18.0 - support for SnippetTextEdit. This is guarded using a\nclient capability.",
+					"since": "3.18.0 - support for SnippetTextEdit. This is guarded using a\nclient capability."
 				}
 			],
 			"documentation": "Describes textual changes on a text document. A TextDocumentEdit describes all changes\non a document version Si and after they are applied move the document to version Si+1.\nSo the creator of a TextDocumentEdit doesn't need to sort the array of edits or do any\nkind of ordering. However the edits must be non overlapping."
@@ -8613,9 +8628,8 @@
 					"documentation": "The server's version as defined by the server."
 				}
 			],
-			"documentation": "Information about the server\n\n@since 3.15.0\n@since 3.18.0 ServerInfo type name added.\n@proposed",
-			"since": "3.18.0 ServerInfo type name added.",
-			"proposed": true
+			"documentation": "Information about the server\n\n@since 3.15.0\n@since 3.18.0 ServerInfo type name added.",
+			"since": "3.18.0 ServerInfo type name added."
 		},
 		{
 			"name": "VersionedTextDocumentIdentifier",
@@ -9320,9 +9334,8 @@
 					"documentation": "Human readable description of why the code action is currently disabled.\n\nThis is displayed in the code actions UI."
 				}
 			],
-			"documentation": "Captures why the code action is currently disabled.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "Captures why the code action is currently disabled.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "CodeActionOptions",
@@ -9383,9 +9396,8 @@
 					}
 				}
 			],
-			"documentation": "Location with only uri and does not include range.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "Location with only uri and does not include range.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "WorkspaceSymbolOptions",
@@ -9603,9 +9615,8 @@
 					}
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "PrepareRenameDefaultBehavior",
@@ -9618,9 +9629,8 @@
 					}
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ExecuteCommandOptions",
@@ -9644,6 +9654,23 @@
 				}
 			],
 			"documentation": "The server capabilities of a {@link ExecuteCommandRequest}."
+		},
+		{
+			"name": "WorkspaceEditMetadata",
+			"properties": [
+				{
+					"name": "isRefactoring",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Signal to the editor that this edit is a refactoring."
+				}
+			],
+			"documentation": "Additional data about a workspace edit.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "SemanticTokensLegend",
@@ -9687,9 +9714,8 @@
 					"documentation": "The server supports deltas for full documents."
 				}
 			],
-			"documentation": "Semantic tokens options to support deltas for full documents\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "Semantic tokens options to support deltas for full documents\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "OptionalVersionedTextDocumentIdentifier",
@@ -9740,6 +9766,39 @@
 			],
 			"documentation": "A special text edit with an additional change annotation.\n\n@since 3.16.0.",
 			"since": "3.16.0."
+		},
+		{
+			"name": "SnippetTextEdit",
+			"properties": [
+				{
+					"name": "range",
+					"type": {
+						"kind": "reference",
+						"name": "Range"
+					},
+					"documentation": "The range of the text document to be manipulated."
+				},
+				{
+					"name": "snippet",
+					"type": {
+						"kind": "reference",
+						"name": "StringValue"
+					},
+					"documentation": "The snippet to be inserted."
+				},
+				{
+					"name": "annotationId",
+					"type": {
+						"kind": "reference",
+						"name": "ChangeAnnotationIdentifier"
+					},
+					"optional": true,
+					"documentation": "The actual identifier of the snippet edit."
+				}
+			],
+			"documentation": "An interactive text edit.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
 		},
 		{
 			"name": "ResourceOperation",
@@ -10020,9 +10079,8 @@
 					"documentation": "The cells of the matching notebook to be synced."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "NotebookDocumentFilterWithCells",
@@ -10057,9 +10115,8 @@
 					"documentation": "The cells of the matching notebook to be synced."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "NotebookDocumentCellChanges",
@@ -10098,9 +10155,8 @@
 					"documentation": "Changes to the text content of notebook cells."
 				}
 			],
-			"documentation": "Cell changes to a notebook document.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "Cell changes to a notebook document.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "SelectedCompletionInfo",
@@ -10147,9 +10203,8 @@
 					"documentation": "The client's version as defined by the client."
 				}
 			],
-			"documentation": "Information about the client\n\n@since 3.15.0\n@since 3.18.0 ClientInfo type name added.\n@proposed",
-			"since": "3.18.0 ClientInfo type name added.",
-			"proposed": true
+			"documentation": "Information about the client\n\n@since 3.15.0\n@since 3.18.0 ClientInfo type name added.",
+			"since": "3.18.0 ClientInfo type name added."
 		},
 		{
 			"name": "ClientCapabilities",
@@ -10296,9 +10351,8 @@
 					"since": "3.16.0"
 				}
 			],
-			"documentation": "Defines workspace specific capabilities of the server.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "Defines workspace specific capabilities of the server.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "TextDocumentContentChangePartial",
@@ -10330,9 +10384,8 @@
 					"documentation": "The new text for the provided range."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "TextDocumentContentChangeWholeDocument",
@@ -10346,9 +10399,8 @@
 					"documentation": "The new text of the whole document."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "CodeDescription",
@@ -10405,9 +10457,8 @@
 					}
 				}
 			],
-			"documentation": "Edit range variant that includes ranges for insert and replace operations.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "Edit range variant that includes ranges for insert and replace operations.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ServerCompletionItemOptions",
@@ -10423,9 +10474,8 @@
 					"since": "3.17.0"
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "MarkedStringWithLanguage",
@@ -10445,10 +10495,9 @@
 					}
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed\n@deprecated use MarkupContent instead.",
+			"documentation": "@since 3.18.0\n@deprecated use MarkupContent instead.",
 			"since": "3.18.0",
-			"deprecated": "use MarkupContent instead.",
-			"proposed": true
+			"deprecated": "use MarkupContent instead."
 		},
 		{
 			"name": "ParameterInformation",
@@ -10606,9 +10655,8 @@
 					}
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "NotebookDocumentCellChangeStructure",
@@ -10646,9 +10694,8 @@
 					"documentation": "Additional closed cell text documents."
 				}
 			],
-			"documentation": "Structural changes to cells in a notebook document.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "Structural changes to cells in a notebook document.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "NotebookDocumentCellContentChanges",
@@ -10671,9 +10718,8 @@
 					}
 				}
 			],
-			"documentation": "Content changes to a cell in a notebook document.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "Content changes to a cell in a notebook document.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "WorkspaceClientCapabilities",
@@ -11382,9 +11428,8 @@
 					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 				}
 			],
-			"documentation": "A document filter where `language` is required field.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "A document filter where `language` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "TextDocumentFilterScheme",
@@ -11416,9 +11461,8 @@
 					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 				}
 			],
-			"documentation": "A document filter where `scheme` is required field.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "A document filter where `scheme` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "TextDocumentFilterPattern",
@@ -11450,9 +11494,8 @@
 					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
 				}
 			],
-			"documentation": "A document filter where `pattern` is required field.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "A document filter where `pattern` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "NotebookDocumentFilterNotebookType",
@@ -11484,9 +11527,8 @@
 					"documentation": "A glob pattern."
 				}
 			],
-			"documentation": "A notebook document filter where `notebookType` is required field.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "A notebook document filter where `notebookType` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "NotebookDocumentFilterScheme",
@@ -11518,9 +11560,8 @@
 					"documentation": "A glob pattern."
 				}
 			],
-			"documentation": "A notebook document filter where `scheme` is required field.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "A notebook document filter where `scheme` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "NotebookDocumentFilterPattern",
@@ -11552,9 +11593,8 @@
 					"documentation": "A glob pattern."
 				}
 			],
-			"documentation": "A notebook document filter where `pattern` is required field.\n\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "A notebook document filter where `pattern` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "NotebookCellArrayChange",
@@ -11645,6 +11685,28 @@
 					"optional": true,
 					"documentation": "Whether the client in general supports change annotations on text edits,\ncreate file, rename file and delete file changes.\n\n@since 3.16.0",
 					"since": "3.16.0"
+				},
+				{
+					"name": "metadataSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports `WorkspaceEditMetadata` in `WorkspaceEdit`s.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
+				},
+				{
+					"name": "snippetEditSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports snippets as text edits.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			]
 		},
@@ -12569,25 +12631,6 @@
 			"name": "PublishDiagnosticsClientCapabilities",
 			"properties": [
 				{
-					"name": "relatedInformation",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"optional": true,
-					"documentation": "Whether the clients accepts diagnostics with related information."
-				},
-				{
-					"name": "tagSupport",
-					"type": {
-						"kind": "reference",
-						"name": "ClientDiagnosticsTagOptions"
-					},
-					"optional": true,
-					"documentation": "Client supports the tag property to provide meta data about a diagnostic.\nClients supporting tags have to handle unknown tags gracefully.\n\n@since 3.15.0",
-					"since": "3.15.0"
-				},
-				{
 					"name": "versionSupport",
 					"type": {
 						"kind": "base",
@@ -12596,26 +12639,12 @@
 					"optional": true,
 					"documentation": "Whether the client interprets the version property of the\n`textDocument/publishDiagnostics` notification's parameter.\n\n@since 3.15.0",
 					"since": "3.15.0"
-				},
+				}
+			],
+			"extends": [
 				{
-					"name": "codeDescriptionSupport",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"optional": true,
-					"documentation": "Client supports a codeDescription property\n\n@since 3.16.0",
-					"since": "3.16.0"
-				},
-				{
-					"name": "dataSupport",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"optional": true,
-					"documentation": "Whether code action supports the `data` property which is\npreserved between a `textDocument/publishDiagnostics` and\n`textDocument/codeAction` request.\n\n@since 3.16.0",
-					"since": "3.16.0"
+					"kind": "reference",
+					"name": "DiagnosticsCapabilities"
 				}
 			],
 			"documentation": "The publish diagnostic client capabilities."
@@ -12842,6 +12871,12 @@
 					"documentation": "Whether the clients supports related documents for document diagnostic pulls."
 				}
 			],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "DiagnosticsCapabilities"
+				}
+			],
 			"documentation": "Client capabilities specific to diagnostic pull requests.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -12940,9 +12975,8 @@
 					"documentation": "The list of requests for which the client\nwill retry the request if it receives a\nresponse with error code `ContentModified`"
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "RegularExpressionsClientCapabilities",
@@ -13018,9 +13052,8 @@
 					"documentation": "Whether the client groups edits with equal labels into tree nodes,\nfor instance all edits labelled with \"Changes in Strings\" would\nbe a tree node."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientSymbolKindOptions",
@@ -13038,9 +13071,8 @@
 					"documentation": "The symbol kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown.\n\nIf this property is not present the client only supports\nthe symbol kinds from `File` to `Array` as defined in\nthe initial version of the protocol."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientSymbolTagOptions",
@@ -13057,9 +13089,8 @@
 					"documentation": "The tags supported by the client."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientSymbolResolveOptions",
@@ -13076,9 +13107,8 @@
 					"documentation": "The properties that a client can resolve lazily. Usually\n`location.range`"
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientCompletionItemOptions",
@@ -13182,9 +13212,8 @@
 					"since": "3.17.0"
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientCompletionItemOptionsKind",
@@ -13202,9 +13231,8 @@
 					"documentation": "The completion item kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown.\n\nIf this property is not present the client only supports\nthe completion items kinds from `Text` to `Reference` as defined in\nthe initial version of the protocol."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "CompletionListCapabilities",
@@ -13272,9 +13300,8 @@
 					"proposed": true
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientCodeActionLiteralOptions",
@@ -13288,9 +13315,8 @@
 					"documentation": "The code action kind is support with the following value\nset."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientCodeActionResolveOptions",
@@ -13307,9 +13333,8 @@
 					"documentation": "The properties that a client can resolve lazily."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientFoldingRangeKindOptions",
@@ -13327,9 +13352,8 @@
 					"documentation": "The folding range kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientFoldingRangeOptions",
@@ -13345,28 +13369,53 @@
 					"since": "3.17.0"
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
-			"name": "ClientDiagnosticsTagOptions",
+			"name": "DiagnosticsCapabilities",
 			"properties": [
 				{
-					"name": "valueSet",
+					"name": "relatedInformation",
 					"type": {
-						"kind": "array",
-						"element": {
-							"kind": "reference",
-							"name": "DiagnosticTag"
-						}
+						"kind": "base",
+						"name": "boolean"
 					},
-					"documentation": "The tags supported by the client."
+					"optional": true,
+					"documentation": "Whether the clients accepts diagnostics with related information."
+				},
+				{
+					"name": "tagSupport",
+					"type": {
+						"kind": "reference",
+						"name": "ClientDiagnosticsTagOptions"
+					},
+					"optional": true,
+					"documentation": "Client supports the tag property to provide meta data about a diagnostic.\nClients supporting tags have to handle unknown tags gracefully.\n\n@since 3.15.0",
+					"since": "3.15.0"
+				},
+				{
+					"name": "codeDescriptionSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Client supports a codeDescription property\n\n@since 3.16.0",
+					"since": "3.16.0"
+				},
+				{
+					"name": "dataSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether code action supports the `data` property which is\npreserved between a `textDocument/publishDiagnostics` and\n`textDocument/codeAction` request.\n\n@since 3.16.0",
+					"since": "3.16.0"
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "General diagnostics capabilities for pull and push model."
 		},
 		{
 			"name": "ClientSemanticTokensRequestOptions",
@@ -13410,9 +13459,8 @@
 					"documentation": "The client will send the `textDocument/semanticTokens/full` request if\nthe server provides a corresponding handler."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientInlayHintResolveOptions",
@@ -13429,9 +13477,8 @@
 					"documentation": "The properties that a client can resolve lazily."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientShowMessageActionItemOptions",
@@ -13446,9 +13493,8 @@
 					"documentation": "Whether the client supports additional attributes which\nare preserved and send back to the server in the\nrequest's response."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "CompletionItemTagOptions",
@@ -13465,9 +13511,8 @@
 					"documentation": "The tags supported by the client."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientCompletionItemResolveOptions",
@@ -13484,9 +13529,8 @@
 					"documentation": "The properties that a client can resolve lazily."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientCompletionItemInsertTextModeOptions",
@@ -13502,9 +13546,8 @@
 					}
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientSignatureParameterInformationOptions",
@@ -13520,9 +13563,8 @@
 					"since": "3.14.0"
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientCodeActionKindOptions",
@@ -13539,9 +13581,26 @@
 					"documentation": "The code action kind values the client supports. When this\nproperty exists the client also guarantees that it will\nhandle values outside its set gracefully and falls back\nto a default value when unknown."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientDiagnosticsTagOptions",
+			"properties": [
+				{
+					"name": "valueSet",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DiagnosticTag"
+						}
+					},
+					"documentation": "The tags supported by the client."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientSemanticTokensRequestFullDelta",
@@ -13556,9 +13615,8 @@
 					"documentation": "The client will send the `textDocument/semanticTokens/full/delta` request if\nthe server provides a corresponding handler."
 				}
 			],
-			"documentation": "@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		}
 	],
 	"enumerations": [
@@ -14546,6 +14604,10 @@
 				{
 					"name": "Handlebars",
 					"value": "handlebars"
+				},
+				{
+					"name": "Haskell",
+					"value": "haskell"
 				},
 				{
 					"name": "HTML",

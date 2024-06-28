@@ -157,7 +157,10 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 	}
 
 	public unregister(id: string): void {
-		const selector = this._selectors.get(id)!;
+		const selector = this._selectors.get(id);
+		if (selector === undefined) {
+			return;
+		}
 		// The super call removed the selector from the map
 		// of selectors.
 		super.unregister(id);

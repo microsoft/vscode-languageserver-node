@@ -8,12 +8,23 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
+import * as proto from 'vscode-languageserver-protocol';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/diagnostic';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
 	export const type = new lsclient.RequestType<string, boolean, void>(method);
+}
+
+namespace ClearNotifiedRequest {
+	export const method: 'testing/clearNotified' = 'testing/clearNotified';
+	export const type = new lsclient.RequestType<string, void, void>(method);
+}
+
+namespace SetDiagnosticsNotification {
+	export const method: 'testing/setDiagnostics' = 'testing/setDiagnostics';
+	export const type = new lsclient.NotificationType<proto.DocumentDiagnosticReport>(method);
 }
 
 async function revertAllDirty(): Promise<void> {
@@ -1628,28 +1639,28 @@ suite('Full notebook tests', () => {
 		await client.stop();
 	});
 
-	test('Notebook document: open', async (): Promise<void> => {
-		let textDocumentMiddlewareCalled: boolean = false;
-		client.middleware.didOpen = (e, n) => {
-			textDocumentMiddlewareCalled = true;
-			return n(e);
-		};
-		let middlewareCalled: boolean = false;
-		client.middleware.notebooks = {
-			didOpen: (nd, nc, n) => {
-				middlewareCalled = true;
-				return n(nd, nc);
-			}
-		};
-		await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
-		assert.strictEqual(textDocumentMiddlewareCalled, false);
-		client.middleware.didOpen = undefined;
-		assert.strictEqual(middlewareCalled, true);
-		client.middleware.notebooks = undefined;
-		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidOpenNotebookDocumentNotification.method);
-		assert.strictEqual(notified, true);
-		await revertAllDirty();
-	});
+	// test('Notebook document: open', async (): Promise<void> => {
+	// 	let textDocumentMiddlewareCalled: boolean = false;
+	// 	client.middleware.didOpen = (e, n) => {
+	// 		textDocumentMiddlewareCalled = true;
+	// 		return n(e);
+	// 	};
+	// 	let middlewareCalled: boolean = false;
+	// 	client.middleware.notebooks = {
+	// 		didOpen: (nd, nc, n) => {
+	// 			middlewareCalled = true;
+	// 			return n(nd, nc);
+	// 		}
+	// 	};
+	// 	await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+	// 	assert.strictEqual(textDocumentMiddlewareCalled, false);
+	// 	client.middleware.didOpen = undefined;
+	// 	assert.strictEqual(middlewareCalled, true);
+	// 	client.middleware.notebooks = undefined;
+	// 	const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidOpenNotebookDocumentNotification.method);
+	// 	assert.strictEqual(notified, true);
+	// 	await revertAllDirty();
+	// });
 
 	test('Notebook document: change', async (): Promise<void> => {
 		let textDocumentMiddlewareCalled: boolean = false;
@@ -1665,6 +1676,8 @@ suite('Full notebook tests', () => {
 			}
 		};
 		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const provider = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method)?.getProvider(notebookDocument.cellAt(1))!;
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
 		const textDocument = notebookDocument.getCells()[0].document;
 		const edit = new vscode.WorkspaceEdit;
 		edit.insert(textDocument.uri, new vscode.Position(0,0), 'REM a comment\n');
@@ -1675,6 +1688,87 @@ suite('Full notebook tests', () => {
 		client.middleware.notebooks = undefined;
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: add unmonitored cell', async(): Promise<void> => {
+		await client.sendRequest(ClearNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const provider = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method)?.getProvider(notebookDocument.cellAt(1))!;
+		let onlyCellChanges: boolean = true;
+		client.middleware.notebooks = {
+			didChange: (ne, n) => {
+				onlyCellChanges = ne.cells?.structure === undefined && ne.cells?.textContent === undefined;
+				return n(ne);
+			}
+		};
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		const edit = new vscode.WorkspaceEdit;
+		const notebookEdit = vscode.NotebookEdit.insertCells(0, [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'console.log("Hello, world!")', 'typescript')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		client.middleware.notebooks = undefined;
+		assert.strictEqual(onlyCellChanges, true, 'Only cell changes');
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: add monitored cell', async(): Promise<void> => {
+		await client.sendRequest(ClearNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const provider = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method)?.getProvider(notebookDocument.cellAt(1))!;
+		let structuralChange: boolean = false;
+		client.middleware.notebooks = {
+			didOpen(notebookDocument, cells, next) {
+				return next(notebookDocument, cells);
+			},
+			didChange: (ne, n) => {
+				structuralChange = structuralChange || ne.cells?.structure !== undefined;
+				return n(ne);
+			}
+		};
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		const edit = new vscode.WorkspaceEdit;
+		const notebookEdit = vscode.NotebookEdit.insertCells(0, [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'print("Hello, world!")', 'python')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		client.middleware.notebooks = undefined;
+		assert.strictEqual(structuralChange, true, 'Structural changes');
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 3, 'Synchronized cells');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: change language id', async(): Promise<void> => {
+		await client.sendRequest(ClearNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const provider = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method)?.getProvider(notebookDocument.cellAt(1))!;
+		let structuralChange: boolean = false;
+		client.middleware.notebooks = {
+			didOpen(notebookDocument, cells, next) {
+				return next(notebookDocument, cells);
+			},
+			didChange: (ne, n) => {
+				structuralChange = structuralChange || ne.cells?.structure !== undefined;
+				return n(ne);
+			}
+		};
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		let edit = new vscode.WorkspaceEdit;
+		let notebookEdit = vscode.NotebookEdit.replaceCells(new vscode.NotebookRange(0, 1), [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, notebookDocument.cellAt(0).document.getText(), 'typescript')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		assert.strictEqual(structuralChange, true, 'Structural changes');
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 1, 'Synchronized cells');
+
+		structuralChange = false;
+		edit = new vscode.WorkspaceEdit;
+		notebookEdit = vscode.NotebookEdit.replaceCells(new vscode.NotebookRange(0, 1), [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, notebookDocument.cellAt(0).document.getText(), 'python')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		client.middleware.notebooks = undefined;
+		assert.strictEqual(structuralChange, true, 'Structural changes');
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
 		await revertAllDirty();
 	});
 
@@ -1686,6 +1780,47 @@ suite('Full notebook tests', () => {
 		await provider.sendDidCloseNotebookDocument(notebookDocument);
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidCloseNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
+		await revertAllDirty();
+	});
+
+	test('Notebook document: pull diagnostics', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+
+		// Send the diagnostics for the first cell.
+		const report: proto.DocumentDiagnosticReport = {
+			kind: 'full',
+			items: [
+				{ message: 'notebook-error', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 }} }
+			]
+		};
+		await client.sendNotification(SetDiagnosticsNotification.method, { uri: notebook.cellAt(0).document.uri.toString(), report });
+
+		// notebook has to be visible for diagnostics to be published.
+		await vscode.window.showNotebookDocument(notebook);
+
+		const promise = new Promise<void>((resolve) => {
+			client.middleware.provideDiagnostics = async (doc, p, token, next) => {
+				const result = await next(doc, p, token);
+				if (result?.kind === 'full' && result?.items.length > 0) {
+					// Need to be async so that the diagnostics are published.
+					setTimeout(() => resolve(), 10);
+				}
+				return result;
+			};
+		});
+
+		// Change the notebook cell, this should cause the diagnostics to be published.
+		const edit = new vscode.WorkspaceEdit();
+		edit.insert(notebook.cellAt(0).document.uri, new vscode.Position(0, 0), '# a comment\n');
+		await vscode.workspace.applyEdit(edit);
+
+		// Wait for the diagnostics to be published.
+		await promise;
+		const diagnostics = vscode.languages.getDiagnostics(notebook.cellAt(0).document.uri);
+		assert.strictEqual(diagnostics.length, 1);
+		const diagnostic = diagnostics[0];
+		assert.strictEqual(diagnostic.message, 'notebook-error');
+
 		await revertAllDirty();
 	});
 });

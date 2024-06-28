@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { HandlerResult, RequestHandler } from 'vscode-jsonrpc';
+import { CancellationToken, HandlerResult, RequestHandler } from 'vscode-jsonrpc';
 import { Range, URI } from 'vscode-languageserver-types';
 import { MessageDirection, ProtocolRequestType } from './messages';
 
@@ -80,5 +80,5 @@ export namespace ShowDocumentRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ShowDocumentParams, ShowDocumentResult, void, void, void>(method);
 	export type HandlerSignature = RequestHandler<ShowDocumentParams, ShowDocumentResult, void>;
-	export type MiddlewareSignature = (params: ShowDocumentParams, next: HandlerSignature) => HandlerResult<ShowDocumentResult, void>;
+	export type MiddlewareSignature = (params: ShowDocumentParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<ShowDocumentResult, void>;
 }
