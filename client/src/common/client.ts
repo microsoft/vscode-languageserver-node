@@ -1073,7 +1073,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		// If we restart then the diagnostics collection is reused.
 		if (this._diagnostics === undefined) {
-			this._diagnostics = Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName || this._id);
+			this._diagnostics = Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName ?? this._id);
 		}
 
 		// When we start make all buffer handlers pending so that they
