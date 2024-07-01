@@ -39,11 +39,18 @@ export type ResolvedTextDocumentSyncCapabilities = {
 	resolvedTextDocumentSync?: TextDocumentSyncOptions;
 };
 
+type $ConfigurationOptions = {
+	textSynchronization?: {
+		delayOpenNotifications?: boolean;
+	};
+};
+
 export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpenTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidOpenTextDocumentFeatureShape {
 
 	private readonly _syncedDocuments: Map<string, TextDocument>;
+	private readonly _delayOpen: boolean;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware, $ConfigurationOptions>, syncedDocuments: Map<string, TextDocument>) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
 			() => client.middleware.didOpen,
@@ -52,6 +59,15 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			TextDocumentEventFeature.textDocumentFilter
 		);
 		this._syncedDocuments = syncedDocuments;
+		this._delayOpen = client.clientOptions.textSynchronization?.delayOpenNotifications ?? false;
+	}
+
+	protected callback(data: TextDocument): Promise<void> {
+		if (!this._delayOpen) {
+			return super.callback(data);
+		} else {
+			
+		}
 	}
 
 	public get openDocuments(): IterableIterator<TextDocument> {

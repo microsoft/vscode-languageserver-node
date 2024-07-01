@@ -10,7 +10,8 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DocumentColorProvider,
 	DeclarationProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider,
 	LinkedEditingRangeProvider, TypeHierarchyProvider, FileCreateEvent, FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent,
-	FileWillDeleteEvent, CancellationError, InlineCompletionItemProvider
+	FileWillDeleteEvent, CancellationError, InlineCompletionItemProvider,
+	type Uri
 } from 'vscode';
 
 import {
@@ -643,6 +644,14 @@ export interface DedicatedTextSynchronizationFeature {
 	handles(textDocument: TextDocument): boolean;
 }
 
+export interface TabsModel {
+	onClose: Event<Set<Uri>>;
+	onOpen: Event<Set<Uri>>;
+	isActive(document: TextDocument | Uri): boolean;
+	isVisible(document: TextDocument | Uri): boolean;
+	getTabResources(): Set<Uri>;
+}
+
 // Features can refer to other feature when implementing themselves.
 // Hence the feature client needs to provide access to them. To
 // avoid cyclic dependencies these import MUST ALL be type imports.
@@ -662,6 +671,8 @@ export interface FeatureClient<M, CO = object> {
 
 	clientOptions: CO;
 	middleware: M;
+
+	tabsModel: TabsModel;
 
 	start(): Promise<void>;
 	isRunning(): boolean;
