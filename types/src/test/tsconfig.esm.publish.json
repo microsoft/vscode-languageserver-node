@@ -4,7 +4,7 @@
             "mocha"
         ],
         "module": "es6",
-        "moduleResolution": "node",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "strict": true,
         "noImplicitAny": true,

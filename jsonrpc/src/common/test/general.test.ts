@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as assert from 'assert';
+import assert from 'assert';
 import { Trace } from '../api';
 
 suite('General Tests', () => {

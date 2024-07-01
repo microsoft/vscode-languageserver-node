@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "types": [
             "node",
@@ -9,7 +9,7 @@
             "mocha"
         ],
         "lib": [
-            "es2020",
+            "es2022",
             "webworker"
         ],
         "strict": true,
@@ -23,7 +23,7 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "assumeChangesOnlyAffectDirectDependencies": true,
-        "target": "es2020",
+        "target": "es2022",
         "outDir": "../lib",
         "tsBuildInfoFile": "../lib/watch.tsbuildInfo",
         "incremental": true

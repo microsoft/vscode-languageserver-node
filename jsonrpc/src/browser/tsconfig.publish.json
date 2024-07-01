@@ -1,11 +1,11 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "types": [],
         "lib": [
-            "es2020",
+            "es2022",
             "webworker"
         ],
         "strict": true,
@@ -18,7 +18,7 @@
         "declarationMap": false,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "target": "es2020",
+        "target": "es2022",
         "outDir": "../../lib/browser",
         "tsBuildInfoFile": "../../lib/browser/publish.tsbuildInfo",
         "incremental": true,

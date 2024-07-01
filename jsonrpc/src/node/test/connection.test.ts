@@ -320,7 +320,7 @@ suite('Connection', () => {
 
 		client.listen();
 		client.sendRequest(type, '').then(_result => {
-			assert(false);
+			assert.ok(false);
 		}, () => {
 			done();
 		});
@@ -335,7 +335,7 @@ suite('Connection', () => {
 		client.dispose();
 		try {
 			void client.sendNotification(testNotification);
-			assert(false);
+			assert.ok(false);
 		} catch (error) {
 			done();
 		}
@@ -349,7 +349,7 @@ suite('Connection', () => {
 		client.listen();
 		try {
 			client.listen();
-			assert(false);
+			assert.ok(false);
 		} catch (error) {
 			done();
 		}
@@ -405,7 +405,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
+			assert.ok(false);
 			done();
 		});
 	});
@@ -431,7 +431,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
+			assert.ok(false);
 			done();
 		});
 	});
@@ -443,7 +443,7 @@ suite('Connection', () => {
 
 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (p1) => {
-			assert(Array.isArray(p1));
+			assert.ok(Array.isArray(p1));
 			assert.strictEqual(p1[0], 10);
 			assert.strictEqual(p1[1], 20);
 			assert.strictEqual(p1[2], 30);
@@ -458,8 +458,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
@@ -470,7 +469,7 @@ suite('Connection', () => {
 
 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onNotification(type, (p1) => {
-			assert(Array.isArray(p1));
+			assert.ok(Array.isArray(p1));
 			assert.strictEqual(p1[0], 10);
 			assert.strictEqual(p1[1], 20);
 			assert.strictEqual(p1[2], 30);
@@ -503,8 +502,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
@@ -526,8 +524,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 10);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
@@ -551,8 +548,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
@@ -576,8 +572,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 30);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
