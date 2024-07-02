@@ -1,10 +1,14 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 'use strict';
 
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 
-import { WorkspaceFoldersFeature } from 'vscode-languageclient/lib/common/workspaceFolder';
+import { WorkspaceFoldersFeature } from 'vscode-languageclient/$test/common/workspaceFolder';
 import { BaseLanguageClient, MessageTransports, DidChangeWorkspaceFoldersParams, Disposable } from 'vscode-languageclient';
 import * as proto from 'vscode-languageclient';
 

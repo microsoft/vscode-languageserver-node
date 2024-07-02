@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "types": [
             "node",
@@ -9,7 +9,7 @@
             "mocha"
         ],
         "lib": [
-            "es2020",
+            "es2022",
             "webworker"
         ],
         "strict": true,
@@ -22,7 +22,7 @@
         "declarationMap": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "target": "es2020",
+        "target": "es2022",
         "outDir": "../lib",
         "tsBuildInfoFile": "../lib/compile.tsbuildInfo",
         "incremental": true

@@ -36,8 +36,8 @@ const general = {
 	 * rely on webpack to package everything correctly.
 	 */
 	compilerOptions: {
-		module: 'commonjs',
-		moduleResolution: 'node'
+		module: 'node16',
+		moduleResolution: 'node16'
 	}
 };
 
@@ -367,8 +367,8 @@ const compileCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	declarationMap: true,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
-	target: 'es2020',
-	lib: [ 'es2020' ],
+	target: 'es2022',
+	lib: [ 'es2022' ],
 });
 
 /** @type ProjectOptions */
@@ -386,8 +386,8 @@ const watchCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	noUnusedLocals: false,
 	noUnusedParameters: false,
 	assumeChangesOnlyAffectDirectDependencies: true,
-	target: 'es2020',
-	lib: [ 'es2020' ],
+	target: 'es2022',
+	lib: [ 'es2022' ],
 });
 
 /** @type ProjectOptions */
@@ -404,8 +404,8 @@ const publishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	declarationMap: false,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
-	target: 'es2020',
-	lib: [ 'es2020' ]
+	target: 'es2022',
+	lib: [ 'es2022' ]
 
 });
 
@@ -425,6 +425,7 @@ const umdCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	noUnusedParameters: true,
 	target: 'es5',
 	module: 'umd',
+	moduleResolution: 'node',
 	lib: [ 'es2015' ],
 });
 
@@ -471,6 +472,7 @@ const esmPublishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions,
 	sourceMap: false,
 	target: 'es6',
 	module: 'es6',
+	moduleResolution: 'node',
 	lib: [ 'es2015' ]
 });
 

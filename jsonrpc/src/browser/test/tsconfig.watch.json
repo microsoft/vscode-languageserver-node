@@ -3,11 +3,11 @@
         "types": [
             "mocha"
         ],
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "lib": [
-            "es2020",
+            "es2022",
             "webworker"
         ],
         "strict": true,
@@ -21,7 +21,7 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "assumeChangesOnlyAffectDirectDependencies": true,
-        "target": "es2020",
+        "target": "es2022",
         "outDir": "../../../lib/browser/test",
         "tsBuildInfoFile": "../../../lib/browser/test/watch.tsbuildInfo",
         "incremental": true

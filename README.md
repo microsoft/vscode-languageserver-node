@@ -36,6 +36,10 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## Next (10.0.0-next.* Client and 10.0.0-next.* Server)
 
+- Upgraded to newer libraries, compilers and package.json exports rules:
+  - Compiler upgraded to `5.5.x`.
+  - Libs now depend on NodeJS `20.9.0` and `es2022`.
+  - `vscode-jsonrpc`, `vscode-languageserver-protocol`, `vscode-languageclient` and `vscode-languageserver` now use the `exports` property instead of having a `main` and `typings` property. This might need adoption in tsconfig.json files around the `module` and `moduleResolution`. The LSP libraries currently use `node16` for both values.
 - added proposed CodeActionKind.RefactorMove
 - snippet support in Workspace edits
 - support to control the parallelism of the dispatch requests and notification. This is a breaking change since it allows notification handlers to return a promise to control this.

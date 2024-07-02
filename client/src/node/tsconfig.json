@@ -4,8 +4,8 @@
             "node",
             "vscode"
         ],
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "strict": true,
         "noImplicitAny": true,
@@ -17,9 +17,9 @@
         "declarationMap": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "target": "es2020",
+        "target": "es2022",
         "lib": [
-            "es2020"
+            "es2022"
         ],
         "outDir": "../../lib/node",
         "tsBuildInfoFile": "../../lib/node/compile.tsbuildInfo",

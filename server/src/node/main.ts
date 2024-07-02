@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-/// <reference path="../../typings/thenable.d.ts" />
+/// <reference path="../../typings/thenable.d.ts" preserve="true"/>
 
 import { inspect } from 'node:util';
 
@@ -307,7 +307,6 @@ function patchConsole(logger: Logger): undefined {
 	};
 
 	console.dir = function dir(arg, options){
-		// @ts-expect-error https://github.com/DefinitelyTyped/DefinitelyTyped/pull/66626
 		logger.log(inspect(arg, options));
 	};
 

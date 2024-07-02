@@ -25,14 +25,14 @@
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
 		"prepack": "npm run all:publish",
-		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
-		"clean": "node ../node_modules/rimraf/dist/esm/bin.mjs lib",
-		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
-		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
+		"compile": "tsc -b ./tsconfig.json",
+		"clean": "rimraf lib",
+		"watch": "tsc -b ./tsconfig.watch.json -w",
+		"lint": "eslint --ext ts src",
 		"test": "node ../node_modules/mocha/bin/_mocha",
 		"all": "npm run clean && npm run compile && npm run lint && npm run test",
-		"compile:esm": "node ../build/bin/tsc -b ./tsconfig.esm.publish.json && node ../build/bin/fix-esm",
-		"compile:umd": "node ../build/bin/tsc -b ./tsconfig.umd.publish.json",
+		"compile:esm": "tsc -b ./tsconfig.esm.publish.json && node ../build/bin/fix-esm",
+		"compile:umd": "tsc -b ./tsconfig.umd.publish.json",
 		"all:publish": "git clean -xfd . && npm install && npm run compile:esm && npm run compile:umd && npm run lint && npm run test",
 		"preversion": "npm test"
 	}
