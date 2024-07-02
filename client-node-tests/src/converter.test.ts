@@ -6,13 +6,13 @@
 import { strictEqual, deepEqual, ok } from 'assert';
 
 import * as proto from 'vscode-languageclient';
-import * as codeConverter from 'vscode-languageclient/lib/common/codeConverter';
-import * as protocolConverter from 'vscode-languageclient/lib/common/protocolConverter';
-import ProtocolCompletionItem from 'vscode-languageclient/lib/common/protocolCompletionItem';
-import ProtocolInlayHint from 'vscode-languageclient/lib/common/protocolInlayHint';
-import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/lib/common/protocolDiagnostic';
-import * as Is from 'vscode-languageclient/lib/common/utils/is';
-import * as async from 'vscode-languageclient/lib/common/utils/async';
+import * as codeConverter from 'vscode-languageclient/$test/common/codeConverter';
+import * as protocolConverter from 'vscode-languageclient/$test/common/protocolConverter';
+import ProtocolCompletionItem from 'vscode-languageclient/$test/common/protocolCompletionItem';
+import ProtocolInlayHint from 'vscode-languageclient/$test/common/protocolInlayHint';
+import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/$test/common/protocolDiagnostic';
+import * as Is from 'vscode-languageclient/$test/common/utils/is';
+import * as async from 'vscode-languageclient/$test/common/utils/async';
 
 import * as vscode from 'vscode';
 

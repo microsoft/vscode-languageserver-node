@@ -22,7 +22,6 @@
         ],
         "outDir": "../../../lib/common/test",
         "tsBuildInfoFile": "../../../lib/common/test/compile.tsbuildInfo",
-        "composite": true,
         "incremental": true
     },
     "include": [

@@ -16,11 +16,24 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"enabledApiProposals": [],
-	"main": "./lib/node/main.js",
-	"browser": {
-		"./lib/node/main.js": "./lib/browser/main.js"
+	"exports": {
+		".": {
+			"types": "./lib/common/api.d.ts",
+			"default": "./lib/common/api.js"
+		},
+		"./node": {
+			"types": "./lib/node/main.d.ts",
+			"node": "./lib/node/main.js"
+		},
+		"./browser": {
+			"types": "./lib/browser/main.d.ts",
+			"node": "./lib/browser/main.js"
+		},
+		"./$test/common/*": {
+			"types": "./lib/common/*.d.ts",
+			"node": "./lib/common/*.js"
+		}
 	},
-	"typings": "./lib/common/api.d.ts",
 	"devDependencies": {
 		"@types/minimatch": "^5.1.2",
 		"@types/semver": "^7.5.8",

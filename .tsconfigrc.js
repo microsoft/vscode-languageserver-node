@@ -472,6 +472,7 @@ const esmPublishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions,
 	sourceMap: false,
 	target: 'es6',
 	module: 'es6',
+	moduleResolution: 'node',
 	lib: [ 'es2015' ]
 });
 

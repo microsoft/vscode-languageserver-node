@@ -23,7 +23,6 @@
         ],
         "outDir": "../../../lib/node/test",
         "tsBuildInfoFile": "../../../lib/node/test/compile.tsbuildInfo",
-        "composite": true,
         "incremental": true
     },
     "include": [

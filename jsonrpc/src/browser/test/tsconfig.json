@@ -23,7 +23,6 @@
         "target": "es2022",
         "outDir": "../../../lib/browser/test",
         "tsBuildInfoFile": "../../../lib/browser/test/compile.tsbuildInfo",
-        "composite": true,
         "incremental": true
     },
     "include": [
