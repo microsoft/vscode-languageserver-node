@@ -9,7 +9,7 @@ import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultPr
 
 import * as ic from './inlineCompletion.proposed';
 
-export * from 'vscode-languageserver-protocol/';
+export * from 'vscode-languageserver-protocol';
 export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter };
 export { SemanticTokensBuilder };
 import { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent } from './textDocuments';

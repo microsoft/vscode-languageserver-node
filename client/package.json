@@ -27,7 +27,7 @@
 		},
 		"./browser": {
 			"types": "./lib/browser/main.d.ts",
-			"node": "./lib/browser/main.js"
+			"browser": "./lib/browser/main.js"
 		},
 		"./$test/common/*": {
 			"types": "./lib/common/*.d.ts",

@@ -23,7 +23,7 @@
 		},
 		"./browser": {
 			"types": "./lib/browser/main.d.ts",
-			"node": "./lib/browser/main.js"
+			"browser": "./lib/browser/main.js"
 		}
 	},
 	"bin": {

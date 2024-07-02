@@ -77,37 +77,42 @@ async function runTests(location) {
 			}
 		});
 		server.listen(8080, '127.0.0.1', async () => {
-			let failCount = 0;
-			const browser = await playwright['chromium'].launch({ headless: true, devtools: false });
-			const context = await browser.newContext();
-			const page = await context.newPage();
-			const emitter = new events.EventEmitter();
-			emitter.on('fail', () => {
-				failCount++;
-			});
-			emitter.on('end', async () => {
-				process.exitCode = failCount === 0 ? 0 : 1;
-				await browser.close();
-				server.close((err) => {
-					if (err) {
-						reject(err);
-					} else {
-						resolve();
-					}
+			try {
+				let failCount = 0;
+				const browser = await playwright['chromium'].launch({ headless: true, devtools: false });
+				const context = await browser.newContext();
+				const page = await context.newPage();
+				// page.setDefaultTimeout(1000000);
+				const emitter = new events.EventEmitter();
+				emitter.on('fail', () => {
+					failCount++;
 				});
-			});
-			const echoRunner = new EchoRunner(emitter, 'Chromium');
-			if (process.platform === 'win32') {
-				new mocha.reporters.List(echoRunner);
-			} else {
-				new mocha.reporters.Spec(echoRunner);
-			}
-			await page.exposeFunction('mocha_report', (type, data1, data2) => {
-				emitter.emit(type, data1, data2);
-			});
+				emitter.on('end', async () => {
+					process.exitCode = failCount === 0 ? 0 : 1;
+					await browser.close();
+					server.close((err) => {
+						if (err) {
+							reject(err);
+						} else {
+							resolve();
+						}
+					});
+				});
+				const echoRunner = new EchoRunner(emitter, 'Chromium');
+				if (process.platform === 'win32') {
+					new mocha.reporters.List(echoRunner);
+				} else {
+					new mocha.reporters.Spec(echoRunner);
+				}
+				await page.exposeFunction('mocha_report', (type, data1, data2) => {
+					emitter.emit(type, data1, data2);
+				});
 
-			const target = new url.URL(location);
-			page.goto(target.href);
+				const target = new url.URL(location);
+				page.goto(target.href);
+			} catch (error) {
+				console.error(error);
+			}
 		});
 	});
 }
