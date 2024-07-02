@@ -12,11 +12,20 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
-	"main": "./lib/node/main.js",
-	"browser": {
-		"./lib/node/main.js": "./lib/browser/main.js"
+	"exports": {
+		".": {
+			"types": "./lib/common/api.d.ts",
+			"default": "./lib/common/api.js"
+		},
+		"./node": {
+			"types": "./lib/node/main.d.ts",
+			"node": "./lib/node/main.js"
+		},
+		"./browser": {
+			"types": "./lib/browser/main.d.ts",
+			"node": "./lib/browser/main.js"
+		}
 	},
-	"typings": "./lib/common/api.d.ts",
 	"bin": {
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
 	},

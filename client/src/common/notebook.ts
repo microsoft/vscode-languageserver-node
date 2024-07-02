@@ -17,7 +17,7 @@ import * as Is from './utils/is';
 import * as _c2p from './codeConverter';
 import * as _p2c from './protocolConverter';
 import { DynamicFeature, FeatureClient, RegistrationData, FeatureState } from './features';
-import { NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook } from 'vscode-languageserver-protocol/lib/common/protocol.notebook';
+import { NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook } from 'vscode-languageserver-protocol/';
 
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
