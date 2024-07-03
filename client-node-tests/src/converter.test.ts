@@ -17,7 +17,7 @@ import * as async from 'vscode-languageclient/$test/common/utils/async';
 import * as vscode from 'vscode';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
-const p2c: protocolConverter.Converter = protocolConverter.createConverter(undefined, false, false);
+const p2c: protocolConverter.Converter = protocolConverter.createConverter(undefined, false, false, false);
 
 interface InsertReplaceRange {
 	inserting: vscode.Range;
@@ -1214,7 +1214,7 @@ suite('Protocol Converter', () => {
 	test('Uri Rewrite', () => {
 		const converter = protocolConverter.createConverter((value: string) => {
 			return vscode.Uri.parse(`${value}.vscode`);
-		}, false, false);
+		}, false, false, false);
 
 		const result = converter.asUri('file://localhost/folder/file');
 		strictEqual('file://localhost/folder/file.vscode', result.toString());

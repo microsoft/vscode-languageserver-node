@@ -371,6 +371,7 @@ export type LanguageClientOptions = {
 	markdown?: {
 		isTrusted?: boolean | { readonly enabledCommands: readonly string[] };
 		supportHtml?: boolean;
+		supportThemeIcons?: boolean;
 	};
 } & $NotebookDocumentOptions & $DiagnosticPullOptions & $ConfigurationOptions;
 
@@ -403,6 +404,7 @@ type ResolvedClientOptions = {
 	markdown: {
 		isTrusted: boolean | { readonly enabledCommands: readonly string[] };
 		supportHtml: boolean;
+		supportThemeIcons: boolean;
 	};
 } & Required<$NotebookDocumentOptions> & Required<$DiagnosticPullOptions>;
 namespace ResolvedClientOptions {
@@ -534,10 +536,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		clientOptions = clientOptions || {};
 
-		const markdown: ResolvedClientOptions['markdown'] = { isTrusted: false, supportHtml: false };
+		const markdown: ResolvedClientOptions['markdown'] = {
+			isTrusted: false,
+			supportHtml: false,
+			supportThemeIcons: false
+		};
 		if (clientOptions.markdown !== undefined) {
 			markdown.isTrusted = ResolvedClientOptions.sanitizeIsTrusted(clientOptions.markdown.isTrusted);
 			markdown.supportHtml = clientOptions.markdown.supportHtml === true;
+			markdown.supportThemeIcons = clientOptions.markdown.supportThemeIcons === true;
 		}
 
 		// const defaultInterval = (clientOptions as TestOptions).$testMode ? 50 : 60000;
@@ -618,7 +625,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._p2c = p2c.createConverter(
 			clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined,
 			this._clientOptions.markdown.isTrusted,
-			this._clientOptions.markdown.supportHtml);
+			this._clientOptions.markdown.supportHtml,
+			this._clientOptions.markdown.supportThemeIcons);
 		this._syncedDocuments = new Map<string, TextDocument>();
 		this.registerBuiltinFeatures();
 	}
