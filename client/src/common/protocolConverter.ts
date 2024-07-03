@@ -276,7 +276,11 @@ namespace CodeBlock {
 	}
 }
 
-export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean | { readonly enabledCommands: readonly string[] }, supportHtml: boolean): Converter {
+export function createConverter(
+	uriConverter: URIConverter | undefined,
+	trustMarkdown: boolean | { readonly enabledCommands: readonly string[] },
+	supportHtml: boolean,
+	supportThemeIcons: boolean): Converter {
 
 	const nullConverter = (value: string) => code.Uri.parse(value);
 
@@ -481,6 +485,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 		result.isTrusted = trustMarkdown;
 		result.supportHtml = supportHtml;
+		result.supportThemeIcons = supportThemeIcons;
 		return result;
 	}
 
