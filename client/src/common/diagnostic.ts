@@ -7,8 +7,7 @@ import * as minimatch from 'minimatch';
 
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
-	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, TabInputText, TabInputTextDiff,
-	TabChangeEvent, Event, TabInputCustom, workspace, TabInputNotebook,	NotebookCell
+	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, workspace, NotebookCell
 } from 'vscode';
 
 import {
@@ -21,9 +20,8 @@ import {
 
 import { generateUuid } from './utils/uuid';
 import {
-	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError
+	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError, type TabsModel
 } from './features';
-import { NotebookDocumentSyncFeature } from './notebook';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -191,128 +189,6 @@ type RequestState = {
 	document: TextDocument | Uri;
 };
 
-
-/**
- * Manages the open tabs. We don't directly use the tab API since for
- * diagnostics we need to de-dupe tabs that show the same resources since
- * we pull on the model not the UI.
- */
-class Tabs {
-
-	private open: Set<string>;
-	private readonly _onOpen: EventEmitter<Set<Uri>>;
-	private readonly _onClose: EventEmitter<Set<Uri>>;
-	private readonly disposable: Disposable;
-
-	constructor() {
-		this.open = new Set();
-		this._onOpen = new EventEmitter();
-		this._onClose = new EventEmitter();
-		Tabs.fillTabResources(this.open);
-		const openTabsHandler = (event: TabChangeEvent) => {
-			if (event.closed.length === 0 && event.opened.length === 0) {
-				return;
-			}
-			const oldTabs = this.open;
-			const currentTabs: Set<string> = new Set();
-			Tabs.fillTabResources(currentTabs);
-
-			const closed: Set<string> = new Set();
-			const opened: Set<string> = new Set(currentTabs);
-			for (const tab of oldTabs.values()) {
-				if (currentTabs.has(tab)) {
-					opened.delete(tab);
-				} else {
-					closed.add(tab);
-				}
-			}
-			this.open = currentTabs;
-			if (closed.size > 0) {
-				const toFire: Set<Uri> = new Set();
-				for (const item of closed) {
-					toFire.add(Uri.parse(item));
-				}
-				this._onClose.fire(toFire);
-			}
-			if (opened.size > 0) {
-				const toFire: Set<Uri> = new Set();
-				for (const item of opened) {
-					toFire.add(Uri.parse(item));
-				}
-				this._onOpen.fire(toFire);
-			}
-		};
-
-		if (Window.tabGroups.onDidChangeTabs !== undefined) {
-			this.disposable = Window.tabGroups.onDidChangeTabs(openTabsHandler);
-		} else {
-			this.disposable = { dispose: () => {} };
-		}
-	}
-
-	public get onClose(): Event<Set<Uri>> {
-		return this._onClose.event;
-	}
-
-	public get onOpen(): Event<Set<Uri>> {
-		return this._onOpen.event;
-	}
-
-	public dispose(): void {
-		this.disposable.dispose();
-	}
-
-	public isActive(document: TextDocument | Uri): boolean {
-		return document instanceof Uri
-			? Window.activeTextEditor?.document.uri === document
-			: Window.activeTextEditor?.document === document;
-	}
-
-	public isVisible(document: TextDocument | Uri): boolean {
-		const uri = document instanceof Uri ? document : document.uri;
-		if (uri.scheme === NotebookDocumentSyncFeature.CellScheme) {
-			// Notebook cells aren't in the list of tabs, but the notebook should be.
-			return Workspace.notebookDocuments.some(notebook => {
-				if (this.open.has(notebook.uri.toString())) {
-					const cell = notebook.getCells().find(cell => cell.document.uri.toString() === uri.toString());
-					return cell !== undefined;
-				}
-				return false;
-			});
-		}
-		return this.open.has(uri.toString());
-	}
-
-	public getTabResources(): Set<Uri> {
-		const result: Set<Uri> = new Set();
-		Tabs.fillTabResources(new Set(), result);
-		return result;
-	}
-
-	private static fillTabResources(strings: Set<string> | undefined, uris?: Set<Uri>): void {
-		const seen = strings ?? new Set();
-		for (const group of Window.tabGroups.all) {
-			for (const tab of group.tabs) {
-				const input = tab.input;
-				let uri: Uri | undefined;
-				if (input instanceof TabInputText) {
-					uri = input.uri;
-				} else if (input instanceof TabInputTextDiff) {
-					uri = input.modified;
-				} else if (input instanceof TabInputCustom) {
-					uri = input.uri;
-				} else if (input instanceof TabInputNotebook) {
-					uri = input.uri;
-				}
-				if (uri !== undefined && !seen.has(uri.toString())) {
-					seen.add(uri.toString());
-					uris !== undefined && uris.add(uri);
-				}
-			}
-		}
-	}
-}
-
 type DocumentPullState = {
 	document: Uri;
 	pulledVersion: number | undefined;
@@ -409,7 +285,7 @@ class DiagnosticRequestor implements Disposable {
 
 	private isDisposed: boolean;
 	private readonly client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>;
-	private readonly tabs: Tabs;
+	private readonly tabs: TabsModel;
 	private readonly options: DiagnosticRegistrationOptions;
 
 	public readonly onDidChangeDiagnosticsEmitter: EventEmitter<void>;
@@ -422,7 +298,7 @@ class DiagnosticRequestor implements Disposable {
 	private workspaceCancellation: CancellationTokenSource | undefined;
 	private workspaceTimeout: Disposable | undefined;
 
-	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
+	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: TabsModel, options: DiagnosticRegistrationOptions) {
 		this.client = client;
 		this.tabs = tabs;
 		this.options = options;
@@ -886,7 +762,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	private activeTextDocument: TextDocument | undefined;
 	private readonly backgroundScheduler: BackgroundScheduler;
 
-	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: Tabs, options: DiagnosticRegistrationOptions) {
+	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: TabsModel, options: DiagnosticRegistrationOptions) {
 		const diagnosticPullOptions = Object.assign({ onChange: false, onSave: false, onFocus: false }, client.clientOptions.diagnosticPullOptions);
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
@@ -1171,8 +1047,6 @@ export interface DiagnosticFeatureShape {
 
 export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticProviderShape, DiagnosticProviderMiddleware, $DiagnosticPullOptions> implements DiagnosticFeatureShape {
 
-	private tabs: Tabs | undefined;
-
 	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>) {
 		super(client, DocumentDiagnosticRequest.type);
 	}
@@ -1208,10 +1082,6 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 	}
 
 	public clear(): void {
-		if (this.tabs !== undefined) {
-			this.tabs.dispose();
-			this.tabs = undefined;
-		}
 		super.clear();
 	}
 
@@ -1222,10 +1092,7 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 	}
 
 	protected registerLanguageProvider(options: DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {
-		if (this.tabs === undefined) {
-			this.tabs = new Tabs();
-		}
-		const provider = new DiagnosticFeatureProviderImpl(this._client, this.tabs, options);
+		const provider = new DiagnosticFeatureProviderImpl(this._client, this._client.tabsModel, options);
 		return [provider.disposable, provider];
 	}
 }

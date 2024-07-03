@@ -55,6 +55,9 @@ export async function activate(context: ExtensionContext) {
 				const fsPath = resource.fsPath;
 				return path.extname(fsPath) === '.bat';
 			}
+		},
+		textSynchronization: {
+			delayOpen:true
 		}
 	};
 
