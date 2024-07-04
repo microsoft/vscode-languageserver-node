@@ -368,7 +368,7 @@ const compileCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	noUnusedLocals: true,
 	noUnusedParameters: true,
 	target: 'es2022',
-	lib: [ 'es2022' ],
+	lib: [ 'es2023' ],
 });
 
 /** @type ProjectOptions */
@@ -387,7 +387,7 @@ const watchCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	noUnusedParameters: false,
 	assumeChangesOnlyAffectDirectDependencies: true,
 	target: 'es2022',
-	lib: [ 'es2022' ],
+	lib: [ 'es2023' ],
 });
 
 /** @type ProjectOptions */
@@ -405,7 +405,7 @@ const publishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	noUnusedLocals: true,
 	noUnusedParameters: true,
 	target: 'es2022',
-	lib: [ 'es2022' ]
+	lib: [ 'es2023' ]
 
 });
 

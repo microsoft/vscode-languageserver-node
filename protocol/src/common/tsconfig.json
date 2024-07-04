@@ -16,7 +16,7 @@
         "noUnusedParameters": true,
         "target": "es2022",
         "lib": [
-            "es2022"
+            "es2023"
         ],
         "outDir": "../../lib/common",
         "tsBuildInfoFile": "../../lib/common/compile.tsbuildInfo",
