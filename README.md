@@ -38,7 +38,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 - Upgraded to newer libraries, compilers and package.json exports rules:
   - Compiler upgraded to `5.5.x`.
-  - Libs now depend on NodeJS `20.9.0` and `es2022`.
+  - Libs now depend on NodeJS `20.9.0` and `es2022`. See also [TypeScript's node  target mapping](https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping).
   - `vscode-jsonrpc`, `vscode-languageserver-protocol`, `vscode-languageclient` and `vscode-languageserver` now use the `exports` property instead of having a `main` and `typings` property. This might need adoption in tsconfig.json files around the `module` and `moduleResolution`. The LSP libraries currently use `node16` for both values.
 - added proposed CodeActionKind.RefactorMove
 - snippet support in Workspace edits

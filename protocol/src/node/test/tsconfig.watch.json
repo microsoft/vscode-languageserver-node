@@ -20,7 +20,7 @@
         "assumeChangesOnlyAffectDirectDependencies": true,
         "target": "es2022",
         "lib": [
-            "es2022"
+            "es2023"
         ],
         "outDir": "../../../lib/node/test",
         "tsBuildInfoFile": "../../../lib/node/test/watch.tsbuildInfo",
