@@ -11,7 +11,8 @@ import {
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider,
 	OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DeclarationProvider, ImplementationProvider,
 	DocumentColorProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider, LinkedEditingRangeProvider, TypeHierarchyProvider, WorkspaceSymbolProvider,
-	ProviderResult, TextEdit as VTextEdit, InlineCompletionItemProvider
+	ProviderResult, TextEdit as VTextEdit, InlineCompletionItemProvider, EventEmitter, type TabChangeEvent, TabInputText, TabInputTextDiff, TabInputCustom,
+	TabInputNotebook
 } from 'vscode';
 
 import {
@@ -36,7 +37,8 @@ import {
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
-	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, HandlerResult
+	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, HandlerResult,
+	type DidCloseTextDocumentParams
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -48,7 +50,8 @@ import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
-	TextDocumentProviderFeature, WorkspaceProviderFeature
+	TextDocumentProviderFeature, WorkspaceProviderFeature,
+	type TabsModel
 } from './features';
 
 import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions, DiagnosticFeatureShape } from './diagnostic';
@@ -373,6 +376,16 @@ export type LanguageClientOptions = {
 		supportHtml?: boolean;
 		supportThemeIcons?: boolean;
 	};
+	textSynchronization?: {
+		/**
+		 * Delays sending the open notification until one of the following
+		 * conditions becomes `true`:
+		 * - document is visible in the editor.
+		 * - any of the other notifications or requests is sent to the server, except
+		 *   a closed notification for the pending document.
+		 */
+		delayOpenNotifications?: boolean;
+	};
 } & $NotebookDocumentOptions & $DiagnosticPullOptions & $ConfigurationOptions;
 
 // type TestOptions = {
@@ -405,6 +418,9 @@ type ResolvedClientOptions = {
 		isTrusted: boolean | { readonly enabledCommands: readonly string[] };
 		supportHtml: boolean;
 		supportThemeIcons: boolean;
+	};
+	textSynchronization: {
+		delayOpenNotifications: boolean;
 	};
 } & Required<$NotebookDocumentOptions> & Required<$DiagnosticPullOptions>;
 namespace ResolvedClientOptions {
@@ -477,6 +493,127 @@ export enum ShutdownMode {
 	Stop = 'stop'
 }
 
+/**
+ * Manages the open tabs. We don't directly use the tab API since for
+ * diagnostics we need to de-dupe tabs that show the same resources since
+ * we pull on the model not the UI.
+ */
+class Tabs implements TabsModel {
+
+	private open: Set<string>;
+	private readonly _onOpen: EventEmitter<Set<Uri>>;
+	private readonly _onClose: EventEmitter<Set<Uri>>;
+	private readonly disposable: Disposable;
+
+	constructor() {
+		this.open = new Set();
+		this._onOpen = new EventEmitter();
+		this._onClose = new EventEmitter();
+		Tabs.fillTabResources(this.open);
+		const openTabsHandler = (event: TabChangeEvent) => {
+			if (event.closed.length === 0 && event.opened.length === 0) {
+				return;
+			}
+			const oldTabs = this.open;
+			const currentTabs: Set<string> = new Set();
+			Tabs.fillTabResources(currentTabs);
+
+			const closed: Set<string> = new Set();
+			const opened: Set<string> = new Set(currentTabs);
+			for (const tab of oldTabs.values()) {
+				if (currentTabs.has(tab)) {
+					opened.delete(tab);
+				} else {
+					closed.add(tab);
+				}
+			}
+			this.open = currentTabs;
+			if (closed.size > 0) {
+				const toFire: Set<Uri> = new Set();
+				for (const item of closed) {
+					toFire.add(Uri.parse(item));
+				}
+				this._onClose.fire(toFire);
+			}
+			if (opened.size > 0) {
+				const toFire: Set<Uri> = new Set();
+				for (const item of opened) {
+					toFire.add(Uri.parse(item));
+				}
+				this._onOpen.fire(toFire);
+			}
+		};
+
+		if (Window.tabGroups.onDidChangeTabs !== undefined) {
+			this.disposable = Window.tabGroups.onDidChangeTabs(openTabsHandler);
+		} else {
+			this.disposable = { dispose: () => {} };
+		}
+	}
+
+	public get onClose(): Event<Set<Uri>> {
+		return this._onClose.event;
+	}
+
+	public get onOpen(): Event<Set<Uri>> {
+		return this._onOpen.event;
+	}
+
+	public dispose(): void {
+		this.disposable.dispose();
+	}
+
+	public isActive(document: TextDocument | Uri): boolean {
+		return document instanceof Uri
+			? Window.activeTextEditor?.document.uri === document
+			: Window.activeTextEditor?.document === document;
+	}
+
+	public isVisible(document: TextDocument | Uri): boolean {
+		const uri = document instanceof Uri ? document : document.uri;
+		if (uri.scheme === NotebookDocumentSyncFeature.CellScheme) {
+			// Notebook cells aren't in the list of tabs, but the notebook should be.
+			return Workspace.notebookDocuments.some(notebook => {
+				if (this.open.has(notebook.uri.toString())) {
+					const cell = notebook.getCells().find(cell => cell.document.uri.toString() === uri.toString());
+					return cell !== undefined;
+				}
+				return false;
+			});
+		}
+		return this.open.has(uri.toString());
+	}
+
+	public getTabResources(): Set<Uri> {
+		const result: Set<Uri> = new Set();
+		Tabs.fillTabResources(new Set(), result);
+		return result;
+	}
+
+	private static fillTabResources(strings: Set<string> | undefined, uris?: Set<Uri>): void {
+		const seen = strings ?? new Set();
+		for (const group of Window.tabGroups.all) {
+			for (const tab of group.tabs) {
+				const input = tab.input;
+				let uri: Uri | undefined;
+				if (input instanceof TabInputText) {
+					uri = input.uri;
+				} else if (input instanceof TabInputTextDiff) {
+					uri = input.modified;
+				} else if (input instanceof TabInputCustom) {
+					uri = input.uri;
+				} else if (input instanceof TabInputNotebook) {
+					uri = input.uri;
+				}
+				if (uri !== undefined && !seen.has(uri.toString())) {
+					seen.add(uri.toString());
+					uris !== undefined && uris.add(uri);
+				}
+			}
+		}
+	}
+}
+
 export abstract class BaseLanguageClient implements FeatureClient<Middleware, LanguageClientOptions> {
 
 	private _id: string;
@@ -513,9 +650,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _syncedDocuments: Map<string, TextDocument>;
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
-	private readonly _pendingOpenNotifications: Set<string>;
+	private readonly _inFlightOpenNotifications: Set<string>;
 	private readonly _pendingChangeSemaphore: Semaphore<void>;
 	private readonly _pendingChangeDelayer: Delayer<void>;
+	private _didOpenTextDocumentFeature: DidOpenTextDocumentFeature | undefined;
 
 	private _fileEvents: FileEvent[];
 	private _fileEventDelayer: Delayer<void>;
@@ -529,6 +667,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private readonly _c2p: c2p.Converter;
 	private readonly _p2c: p2c.Converter;
+	private _tabsModel: TabsModel | undefined;
 
 	public constructor(id: string, name: string, clientOptions: LanguageClientOptions) {
 		this._id = id;
@@ -571,7 +710,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			// 	interval: clientOptions.suspend?.interval ? Math.max(clientOptions.suspend.interval, defaultInterval) : defaultInterval
 			// },
 			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
-			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { }
+			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { },
+			textSynchronization: this.createTextSynchronizationOptions(clientOptions.textSynchronization)
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -602,7 +742,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._traceOutputChannel = clientOptions.traceOutputChannel;
 		this._diagnostics = undefined;
 
-		this._pendingOpenNotifications = new Set();
+		this._inFlightOpenNotifications = new Set();
 		this._pendingChangeSemaphore = new Semaphore(1);
 		this._pendingChangeDelayer = new Delayer<void>(250);
 
@@ -631,6 +771,16 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerBuiltinFeatures();
 	}
 
+	private createTextSynchronizationOptions(options: LanguageClientOptions['textSynchronization']): ResolvedClientOptions['textSynchronization'] {
+		if (!options) {
+			return { delayOpenNotifications: false };
+		}
+		if (typeof options.delayOpenNotifications === 'boolean') {
+			return { delayOpenNotifications: options.delayOpenNotifications };
+		}
+		return { delayOpenNotifications: false };
+	}
+
 	public get name(): string {
 		return this._name;
 	}
@@ -649,6 +799,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	public get code2ProtocolConverter(): c2p.Converter {
 		return this._c2p;
+	}
+
+	public get tabsModel(): TabsModel {
+		if (this._tabsModel === undefined) {
+			this._tabsModel = new Tabs();
+		}
+		return this._tabsModel;
 	}
 
 	public get onTelemetry(): Event<any> {
@@ -724,6 +881,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
+
+		// Send ony depending open notifications
+		await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications();
+
 		// If any document is synced in full mode make sure we flush any pending
 		// full document syncs.
 		if (this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full) {
@@ -828,10 +989,18 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		let openNotification: string | undefined;
 		if (needsPendingFullTextDocumentSync && typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
 			openNotification = (params as DidOpenTextDocumentParams)?.textDocument.uri;
-			this._pendingOpenNotifications.add(openNotification);
+			this._inFlightOpenNotifications.add(openNotification);
+		}
+		let documentToClose: string | undefined;
+		if (typeof type !== 'string' && type.method === DidCloseTextDocumentNotification.method) {
+			documentToClose = (params as DidCloseTextDocumentParams).textDocument.uri;
 		}
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
+
+		// Send ony depending open notifications
+		await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
+
 		// If any document is synced in full mode make sure we flush any pending
 		// full document syncs.
 		if (needsPendingFullTextDocumentSync) {
@@ -843,11 +1012,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// onto the wire will ignore pending document changes.
 		//
 		// Since the code path of connection.sendNotification is actually sync
-		// until the message is handed of to the writer and the writer as a semaphore
+		// until the message is handed off to the writer and the writer has a semaphore
 		// lock with a capacity of 1 no additional async scheduling can happen until
-		// the message is actually handed of.
+		// the message is actually handed off.
 		if (openNotification !== undefined) {
-			this._pendingOpenNotifications.delete(openNotification);
+			this._inFlightOpenNotifications.delete(openNotification);
 		}
 
 		const _sendNotification = this._clientOptions.middleware?.sendNotification;
@@ -1479,7 +1648,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private async sendPendingFullTextDocumentChanges(connection: Connection): Promise<void> {
 		return this._pendingChangeSemaphore.lock(async () => {
 			try {
-				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(this._pendingOpenNotifications);
+				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(this._inFlightOpenNotifications);
 				if (changes.length === 0) {
 					return;
 				}
@@ -1773,7 +1942,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	protected registerBuiltinFeatures() {
 		const pendingFullTextDocumentChanges: Map<string, TextDocument> = new Map();
 		this.registerFeature(new ConfigurationFeature(this));
-		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
+		this._didOpenTextDocumentFeature = new DidOpenTextDocumentFeature(this, this._syncedDocuments);
+		this.registerFeature(this._didOpenTextDocumentFeature);
 		this._didChangeTextDocumentFeature = new DidChangeTextDocumentFeature(this, pendingFullTextDocumentChanges);
 		this._didChangeTextDocumentFeature.onPendingChangeAdded(() => {
 			this.triggerPendingChangeDelivery();
