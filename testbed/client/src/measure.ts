@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const counter = 1000000;
 
-		const converter = p2c.createConverter(undefined, false, false);
+		const converter = p2c.createConverter(undefined, false, false, false);
 		// const diagnostics: proto.Diagnostic[] = new Array(counter);
 
 		// for (let i = 0; i < counter; i++) {

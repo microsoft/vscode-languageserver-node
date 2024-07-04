@@ -14,10 +14,10 @@ import {
 	CodeAction, CodeActionKind, Command, CompletionItem, createConnection, DeclarationLink, Definition, DefinitionLink, Diagnostic,
 	DocumentHighlight, DocumentHighlightKind, Hover, InitializeError, InitializeResult, Location, MarkupKind, MessageActionItem,
 	Position, Range, ResponseError, SignatureHelp, SymbolInformation, SymbolKind, TextDocuments, TextDocumentSyncKind,
-	TextEdit, ProposedFeatures, DiagnosticTag, InsertTextFormat, SelectionRangeRequest, SelectionRange, InsertReplaceEdit,
+	TextEdit, ProposedFeatures, InsertTextFormat, SelectionRangeRequest, SelectionRange, InsertReplaceEdit,
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
-	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DocumentLinkResolveRequest, DidChangeConfigurationNotification
+	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DidChangeConfigurationNotification
 } from 'vscode-languageserver/node';
 
 import {
