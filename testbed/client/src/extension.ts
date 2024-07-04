@@ -6,7 +6,7 @@
 
 import * as path from 'path';
 import { commands, ExtensionContext, workspace, window } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType, SuspendMode, DidOpenTextDocumentNotification } from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
@@ -57,7 +57,7 @@ export async function activate(context: ExtensionContext) {
 			}
 		},
 		textSynchronization: {
-			delayOpen:true
+			delayOpenNotifications: false
 		}
 	};
 

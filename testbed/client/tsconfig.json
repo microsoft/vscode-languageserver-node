@@ -1,10 +1,10 @@
 {
 	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es2017",
+		"module": "Node16",
+		"target": "ES2022",
 		"outDir": "out",
 		"rootDir": "src",
-		"lib": ["es2017"],
+		"lib": ["ES2023"],
 		"sourceMap": true,
 		"incremental": true,
 		"tsBuildInfoFile":"./out/tsconfig.tsbuildInfo",
