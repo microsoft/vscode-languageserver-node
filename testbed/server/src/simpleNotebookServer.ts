@@ -10,7 +10,7 @@ import {
 
 import {
 	CompletionItem, createConnection, Diagnostic, Hover, InitializeError, InitializeResult, MarkupKind, Range, ResponseError,
-	TextDocuments, TextDocumentSyncKind, ProposedFeatures, Proposed, DiagnosticSeverity
+	TextDocuments, TextDocumentSyncKind, ProposedFeatures, DiagnosticSeverity
 } from 'vscode-languageserver/node';
 
 const patterns = [
