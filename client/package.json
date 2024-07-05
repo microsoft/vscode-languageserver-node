@@ -1,11 +1,11 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "10.0.0-next.8",
+	"version": "10.0.0-next.9",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
-		"vscode": "^1.89.0"
+		"vscode": "^1.91.0"
 	},
 	"repository": {
 		"type": "git",
@@ -37,13 +37,13 @@
 	"devDependencies": {
 		"@types/minimatch": "^5.1.2",
 		"@types/semver": "^7.5.8",
-		"@types/vscode": "1.89.0",
+		"@types/vscode": "1.91.0",
 		"shx": "^0.3.4"
 	},
 	"dependencies": {
 		"minimatch": "^9.0.3",
 		"semver": "^7.6.0",
-		"vscode-languageserver-protocol": "3.17.6-next.6"
+		"vscode-languageserver-protocol": "3.17.6-next.7"
 	},
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
@@ -58,6 +58,7 @@
 		"compile:publish": "tsc -b ./tsconfig.publish.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
 		"all:publish": "git clean -xfd . && npm install && npm run updateVSCodeVersion && npm run compile:publish && npm run lint && cd ../client-node-tests && npm run all:publish && cd ..",
 		"preversion": "npm test",
-		"updateVSCodeVersion": "node ./bin/updateVSCode.js"
+		"updateVSCodeVersion": "node ./bin/updateVSCode.js",
+		"update:vscode-version": "node ./bin/updateVSCode.js"
 	}
 }
