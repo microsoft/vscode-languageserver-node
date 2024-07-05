@@ -1635,13 +1635,20 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		async function didChangeWatchedFile(this: void, event: FileEvent): Promise<void> {
 			client._fileEvents.push(event);
 			return client._fileEventDelayer.trigger(async (): Promise<void> => {
-				await client.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
+				const fileEvents = client._fileEvents;
 				client._fileEvents = [];
+				try {
+					await client.sendNotification(DidChangeWatchedFilesNotification.type, { changes: fileEvents });
+				} catch (error) {
+					// Restore the file events.
+					client._fileEvents.push(...fileEvents);
+					throw error;
+				}
 			});
 		}
 		const workSpaceMiddleware = this.clientOptions.middleware?.workspace;
 		(workSpaceMiddleware?.didChangeWatchedFile ? workSpaceMiddleware.didChangeWatchedFile(event, didChangeWatchedFile) : didChangeWatchedFile(event)).catch((error) => {
-			client.error(`Notify file events failed.`, error);
+			client.error(`Notifying file events failed.`, error);
 		});
 	}
 
