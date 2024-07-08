@@ -5,6 +5,7 @@
 	"requests": [
 		{
 			"method": "textDocument/implementation",
+			"typeName": "ImplementationRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -57,6 +58,7 @@
 		},
 		{
 			"method": "textDocument/typeDefinition",
+			"typeName": "TypeDefinitionRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -109,6 +111,7 @@
 		},
 		{
 			"method": "workspace/workspaceFolders",
+			"typeName": "WorkspaceFoldersRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -130,6 +133,7 @@
 		},
 		{
 			"method": "workspace/configuration",
+			"typeName": "ConfigurationRequest",
 			"result": {
 				"kind": "array",
 				"element": {
@@ -146,6 +150,7 @@
 		},
 		{
 			"method": "textDocument/documentColor",
+			"typeName": "DocumentColorRequest",
 			"result": {
 				"kind": "array",
 				"element": {
@@ -173,6 +178,7 @@
 		},
 		{
 			"method": "textDocument/colorPresentation",
+			"typeName": "ColorPresentationRequest",
 			"result": {
 				"kind": "array",
 				"element": {
@@ -209,6 +215,7 @@
 		},
 		{
 			"method": "textDocument/foldingRange",
+			"typeName": "FoldingRangeRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -245,6 +252,7 @@
 		},
 		{
 			"method": "workspace/foldingRange/refresh",
+			"typeName": "FoldingRangeRefreshRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -256,6 +264,7 @@
 		},
 		{
 			"method": "textDocument/declaration",
+			"typeName": "DeclarationRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -308,6 +317,7 @@
 		},
 		{
 			"method": "textDocument/selectionRange",
+			"typeName": "SelectionRangeRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -344,6 +354,7 @@
 		},
 		{
 			"method": "window/workDoneProgress/create",
+			"typeName": "WorkDoneProgressCreateRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -357,6 +368,7 @@
 		},
 		{
 			"method": "textDocument/prepareCallHierarchy",
+			"typeName": "CallHierarchyPrepareRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -387,6 +399,7 @@
 		},
 		{
 			"method": "callHierarchy/incomingCalls",
+			"typeName": "CallHierarchyIncomingCallsRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -420,6 +433,7 @@
 		},
 		{
 			"method": "callHierarchy/outgoingCalls",
+			"typeName": "CallHierarchyOutgoingCallsRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -453,6 +467,7 @@
 		},
 		{
 			"method": "textDocument/semanticTokens/full",
+			"typeName": "SemanticTokensRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -485,6 +500,7 @@
 		},
 		{
 			"method": "textDocument/semanticTokens/full/delta",
+			"typeName": "SemanticTokensDeltaRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -530,6 +546,7 @@
 		},
 		{
 			"method": "textDocument/semanticTokens/range",
+			"typeName": "SemanticTokensRangeRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -558,6 +575,7 @@
 		},
 		{
 			"method": "workspace/semanticTokens/refresh",
+			"typeName": "SemanticTokensRefreshRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -568,6 +586,7 @@
 		},
 		{
 			"method": "window/showDocument",
+			"typeName": "ShowDocumentRequest",
 			"result": {
 				"kind": "reference",
 				"name": "ShowDocumentResult"
@@ -582,6 +601,7 @@
 		},
 		{
 			"method": "textDocument/linkedEditingRange",
+			"typeName": "LinkedEditingRangeRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -609,6 +629,7 @@
 		},
 		{
 			"method": "workspace/willCreateFiles",
+			"typeName": "WillCreateFilesRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -636,6 +657,7 @@
 		},
 		{
 			"method": "workspace/willRenameFiles",
+			"typeName": "WillRenameFilesRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -663,6 +685,7 @@
 		},
 		{
 			"method": "workspace/willDeleteFiles",
+			"typeName": "WillDeleteFilesRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -690,6 +713,7 @@
 		},
 		{
 			"method": "textDocument/moniker",
+			"typeName": "MonikerRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -726,6 +750,7 @@
 		},
 		{
 			"method": "textDocument/prepareTypeHierarchy",
+			"typeName": "TypeHierarchyPrepareRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -756,6 +781,7 @@
 		},
 		{
 			"method": "typeHierarchy/supertypes",
+			"typeName": "TypeHierarchySupertypesRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -789,6 +815,7 @@
 		},
 		{
 			"method": "typeHierarchy/subtypes",
+			"typeName": "TypeHierarchySubtypesRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -822,6 +849,7 @@
 		},
 		{
 			"method": "textDocument/inlineValue",
+			"typeName": "InlineValueRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -859,6 +887,7 @@
 		},
 		{
 			"method": "workspace/inlineValue/refresh",
+			"typeName": "InlineValueRefreshRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -869,6 +898,7 @@
 		},
 		{
 			"method": "textDocument/inlayHint",
+			"typeName": "InlayHintRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -906,6 +936,7 @@
 		},
 		{
 			"method": "inlayHint/resolve",
+			"typeName": "InlayHintResolveRequest",
 			"result": {
 				"kind": "reference",
 				"name": "InlayHint"
@@ -920,6 +951,7 @@
 		},
 		{
 			"method": "workspace/inlayHint/refresh",
+			"typeName": "InlayHintRefreshRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -930,6 +962,7 @@
 		},
 		{
 			"method": "textDocument/diagnostic",
+			"typeName": "DocumentDiagnosticRequest",
 			"result": {
 				"kind": "reference",
 				"name": "DocumentDiagnosticReport"
@@ -956,6 +989,7 @@
 		},
 		{
 			"method": "workspace/diagnostic",
+			"typeName": "WorkspaceDiagnosticRequest",
 			"result": {
 				"kind": "reference",
 				"name": "WorkspaceDiagnosticReport"
@@ -978,6 +1012,7 @@
 		},
 		{
 			"method": "workspace/diagnostic/refresh",
+			"typeName": "DiagnosticRefreshRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -988,6 +1023,7 @@
 		},
 		{
 			"method": "textDocument/inlineCompletion",
+			"typeName": "InlineCompletionRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1030,6 +1066,7 @@
 		},
 		{
 			"method": "client/registerCapability",
+			"typeName": "RegistrationRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -1043,6 +1080,7 @@
 		},
 		{
 			"method": "client/unregisterCapability",
+			"typeName": "UnregistrationRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -1056,6 +1094,7 @@
 		},
 		{
 			"method": "initialize",
+			"typeName": "InitializeRequest",
 			"result": {
 				"kind": "reference",
 				"name": "InitializeResult"
@@ -1073,6 +1112,7 @@
 		},
 		{
 			"method": "shutdown",
+			"typeName": "ShutdownRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -1082,6 +1122,7 @@
 		},
 		{
 			"method": "window/showMessageRequest",
+			"typeName": "ShowMessageRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1104,6 +1145,7 @@
 		},
 		{
 			"method": "textDocument/willSaveWaitUntil",
+			"typeName": "WillSaveTextDocumentWaitUntilRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1133,6 +1175,7 @@
 		},
 		{
 			"method": "textDocument/completion",
+			"typeName": "CompletionRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1173,6 +1216,7 @@
 		},
 		{
 			"method": "completionItem/resolve",
+			"typeName": "CompletionResolveRequest",
 			"result": {
 				"kind": "reference",
 				"name": "CompletionItem"
@@ -1186,6 +1230,7 @@
 		},
 		{
 			"method": "textDocument/hover",
+			"typeName": "HoverRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1212,6 +1257,7 @@
 		},
 		{
 			"method": "textDocument/signatureHelp",
+			"typeName": "SignatureHelpRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1237,6 +1283,7 @@
 		},
 		{
 			"method": "textDocument/definition",
+			"typeName": "DefinitionRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1289,6 +1336,7 @@
 		},
 		{
 			"method": "textDocument/references",
+			"typeName": "ReferencesRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1325,6 +1373,7 @@
 		},
 		{
 			"method": "textDocument/documentHighlight",
+			"typeName": "DocumentHighlightRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1361,6 +1410,7 @@
 		},
 		{
 			"method": "textDocument/documentSymbol",
+			"typeName": "DocumentSymbolRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1416,6 +1466,7 @@
 		},
 		{
 			"method": "textDocument/codeAction",
+			"typeName": "CodeActionRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1470,6 +1521,7 @@
 		},
 		{
 			"method": "codeAction/resolve",
+			"typeName": "CodeActionResolveRequest",
 			"result": {
 				"kind": "reference",
 				"name": "CodeAction"
@@ -1483,6 +1535,7 @@
 		},
 		{
 			"method": "workspace/symbol",
+			"typeName": "WorkspaceSymbolRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1539,6 +1592,7 @@
 		},
 		{
 			"method": "workspaceSymbol/resolve",
+			"typeName": "WorkspaceSymbolResolveRequest",
 			"result": {
 				"kind": "reference",
 				"name": "WorkspaceSymbol"
@@ -1553,6 +1607,7 @@
 		},
 		{
 			"method": "textDocument/codeLens",
+			"typeName": "CodeLensRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1589,6 +1644,7 @@
 		},
 		{
 			"method": "codeLens/resolve",
+			"typeName": "CodeLensResolveRequest",
 			"result": {
 				"kind": "reference",
 				"name": "CodeLens"
@@ -1602,6 +1658,7 @@
 		},
 		{
 			"method": "workspace/codeLens/refresh",
+			"typeName": "CodeLensRefreshRequest",
 			"result": {
 				"kind": "base",
 				"name": "null"
@@ -1612,6 +1669,7 @@
 		},
 		{
 			"method": "textDocument/documentLink",
+			"typeName": "DocumentLinkRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1648,6 +1706,7 @@
 		},
 		{
 			"method": "documentLink/resolve",
+			"typeName": "DocumentLinkResolveRequest",
 			"result": {
 				"kind": "reference",
 				"name": "DocumentLink"
@@ -1661,6 +1720,7 @@
 		},
 		{
 			"method": "textDocument/formatting",
+			"typeName": "DocumentFormattingRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1690,6 +1750,7 @@
 		},
 		{
 			"method": "textDocument/rangeFormatting",
+			"typeName": "DocumentRangeFormattingRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1719,6 +1780,7 @@
 		},
 		{
 			"method": "textDocument/rangesFormatting",
+			"typeName": "DocumentRangesFormattingRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1750,6 +1812,7 @@
 		},
 		{
 			"method": "textDocument/onTypeFormatting",
+			"typeName": "DocumentOnTypeFormattingRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1779,6 +1842,7 @@
 		},
 		{
 			"method": "textDocument/rename",
+			"typeName": "RenameRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1805,6 +1869,7 @@
 		},
 		{
 			"method": "textDocument/prepareRename",
+			"typeName": "PrepareRenameRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1828,6 +1893,7 @@
 		},
 		{
 			"method": "workspace/executeCommand",
+			"typeName": "ExecuteCommandRequest",
 			"result": {
 				"kind": "or",
 				"items": [
@@ -1854,6 +1920,7 @@
 		},
 		{
 			"method": "workspace/applyEdit",
+			"typeName": "ApplyWorkspaceEditRequest",
 			"result": {
 				"kind": "reference",
 				"name": "ApplyWorkspaceEditResult"
@@ -13721,6 +13788,12 @@
 					"value": "decorator",
 					"documentation": "@since 3.17.0",
 					"since": "3.17.0"
+				},
+				{
+					"name": "label",
+					"value": "label",
+					"documentation": "@since 3.18.0",
+					"since": "3.18.0"
 				}
 			],
 			"supportsCustomValues": true,
@@ -13867,7 +13940,7 @@
 				{
 					"name": "RequestCancelled",
 					"value": -32800,
-					"documentation": "The client has canceled a request and a server as detected\nthe cancel."
+					"documentation": "The client has canceled a request and a server has detected\nthe cancel."
 				}
 			],
 			"supportsCustomValues": true
