@@ -21,7 +21,7 @@ namespace MapKeyType {
 		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'URI'));
 	}
 }
-type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; proposed?: boolean; deprecated?: string };
+type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; sinceTags?: string[]; proposed?: boolean; deprecated?: string };
 
 type TypeInfo =
 {
@@ -1172,10 +1172,11 @@ export default class Visitor {
 		const filePath = node.getSourceFile().fileName;
 		const fileName = path.basename(filePath);
 		const tags = ts.getJSDocTags(node);
-		const { since, deprecated } = this.getTags(tags);
+		const { since, sinceTags, deprecated } = this.getTags(tags);
 		const proposed = (fileName.startsWith('proposed.') || tags.some((tag) => { return ts.isJSDocUnknownTag(tag) && tag.tagName.text === 'proposed';})) ? true : undefined;
 		value.documentation = this.getDocumentation(node);
 		value.since = since;
+		value.sinceTags = sinceTags;
 		value.deprecated = deprecated;
 		value.proposed = proposed;
 	}
@@ -1216,17 +1217,23 @@ export default class Visitor {
 		return undefined;
 	}
 
-	private getTags(tags: ReadonlyArray<ts.JSDocTag>): { since?: string; deprecated?: string } {
-		const result: { since?: string; deprecated?: string } = {};
+	private getTags(tags: ReadonlyArray<ts.JSDocTag>): { since?: string; sinceTags?: string[]; deprecated?: string } {
+		const result: { since?: string; sinceTags?: string[];  deprecated?: string } = {};
 		for (const tag of tags) {
 			if (tag.tagName.text === 'since' && typeof tag.comment === 'string') {
-				result.since = tag.comment.replace(/\r?\n/g, '\n');
+				const value = tag.comment.replace(/\r?\n/g, '\n');
+				result.since = value;
+				if (result.sinceTags === undefined) {
+					result.sinceTags = [value];
+				} else {
+					result.sinceTags.push(value);
+				}
 			} else if (tag.tagName.text === 'deprecated' && typeof tag.comment === 'string') {
 				result.deprecated = tag.comment.replace(/\r?\n/g, '\n');
 			}
-			if (result.since !== undefined && result.deprecated !== undefined) {
-				return result;
-			}
+		}
+		if (Array.isArray(result.sinceTags) && result.sinceTags.length === 1) {
+			delete result.sinceTags;
 		}
 		return result;
 	}
