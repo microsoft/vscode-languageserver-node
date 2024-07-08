@@ -341,6 +341,7 @@ export default class Visitor {
 		};
 		const result: JsonRequest = {
 			method: methodName,
+			typeName: symbol.name,
 			result: TypeInfo.isVoid(requestTypes.result) ? TypeInfo.asJsonType({ kind: 'base', name: 'null' }) : TypeInfo.asJsonType(requestTypes.result),
 			messageDirection: this.getMessageDirection(symbol)
 		};

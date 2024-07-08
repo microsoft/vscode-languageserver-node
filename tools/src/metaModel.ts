@@ -131,6 +131,11 @@ export type Request = {
 	method: string;
 
 	/**
+	 * The type name of the request if any.
+	 */
+	typeName?: string;
+
+	/**
 	 * The parameter type(s) if any.
 	 */
 	params?: Type | Type[];
