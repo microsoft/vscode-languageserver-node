@@ -760,11 +760,11 @@ export namespace $GlobPattern {
 	export function match(pattern: GlobPattern, resource: Uri): boolean {
 		let miniMatchPattern: string;
 		if (typeof pattern === 'string') {
-			miniMatchPattern = pattern;
+			miniMatchPattern = pattern.replace(/\\/g, '/');
 		} else {
 			try {
 				const baseUri = Uri.parse(typeof pattern.baseUri === 'string' ? pattern.baseUri : pattern.baseUri.uri);
-				miniMatchPattern = baseUri.with({ path: baseUri.path + '/' + pattern.pattern }).fsPath;
+				miniMatchPattern = baseUri.with({ path: baseUri.path + '/' + pattern.pattern }).fsPath.replace(/\\/g, '/');
 			} catch (error) {
 				return false;
 			}
