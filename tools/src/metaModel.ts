@@ -209,9 +209,14 @@ export type Request = {
  */
 export type Notification = {
 	/**
-	 * The request's method name.
+	 * The notifications's method name.
 	 */
 	method: string;
+
+	/**
+	 * The type name of the notifications if any.
+	 */
+	typeName?: string;
 
 	/**
 	 * The parameter type(s) if any.
@@ -220,7 +225,7 @@ export type Notification = {
 
 	/**
 	 * Optional a dynamic registration method if it
-	 * different from the request's method.
+	 * different from the notifications's method.
 	 */
 	registrationMethod?: string;
 

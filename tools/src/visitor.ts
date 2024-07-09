@@ -381,6 +381,7 @@ export default class Visitor {
 		};
 		const result: JsonNotification = {
 			method: methodName,
+			typeName: symbol.name,
 			messageDirection: this.getMessageDirection(symbol)
 		};
 		result.params = notificationTypes.param !== undefined ? asJsonType(notificationTypes.param) : undefined;
