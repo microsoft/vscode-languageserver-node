@@ -115,7 +115,7 @@
           "type": "string"
         },
         "sinceTags": {
-          "description": "All since tags in case there was more than one tag. Is undefined of not known.",
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
           "items": {
             "type": "string"
           },
@@ -169,7 +169,7 @@
           "type": "string"
         },
         "sinceTags": {
-          "description": "All since tags in case there was more than one tag. Is undefined of not known.",
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
           "items": {
             "type": "string"
           },
@@ -409,7 +409,7 @@
           "type": "string"
         },
         "sinceTags": {
-          "description": "All since tags in case there was more than one tag. Is undefined of not known.",
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
           "items": {
             "type": "string"
           },
@@ -472,7 +472,7 @@
           "type": "string"
         },
         "sinceTags": {
-          "description": "All since tags in case there was more than one tag. Is undefined of not known.",
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
           "items": {
             "type": "string"
           },
@@ -570,7 +570,7 @@
           "type": "string"
         },
         "sinceTags": {
-          "description": "All since tags in case there was more than one tag. Is undefined of not known.",
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
           "items": {
             "type": "string"
           },
@@ -652,7 +652,7 @@
           "type": "string"
         },
         "sinceTags": {
-          "description": "All since tags in case there was more than one tag. Is undefined of not known.",
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
           "items": {
             "type": "string"
           },
@@ -693,7 +693,7 @@
           "type": "string"
         },
         "sinceTags": {
-          "description": "All since tags in case there was more than one tag. Is undefined of not known.",
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
           "items": {
             "type": "string"
           },
@@ -806,7 +806,7 @@
           "type": "string"
         },
         "sinceTags": {
-          "description": "All since tags in case there was more than one tag. Is undefined of not known.",
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
           "items": {
             "type": "string"
           },
