@@ -3531,6 +3531,16 @@ export namespace WorkspaceSymbolResolveRequest {
 //---- Code Lens Provider -------------------------------------------
 
 /**
+ * @since 3.18.0
+ */
+export type ClientCodeLensResolveOptions = {
+	/**
+	 * The properties that a client can resolve lazily.
+	 */
+	properties: string[];
+};
+
+/**
  * The client capabilities  of a {@link CodeLensRequest}.
  */
 export interface CodeLensClientCapabilities {
@@ -3538,6 +3548,14 @@ export interface CodeLensClientCapabilities {
 	 * Whether code lens supports dynamic registration.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Whether the client supports resolving additional code lens
+	 * properties via a separate `codeLens/resolve` request.
+	 *
+	 * @since 3.18.0
+	 */
+	resolveSupport?: ClientCodeLensResolveOptions;
 }
 
 /**
