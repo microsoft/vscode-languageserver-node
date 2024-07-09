@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentHighlightRegistrationOptions, DocumentFormattingOptions, DocumentFormattingRequest, TextDocumentRegistrationOptions, DocumentFormattingParams, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingOptions, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentRangesFormattingRequest, DocumentRangesFormattingParams, DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams} from 'vscode-languageserver-protocol';
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentFormattingOptions, DocumentFormattingRequest, TextDocumentRegistrationOptions, DocumentFormattingParams, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingOptions, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentRangesFormattingRequest, DocumentRangesFormattingParams, DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, DocumentFormattingRegistrationOptions} from 'vscode-languageserver-protocol';
 
 import * as UUID from './utils/uuid';
 
@@ -53,7 +53,7 @@ export interface FormattingMiddleware {
 }
 
 
-export class DocumentFormattingFeature extends TextDocumentLanguageFeature<boolean | DocumentFormattingOptions, DocumentHighlightRegistrationOptions, DocumentFormattingEditProvider, FormattingMiddleware> {
+export class DocumentFormattingFeature extends TextDocumentLanguageFeature<boolean | DocumentFormattingOptions, DocumentFormattingRegistrationOptions, DocumentFormattingEditProvider, FormattingMiddleware> {
 
 	constructor(client: FeatureClient<FormattingMiddleware>) {
 		super(client, DocumentFormattingRequest.type);
@@ -199,7 +199,7 @@ export class DocumentOnTypeFormattingFeature extends TextDocumentLanguageFeature
 			provideOnTypeFormattingEdits: (document, position, ch, options, token) => {
 				const client = this._client;
 				const provideOnTypeFormattingEdits: ProvideOnTypeFormattingEditsSignature = (document, position, ch, options, token) => {
-					let params: DocumentOnTypeFormattingParams = {
+					const params: DocumentOnTypeFormattingParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						position: client.code2ProtocolConverter.asPosition(position),
 						ch: ch,

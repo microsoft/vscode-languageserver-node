@@ -38,7 +38,7 @@ export class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegi
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let symbolCapabilities = ensure(ensure(capabilities, 'workspace')!, 'symbol')!;
+		const symbolCapabilities = ensure(ensure(capabilities, 'workspace')!, 'symbol')!;
 		symbolCapabilities.dynamicRegistration = true;
 		symbolCapabilities.symbolKind = {
 			valueSet: SupportedSymbolKinds

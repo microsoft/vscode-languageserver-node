@@ -6,7 +6,10 @@
 import {
 	createConnection, InitializeParams, ServerCapabilities, TextDocumentSyncKind, RequestType,
 	DidOpenNotebookDocumentNotification, DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentNotification,
-	DidCloseNotebookDocumentNotification
+	DidCloseNotebookDocumentNotification,
+	PublishDiagnosticsNotification,
+	DocumentDiagnosticReport,
+	NotificationType
 } from 'vscode-languageserver/node';
 
 const connection = createConnection();
@@ -20,6 +23,18 @@ namespace GotNotifiedRequest {
 	export const type = new RequestType<string, boolean, void>(method);
 }
 
+namespace ClearNotifiedRequest {
+	export const method: 'testing/clearNotified' = 'testing/clearNotified';
+	export const type = new RequestType<string, void, void>(method);
+}
+
+namespace SetDiagnosticsNotification {
+	export const method: 'testing/setDiagnostics' = 'testing/setDiagnostics';
+	export const type = new NotificationType<DocumentDiagnosticReport>(method);
+}
+
+const diagnostics = new Map<string, DocumentDiagnosticReport>();
+
 connection.onInitialize((_params: InitializeParams): any => {
 	const capabilities: ServerCapabilities = {
 		textDocumentSync: TextDocumentSyncKind.Full,
@@ -28,6 +43,12 @@ connection.onInitialize((_params: InitializeParams): any => {
 				notebook: { notebookType: 'jupyter-notebook' },
 				cells: [{ language: 'python' }]
 			}]
+		},
+		diagnosticProvider: {
+			identifier: 'diagnostic-provider',
+			documentSelector: null,
+			interFileDependencies: false,
+			workspaceDiagnostics: false
 		}
 	};
 	return { capabilities };
@@ -45,6 +66,11 @@ connection.notebooks.synchronization.onDidSaveNotebookDocument(() => {
 connection.notebooks.synchronization.onDidCloseNotebookDocument(() => {
 	receivedNotifications.add(DidCloseNotebookDocumentNotification.method);
 });
+connection.languages.diagnostics.on((params) => {
+	receivedNotifications.add(PublishDiagnosticsNotification.method);
+	const result = diagnostics.get(params.textDocument.uri) || { kind: 'unchanged', resultId: params.previousResultId || '' };
+	return result;
+});
 
 connection.onRequest(GotNotifiedRequest.type, (method: string) => {
 	const result = receivedNotifications.has(method);
@@ -52,6 +78,14 @@ connection.onRequest(GotNotifiedRequest.type, (method: string) => {
 		receivedNotifications.delete(method);
 	}
 	return result;
+});
+
+connection.onRequest(ClearNotifiedRequest.type, (method: string) => {
+	receivedNotifications.delete(method);
+});
+
+connection.onNotification(SetDiagnosticsNotification.method, (params) => {
+	diagnostics.set(params.uri, params.report);
 });
 
 // Listen on the connection

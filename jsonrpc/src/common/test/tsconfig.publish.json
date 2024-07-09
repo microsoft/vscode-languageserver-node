@@ -3,8 +3,8 @@
         "types": [
             "mocha"
         ],
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "strict": true,
         "noImplicitAny": true,
@@ -13,11 +13,12 @@
         "declaration": true,
         "stripInternal": true,
         "sourceMap": false,
+        "declarationMap": false,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "target": "es2020",
+        "target": "es2022",
         "lib": [
-            "es2020"
+            "es2023"
         ],
         "outDir": "../../../lib/common/test",
         "tsBuildInfoFile": "../../../lib/common/test/publish.tsbuildInfo",

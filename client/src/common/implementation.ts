@@ -26,13 +26,13 @@ export class ImplementationFeature extends TextDocumentLanguageFeature<boolean |
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let implementationSupport = ensure(ensure(capabilities, 'textDocument')!, 'implementation')!;
+		const implementationSupport = ensure(ensure(capabilities, 'textDocument')!, 'implementation')!;
 		implementationSupport.dynamicRegistration = true;
 		implementationSupport.linkSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let [id, options] = this.getRegistration(documentSelector, capabilities.implementationProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.implementationProvider);
 		if (!id || !options) {
 			return;
 		}

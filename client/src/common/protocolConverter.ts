@@ -142,6 +142,10 @@ export interface Converter {
 	asCodeActionKinds(items: ls.CodeActionKind[]): code.CodeActionKind[];
 	asCodeActionKinds(item: ls.CodeActionKind[] | null | undefined): code.CodeActionKind[] | undefined;
 
+	asCodeActionDocumentations(items: null | undefined): undefined;
+	asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[]): code.CodeActionProviderMetadata['documentation'];
+	asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[] | null | undefined): code.CodeActionProviderMetadata['documentation'] | undefined;
+
 	asCodeActionResult(items: (ls.Command | ls.CodeAction)[], token?: code.CancellationToken): Promise<(code.Command | code.CodeAction)[]>;
 
 	asCodeLens(item: ls.CodeLens): code.CodeLens;
@@ -246,6 +250,7 @@ export interface Converter {
 	asTypeHierarchyItems(items: ls.TypeHierarchyItem[], token?: code.CancellationToken): Promise<code.TypeHierarchyItem[]>;
 	asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.TypeHierarchyItem[] | undefined>;
 
+	asGlobPattern(pattern: undefined | null): undefined;
 	asGlobPattern(pattern: ls.GlobPattern): code.GlobPattern | undefined;
 
 	asInlineCompletionResult(value: undefined | null, token?: code.CancellationToken): Promise<undefined>;
@@ -267,12 +272,16 @@ interface CodeFenceBlock {
 
 namespace CodeBlock {
 	export function is(value: any): value is CodeFenceBlock {
-		let candidate: CodeFenceBlock = value;
+		const candidate: CodeFenceBlock = value;
 		return candidate && Is.string(candidate.language) && Is.string(candidate.value);
 	}
 }
 
-export function createConverter(uriConverter: URIConverter | undefined, trustMarkdown: boolean | { readonly enabledCommands: readonly string[] }, supportHtml: boolean): Converter {
+export function createConverter(
+	uriConverter: URIConverter | undefined,
+	trustMarkdown: boolean | { readonly enabledCommands: readonly string[] },
+	supportHtml: boolean,
+	supportThemeIcons: boolean): Converter {
 
 	const nullConverter = (value: string) => code.Uri.parse(value);
 
@@ -297,7 +306,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 					result.push({ notebookType: notebookType, scheme: filter.notebook.scheme, pattern: filter.notebook.pattern, language: filter.language });
 				}
 			} else if (TextDocumentFilter.is(filter)) {
-				result.push({ language: filter.language, scheme: filter.scheme, pattern: filter.pattern });
+				result.push({ language: filter.language, scheme: filter.scheme, pattern: asGlobPattern(filter.pattern) });
 			}
 		}
 		return result;
@@ -316,7 +325,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
-		let result = new ProtocolDiagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity), diagnostic.data);
+		const result = new ProtocolDiagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity), diagnostic.data);
 		if (diagnostic.code !== undefined) {
 			if (typeof diagnostic.code === 'string' || typeof diagnostic.code === 'number') {
 				if (ls.CodeDescription.is(diagnostic.codeDescription)) {
@@ -360,9 +369,9 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!tags) {
 			return undefined;
 		}
-		let result: code.DiagnosticTag[] = [];
-		for (let tag of tags) {
-			let converted = asDiagnosticTag(tag);
+		const result: code.DiagnosticTag[] = [];
+		for (const tag of tags) {
+			const converted = asDiagnosticTag(tag);
 			if (converted !== undefined) {
 				result.push(converted);
 			}
@@ -422,12 +431,12 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (Is.string(value)) {
 			return asMarkdownString(value);
 		} else if (CodeBlock.is(value)) {
-			let result = asMarkdownString();
+			const result = asMarkdownString();
 			return result.appendCodeblock(value.value, value.language);
 		} else if (Array.isArray(value)) {
-			let result: code.MarkdownString[] = [];
-			for (let element of value) {
-				let item = asMarkdownString();
+			const result: code.MarkdownString[] = [];
+			for (const element of value) {
+				const item = asMarkdownString();
 				if (CodeBlock.is(element)) {
 					item.appendCodeblock(element.value, element.language);
 				} else {
@@ -477,6 +486,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 		result.isTrusted = trustMarkdown;
 		result.supportHtml = supportHtml;
+		result.supportThemeIcons = supportThemeIcons;
 		return result;
 	}
 
@@ -568,7 +578,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 			result.fromEdit = insertText.fromEdit;
 		}
 		if (Is.number(item.kind)) {
-			let [itemKind, original] = asCompletionItemKind(item.kind);
+			const [itemKind, original] = asCompletionItemKind(item.kind);
 			result.kind = itemKind;
 			if (original) {
 				result.originalItemKind = original;
@@ -685,7 +695,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!item) {
 			return undefined;
 		}
-		let result = new code.SignatureHelp();
+		const result = new code.SignatureHelp();
 		if (Is.number(item.activeSignature)) {
 			result.activeSignature = item.activeSignature;
 		} else {
@@ -694,6 +704,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		}
 		if (Is.number(item.activeParameter)) {
 			result.activeParameter = item.activeParameter;
+		} else if (item.activeParameter === null) {
+			result.activeParameter = -1;
 		} else {
 			// activeParameter was optional in the past
 			result.activeParameter = 0;
@@ -707,10 +719,10 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	async function asSignatureInformation(item: ls.SignatureInformation, token?: code.CancellationToken): Promise<code.SignatureInformation> {
-		let result = new code.SignatureInformation(item.label);
+		const result = new code.SignatureInformation(item.label);
 		if (item.documentation !== undefined) { result.documentation = asDocumentation(item.documentation); }
 		if (item.parameters !== undefined) { result.parameters = await asParameterInformations(item.parameters, token); }
-		if (item.activeParameter !== undefined) { result.activeParameter = item.activeParameter; }
+		if (item.activeParameter !== undefined) { result.activeParameter = item.activeParameter ?? -1; }
 		{ return result; }
 	}
 
@@ -719,7 +731,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asParameterInformation(item: ls.ParameterInformation): code.ParameterInformation {
-		let result = new code.ParameterInformation(item.label);
+		const result = new code.ParameterInformation(item.label);
 		if (item.documentation) { result.documentation = asDocumentation(item.documentation); }
 		return result;
 	}
@@ -758,7 +770,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!item) {
 			return undefined;
 		}
-		let result = {
+		const result = {
 			targetUri: _uriConverter(item.targetUri),
 			targetRange: asRange(item.targetRange), // See issue: https://github.com/Microsoft/vscode/issues/58649
 			originSelectionRange: asRange(item.originSelectionRange),
@@ -812,7 +824,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asDocumentHighlight(item: ls.DocumentHighlight): code.DocumentHighlight {
-		let result = new code.DocumentHighlight(asRange(item.range));
+		const result = new code.DocumentHighlight(asRange(item.range));
 		if (Is.number(item.kind)) { result.kind = asDocumentHighlightKind(item.kind); }
 		return result;
 	}
@@ -897,7 +909,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asDocumentSymbol(value: ls.DocumentSymbol): code.DocumentSymbol {
-		let result = new code.DocumentSymbol(
+		const result = new code.DocumentSymbol(
 			value.name,
 			value.detail || '',
 			asSymbolKind(value.kind),
@@ -906,8 +918,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		);
 		fillTags(result, value);
 		if (value.children !== undefined && value.children.length > 0) {
-			let children: code.DocumentSymbol[] = [];
-			for (let child of value.children) {
+			const children: code.DocumentSymbol[] = [];
+			for (const child of value.children) {
 				children.push(asDocumentSymbol(child));
 			}
 			result.children = children;
@@ -929,7 +941,8 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asCommand(item: ls.Command): code.Command {
-		let result: code.Command = { title: item.title, command: item.command };
+		const result: code.Command = { title: item.title, command: item.command };
+		if (item.tooltip) { result.tooltip = item.tooltip; }
 		if (item.arguments) { result.arguments = item.arguments; }
 		return result;
 	}
@@ -965,9 +978,9 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (result) {
 			return result;
 		}
-		let parts = item.split('.');
+		const parts = item.split('.');
 		result = code.CodeActionKind.Empty;
-		for (let part of parts) {
+		for (const part of parts) {
 			result = result.append(part);
 		}
 		return result;
@@ -983,6 +996,16 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return items.map(kind => asCodeActionKind(kind));
 	}
 
+	function asCodeActionDocumentations(items: null | undefined): undefined;
+	function asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[]): code.CodeActionProviderMetadata['documentation'];
+	function asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[] | null | undefined): code.CodeActionProviderMetadata['documentation'] | undefined;
+	function asCodeActionDocumentations(items: ls.CodeActionKindDocumentation[] | null | undefined): code.CodeActionProviderMetadata['documentation'] | undefined {
+		if (items === undefined || items === null) {
+			return undefined;
+		}
+		return items.map(doc => ({ kind: asCodeActionKind(doc.kind), command: asCommand(doc.command) }));
+	}
+
 	function asCodeAction(item: undefined | null, token?: code.CancellationToken): Promise<undefined>;
 	function asCodeAction(item: ls.CodeAction, token?: code.CancellationToken): Promise<code.CodeAction>;
 	function asCodeAction(item: ls.CodeAction | undefined | null, token?: code.CancellationToken): Promise<code.CodeAction | undefined>;
@@ -990,7 +1013,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (item === undefined || item === null) {
 			return undefined;
 		}
-		let result = new ProtocolCodeAction(item.title, item.data);
+		const result = new ProtocolCodeAction(item.title, item.data);
 		if (item.kind !== undefined) { result.kind = asCodeActionKind(item.kind); }
 		if (item.diagnostics !== undefined) { result.diagnostics = asDiagnosticsSync(item.diagnostics); }
 		if (item.edit !== undefined) { result.edit = await asWorkspaceEdit(item.edit, token); }
@@ -1017,7 +1040,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (!item) {
 			return undefined;
 		}
-		let result: ProtocolCodeLens = new ProtocolCodeLens(asRange(item.range));
+		const result: ProtocolCodeLens = new ProtocolCodeLens(asRange(item.range));
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.data !== undefined && item.data !== null) { result.data = item.data; }
 		return result;
@@ -1068,13 +1091,17 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 					result.deleteFile(_uriConverter(change.uri), change.options, asMetadata(change.annotationId));
 				} else if (ls.TextDocumentEdit.is(change)) {
 					const uri = _uriConverter(change.textDocument.uri);
+					const edits: [code.TextEdit | code.SnippetTextEdit, code.WorkspaceEditEntryMetadata | undefined][] = [];
 					for (const edit of change.edits) {
 						if (ls.AnnotatedTextEdit.is(edit)) {
-							result.replace(uri, asRange(edit.range), edit.newText, asMetadata(edit.annotationId));
+							edits.push([new code.TextEdit(asRange(edit.range), edit.newText), asMetadata(edit.annotationId)]);
+						} else if (ls.SnippetTextEdit.is(edit)) {
+							edits.push([new code.SnippetTextEdit(asRange(edit.range), new code.SnippetString(edit.snippet.value)), asMetadata(edit.annotationId)]);
 						} else {
-							result.replace(uri, asRange(edit.range), edit.newText);
+							edits.push([new code.TextEdit(asRange(edit.range), edit.newText), undefined]);
 						}
 					}
+					result.set(uri, edits);
 				} else {
 					throw new Error(`Unknown workspace edit change received:\n${JSON.stringify(change, undefined, 4)}`);
 				}
@@ -1099,10 +1126,10 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asDocumentLink(item: ls.DocumentLink): code.DocumentLink {
-		let range = asRange(item.range);
-		let target = item.target ? asUri(item.target) : undefined;
+		const range = asRange(item.range);
+		const target = item.target ? asUri(item.target) : undefined;
 		// target must be optional in DocumentLink
-		let link = new ProtocolDocumentLink(range, target);
+		const link = new ProtocolDocumentLink(range, target);
 		if (item.tooltip !== undefined) { link.tooltip = item.tooltip; }
 		if (item.data !== undefined && item.data !== null) { link.data = item.data; }
 		return link;
@@ -1136,7 +1163,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 	}
 
 	function asColorPresentation(cp: ls.ColorPresentation): code.ColorPresentation {
-		let presentation = new code.ColorPresentation(cp.label);
+		const presentation = new code.ColorPresentation(cp.label);
 		presentation.additionalTextEdits = asTextEditsSync(cp.additionalTextEdits);
 		if (cp.textEdit) {
 			presentation.textEdit = asTextEdit(cp.textEdit);
@@ -1389,7 +1416,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		if (item === null) {
 			return undefined;
 		}
-		let result = new ProtocolTypeHierarchyItem(
+		const result = new ProtocolTypeHierarchyItem(
 			asSymbolKind(item.kind),
 			item.name,
 			item.detail || '',
@@ -1412,7 +1439,9 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		return async.map(items, (asTypeHierarchyItem as (item: ls.TypeHierarchyItem) => code.TypeHierarchyItem), token);
 	}
 
-	function asGlobPattern(pattern: ls.GlobPattern): code.GlobPattern | undefined {
+	function asGlobPattern(pattern: undefined | null): undefined;
+	function asGlobPattern(pattern: ls.GlobPattern | null | undefined): code.GlobPattern | undefined;
+	function asGlobPattern(pattern: ls.GlobPattern | null | undefined): code.GlobPattern | undefined {
 		if (Is.string(pattern)) {
 			return pattern;
 		}
@@ -1502,6 +1531,7 @@ export function createConverter(uriConverter: URIConverter | undefined, trustMar
 		asCodeAction,
 		asCodeActionKind,
 		asCodeActionKinds,
+		asCodeActionDocumentations,
 		asCodeActionResult,
 		asCodeLens,
 		asCodeLenses,

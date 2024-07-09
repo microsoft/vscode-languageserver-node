@@ -6,21 +6,21 @@
 
 import * as path from 'path';
 import { commands, ExtensionContext, workspace, window } from 'vscode';
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType, SuspendMode, DidOpenTextDocumentNotification } from 'vscode-languageclient/node';
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
 
 export async function activate(context: ExtensionContext) {
 	// We need to go one level up since an extension compile the js code into
 	// the output folder.
-	let module = path.join(__dirname, '..', '..', 'server', 'out', 'server.js');
-	let debugOptions = { execArgv: ['--nolazy', '--inspect=6012'] };
-	let serverOptions: ServerOptions = {
+	const module = path.join(__dirname, '..', '..', 'server', 'out', 'server.js');
+	const debugOptions = { execArgv: ['--nolazy', '--inspect=6012'] };
+	const serverOptions: ServerOptions = {
 		run: { module, transport: TransportKind.ipc },
 		debug: { module, /* runtime: 'node.exe', */ transport: TransportKind.ipc, options: debugOptions}
 	};
 
-	let clientOptions: LanguageClientOptions = {
+	const clientOptions: LanguageClientOptions = {
 		documentSelector: [
 			{ language: 'bat' },
 			{ language: 'bat', notebook: '*' },
@@ -50,10 +50,14 @@ export async function activate(context: ExtensionContext) {
 		diagnosticPullOptions: {
 			onTabs: true,
 			onChange: true,
+			onFocus: true,
 			match: (selector, resource) => {
 				const fsPath = resource.fsPath;
 				return path.extname(fsPath) === '.bat';
 			}
+		},
+		textSynchronization: {
+			delayOpenNotifications: false
 		}
 	};
 
@@ -93,7 +97,7 @@ FOR %%f IN (*.jpg *.png *.bmp) DO XCOPY C:\\source\\"%%f" c:\\images /m /y
 REM This moves any files with a .jpg, .png,
 REM or .bmp extension from c:\\source to c:\\images;;`;
 
-		workspace
+		void workspace
 			.openTextDocument({
 				content: testContent,
 				language: 'bat',

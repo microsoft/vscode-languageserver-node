@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+/// <reference path="../../typings/thenable.d.ts" />
 
 import RAL from './ral';
 import * as Is from './is';
@@ -126,56 +127,58 @@ export interface RequestHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E> {
 	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token: CancellationToken): HandlerResult<R, E>;
 }
 
+export type NotificationResult = void | Promise<void>;
+
 export interface StarNotificationHandler {
-	(method: string, params: any[] | object | undefined): void;
+	(method: string, params: any[] | object | undefined): NotificationResult;
 }
 
 export interface GenericNotificationHandler {
-	(...params: any[]): void;
+	(...params: any[]): NotificationResult;
 }
 
 export interface NotificationHandler0 {
-	(): void;
+	(): NotificationResult;
 }
 
 export interface NotificationHandler<P> {
-	(params: P): void;
+	(params: P): NotificationResult;
 }
 
 export interface NotificationHandler1<P1> {
-	(p1: P1): void;
+	(p1: P1): NotificationResult;
 }
 
 export interface NotificationHandler2<P1, P2> {
-	(p1: P1, p2: P2): void;
+	(p1: P1, p2: P2): NotificationResult;
 }
 
 export interface NotificationHandler3<P1, P2, P3> {
-	(p1: P1, p2: P2, p3: P3): void;
+	(p1: P1, p2: P2, p3: P3): NotificationResult;
 }
 
 export interface NotificationHandler4<P1, P2, P3, P4> {
-	(p1: P1, p2: P2, p3: P3, p4: P4): void;
+	(p1: P1, p2: P2, p3: P3, p4: P4): NotificationResult;
 }
 
 export interface NotificationHandler5<P1, P2, P3, P4, P5> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5): void;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5): NotificationResult;
 }
 
 export interface NotificationHandler6<P1, P2, P3, P4, P5, P6> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6): void;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6): NotificationResult;
 }
 
 export interface NotificationHandler7<P1, P2, P3, P4, P5, P6, P7> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7): void;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7): NotificationResult;
 }
 
 export interface NotificationHandler8<P1, P2, P3, P4, P5, P6, P7, P8> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8): void;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8): NotificationResult;
 }
 
 export interface NotificationHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9> {
-	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9): void;
+	(p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9): NotificationResult;
 }
 
 export interface Logger {
@@ -196,7 +199,7 @@ export enum Trace {
 	Off, Messages, Compact, Verbose
 }
 
-export namespace TraceValues {
+export namespace TraceValue {
 	/**
 	 * Turn tracing off.
 	 */
@@ -217,7 +220,13 @@ export namespace TraceValues {
 	 */
 	export const Verbose: 'verbose' = 'verbose';
 }
-export type TraceValues = 'off' | 'messages' | 'compact' | 'verbose';
+export type TraceValue = 'off' | 'messages' | 'compact' | 'verbose';
+
+/**
+ * @deprecated Use TraceValue instead
+ */
+export const TraceValues = TraceValue;
+export type TraceValues = TraceValue;
 
 export namespace Trace {
 	export function fromString(value: string): Trace {
@@ -239,7 +248,7 @@ export namespace Trace {
 		}
 	}
 
-	export function toString(value: Trace): TraceValues {
+	export function toString(value: Trace): TraceValue {
 		switch (value) {
 			case Trace.Off:
 				return 'off';
@@ -279,7 +288,7 @@ export interface TraceOptions {
 }
 
 export interface SetTraceParams {
-	value: TraceValues;
+	value: TraceValue;
 }
 
 export namespace SetTraceNotification {
@@ -389,11 +398,7 @@ export namespace RequestCancellationReceiverStrategy {
 	}
 }
 
-/**
- * This will break with the next major version and will become
- * export type CancellationReceiverStrategy = IdCancellationReceiverStrategy | RequestCancellationReceiverStrategy;
- */
-export type CancellationReceiverStrategy = IdCancellationReceiverStrategy;
+export type CancellationReceiverStrategy = IdCancellationReceiverStrategy | RequestCancellationReceiverStrategy;
 
 export namespace CancellationReceiverStrategy {
 	export const Message: CancellationReceiverStrategy = Object.freeze({
@@ -467,7 +472,7 @@ export namespace CancellationStrategy {
 }
 
 export interface MessageStrategy {
-	handleMessage(message: Message, next: (message: Message) => void): void;
+	handleMessage(message: Message, next: (message: Message) => NotificationResult): NotificationResult;
 }
 
 export namespace MessageStrategy {
@@ -477,16 +482,22 @@ export namespace MessageStrategy {
 	}
 }
 
+/**
+ * Connection options. A valid connection option must have at least a
+ * `CancellationStrategy` or a `MessageStrategy` or a `ConnectionStrategy`.
+ */
 export interface ConnectionOptions {
 	cancellationStrategy?: CancellationStrategy;
 	connectionStrategy?: ConnectionStrategy;
 	messageStrategy?: MessageStrategy;
+	maxParallelism?: number;
 }
 
 export namespace ConnectionOptions {
 	export function is(value: any): value is ConnectionOptions {
 		const candidate: ConnectionOptions = value;
-		return candidate && (CancellationStrategy.is(candidate.cancellationStrategy) || ConnectionStrategy.is(candidate.connectionStrategy) || MessageStrategy.is(candidate.messageStrategy));
+		return candidate
+			&& (CancellationStrategy.is(candidate.cancellationStrategy) || ConnectionStrategy.is(candidate.connectionStrategy) || MessageStrategy.is(candidate.messageStrategy) || Is.number(candidate.maxParallelism));
 	}
 }
 
@@ -599,6 +610,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	let notificationSequenceNumber = 0;
 	let unknownResponseSequenceNumber = 0;
 	const version: string = '2.0';
+	const maxParallelism = options?.maxParallelism ?? -1;
+	let inFlight: number = 0;
 
 	let starRequestHandler: StarRequestHandler | undefined = undefined;
 	const requestHandlers: Map<string, RequestHandlerElement> = new Map();
@@ -624,35 +637,6 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 	const disposeEmitter: Emitter<void> = new Emitter<void>();
 	const cancellationStrategy = (options && options.cancellationStrategy) ? options.cancellationStrategy : CancellationStrategy.Message;
-
-	function createRequestQueueKey(id: string | number | null): string {
-		if (id === null) {
-			throw new Error(`Can't send requests with id null since the response can't be correlated.`);
-		}
-		return 'req-' + id.toString();
-	}
-
-	function createResponseQueueKey(id: string | number | null): string {
-		if (id === null) {
-			return 'res-unknown-' + (++unknownResponseSequenceNumber).toString();
-		} else {
-			return 'res-' + id.toString();
-		}
-	}
-
-	function createNotificationQueueKey(): string {
-		return 'not-' + (++notificationSequenceNumber).toString();
-	}
-
-	function addMessageToQueue(queue: MessageQueue, message: Message): void {
-		if (Message.isRequest(message)) {
-			queue.set(createRequestQueueKey(message.id), message);
-		} else if (Message.isResponse(message)) {
-			queue.set(createResponseQueueKey(message.id), message);
-		} else {
-			queue.set(createNotificationQueueKey(), message);
-		}
-	}
 
 	function cancelUndispatched(_message: Message): ResponseMessage | undefined {
 		return undefined;
@@ -692,42 +676,95 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	messageWriter.onClose(closeHandler);
 	messageWriter.onError(writeErrorHandler);
 
+	function createRequestQueueKey(id: string | number | null): string {
+		if (id === null) {
+			throw new Error(`Can't send requests with id null since the response can't be correlated.`);
+		}
+		return 'req-' + id.toString();
+	}
+
+	function createResponseQueueKey(id: string | number | null): string {
+		if (id === null) {
+			return 'res-unknown-' + (++unknownResponseSequenceNumber).toString();
+		} else {
+			return 'res-' + id.toString();
+		}
+	}
+
+	function createNotificationQueueKey(): string {
+		return 'not-' + (++notificationSequenceNumber).toString();
+	}
+
+	function addMessageToQueue(queue: MessageQueue, message: Message): void {
+		if (Message.isRequest(message)) {
+			queue.set(createRequestQueueKey(message.id), message);
+		} else if (Message.isResponse(message)) {
+			// If we have unlimited parallelism we queue the response to keep
+			// the previous semantics.
+			if (maxParallelism === -1) {
+				queue.set(createResponseQueueKey(message.id), message);
+			} else {
+				// If we have limited parallelism we resolve responses to avoid
+				// dead locks.
+				handleResponse(message);
+			}
+		} else {
+			queue.set(createNotificationQueueKey(), message);
+		}
+	}
+
 	function triggerMessageQueue(): void {
 		if (timer || messageQueue.size === 0) {
 			return;
 		}
-		timer = RAL().timer.setImmediate(() => {
+		if (maxParallelism !== -1 && inFlight >= maxParallelism) {
+			return;
+		}
+		timer = RAL().timer.setImmediate(async () => {
 			timer = undefined;
-			processMessageQueue();
+			if (messageQueue.size === 0) {
+				return;
+			}
+			if (maxParallelism !== -1 && inFlight >= maxParallelism) {
+				return;
+			}
+			const message = messageQueue.shift()!;
+			let result: NotificationResult | undefined;
+			try {
+				inFlight++;
+				const messageStrategy = options?.messageStrategy;
+				if (MessageStrategy.is(messageStrategy)) {
+					result = messageStrategy.handleMessage(message, handleMessage);
+				} else {
+					result = handleMessage(message);
+				}
+			} catch (error: any) {
+				logger.error(`Processing message queue failed: ${error.toString()}`);
+			} finally {
+				if (result instanceof Promise) {
+					result.then(() => {
+						inFlight--;
+						triggerMessageQueue();
+					}).catch((error) => {
+						logger.error(`Processing message queue failed: ${error.toString()}`);
+					});
+				} else {
+					inFlight--;
+				}
+				triggerMessageQueue();
+			}
 		});
 	}
 
-	function handleMessage (message: Message) {
+	async function handleMessage (message: Message): Promise<void> {
 		if (Message.isRequest(message)) {
-			handleRequest(message);
+			return handleRequest(message);
 		} else if (Message.isNotification(message)) {
-			handleNotification(message);
+			return handleNotification(message);
 		} else if (Message.isResponse(message)) {
-			handleResponse(message);
+			return handleResponse(message);
 		} else {
-			handleInvalidMessage(message);
-		}
-	}
-
-	function processMessageQueue(): void {
-		if (messageQueue.size === 0) {
-			return;
-		}
-		const message = messageQueue.shift()!;
-		try {
-			const messageStrategy = options?.messageStrategy;
-			if (MessageStrategy.is(messageStrategy)) {
-				messageStrategy.handleMessage(message, handleMessage);
-			} else {
-				handleMessage(message);
-			}
-		} finally {
-			triggerMessageQueue();
+			return handleInvalidMessage(message);
 		}
 	}
 
@@ -769,14 +806,14 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	};
 
-	function handleRequest(requestMessage: RequestMessage) {
+	async function handleRequest(requestMessage: RequestMessage): Promise<void> {
 		if (isDisposed()) {
 			// we return here silently since we fired an event when the
 			// connection got disposed.
-			return;
+			return Promise.resolve();
 		}
 
-		function reply(resultOrError: any | ResponseError<any>, method: string, startTime: number): void {
+		function reply(resultOrError: any | ResponseError<any>, method: string, startTime: number): Promise<void> {
 			const message: ResponseMessage = {
 				jsonrpc: version,
 				id: requestMessage.id
@@ -787,30 +824,16 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				message.result = resultOrError === undefined ? null : resultOrError;
 			}
 			traceSendingResponse(message, method, startTime);
-			messageWriter.write(message).catch(() => logger.error(`Sending response failed.`));
+			return messageWriter.write(message);
 		}
-		function replyError(error: ResponseError<any>, method: string, startTime: number) {
+		function replyError(error: ResponseError<any>, method: string, startTime: number): Promise<void> {
 			const message: ResponseMessage = {
 				jsonrpc: version,
 				id: requestMessage.id,
 				error: error.toJson()
 			};
 			traceSendingResponse(message, method, startTime);
-			messageWriter.write(message).catch(() => logger.error(`Sending response failed.`));
-		}
-		function replySuccess(result: any, method: string, startTime: number) {
-			// The JSON RPC defines that a response must either have a result or an error
-			// So we can't treat undefined as a valid response result.
-			if (result === undefined) {
-				result = null;
-			}
-			const message: ResponseMessage = {
-				jsonrpc: version,
-				id: requestMessage.id,
-				result: result
-			};
-			traceSendingResponse(message, method, startTime);
-			messageWriter.write(message).catch(() => logger.error(`Sending response failed.`));
+			return messageWriter.write(message);
 		}
 		traceReceivedRequest(requestMessage);
 
@@ -839,20 +862,17 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				if (requestHandler) {
 					if (requestMessage.params === undefined) {
 						if (type !== undefined && type.numberOfParams !== 0) {
-							replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines ${type.numberOfParams} params but received none.`), requestMessage.method, startTime);
-							return;
+							return replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines ${type.numberOfParams} params but received none.`), requestMessage.method, startTime);
 						}
 						handlerResult = requestHandler(cancellationSource.token);
 					} else if (Array.isArray(requestMessage.params)) {
 						if (type !== undefined && type.parameterStructures === ParameterStructures.byName) {
-							replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines parameters by name but received parameters by position`), requestMessage.method, startTime);
-							return;
+							return replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines parameters by name but received parameters by position`), requestMessage.method, startTime);
 						}
 						handlerResult = requestHandler(...requestMessage.params, cancellationSource.token);
 					} else {
 						if (type !== undefined && type.parameterStructures === ParameterStructures.byPosition) {
-							replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines parameters by position but received parameters by name`), requestMessage.method, startTime);
-							return;
+							return replyError(new ResponseError<void>(ErrorCodes.InvalidParams, `Request ${requestMessage.method} defines parameters by position but received parameters by name`), requestMessage.method, startTime);
 						}
 						handlerResult = requestHandler(requestMessage.params, cancellationSource.token);
 					}
@@ -860,44 +880,25 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					handlerResult = starRequestHandler(requestMessage.method, requestMessage.params, cancellationSource.token);
 				}
 
-				const promise = handlerResult as Thenable<any | ResponseError<any>>;
-				if (!handlerResult) {
-					requestTokens.delete(tokenKey);
-					replySuccess(handlerResult, requestMessage.method, startTime);
-				} else if (promise.then) {
-					promise.then((resultOrError): any | ResponseError<any> => {
-						requestTokens.delete(tokenKey);
-						reply(resultOrError, requestMessage.method, startTime);
-					}, error => {
-						requestTokens.delete(tokenKey);
-						if (error instanceof ResponseError) {
-							replyError(<ResponseError<any>>error, requestMessage.method, startTime);
-						} else if (error && Is.string(error.message)) {
-							replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed with message: ${error.message}`), requestMessage.method, startTime);
-						} else {
-							replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed unexpectedly without providing any details.`), requestMessage.method, startTime);
-						}
-					});
-				} else {
-					requestTokens.delete(tokenKey);
-					reply(handlerResult, requestMessage.method, startTime);
-				}
+				const resultOrError = await handlerResult;
+				await reply(resultOrError, requestMessage.method, startTime);
 			} catch (error: any) {
-				requestTokens.delete(tokenKey);
 				if (error instanceof ResponseError) {
-					reply(<ResponseError<any>>error, requestMessage.method, startTime);
+					await reply(<ResponseError<any>>error, requestMessage.method, startTime);
 				} else if (error && Is.string(error.message)) {
-					replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed with message: ${error.message}`), requestMessage.method, startTime);
+					await replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed with message: ${error.message}`), requestMessage.method, startTime);
 				} else {
-					replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed unexpectedly without providing any details.`), requestMessage.method, startTime);
+					await replyError(new ResponseError<void>(ErrorCodes.InternalError, `Request ${requestMessage.method} failed unexpectedly without providing any details.`), requestMessage.method, startTime);
 				}
+			} finally {
+				requestTokens.delete(tokenKey);
 			}
 		} else {
-			replyError(new ResponseError<void>(ErrorCodes.MethodNotFound, `Unhandled method ${requestMessage.method}`), requestMessage.method, startTime);
+			await replyError(new ResponseError<void>(ErrorCodes.MethodNotFound, `Unhandled method ${requestMessage.method}`), requestMessage.method, startTime);
 		}
 	}
 
-	function handleResponse(responseMessage: ResponseMessage) {
+	function handleResponse(responseMessage: ResponseMessage): void {
 		if (isDisposed()) {
 			// See handle request.
 			return;
@@ -935,7 +936,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
-	function handleNotification(message: NotificationMessage) {
+	async function handleNotification(message: NotificationMessage): Promise<void> {
 		if (isDisposed()) {
 			// See handle request.
 			return;
@@ -964,13 +965,13 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 								logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received none.`);
 							}
 						}
-						notificationHandler();
+						await notificationHandler();
 					} else if (Array.isArray(message.params)) {
 						// There are JSON-RPC libraries that send progress message as positional params although
 						// specified as named. So convert them if this is the case.
 						const params = message.params;
 						if (message.method === ProgressNotification.type.method && params.length === 2 && ProgressToken.is(params[0])) {
-							notificationHandler({ token: params[0], value: params[1] } as ProgressParams<any>);
+							await notificationHandler({ token: params[0], value: params[1] } as ProgressParams<any>);
 						} else {
 							if (type !== undefined) {
 								if (type.parameterStructures === ParameterStructures.byName) {
@@ -980,16 +981,16 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 									logger.error(`Notification ${message.method} defines ${type.numberOfParams} params but received ${params.length} arguments`);
 								}
 							}
-							notificationHandler(...params);
+							await notificationHandler(...params);
 						}
 					} else {
 						if (type !== undefined && type.parameterStructures === ParameterStructures.byPosition) {
 							logger.error(`Notification ${message.method} defines parameters by position but received parameters by name`);
 						}
-						notificationHandler(message.params);
+						await notificationHandler(message.params);
 					}
 				} else if (starNotificationHandler) {
-					starNotificationHandler(message.method, message.params);
+					await starNotificationHandler(message.method, message.params);
 				}
 			} catch (error: any) {
 				if (error.message) {
@@ -1003,7 +1004,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
-	function handleInvalidMessage(message: Message) {
+	function handleInvalidMessage(message: Message): void {
 		if (!message) {
 			logger.error('Received empty message.');
 			return;
@@ -1277,7 +1278,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					paramStart = 1;
 					parameterStructures = first;
 				}
-				let paramEnd: number = args.length;
+				const paramEnd: number = args.length;
 				const numberOfParams = paramEnd - paramStart;
 				switch (numberOfParams) {
 					case 0:
@@ -1354,6 +1355,17 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			throwIfClosedOrDisposed();
 			throwIfNotListening();
 
+			function sendCancellation(connection: MessageConnection, id: CancellationId): void {
+				const p = cancellationStrategy.sender.sendCancellation(connection, id);
+				if (p === undefined) {
+					logger.log(`Received no promise from cancellation strategy when cancelling id ${id}`);
+				} else {
+					p.catch(() => {
+						logger.log(`Sending cancellation messages for id ${id} failed.`);
+					});
+				}
+			}
+
 			let method: string;
 			let messageParams: object | [] | undefined;
 			let token: CancellationToken | undefined = undefined;
@@ -1397,18 +1409,15 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 
 			const id = sequenceNumber++;
 			let disposable: Disposable;
-			if (token) {
-				disposable = token.onCancellationRequested(() => {
-					const p = cancellationStrategy.sender.sendCancellation(connection, id);
-					if (p === undefined) {
-						logger.log(`Received no promise from cancellation strategy when cancelling id ${id}`);
-						return Promise.resolve();
-					} else {
-						return p.catch(() => {
-							logger.log(`Sending cancellation messages for id ${id} failed`);
-						});
-					}
-				});
+			let tokenWasCancelled = false;
+			if (token !== undefined) {
+				if (token.isCancellationRequested) {
+					tokenWasCancelled = true;
+				} else {
+					disposable = token.onCancellationRequested(() => {
+						sendCancellation(connection, id);
+					});
+				}
 			}
 
 			const requestMessage: RequestMessage = {
@@ -1423,6 +1432,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				cancellationStrategy.sender.enableCancellation(requestMessage);
 			}
 
+			// eslint-disable-next-line no-async-promise-executor
 			return new Promise<R | ResponseError<E>>(async (resolve, reject) => {
 				const resolveWithCleanup = (r: any) => {
 					resolve(r);
@@ -1437,12 +1447,17 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				};
 				const responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				try {
-					await messageWriter.write(requestMessage);
 					responsePromises.set(id, responsePromise);
+					await messageWriter.write(requestMessage);
+					if (tokenWasCancelled) {
+						sendCancellation(connection, id);
+					}
 				} catch (error: any) {
-					logger.error(`Sending request failed.`);
-					// Writing the message failed. So we need to reject the promise.
+					// Writing the message failed. So we need to delete it from the response promises and
+					// reject it.
+					responsePromises.delete(id);
 					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, error.message ? error.message : 'Unknown reason'));
+					logger.error(`Sending request failed.`);
 					throw error;
 				}
 			});
@@ -1556,10 +1571,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		tracer.log(params.message, verbose ? params.verbose : undefined);
 	});
 
-	connection.onNotification(ProgressNotification.type, (params) => {
+	connection.onNotification(ProgressNotification.type, async (params) => {
 		const handler = progressHandlers.get(params.token);
 		if (handler) {
-			handler(params.value);
+			await handler(params.value);
 		} else {
 			unhandledProgressEmitter.fire(params);
 		}

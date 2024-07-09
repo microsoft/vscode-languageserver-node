@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": "./src",
         "types": [
             "node"
@@ -13,11 +13,12 @@
         "declaration": true,
         "stripInternal": true,
         "sourceMap": false,
+        "declarationMap": false,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "target": "es2020",
+        "target": "es2022",
         "lib": [
-            "es2020"
+            "es2023"
         ],
         "outDir": "./lib",
         "tsBuildInfoFile": "lib/publish.tsbuildInfo",

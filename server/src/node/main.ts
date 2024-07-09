@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-/// <reference path="../../typings/thenable.d.ts" />
+/// <reference path="../../typings/thenable.d.ts" preserve="true"/>
 
 import { inspect } from 'node:util';
 
@@ -19,11 +19,11 @@ export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
 
 export namespace Files {
-	export let uriToFilePath = fm.uriToFilePath;
-	export let resolveGlobalNodePath = fm.resolveGlobalNodePath;
-	export let resolveGlobalYarnPath = fm.resolveGlobalYarnPath;
-	export let resolve = fm.resolve;
-	export let resolveModulePath = fm.resolveModulePath;
+	export const uriToFilePath = fm.uriToFilePath;
+	export const resolveGlobalNodePath = fm.resolveGlobalNodePath;
+	export const resolveGlobalYarnPath = fm.resolveGlobalYarnPath;
+	export const resolve = fm.resolve;
+	export const resolveModulePath = fm.resolveModulePath;
 }
 
 let _protocolConnection: ProtocolConnection | undefined;
@@ -45,7 +45,7 @@ function setupExitTimer(): void {
 	const argName = '--clientProcessId';
 	function runTimer(value: string): void {
 		try {
-			let processId = parseInt(value);
+			const processId = parseInt(value);
 			if (!isNaN(processId)) {
 				exitTimer = setInterval(() => {
 					try {
@@ -63,12 +63,12 @@ function setupExitTimer(): void {
 	}
 
 	for (let i = 2; i < process.argv.length; i++) {
-		let arg = process.argv[i];
+		const arg = process.argv[i];
 		if (arg === argName && i + 1 < process.argv.length) {
 			runTimer(process.argv[i + 1]);
 			return;
 		} else {
-			let args = arg.split('=');
+			const args = arg.split('=');
 			if (args[0] === argName) {
 				runTimer(args[1]);
 			}
@@ -173,7 +173,7 @@ export function createConnection(arg1?: any, arg2?: any, arg3?: any, arg4?: any)
 	let input: NodeJS.ReadableStream | MessageReader | undefined;
 	let output: NodeJS.WritableStream | MessageWriter | undefined;
 	let options: ConnectionStrategy | ConnectionOptions | undefined;
-	if (arg1 !== void 0 && (arg1 as Features).__brand === 'features') {
+	if (arg1 !== undefined && (arg1 as Features).__brand === 'features') {
 		factories = arg1;
 		arg1 = arg2; arg2 = arg3; arg3 = arg4;
 	}
@@ -194,11 +194,11 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 ): _Connection<PConsole, PTracer, PTelemetry, PClient, PWindow, PWorkspace, PLanguages, PNotebooks> {
 	let stdio = false;
 	if (!input && !output && process.argv.length > 2) {
-		let port: number | undefined = void 0;
-		let pipeName: string | undefined = void 0;
-		let argv = process.argv.slice(2);
+		let port: number | undefined = undefined;
+		let pipeName: string | undefined = undefined;
+		const argv = process.argv.slice(2);
 		for (let i = 0; i < argv.length; i++) {
-			let arg = argv[i];
+			const arg = argv[i];
 			if (arg === '--node-ipc') {
 				input = new IPCMessageReader(process);
 				output = new IPCMessageWriter(process);
@@ -216,7 +216,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 				break;
 			}
 			else {
-				var args = arg.split('=');
+				const args = arg.split('=');
 				if (args[0] === '--socket') {
 					port = parseInt(args[1]);
 					break;
@@ -227,16 +227,16 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 			}
 		}
 		if (port) {
-			let transport = createServerSocketTransport(port);
+			const transport = createServerSocketTransport(port);
 			input = transport[0];
 			output = transport[1];
 		} else if (pipeName) {
-			let transport = createServerPipeTransport(pipeName);
+			const transport = createServerPipeTransport(pipeName);
 			input = transport[0];
 			output = transport[1];
 		}
 	}
-	var commandLineMessage = 'Use arguments of createConnection or set command line parameters: \'--node-ipc\', \'--stdio\' or \'--socket={number}\'';
+	const commandLineMessage = 'Use arguments of createConnection or set command line parameters: \'--node-ipc\', \'--stdio\' or \'--socket={number}\'';
 	if (!input) {
 		throw new Error('Connection input stream is not set. ' + commandLineMessage);
 	}
@@ -246,7 +246,7 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 
 	// Backwards compatibility
 	if (Is.func((input as NodeJS.ReadableStream).read) && Is.func((input as NodeJS.ReadableStream).on)) {
-		let inputStream = <NodeJS.ReadableStream>input;
+		const inputStream = <NodeJS.ReadableStream>input;
 		inputStream.on('end', () => {
 			endProtocolConnection();
 			process.exit(_shutdownReceived ? 0 : 1);
@@ -307,7 +307,6 @@ function patchConsole(logger: Logger): undefined {
 	};
 
 	console.dir = function dir(arg, options){
-		// @ts-expect-error https://github.com/DefinitelyTyped/DefinitelyTyped/pull/66626
 		logger.log(inspect(arg, options));
 	};
 

@@ -11,7 +11,7 @@ import * as path from 'path';
 import { workspace as Workspace, Disposable, version as VSCodeVersion } from 'vscode';
 
 import * as Is from '../common/utils/is';
-import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '../common/client';
+import { BaseLanguageClient, LanguageClientOptions, MessageTransports, ShutdownMode } from '../common/client';
 
 import { terminate } from './processes';
 import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
@@ -23,7 +23,7 @@ import semverSatisfies = require('semver/functions/satisfies');
 export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';
 
-const REQUIRED_VSCODE_VERSION = '^1.82.0'; // do not change format, updated by `updateVSCode` script
+const REQUIRED_VSCODE_VERSION = '^1.91.0'; // do not change format, updated by `updateVSCode` script
 
 export enum TransportKind {
 	stdio,
@@ -106,7 +106,7 @@ export interface StreamInfo {
 
 namespace StreamInfo {
 	export function is(value: any): value is StreamInfo {
-		let candidate = value as StreamInfo;
+		const candidate = value as StreamInfo;
 		return candidate && candidate.writer !== undefined && candidate.reader !== undefined;
 	}
 }
@@ -118,7 +118,7 @@ export interface ChildProcessInfo {
 
 namespace ChildProcessInfo {
 	export function is(value: any): value is ChildProcessInfo {
-		let candidate = value as ChildProcessInfo;
+		const candidate = value as ChildProcessInfo;
 		return candidate && candidate.process !== undefined && typeof candidate.detached === 'boolean';
 	}
 }
@@ -201,8 +201,8 @@ export class LanguageClient extends BaseLanguageClient {
 		}
 	}
 
-	public stop(timeout: number = 2000): Promise<void> {
-		return super.stop(timeout).finally(() => {
+	protected shutdown(mode: ShutdownMode, timeout: number = 2000): Promise<void> {
+		return super.shutdown(mode, timeout).finally(() => {
 			if (this._serverProcess) {
 				const toCheck = this._serverProcess;
 				this._serverProcess = undefined;
@@ -264,7 +264,7 @@ export class LanguageClient extends BaseLanguageClient {
 		const debugStartWith: string[] = ['--debug=', '--debug-brk=', '--inspect=', '--inspect-brk='];
 		const debugEquals: string[] = ['--debug', '--debug-brk', '--inspect', '--inspect-brk'];
 		function startedInDebugMode(): boolean {
-			let args: string[] = (process as any).execArgv;
+			const args: string[] = (process as any).execArgv;
 			if (args) {
 				return args.some((arg) => {
 					return debugStartWith.some(value => arg.startsWith(value)) ||
@@ -305,7 +305,7 @@ export class LanguageClient extends BaseLanguageClient {
 			});
 		}
 		let json: NodeModule | Executable;
-		let runDebug = <{ run: any; debug: any }>server;
+		const runDebug = <{ run: any; debug: any }>server;
 		if (runDebug.run || runDebug.debug) {
 			if (this._forceDebug || startedInDebugMode()) {
 				json = runDebug.debug;
@@ -319,8 +319,8 @@ export class LanguageClient extends BaseLanguageClient {
 		}
 		return this._getServerWorkingDir(json.options).then(serverWorkingDir => {
 			if (NodeModule.is(json) && json.module) {
-				let node = json;
-				let transport = node.transport || TransportKind.stdio;
+				const node = json;
+				const transport = node.transport || TransportKind.stdio;
 				if (node.runtime) {
 					const args: string[] = [];
 					const options: ForkOptions = node.options ?? Object.create(null);
@@ -505,7 +505,9 @@ export class LanguageClient extends BaseLanguageClient {
 		}).finally(() => {
 			if (this._serverProcess !== undefined) {
 				this._serverProcess.on('exit', (code, signal) => {
-					if (code !== null) {
+					if (code === 0) {
+						this.info('Server process exited successfully', undefined, false);
+					} else if (code !== null) {
 						this.error(`Server process exited with code ${code}.`, undefined, false);
 					}
 					if (signal !== null) {
@@ -537,11 +539,11 @@ export class LanguageClient extends BaseLanguageClient {
 	}
 
 	private _mainGetRootPath(): string | undefined {
-		let folders = Workspace.workspaceFolders;
+		const folders = Workspace.workspaceFolders;
 		if (!folders || folders.length === 0) {
 			return undefined;
 		}
-		let folder = folders[0];
+		const folder = folders[0];
 		if (folder.uri.scheme === 'file') {
 			return folder.uri.fsPath;
 		}
@@ -587,10 +589,10 @@ export class SettingMonitor {
 	}
 
 	private onDidChangeConfiguration(): void {
-		let index = this._setting.indexOf('.');
-		let primary = index >= 0 ? this._setting.substr(0, index) : this._setting;
-		let rest = index >= 0 ? this._setting.substr(index + 1) : undefined;
-		let enabled = rest ? Workspace.getConfiguration(primary).get(rest, false) : Workspace.getConfiguration(primary);
+		const index = this._setting.indexOf('.');
+		const primary = index >= 0 ? this._setting.substr(0, index) : this._setting;
+		const rest = index >= 0 ? this._setting.substr(index + 1) : undefined;
+		const enabled = rest ? Workspace.getConfiguration(primary).get(rest, false) : Workspace.getConfiguration(primary);
 		if (enabled && this._client.needsStart()) {
 			this._client.start().catch((error) => this._client.error('Start failed after configuration change', error, 'force'));
 		} else if (!enabled && this._client.needsStop()) {

@@ -13,24 +13,24 @@ suite('Text Document Lines Model Validator', () => {
 	}
 
 	test('Single line', () => {
-		var str = 'Hello World';
-		var lm = newDocument(str);
+		const str = 'Hello World';
+		const lm = newDocument(str);
 		assert.equal(lm.lineCount, 1);
 
-		for (var i = 0; i < str.length; i++) {
+		for (let i = 0; i < str.length; i++) {
 			assert.equal(lm.offsetAt(Position.create(0, i)), i);
 			assert.deepEqual(lm.positionAt(i), Position.create(0, i));
 		}
 	});
 
 	test('Multiple lines', () => {
-		var str = 'ABCDE\nFGHIJ\nKLMNO\n';
-		var lm = newDocument(str);
+		const str = 'ABCDE\nFGHIJ\nKLMNO\n';
+		const lm = newDocument(str);
 		assert.equal(lm.lineCount, 4);
 
-		for (var i = 0; i < str.length; i++) {
-			var line = Math.floor(i / 6);
-			var column = i % 6;
+		for (let i = 0; i < str.length; i++) {
+			const line = Math.floor(i / 6);
+			const column = i % 6;
 
 			assert.equal(lm.offsetAt(Position.create(line, column)), i);
 			assert.deepEqual(lm.positionAt(i), Position.create(line, column));
@@ -43,13 +43,13 @@ suite('Text Document Lines Model Validator', () => {
 	});
 
 	test('New line characters', () => {
-		var str = 'ABCDE\rFGHIJ';
+		let str = 'ABCDE\rFGHIJ';
 		assert.equal(newDocument(str).lineCount, 2);
 
-		var str = 'ABCDE\nFGHIJ';
+		str = 'ABCDE\nFGHIJ';
 		assert.equal(newDocument(str).lineCount, 2);
 
-		var str = 'ABCDE\r\nFGHIJ';
+		str = 'ABCDE\r\nFGHIJ';
 		assert.equal(newDocument(str).lineCount, 2);
 
 		str = 'ABCDE\n\nFGHIJ';
@@ -63,8 +63,8 @@ suite('Text Document Lines Model Validator', () => {
 	});
 
 	test('getText(Range)', () => {
-		var str = '12345\n12345\n12345';
-		var lm = newDocument(str);
+		const str = '12345\n12345\n12345';
+		const lm = newDocument(str);
 		assert.equal(lm.getText(), str);
 		assert.equal(lm.getText(Range.create(0, 0, 0, 5)), '12345');
 		assert.equal(lm.getText(Range.create(0, 4, 1, 1)), '5\n1');
@@ -74,8 +74,8 @@ suite('Text Document Lines Model Validator', () => {
 	});
 
 	test('Invalid inputs', () => {
-		var str = 'Hello World';
-		var lm = newDocument(str);
+		const str = 'Hello World';
+		const lm = newDocument(str);
 
 		// invalid position
 		assert.equal(lm.offsetAt(Position.create(0, str.length)), str.length);

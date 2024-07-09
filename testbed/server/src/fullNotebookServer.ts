@@ -10,7 +10,7 @@ import {
 
 import {
 	CompletionItem, createConnection, Diagnostic, Hover, InitializeError, InitializeResult, MarkupKind, Range, ResponseError,
-	TextDocuments, TextDocumentSyncKind, ProposedFeatures, Proposed, DiagnosticSeverity, NotebookCell, NotebookDocuments
+	TextDocuments, TextDocumentSyncKind, ProposedFeatures, DiagnosticSeverity, NotebookCell, NotebookDocuments
 } from 'vscode-languageserver/node';
 
 const patterns = [
@@ -79,7 +79,7 @@ connection.onDeclaration((params, token) => {
 
 connection.onCompletion((params, token): CompletionItem[] => {
 	const result: CompletionItem[] = [];
-	let item = CompletionItem.create('foo');
+	const item = CompletionItem.create('foo');
 	result.push(item);
 	return result;
 });

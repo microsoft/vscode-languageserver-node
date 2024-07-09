@@ -10,7 +10,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DocumentColorProvider,
 	DeclarationProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider,
 	LinkedEditingRangeProvider, TypeHierarchyProvider, FileCreateEvent, FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent,
-	FileWillDeleteEvent, CancellationError, InlineCompletionItemProvider
+	FileWillDeleteEvent, CancellationError, InlineCompletionItemProvider, type Uri
 } from 'vscode';
 
 import {
@@ -339,7 +339,7 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 
 	private _listener: Disposable | undefined;
 	protected readonly _selectors: Map<string, VDocumentSelector>;
-	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<P>>;
+	private _onNotificationSent: EventEmitter<NotificationSendEvent<P>>;
 
 	public static textDocumentFilter(selectors: IterableIterator<VDocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
@@ -401,7 +401,7 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 		}
 	}
 
-	private matches(data: E): boolean {
+	protected matches(data: E): boolean {
 		if (this._client.hasDedicatedTextSynchronizationFeature(this._textDocument(data))) {
 			return false;
 		}
@@ -429,6 +429,7 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 	public clear(): void {
 		this._selectors.clear();
 		this._onNotificationSent.dispose();
+		this._onNotificationSent = new EventEmitter<NotificationSendEvent<P>>();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;
@@ -507,15 +508,16 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		if (!data.registerOptions.documentSelector) {
 			return;
 		}
-		let registration = this.registerLanguageProvider(data.registerOptions, data.id);
+		const registration = this.registerLanguageProvider(data.registerOptions, data.id);
 		this._registrations.set(data.id, { disposable: registration[0], data, provider: registration[1] });
 	}
 
 	protected abstract registerLanguageProvider(options: RO, id: string): [Disposable, PR];
 
 	public unregister(id: string): void {
-		let registration = this._registrations.get(id);
+		const registration = this._registrations.get(id);
 		if (registration !== undefined) {
+			this._registrations.delete(id);
 			registration.disposable.dispose();
 		}
 	}
@@ -555,7 +557,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 
 	public getProvider(textDocument: TextDocument): PR | undefined {
 		for (const registration of this._registrations.values()) {
-			let selector = registration.data.registerOptions.documentSelector;
+			const selector = registration.data.registerOptions.documentSelector;
 			if (selector !== null && Languages.match(this._client.protocol2CodeConverter.asDocumentSelector(selector), textDocument) > 0) {
 				return registration.provider;
 			}
@@ -614,8 +616,9 @@ export abstract class WorkspaceFeature<RO, PR, M> implements DynamicFeature<RO> 
 	protected abstract registerLanguageProvider(options: RO): [Disposable, PR];
 
 	public unregister(id: string): void {
-		let registration = this._registrations.get(id);
+		const registration = this._registrations.get(id);
 		if (registration !== undefined) {
+			this._registrations.delete(id);
 			registration.disposable.dispose();
 		}
 	}
@@ -640,6 +643,14 @@ export interface DedicatedTextSynchronizationFeature {
 	handles(textDocument: TextDocument): boolean;
 }
 
+export interface TabsModel {
+	onClose: Event<Set<Uri>>;
+	onOpen: Event<Set<Uri>>;
+	isActive(document: TextDocument | Uri): boolean;
+	isVisible(document: TextDocument | Uri): boolean;
+	getTabResources(): Set<Uri>;
+}
+
 // Features can refer to other feature when implementing themselves.
 // Hence the feature client needs to provide access to them. To
 // avoid cyclic dependencies these import MUST ALL be type imports.
@@ -648,7 +659,7 @@ import type { DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeatureShap
 import type { CodeLensProviderShape } from './codeLens';
 import type { InlineValueProviderShape } from './inlineValue';
 import type { InlayHintsProviderShape } from './inlayHint';
-import type { DiagnosticProviderShape } from './diagnostic';
+import type { DiagnosticFeatureShape, DiagnosticProviderShape } from './diagnostic';
 import type { NotebookDocumentProviderShape } from './notebook';
 import { FoldingRangeProviderShape } from './foldingRange';
 
@@ -659,6 +670,8 @@ export interface FeatureClient<M, CO = object> {
 
 	clientOptions: CO;
 	middleware: M;
+
+	tabsModel: TabsModel;
 
 	start(): Promise<void>;
 	isRunning(): boolean;
@@ -696,7 +709,7 @@ export interface FeatureClient<M, CO = object> {
 	warn(message: string, data?: any, showNotification?: boolean): void;
 	error(message: string, data?: any, showNotification?: boolean | 'force'): void;
 
-	handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification?: boolean): T;
+	handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification?: boolean, throwOnCancel?: boolean): T;
 
 	hasDedicatedTextSynchronizationFeature(textDocument: TextDocument): boolean;
 
@@ -739,8 +752,8 @@ export interface FeatureClient<M, CO = object> {
 	getFeature(request: typeof InlineValueRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValueProviderShape>;
 	getFeature(request: typeof InlayHintRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlayHintsProviderShape>;
 	getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
-	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> | undefined;
-	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape | undefined;
-	getFeature(request: typeof InlineCompletionRequest.method): DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>;
+	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> & DiagnosticFeatureShape;
+	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape;
+	getFeature(request: typeof InlineCompletionRequest.method): (DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>) | undefined;
 	getFeature(request: typeof ExecuteCommandRequest.method): DynamicFeature<ExecuteCommandOptions>;
 }

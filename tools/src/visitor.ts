@@ -21,7 +21,7 @@ namespace MapKeyType {
 		return value.kind === 'reference' || (value.kind === 'base' && (value.name === 'string' || value.name === 'integer' || value.name === 'DocumentUri' || value.name === 'URI'));
 	}
 }
-type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; proposed?: boolean; deprecated?: string };
+type LiteralInfo = { type: TypeInfo; optional: boolean; documentation?: string; since?: string; sinceTags?: string[]; proposed?: boolean; deprecated?: string };
 
 type TypeInfo =
 {
@@ -76,6 +76,7 @@ namespace TypeInfo {
 
 	const baseSet = new Set(['null', 'void', 'string', 'boolean', 'URI', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
 	export function asJsonType(info: TypeInfo): JsonType {
+		const literal: StructureLiteral = { properties: [] };
 		switch (info.kind) {
 			case 'base':
 				if (baseSet.has(info.name)) {
@@ -98,7 +99,6 @@ namespace TypeInfo {
 			case 'tuple':
 				return { kind: 'tuple', items: info.items.map(info => asJsonType(info)) };
 			case 'literal':
-				const literal: StructureLiteral = { properties: [] };
 				for (const entry of info.items) {
 					const property: Property = { name: entry[0], type: asJsonType(entry[1].type) };
 					const value = entry[1];
@@ -166,6 +166,9 @@ export default class Visitor {
 	private readonly typeAliases: TypeAlias[];
 	private readonly symbolQueue: Map<string, ts.Symbol>;
 	private readonly processedStructures: Map<string, ts.Symbol>;
+	private readonly filter: Map<string, (symbol: ts.Symbol) => boolean> = new Map([
+		['TraceValues', Symbols.isTypeAlias]
+	]);
 
 	constructor(program: ts.Program) {
 		this.program = program;
@@ -178,6 +181,7 @@ export default class Visitor {
 		this.typeAliases = [];
 		this.symbolQueue = new Map();
 		this.processedStructures = new Map();
+
 	}
 
 	protected get currentSourceFile(): ts.SourceFile {
@@ -196,19 +200,21 @@ export default class Visitor {
 	public async endVisitProgram(): Promise<void> {
 		while (this.symbolQueue.size > 0) {
 			const toProcess = new Map(this.symbolQueue);
-			for (const entry of toProcess) {
-				const element = this.processSymbol(entry[0], entry[1]);
-				if (element === undefined) {
-					throw new Error(`Can't create structure for type ${entry[0]}`);
-				} else if (Array.isArray((element as Structure).properties)) {
-					this.structures.push(element as Structure);
-				} else if (Array.isArray((element as Enumeration).values)) {
-					this.enumerations.push(element as Enumeration);
-				} else {
-					this.typeAliases.push(element as TypeAlias);
+			for (const [name, symbol] of toProcess) {
+				if (!(this.filter.has(name) && this.filter.get(name)!(symbol))) {
+					const element = this.processSymbol(name, symbol);
+					if (element === undefined) {
+						throw new Error(`Can't create structure for type ${name}`);
+					} else if (Array.isArray((element as Structure).properties)) {
+						this.structures.push(element as Structure);
+					} else if (Array.isArray((element as Enumeration).values)) {
+						this.enumerations.push(element as Enumeration);
+					} else {
+						this.typeAliases.push(element as TypeAlias);
+					}
 				}
-				this.symbolQueue.delete(entry[0]);
-				this.processedStructures.set(entry[0], entry[1]);
+				this.symbolQueue.delete(name);
+				this.processedStructures.set(name, symbol);
 			}
 		}
 	}
@@ -335,6 +341,7 @@ export default class Visitor {
 		};
 		const result: JsonRequest = {
 			method: methodName,
+			typeName: symbol.name,
 			result: TypeInfo.isVoid(requestTypes.result) ? TypeInfo.asJsonType({ kind: 'base', name: 'null' }) : TypeInfo.asJsonType(requestTypes.result),
 			messageDirection: this.getMessageDirection(symbol)
 		};
@@ -773,7 +780,7 @@ export default class Visitor {
 
 	private static readonly Mixins: Set<string> = new Set(['WorkDoneProgressParams', 'PartialResultParams', 'StaticRegistrationOptions', 'WorkDoneProgressOptions']);
 	private static readonly PropertyFilters: Map<string, Set<string>> = new Map([
-		['TraceValues', new Set(['Compact'])],
+		['TraceValue', new Set(['Compact'])],
 		['ErrorCodes', new Set(['jsonrpcReservedErrorRangeStart', 'serverErrorStart', 'MessageWriteError', 'MessageReadError', 'PendingResponseRejected', 'ConnectionInactive', 'jsonrpcReservedErrorRangeEnd', 'serverErrorEnd'])],
 		['LSPErrorCodes', new Set(['lspReservedErrorRangeStart', 'lspReservedErrorRangeEnd'])]
 	]);
@@ -1165,10 +1172,11 @@ export default class Visitor {
 		const filePath = node.getSourceFile().fileName;
 		const fileName = path.basename(filePath);
 		const tags = ts.getJSDocTags(node);
-		const { since, deprecated } = this.getTags(tags);
+		const { since, sinceTags, deprecated } = this.getTags(tags);
 		const proposed = (fileName.startsWith('proposed.') || tags.some((tag) => { return ts.isJSDocUnknownTag(tag) && tag.tagName.text === 'proposed';})) ? true : undefined;
 		value.documentation = this.getDocumentation(node);
 		value.since = since;
+		value.sinceTags = sinceTags;
 		value.deprecated = deprecated;
 		value.proposed = proposed;
 	}
@@ -1209,17 +1217,23 @@ export default class Visitor {
 		return undefined;
 	}
 
-	private getTags(tags: ReadonlyArray<ts.JSDocTag>): { since?: string; deprecated?: string } {
-		const result: { since?: string; deprecated?: string } = {};
+	private getTags(tags: ReadonlyArray<ts.JSDocTag>): { since?: string; sinceTags?: string[]; deprecated?: string } {
+		const result: { since?: string; sinceTags?: string[];  deprecated?: string } = {};
 		for (const tag of tags) {
 			if (tag.tagName.text === 'since' && typeof tag.comment === 'string') {
-				result.since = tag.comment.replace(/\r?\n/g, '\n');
+				const value = tag.comment.replace(/\r?\n/g, '\n');
+				result.since = value;
+				if (result.sinceTags === undefined) {
+					result.sinceTags = [value];
+				} else {
+					result.sinceTags.push(value);
+				}
 			} else if (tag.tagName.text === 'deprecated' && typeof tag.comment === 'string') {
 				result.deprecated = tag.comment.replace(/\r?\n/g, '\n');
 			}
-			if (result.since !== undefined && result.deprecated !== undefined) {
-				return result;
-			}
+		}
+		if (Array.isArray(result.sinceTags) && result.sinceTags.length === 1) {
+			delete result.sinceTags;
 		}
 		return result;
 	}

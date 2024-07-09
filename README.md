@@ -21,9 +21,9 @@ This repository contains the code for the following npm modules:
 [![NPM Version](https://img.shields.io/npm/v/vscode-jsonrpc.svg)](https://npmjs.org/package/vscode-jsonrpc)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-jsonrpc.svg)](https://npmjs.org/package/vscode-jsonrpc)
 
-All four npm modules are built using one travis build. Its status is:
+All npm modules are built using one Azure Pipeline. Its status is:
 
-[![Build Status](https://travis-ci.org/Microsoft/vscode-languageserver-node.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-languageserver-node)
+[![Build Status](https://dev.azure.com/ms/vscode-languageserver-node/_apis/build/status/microsoft.vscode-languageserver-node?branchName=main)](https://dev.azure.com/ms/vscode-languageserver-node/_build/latest?definitionId=439&branchName=main)
 
 Click [here](https://code.visualstudio.com/docs/extensions/example-language-server) for a detailed document on how to use these npm modules to implement
 language servers for [VSCode](https://code.visualstudio.com/).
@@ -34,9 +34,17 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## Next
+## Next (10.0.0-next.* Client and 10.0.0-next.* Server)
 
+- Upgraded to newer libraries, compilers and package.json exports rules:
+  - Compiler upgraded to `5.5.x`.
+  - Libs now depend on NodeJS `20.9.0` and `es2022`. See also [TypeScript's node  target mapping](https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping).
+  - `vscode-jsonrpc`, `vscode-languageserver-protocol`, `vscode-languageclient` and `vscode-languageserver` now use the `exports` property instead of having a `main` and `typings` property. This might need adoption in tsconfig.json files around the `module` and `moduleResolution`. The LSP libraries currently use `node16` for both values.
 - added proposed CodeActionKind.RefactorMove
+- snippet support in Workspace edits
+- support to control the parallelism of the dispatch requests and notification. This is a breaking change since it allows notification handlers to return a promise to control this.
+- make client browser implementation consistent with the node implementation in terms of arguments. This is a breaking change since it re-ordered parameter declarations.
+- Added a `CancellationToken` to the show document middleware to make it consistent with the other middleware. This is a breaking change since it added a required parameter.
 
 ## 3.17.5 Protocol, 9.0.1 Client and 9.0.1 Server
 

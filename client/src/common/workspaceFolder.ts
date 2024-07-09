@@ -123,7 +123,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 	}
 
 	private doSendEvent(addedFolders: ReadonlyArray<VWorkspaceFolder>, removedFolders: ReadonlyArray<VWorkspaceFolder>): Promise<void> {
-		let params: DidChangeWorkspaceFoldersParams = {
+		const params: DidChangeWorkspaceFoldersParams = {
 			event: {
 				added: addedFolders.map(folder => this.asProtocol(folder)),
 				removed: removedFolders.map(folder => this.asProtocol(folder))
@@ -133,13 +133,13 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 	}
 
 	public register(data: RegistrationData<undefined>): void {
-		let id = data.id;
-		let client = this._client;
-		let disposable = workspace.onDidChangeWorkspaceFolders((event) => {
-			let didChangeWorkspaceFolders = (event: VWorkspaceFoldersChangeEvent): Promise<void> => {
+		const id = data.id;
+		const client = this._client;
+		const disposable = workspace.onDidChangeWorkspaceFolders((event) => {
+			const didChangeWorkspaceFolders = (event: VWorkspaceFoldersChangeEvent): Promise<void> => {
 				return this.doSendEvent(event.added, event.removed);
 			};
-			let middleware = client.middleware.workspace;
+			const middleware = client.middleware.workspace;
 			const promise = middleware && middleware.didChangeWorkspaceFolders
 				? middleware.didChangeWorkspaceFolders(event, didChangeWorkspaceFolders)
 				: didChangeWorkspaceFolders(event);
@@ -152,7 +152,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 	}
 
 	public unregister(id: string): void {
-		let disposable = this._listeners.get(id);
+		const disposable = this._listeners.get(id);
 		if (disposable === void 0) {
 			return;
 		}
@@ -161,7 +161,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 	}
 
 	public clear(): void {
-		for (let disposable of this._listeners.values()) {
+		for (const disposable of this._listeners.values()) {
 			disposable.dispose();
 		}
 		this._listeners.clear();

@@ -50,7 +50,7 @@ suite('Connection Tests', () => {
 		let paramsCorrect: boolean = false;
 		serverConnection.onRequest(InitializeRequest.type, (params) => {
 			paramsCorrect = !Array.isArray(params);
-			let result: InitializeResult = {
+			const result: InitializeResult = {
 				capabilities: {
 				}
 			};
@@ -72,7 +72,7 @@ suite('Partial result tests', () => {
 
 	let serverConnection: ProtocolConnection;
 	let clientConnection: ProtocolConnection;
-	let progressType: ProgressType<any> = new ProgressType();
+	const progressType: ProgressType<any> = new ProgressType();
 
 	setup(() => {
 		const up = new TestStream();
@@ -98,7 +98,7 @@ suite('Partial result tests', () => {
 	});
 
 	test('Result reported', async () => {
-		let result: SymbolInformation = {
+		const result: SymbolInformation = {
 			name: 'abc',
 			kind: SymbolKind.Class,
 			location: {

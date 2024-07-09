@@ -6,7 +6,7 @@
 	"description": "",
 	"version": "0.0.1",
 	"engines": {
-		"vscode": "^1.79.0"
+		"vscode": "^1.91.0"
 	},
 	"categories": [
 		"Other"
@@ -17,20 +17,20 @@
 	"main": "./extension.js",
 	"contributes": {},
 	"scripts": {
-		"clean": "node ../node_modules/.bin/rimraf lib",
-		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
-		"watch": "node ../build/bin/tsc -b ./tsconfig.watch.json -w",
-		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src",
+		"clean": "rimraf lib",
+		"compile": "tsc -b ./tsconfig.json",
+		"watch": "tsc -b ./tsconfig.watch.json -w",
+		"lint": "eslint --ext ts src",
 		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js",
 		"all": "npm run clean && npm run compile && npm run lint && npm run test",
 		"symlink:publish": "node ../build/bin/symlink-client-tests-publish.js",
-		"compile:publish": "node ../build/bin/tsc -b ./tsconfig.publish.json",
+		"compile:publish": "tsc -b ./tsconfig.publish.json",
 		"test:publish": "node lib/runTests.js",
 		"all:publish": "git clean -xfd . && npm install && npm run symlink:publish && npm run compile:publish && npm run test:publish"
 	},
 	"dependencies": {
 		"minimatch": "^9.0.3",
-		"vscode-languageserver": "9.0.2-next.1",
+		"vscode-languageserver": "10.0.0-next.7",
 		"vscode-uri": "3.0.8"
 	},
 	"devDependencies": {
@@ -38,12 +38,12 @@
 		"@types/minimatch": "^5.1.2",
 		"@types/sinon": "^10.0.20",
 		"@types/uuid": "^9.0.6",
-		"@types/vscode": "1.82.0",
+		"@types/vscode": "1.91.0",
+		"@vscode/test-electron": "^2.3.9",
 		"find-process": "^1.4.7",
 		"glob": "^10.3.10",
 		"sinon": "^17.0.0",
-		"uuid": "^9.0.1",
-		"vscode-test": "^1.6.1"
+		"uuid": "^9.0.1"
 	},
 	"enabledApiProposals": []
 }

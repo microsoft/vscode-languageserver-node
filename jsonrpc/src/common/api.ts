@@ -25,9 +25,9 @@ import {
 	ProgressToken, ProgressType, HandlerResult, StarRequestHandler, GenericRequestHandler,
 	RequestHandler0, RequestHandler, RequestHandler1, RequestHandler2, RequestHandler3, RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
 	RequestHandler9, StarNotificationHandler, GenericNotificationHandler, NotificationHandler0, NotificationHandler, NotificationHandler1, NotificationHandler2, NotificationHandler3,
-	NotificationHandler4, NotificationHandler5, NotificationHandler6, NotificationHandler7, NotificationHandler8, NotificationHandler9, Trace, TraceValues, TraceFormat,
+	NotificationHandler4, NotificationHandler5, NotificationHandler6, NotificationHandler7, NotificationHandler8, NotificationHandler9, Trace, TraceValue, TraceFormat,
 	TraceOptions, SetTraceParams, SetTraceNotification, LogTraceParams, LogTraceNotification, Tracer, ConnectionErrors, ConnectionError, CancellationId,
-	CancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy, MessageStrategy
+	CancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy, MessageStrategy, TraceValues
 } from './connection';
 
 import RAL from './ral';
@@ -62,7 +62,7 @@ export {
 	ProgressToken, ProgressType, HandlerResult, StarRequestHandler, GenericRequestHandler,
 	RequestHandler0, RequestHandler, RequestHandler1, RequestHandler2, RequestHandler3, RequestHandler4, RequestHandler5, RequestHandler6, RequestHandler7, RequestHandler8,
 	RequestHandler9, StarNotificationHandler, GenericNotificationHandler, NotificationHandler0, NotificationHandler, NotificationHandler1, NotificationHandler2, NotificationHandler3,
-	NotificationHandler4, NotificationHandler5, NotificationHandler6, NotificationHandler7, NotificationHandler8, NotificationHandler9, Trace, TraceValues, TraceFormat,
+	NotificationHandler4, NotificationHandler5, NotificationHandler6, NotificationHandler7, NotificationHandler8, NotificationHandler9, Trace, TraceValue, TraceValues, TraceFormat,
 	TraceOptions, SetTraceParams, SetTraceNotification, LogTraceParams, LogTraceNotification, Tracer, ConnectionErrors, ConnectionError, CancellationId,
 	CancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy, MessageStrategy
 };

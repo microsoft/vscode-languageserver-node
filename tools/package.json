@@ -13,11 +13,10 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
-	"main": "./lib/main.js",
 	"scripts": {
-		"compile": "node ../build/bin/tsc -b ./tsconfig.json",
-		"watch": "node ../build/bin/tsc -b ./tsconfig-watch.json -w",
-		"clean": "node ../node_modules/.bin/rimraf lib && node ../node_modules/.bin/rimraf dist",
-		"lint": "node ../node_modules/eslint/bin/eslint.js --ext ts src"
+		"compile": "tsc -b ./tsconfig.json",
+		"watch": "tsc -b ./tsconfig-watch.json -w",
+		"clean": "rimraf lib && rimraf dist",
+		"lint": "eslint --ext ts src"
 	}
 }

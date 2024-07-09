@@ -2,7 +2,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageserver.svg)](https://npmjs.org/package/vscode-languageserver)
-[![Build Status](https://travis-ci.org/Microsoft/vscode-languageserver-node.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-languageserver-node)
+[![Build Status](https://dev.azure.com/ms/vscode-languageserver-node/_apis/build/status/microsoft.vscode-languageserver-node?branchName=main)](https://dev.azure.com/ms/vscode-languageserver-node/_build/latest?definitionId=439&branchName=main)
 
 Npm module to implement a VSCode language server using [Node.js](https://nodejs.org/) as a runtime.
 

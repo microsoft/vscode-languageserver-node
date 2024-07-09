@@ -7,7 +7,7 @@ import {
 	NotificationHandler, DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
 	WillSaveTextDocumentParams, RequestHandler, TextEdit, DidSaveTextDocumentParams, DocumentUri,
 	TextDocumentContentChangeEvent, TextDocumentSaveReason, Emitter, Event, TextDocumentSyncKind,
-	CancellationToken, Disposable
+	CancellationToken, Disposable, LanguageKind
 } from 'vscode-languageserver-protocol';
 
 /**
@@ -27,7 +27,7 @@ export interface ConnectionState {
 }
 
 export interface TextDocumentsConfiguration<T extends { uri: DocumentUri }> {
-	create(uri: DocumentUri, languageId: string, version: number, content: string): T;
+	create(uri: DocumentUri, languageId: LanguageKind, version: number, content: string): T;
 	update(document: T, changes: TextDocumentContentChangeEvent[], version: number): T;
 }
 
@@ -216,20 +216,20 @@ export class TextDocuments<T extends { uri: DocumentUri }> {
 			}
 		}));
 		disposables.push(connection.onDidCloseTextDocument((event: DidCloseTextDocumentParams) => {
-			let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
+			const syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
 			if (syncedDocument !== undefined) {
 				this._syncedDocuments.delete(event.textDocument.uri);
 				this._onDidClose.fire(Object.freeze({ document: syncedDocument }));
 			}
 		}));
 		disposables.push(connection.onWillSaveTextDocument((event: WillSaveTextDocumentParams) => {
-			let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
+			const syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
 			if (syncedDocument !== undefined) {
 				this._onWillSave.fire(Object.freeze({ document: syncedDocument, reason: event.reason }));
 			}
 		}));
 		disposables.push(connection.onWillSaveTextDocumentWaitUntil((event: WillSaveTextDocumentParams, token: CancellationToken) => {
-			let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
+			const syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
 			if (syncedDocument !== undefined && this._willSaveWaitUntil) {
 				return this._willSaveWaitUntil(Object.freeze({ document: syncedDocument, reason: event.reason }), token);
 			} else {
@@ -237,7 +237,7 @@ export class TextDocuments<T extends { uri: DocumentUri }> {
 			}
 		}));
 		disposables.push(connection.onDidSaveTextDocument((event: DidSaveTextDocumentParams) => {
-			let syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
+			const syncedDocument = this._syncedDocuments.get(event.textDocument.uri);
 			if (syncedDocument !== undefined) {
 				this._onDidSave.fire(Object.freeze({ document: syncedDocument }));
 			}

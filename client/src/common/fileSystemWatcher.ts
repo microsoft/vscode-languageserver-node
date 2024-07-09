@@ -69,8 +69,8 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 	}
 
 	public registerRaw(id: string, fileSystemWatchers: VFileSystemWatcher[]) {
-		let disposables: Disposable[] = [];
-		for (let fileSystemWatcher of fileSystemWatchers) {
+		const disposables: Disposable[] = [];
+		for (const fileSystemWatcher of fileSystemWatchers) {
 			this.hookListeners(fileSystemWatcher, true, true, true, disposables);
 		}
 		this._watchers.set(id, disposables);
@@ -104,9 +104,10 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 	}
 
 	public unregister(id: string): void {
-		let disposables = this._watchers.get(id);
+		const disposables = this._watchers.get(id);
 		if (disposables) {
-			for (let disposable of disposables) {
+			this._watchers.delete(id);
+			for (const disposable of disposables) {
 				disposable.dispose();
 			}
 		}
@@ -114,7 +115,7 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 
 	public clear(): void {
 		this._watchers.forEach((disposables) => {
-			for (let disposable of disposables) {
+			for (const disposable of disposables) {
 				disposable.dispose();
 			}
 		});

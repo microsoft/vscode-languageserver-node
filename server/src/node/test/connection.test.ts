@@ -40,7 +40,7 @@ suite('Connection Tests', () => {
 		let paramsCorrect: boolean = false;
 		serverConnection.onRequest(InitializeRequest.type, (params) => {
 			paramsCorrect = !Array.isArray(params) && params.workDoneToken === 'token';
-			let result: InitializeResult = {
+			const result: InitializeResult = {
 				capabilities: {
 				}
 			};

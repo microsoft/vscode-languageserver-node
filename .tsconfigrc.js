@@ -36,8 +36,8 @@ const general = {
 	 * rely on webpack to package everything correctly.
 	 */
 	compilerOptions: {
-		module: 'commonjs',
-		moduleResolution: 'node'
+		module: 'node16',
+		moduleResolution: 'node16'
 	}
 };
 
@@ -364,10 +364,11 @@ const defaultCompilerOptions = {
 /** @type CompilerOptions */
 const compileCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: true,
+	declarationMap: true,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
-	target: 'es2020',
-	lib: [ 'es2020' ],
+	target: 'es2022',
+	lib: [ 'es2023' ],
 });
 
 /** @type ProjectOptions */
@@ -381,11 +382,12 @@ const compileProjectOptions = {
 /** @type CompilerOptions */
 const watchCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: true,
+	declarationMap: true,
 	noUnusedLocals: false,
 	noUnusedParameters: false,
 	assumeChangesOnlyAffectDirectDependencies: true,
-	target: 'es2020',
-	lib: [ 'es2020' ],
+	target: 'es2022',
+	lib: [ 'es2023' ],
 });
 
 /** @type ProjectOptions */
@@ -399,10 +401,11 @@ const watchProjectOptions = {
 /** @type CompilerOptions */
 const publishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: false,
+	declarationMap: false,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
-	target: 'es2020',
-	lib: [ 'es2020' ]
+	target: 'es2022',
+	lib: [ 'es2023' ]
 
 });
 
@@ -417,10 +420,12 @@ const publishProjectOptions = {
 /** @type CompilerOptions */
 const umdCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 	sourceMap: true,
+	declarationMap: true,
 	noUnusedLocals: true,
 	noUnusedParameters: true,
 	target: 'es5',
 	module: 'umd',
+	moduleResolution: 'node',
 	lib: [ 'es2015' ],
 });
 
@@ -449,7 +454,8 @@ const umdWatchProjectOptions = {
 
 /** @type CompilerOptions */
 const umdPublishCompilerOptions = CompilerOptions.assign(umdCompilerOptions, {
-	sourceMap: false
+	sourceMap: false,
+	declarationMap: false
 });
 
 /** @type ProjectOptions */
@@ -466,6 +472,7 @@ const esmPublishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions,
 	sourceMap: false,
 	target: 'es6',
 	module: 'es6',
+	moduleResolution: 'node',
 	lib: [ 'es2015' ]
 });
 

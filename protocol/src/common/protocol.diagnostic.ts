@@ -9,7 +9,8 @@ import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from 'vscode
 import * as Is from './utils/is';
 import { MessageDirection, ProtocolRequestType0, ProtocolRequestType } from './messages';
 import type {
-	PartialResultParams, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions
+	PartialResultParams, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions,
+	DiagnosticsCapabilities
 } from './protocol';
 
 
@@ -18,7 +19,7 @@ import type {
  *
  * @since 3.17.0
  */
-export type DiagnosticClientCapabilities = {
+export type DiagnosticClientCapabilities = DiagnosticsCapabilities & {
 	/**
 	 * Whether implementation supports dynamic registration. If this is set to `true`
 	 * the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`

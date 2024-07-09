@@ -11,7 +11,8 @@ import {
 	DefinitionProvider, ReferenceProvider, DocumentHighlightProvider, CodeActionProvider, DocumentFormattingEditProvider, DocumentRangeFormattingEditProvider,
 	OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DeclarationProvider, ImplementationProvider,
 	DocumentColorProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider, LinkedEditingRangeProvider, TypeHierarchyProvider, WorkspaceSymbolProvider,
-	ProviderResult, TextEdit as VTextEdit, InlineCompletionItemProvider
+	ProviderResult, TextEdit as VTextEdit, InlineCompletionItemProvider, EventEmitter, type TabChangeEvent, TabInputText, TabInputTextDiff, TabInputCustom,
+	TabInputNotebook
 } from 'vscode';
 
 import {
@@ -36,7 +37,8 @@ import {
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
-	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, HandlerResult
+	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, HandlerResult,
+	type DidCloseTextDocumentParams
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -48,10 +50,11 @@ import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
-	TextDocumentProviderFeature, WorkspaceProviderFeature
+	TextDocumentProviderFeature, WorkspaceProviderFeature,
+	type TabsModel
 } from './features';
 
-import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions } from './diagnostic';
+import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions, DiagnosticFeatureShape } from './diagnostic';
 import { NotebookDocumentMiddleware, $NotebookDocumentOptions, NotebookDocumentProviderShape, NotebookDocumentSyncFeature } from './notebook';
 import {
 	ConfigurationFeature, ConfigurationMiddleware, $ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature,
@@ -70,44 +73,29 @@ import { DocumentHighlightFeature, DocumentHighlightMiddleware } from './documen
 import { DocumentSymbolFeature, DocumentSymbolMiddleware } from './documentSymbol';
 import { WorkspaceSymbolFeature, WorkspaceSymbolMiddleware } from './workspaceSymbol';
 import { ReferencesFeature, ReferencesMiddleware } from './reference';
-import { TypeDefinitionMiddleware } from './typeDefinition';
-import { ImplementationMiddleware } from './implementation';
-import { ColorProviderMiddleware } from './colorProvider';
+import { TypeDefinitionFeature, TypeDefinitionMiddleware } from './typeDefinition';
+import { ImplementationFeature, ImplementationMiddleware } from './implementation';
+import { ColorProviderFeature, ColorProviderMiddleware } from './colorProvider';
 import { CodeActionFeature, CodeActionMiddleware } from './codeAction';
 import { CodeLensFeature, CodeLensMiddleware, CodeLensProviderShape } from './codeLens';
 import { DocumentFormattingFeature, DocumentOnTypeFormattingFeature, DocumentRangeFormattingFeature, FormattingMiddleware } from './formatting';
 import { RenameFeature, RenameMiddleware } from './rename';
 import { DocumentLinkFeature, DocumentLinkMiddleware } from './documentLink';
 import { ExecuteCommandFeature, ExecuteCommandMiddleware } from './executeCommand';
-import { FoldingRangeProviderMiddleware, FoldingRangeProviderShape } from './foldingRange';
-import { DeclarationMiddleware } from './declaration';
-import { SelectionRangeProviderMiddleware } from './selectionRange';
-import { CallHierarchyMiddleware } from './callHierarchy';
-import { SemanticTokensMiddleware, SemanticTokensProviderShape } from './semanticTokens';
-import { LinkedEditingRangeMiddleware } from './linkedEditingRange';
-import { TypeHierarchyMiddleware } from './typeHierarchy';
-import { InlineValueMiddleware, InlineValueProviderShape } from './inlineValue';
-import { InlayHintsMiddleware, InlayHintsProviderShape } from './inlayHint';
-import { WorkspaceFolderMiddleware } from './workspaceFolder';
-import { FileOperationsMiddleware } from './fileOperations';
-import { InlineCompletionMiddleware } from './inlineCompletion';
+import { FoldingRangeFeature, FoldingRangeProviderMiddleware, FoldingRangeProviderShape } from './foldingRange';
+import { DeclarationFeature, DeclarationMiddleware } from './declaration';
+import { SelectionRangeFeature, SelectionRangeProviderMiddleware } from './selectionRange';
+import { CallHierarchyFeature, CallHierarchyMiddleware } from './callHierarchy';
+import { SemanticTokensFeature, SemanticTokensMiddleware, SemanticTokensProviderShape } from './semanticTokens';
+import { LinkedEditingFeature, LinkedEditingRangeMiddleware } from './linkedEditingRange';
+import { TypeHierarchyFeature, TypeHierarchyMiddleware } from './typeHierarchy';
+import { InlineValueFeature, InlineValueMiddleware, InlineValueProviderShape } from './inlineValue';
+import { InlayHintsFeature, InlayHintsMiddleware, InlayHintsProviderShape } from './inlayHint';
+import { WorkspaceFoldersFeature, WorkspaceFolderMiddleware } from './workspaceFolder';
+import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature, FileOperationsMiddleware } from './fileOperations';
+import { InlineCompletionItemFeature, InlineCompletionMiddleware } from './inlineCompletion';
 import { FileSystemWatcherFeature } from './fileSystemWatcher';
-import { ColorProviderFeature } from './colorProvider';
-import { ImplementationFeature } from './implementation';
-import { TypeDefinitionFeature } from './typeDefinition';
-import { WorkspaceFoldersFeature } from './workspaceFolder';
-import { FoldingRangeFeature } from './foldingRange';
-import { DeclarationFeature } from './declaration';
-import { SelectionRangeFeature } from './selectionRange';
 import { ProgressFeature } from './progress';
-import { CallHierarchyFeature } from './callHierarchy';
-import { SemanticTokensFeature } from './semanticTokens';
-import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature } from './fileOperations';
-import { LinkedEditingFeature } from './linkedEditingRange';
-import { TypeHierarchyFeature } from './typeHierarchy';
-import { InlineValueFeature } from './inlineValue';
-import { InlayHintsFeature } from './inlayHint';
-import { InlineCompletionItemFeature } from './inlineCompletion';
 
 /**
  * Controls when the output channel is revealed.
@@ -238,6 +226,10 @@ export enum State {
 	 */
 	Starting = 3,
 	/**
+	 * The start has failed.
+	 */
+	StartFailed = 4,
+	/**
 	 * The client is running and ready.
 	 */
 	Running = 2,
@@ -303,7 +295,7 @@ type _WorkspaceMiddleware = {
 export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware;
 
 interface _WindowMiddleware {
-	showDocument?: (this: void, params: ShowDocumentParams, next: ShowDocumentRequest.HandlerSignature) => Promise<ShowDocumentResult>;
+	showDocument?: ShowDocumentRequest.MiddlewareSignature;
 }
 export type WindowMiddleware = _WindowMiddleware;
 
@@ -382,6 +374,17 @@ export type LanguageClientOptions = {
 	markdown?: {
 		isTrusted?: boolean | { readonly enabledCommands: readonly string[] };
 		supportHtml?: boolean;
+		supportThemeIcons?: boolean;
+	};
+	textSynchronization?: {
+		/**
+		 * Delays sending the open notification until one of the following
+		 * conditions becomes `true`:
+		 * - document is visible in the editor.
+		 * - any of the other notifications or requests is sent to the server, except
+		 *   a closed notification for the pending document.
+		 */
+		delayOpenNotifications?: boolean;
 	};
 } & $NotebookDocumentOptions & $DiagnosticPullOptions & $ConfigurationOptions;
 
@@ -414,6 +417,10 @@ type ResolvedClientOptions = {
 	markdown: {
 		isTrusted: boolean | { readonly enabledCommands: readonly string[] };
 		supportHtml: boolean;
+		supportThemeIcons: boolean;
+	};
+	textSynchronization: {
+		delayOpenNotifications: boolean;
 	};
 } & Required<$NotebookDocumentOptions> & Required<$DiagnosticPullOptions>;
 namespace ResolvedClientOptions {
@@ -448,7 +455,7 @@ class DefaultErrorHandler implements ErrorHandler {
 		if (this.restarts.length <= this.maxRestartCount) {
 			return { action: CloseAction.Restart };
 		} else {
-			let diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
+			const diff = this.restarts[this.restarts.length - 1] - this.restarts[0];
 			if (diff <= 3 * 60 * 1000) {
 				return { action: CloseAction.DoNotRestart, message: `The ${this.client.name} server crashed ${this.maxRestartCount+1} times in the last 3 minutes. The server will not be restarted. See the output for more information.` };
 			} else {
@@ -476,8 +483,134 @@ export interface MessageTransports {
 
 export namespace MessageTransports {
 	export function is(value: any): value is MessageTransports {
-		let candidate: MessageTransports = value;
+		const candidate: MessageTransports = value;
 		return candidate && MessageReader.is(value.reader) && MessageWriter.is(value.writer);
+	}
+}
+
+export enum ShutdownMode {
+	Restart = 'restart',
+	Stop = 'stop'
+}
+
+/**
+ * Manages the open tabs. We don't directly use the tab API since for
+ * diagnostics we need to de-dupe tabs that show the same resources since
+ * we pull on the model not the UI.
+ */
+class Tabs implements TabsModel {
+
+	private open: Set<string>;
+	private readonly _onOpen: EventEmitter<Set<Uri>>;
+	private readonly _onClose: EventEmitter<Set<Uri>>;
+	private readonly disposable: Disposable;
+
+	constructor() {
+		this.open = new Set();
+		this._onOpen = new EventEmitter();
+		this._onClose = new EventEmitter();
+		Tabs.fillTabResources(this.open);
+		const openTabsHandler = (event: TabChangeEvent) => {
+			if (event.closed.length === 0 && event.opened.length === 0) {
+				return;
+			}
+			const oldTabs = this.open;
+			const currentTabs: Set<string> = new Set();
+			Tabs.fillTabResources(currentTabs);
+
+			const closed: Set<string> = new Set();
+			const opened: Set<string> = new Set(currentTabs);
+			for (const tab of oldTabs.values()) {
+				if (currentTabs.has(tab)) {
+					opened.delete(tab);
+				} else {
+					closed.add(tab);
+				}
+			}
+			this.open = currentTabs;
+			if (closed.size > 0) {
+				const toFire: Set<Uri> = new Set();
+				for (const item of closed) {
+					toFire.add(Uri.parse(item));
+				}
+				this._onClose.fire(toFire);
+			}
+			if (opened.size > 0) {
+				const toFire: Set<Uri> = new Set();
+				for (const item of opened) {
+					toFire.add(Uri.parse(item));
+				}
+				this._onOpen.fire(toFire);
+			}
+		};
+
+		if (Window.tabGroups.onDidChangeTabs !== undefined) {
+			this.disposable = Window.tabGroups.onDidChangeTabs(openTabsHandler);
+		} else {
+			this.disposable = { dispose: () => {} };
+		}
+	}
+
+	public get onClose(): Event<Set<Uri>> {
+		return this._onClose.event;
+	}
+
+	public get onOpen(): Event<Set<Uri>> {
+		return this._onOpen.event;
+	}
+
+	public dispose(): void {
+		this.disposable.dispose();
+	}
+
+	public isActive(document: TextDocument | Uri): boolean {
+		return document instanceof Uri
+			? Window.activeTextEditor?.document.uri === document
+			: Window.activeTextEditor?.document === document;
+	}
+
+	public isVisible(document: TextDocument | Uri): boolean {
+		const uri = document instanceof Uri ? document : document.uri;
+		if (uri.scheme === NotebookDocumentSyncFeature.CellScheme) {
+			// Notebook cells aren't in the list of tabs, but the notebook should be.
+			return Workspace.notebookDocuments.some(notebook => {
+				if (this.open.has(notebook.uri.toString())) {
+					const cell = notebook.getCells().find(cell => cell.document.uri.toString() === uri.toString());
+					return cell !== undefined;
+				}
+				return false;
+			});
+		}
+		return this.open.has(uri.toString());
+	}
+
+	public getTabResources(): Set<Uri> {
+		const result: Set<Uri> = new Set();
+		Tabs.fillTabResources(new Set(), result);
+		return result;
+	}
+
+	private static fillTabResources(strings: Set<string> | undefined, uris?: Set<Uri>): void {
+		const seen = strings ?? new Set();
+		for (const group of Window.tabGroups.all) {
+			for (const tab of group.tabs) {
+				const input = tab.input;
+				let uri: Uri | undefined;
+				if (input instanceof TabInputText) {
+					uri = input.uri;
+				} else if (input instanceof TabInputTextDiff) {
+					uri = input.modified;
+				} else if (input instanceof TabInputCustom) {
+					uri = input.uri;
+				} else if (input instanceof TabInputNotebook) {
+					uri = input.uri;
+				}
+				if (uri !== undefined && !seen.has(uri.toString())) {
+					seen.add(uri.toString());
+					uris !== undefined && uris.add(uri);
+				}
+			}
+		}
 	}
 }
 
@@ -517,9 +650,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _syncedDocuments: Map<string, TextDocument>;
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
-	private readonly _pendingOpenNotifications: Set<string>;
+	private readonly _inFlightOpenNotifications: Set<string>;
 	private readonly _pendingChangeSemaphore: Semaphore<void>;
 	private readonly _pendingChangeDelayer: Delayer<void>;
+	private _didOpenTextDocumentFeature: DidOpenTextDocumentFeature | undefined;
 
 	private _fileEvents: FileEvent[];
 	private _fileEventDelayer: Delayer<void>;
@@ -533,6 +667,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private readonly _c2p: c2p.Converter;
 	private readonly _p2c: p2c.Converter;
+	private _tabsModel: TabsModel | undefined;
 
 	public constructor(id: string, name: string, clientOptions: LanguageClientOptions) {
 		this._id = id;
@@ -540,10 +675,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		clientOptions = clientOptions || {};
 
-		const markdown: ResolvedClientOptions['markdown'] = { isTrusted: false, supportHtml: false };
+		const markdown: ResolvedClientOptions['markdown'] = {
+			isTrusted: false,
+			supportHtml: false,
+			supportThemeIcons: false
+		};
 		if (clientOptions.markdown !== undefined) {
 			markdown.isTrusted = ResolvedClientOptions.sanitizeIsTrusted(clientOptions.markdown.isTrusted);
 			markdown.supportHtml = clientOptions.markdown.supportHtml === true;
+			markdown.supportThemeIcons = clientOptions.markdown.supportThemeIcons === true;
 		}
 
 		// const defaultInterval = (clientOptions as TestOptions).$testMode ? 50 : 60000;
@@ -570,7 +710,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			// 	interval: clientOptions.suspend?.interval ? Math.max(clientOptions.suspend.interval, defaultInterval) : defaultInterval
 			// },
 			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
-			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { }
+			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { },
+			textSynchronization: this.createTextSynchronizationOptions(clientOptions.textSynchronization)
 		};
 		this._clientOptions.synchronize = this._clientOptions.synchronize || {};
 
@@ -601,7 +742,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._traceOutputChannel = clientOptions.traceOutputChannel;
 		this._diagnostics = undefined;
 
-		this._pendingOpenNotifications = new Set();
+		this._inFlightOpenNotifications = new Set();
 		this._pendingChangeSemaphore = new Semaphore(1);
 		this._pendingChangeDelayer = new Delayer<void>(250);
 
@@ -624,9 +765,20 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._p2c = p2c.createConverter(
 			clientOptions.uriConverters ? clientOptions.uriConverters.protocol2Code : undefined,
 			this._clientOptions.markdown.isTrusted,
-			this._clientOptions.markdown.supportHtml);
+			this._clientOptions.markdown.supportHtml,
+			this._clientOptions.markdown.supportThemeIcons);
 		this._syncedDocuments = new Map<string, TextDocument>();
 		this.registerBuiltinFeatures();
+	}
+
+	private createTextSynchronizationOptions(options: LanguageClientOptions['textSynchronization']): ResolvedClientOptions['textSynchronization'] {
+		if (!options) {
+			return { delayOpenNotifications: false };
+		}
+		if (typeof options.delayOpenNotifications === 'boolean') {
+			return { delayOpenNotifications: options.delayOpenNotifications };
+		}
+		return { delayOpenNotifications: false };
 	}
 
 	public get name(): string {
@@ -647,6 +799,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	public get code2ProtocolConverter(): c2p.Converter {
 		return this._c2p;
+	}
+
+	public get tabsModel(): TabsModel {
+		if (this._tabsModel === undefined) {
+			this._tabsModel = new Tabs();
+		}
+		return this._tabsModel;
 	}
 
 	public get onTelemetry(): Event<any> {
@@ -684,9 +843,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private set $state(value: ClientState) {
-		let oldState = this.getPublicState();
+		const oldState = this.getPublicState();
 		this._state = value;
-		let newState = this.getPublicState();
+		const newState = this.getPublicState();
 		if (newState !== oldState) {
 			this._stateChangeEmitter.fire({ oldState, newState });
 		}
@@ -698,6 +857,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				return State.Starting;
 			case ClientState.Running:
 				return State.Running;
+			case ClientState.StartFailed:
+				return State.StartFailed;
 			default:
 				return State.Stopped;
 		}
@@ -720,30 +881,35 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
+
+		// Send ony depending open notifications
+		await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications();
+
 		// If any document is synced in full mode make sure we flush any pending
 		// full document syncs.
 		if (this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full) {
 			await this.sendPendingFullTextDocumentChanges(connection);
 		}
 
+		let param: any | undefined = undefined;
+		let token: CancellationToken | undefined = undefined;
+		// Separate cancellation tokens from other parameters for a better client interface
+		if (params.length === 1) {
+			// CancellationToken is an interface, so we need to check if the first param complies to it
+			if (ProtocolCancellationToken.is(params[0])) {
+				token = params[0];
+			} else {
+				param = params[0];
+			}
+		} else if (params.length === 2) {
+			param = params[0];
+			token = params[1];
+		}
+		if (token !== undefined && token.isCancellationRequested) {
+			return Promise.reject(new ResponseError(LSPErrorCodes.RequestCancelled, 'Request got cancelled'));
+		}
 		const _sendRequest = this._clientOptions.middleware?.sendRequest;
 		if (_sendRequest !== undefined) {
-			let param: any | undefined = undefined;
-			let token: CancellationToken | undefined = undefined;
-
-			// Separate cancellation tokens from other parameters for a better client interface
-			if (params.length === 1) {
-				// CancellationToken is an interface, so we need to check if the first param complies to it
-				if (ProtocolCancellationToken.is(params[0])) {
-					token = params[0];
-				} else {
-					param = params[0];
-				}
-			} else if (params.length === 2) {
-				param = params[0];
-				token = params[1];
-			}
-
 			// Return the general middleware invocation defining `next` as a utility function that reorganizes parameters to
 			// pass them to the original sendRequest function.
 			return _sendRequest(type, param, token, (type, param, token) => {
@@ -823,10 +989,18 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		let openNotification: string | undefined;
 		if (needsPendingFullTextDocumentSync && typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
 			openNotification = (params as DidOpenTextDocumentParams)?.textDocument.uri;
-			this._pendingOpenNotifications.add(openNotification);
+			this._inFlightOpenNotifications.add(openNotification);
+		}
+		let documentToClose: string | undefined;
+		if (typeof type !== 'string' && type.method === DidCloseTextDocumentNotification.method) {
+			documentToClose = (params as DidCloseTextDocumentParams).textDocument.uri;
 		}
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
+
+		// Send ony depending open notifications
+		await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
+
 		// If any document is synced in full mode make sure we flush any pending
 		// full document syncs.
 		if (needsPendingFullTextDocumentSync) {
@@ -838,11 +1012,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// onto the wire will ignore pending document changes.
 		//
 		// Since the code path of connection.sendNotification is actually sync
-		// until the message is handed of to the writer and the writer as a semaphore
+		// until the message is handed off to the writer and the writer has a semaphore
 		// lock with a capacity of 1 no additional async scheduling can happen until
-		// the message is actually handed of.
+		// the message is actually handed off.
 		if (openNotification !== undefined) {
-			this._pendingOpenNotifications.delete(openNotification);
+			this._inFlightOpenNotifications.delete(openNotification);
 		}
 
 		const _sendNotification = this._clientOptions.middleware?.sendNotification;
@@ -1076,9 +1250,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 		// If we restart then the diagnostics collection is reused.
 		if (this._diagnostics === undefined) {
-			this._diagnostics = this._clientOptions.diagnosticCollectionName
-				? Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName)
-				: Languages.createDiagnosticCollection();
+			this._diagnostics = Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName ?? this._id);
 		}
 
 		// When we start make all buffer handlers pending so that they
@@ -1150,13 +1322,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					default:
 						messageFunc = Window.showInformationMessage;
 				}
-				let actions = params.actions || [];
+				const actions = params.actions || [];
 				return messageFunc(params.message, ...actions);
 			});
 			connection.onNotification(TelemetryEventNotification.type, (data) => {
 				this._telemetryEmitter.fire(data);
 			});
-			connection.onRequest(ShowDocumentRequest.type, async (params): Promise<ShowDocumentResult> => {
+			connection.onRequest(ShowDocumentRequest.type, async (params, token) => {
 				const showDocument = async (params: ShowDocumentParams): Promise<ShowDocumentResult> => {
 					const uri = this.protocol2CodeConverter.asUri(params.uri);
 					try {
@@ -1182,7 +1354,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				};
 				const middleware = this._clientOptions.middleware.window?.showDocument;
 				if (middleware !== undefined)  {
-					return middleware(params, showDocument);
+					return middleware(params, token, showDocument);
 				} else {
 					return showDocument(params);
 				}
@@ -1341,11 +1513,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private _clientGetRootPath(): string | undefined {
-		let folders = Workspace.workspaceFolders;
+		const folders = Workspace.workspaceFolders;
 		if (!folders || folders.length === 0) {
 			return undefined;
 		}
-		let folder = folders[0];
+		const folder = folders[0];
 		if (folder.uri.scheme === 'file') {
 			return folder.uri.fsPath;
 		}
@@ -1354,7 +1526,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	public stop(timeout: number = 2000): Promise<void> {
 		// Wait 2 seconds on stop
-		return this.shutdown('stop', timeout);
+		return this.shutdown(ShutdownMode.Stop, timeout);
 	}
 
 	public dispose(timeout: number = 2000): Promise<void> {
@@ -1366,7 +1538,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 	}
 
-	private async shutdown(mode: 'suspend' | 'stop', timeout: number): Promise<void> {
+	protected async shutdown(mode: ShutdownMode, timeout: number = 2000): Promise<void> {
 		// If the client is stopped or in its initial state return.
 		if (this.$state === ClientState.Stopped || this.$state === ClientState.Initial) {
 			return;
@@ -1414,7 +1586,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			throw error;
 		}).finally(() => {
 			this.$state = ClientState.Stopped;
-			mode === 'stop' && this.cleanUpChannel();
+			mode === ShutdownMode.Stop && this.cleanUpChannel();
 			this._onStart = undefined;
 			this._onStop = undefined;
 			this._connection = undefined;
@@ -1422,7 +1594,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		});
 	}
 
-	private cleanUp(mode: 'restart' | 'suspend' | 'stop'): void {
+	private cleanUp(mode: ShutdownMode): void {
 		// purge outstanding file events.
 		this._fileEvents = [];
 		this._fileEventDelayer.cancel();
@@ -1439,7 +1611,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
 			feature.clear();
 		}
-		if (mode === 'stop' && this._diagnostics !== undefined) {
+		if ((mode === ShutdownMode.Stop || mode === ShutdownMode.Restart) && this._diagnostics !== undefined) {
 			this._diagnostics.dispose();
 			this._diagnostics = undefined;
 		}
@@ -1463,20 +1635,27 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		async function didChangeWatchedFile(this: void, event: FileEvent): Promise<void> {
 			client._fileEvents.push(event);
 			return client._fileEventDelayer.trigger(async (): Promise<void> => {
-				await client.sendNotification(DidChangeWatchedFilesNotification.type, { changes: client._fileEvents });
+				const fileEvents = client._fileEvents;
 				client._fileEvents = [];
+				try {
+					await client.sendNotification(DidChangeWatchedFilesNotification.type, { changes: fileEvents });
+				} catch (error) {
+					// Restore the file events.
+					client._fileEvents.push(...fileEvents);
+					throw error;
+				}
 			});
 		}
 		const workSpaceMiddleware = this.clientOptions.middleware?.workspace;
 		(workSpaceMiddleware?.didChangeWatchedFile ? workSpaceMiddleware.didChangeWatchedFile(event, didChangeWatchedFile) : didChangeWatchedFile(event)).catch((error) => {
-			client.error(`Notify file events failed.`, error);
+			client.error(`Notifying file events failed.`, error);
 		});
 	}
 
 	private async sendPendingFullTextDocumentChanges(connection: Connection): Promise<void> {
 		return this._pendingChangeSemaphore.lock(async () => {
 			try {
-				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(this._pendingOpenNotifications);
+				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(this._inFlightOpenNotifications);
 				if (changes.length === 0) {
 					return;
 				}
@@ -1582,11 +1761,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private async createConnection(): Promise<Connection> {
-		let errorHandler = (error: Error, message: Message | undefined, count: number | undefined) => {
+		const errorHandler = (error: Error, message: Message | undefined, count: number | undefined) => {
 			this.handleConnectionError(error, message, count).catch((error) => this.error(`Handling connection error failed`, error));
 		};
 
-		let closeHandler = () => {
+		const closeHandler = () => {
 			this.handleConnectionClosed().catch((error) => this.error(`Handling connection close failed`, error));
 		};
 
@@ -1618,7 +1797,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._connection = undefined;
 		if (handlerResult.action === CloseAction.DoNotRestart) {
 			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, handlerResult.handled === true ? false : 'force');
-			this.cleanUp('stop');
+			this.cleanUp(ShutdownMode.Stop);
 			if (this.$state === ClientState.Starting) {
 				this.$state = ClientState.StartFailed;
 			} else {
@@ -1628,7 +1807,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._onStart = undefined;
 		} else if (handlerResult.action === CloseAction.Restart) {
 			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.', !handlerResult.handled);
-			this.cleanUp('restart');
+			this.cleanUp(ShutdownMode.Restart);
 			this.$state = ClientState.Initial;
 			this._onStop = Promise.resolve();
 			this._onStart = undefined;
@@ -1679,7 +1858,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 
 	private hookFileEvents(_connection: Connection): void {
-		let fileEvents = this._clientOptions.synchronize.fileEvents;
+		const fileEvents = this._clientOptions.synchronize.fileEvents;
 		if (!fileEvents) {
 			return;
 		}
@@ -1699,7 +1878,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private readonly _dynamicFeatures: Map<string, DynamicFeature<any>> = new Map<string, DynamicFeature<any>>();
 
 	public registerFeatures(features: (StaticFeature | DynamicFeature<any>)[]): void {
-		for (let feature of features) {
+		for (const feature of features) {
 			this.registerFeature(feature);
 		}
 	}
@@ -1751,9 +1930,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	getFeature(request: typeof InlineValueRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlineValueProviderShape>;
 	getFeature(request: typeof InlayHintRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<InlayHintsProviderShape>;
 	getFeature(request: typeof WorkspaceSymbolRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<WorkspaceSymbolProvider>;
-	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> | undefined;
-	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape | undefined;
-	getFeature(request: typeof InlineCompletionRequest.method): DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>;
+	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> & DiagnosticFeatureShape;
+	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape;
+	getFeature(request: typeof InlineCompletionRequest.method): (DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>) | undefined;
 	getFeature(request: typeof ExecuteCommandRequest.method): DynamicFeature<ExecuteCommandOptions>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
 		return this._dynamicFeatures.get(request);
@@ -1770,7 +1949,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	protected registerBuiltinFeatures() {
 		const pendingFullTextDocumentChanges: Map<string, TextDocument> = new Map();
 		this.registerFeature(new ConfigurationFeature(this));
-		this.registerFeature(new DidOpenTextDocumentFeature(this, this._syncedDocuments));
+		this._didOpenTextDocumentFeature = new DidOpenTextDocumentFeature(this, this._syncedDocuments);
+		this.registerFeature(this._didOpenTextDocumentFeature);
 		this._didChangeTextDocumentFeature = new DidChangeTextDocumentFeature(this, pendingFullTextDocumentChanges);
 		this._didChangeTextDocumentFeature.onPendingChangeAdded(() => {
 			this.triggerPendingChangeDelivery();
@@ -1831,7 +2011,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	protected fillInitializeParams(params: InitializeParams): void {
-		for (let feature of this._features) {
+		for (const feature of this._features) {
 			if (Is.func(feature.fillInitializeParams)) {
 				feature.fillInitializeParams(params);
 			}
@@ -1850,6 +2030,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		workspaceEdit.changeAnnotationSupport = {
 			groupsOnLabel: true
 		};
+		workspaceEdit.metadataSupport = true;
+		workspaceEdit.snippetEditSupport = true;
 
 		const diagnostics = ensure(ensure(result, 'textDocument')!, 'publishDiagnostics')!;
 		diagnostics.relatedInformation = true;
@@ -1880,7 +2062,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			generalCapabilities.markdown.allowedTags = ['ul', 'li', 'p', 'code', 'blockquote', 'ol', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'em', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div', 'del', 'a', 'strong', 'br', 'img', 'span'];
 		}
 
-		for (let feature of this._features) {
+		for (const feature of this._features) {
 			feature.fillClientCapabilities(result);
 		}
 		return result;
@@ -2005,7 +2187,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (versionMismatch) {
 			return Promise.resolve({ applied: false });
 		}
-		return Is.asPromise(Workspace.applyEdit(converted).then((value) => { return { applied: value }; }));
+		return Is.asPromise(Workspace.applyEdit(converted, { isRefactoring: params.metadata?.isRefactoring }).then((value) => { return { applied: value }; }));
 	}
 
 	private static RequestsToCancelOnContentModified: Set<string> = new Set([
@@ -2022,7 +2204,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		WorkspaceSymbolResolveRequest.method
 	]);
 
-	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true): T {
+	public handleFailedRequest<T>(type: MessageSignature, token: CancellationToken | undefined, error: any, defaultValue: T, showNotification: boolean = true, throwOnCancel: boolean = false): T {
 		// If we get a request cancel or a content modified don't log anything.
 		if (error instanceof ResponseError) {
 			// The connection got disposed while we were waiting for a response.
@@ -2031,7 +2213,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				return defaultValue;
 			}
 			if (error.code === LSPErrorCodes.RequestCancelled || error.code === LSPErrorCodes.ServerCancelled) {
-				if (token !== undefined && token.isCancellationRequested) {
+				if (token !== undefined && token.isCancellationRequested && !throwOnCancel) {
 					return defaultValue;
 				} else {
 					if (error.data !== undefined) {
@@ -2133,16 +2315,49 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	// }
 }
 
+export type ServerOptions = () => Promise<MessageTransports>;
+export class LanguageClient extends BaseLanguageClient {
+
+	private readonly serverOptions: ServerOptions;
+
+	constructor(id: string, name: string, serverOptions: ServerOptions, clientOptions: LanguageClientOptions) {
+		super(id, name, clientOptions);
+		this.serverOptions = serverOptions;
+	}
+
+	protected async createMessageTransports(_encoding: string): Promise<MessageTransports> {
+		return this.serverOptions();
+	}
+}
+
 interface Connection {
 
 	listen(): void;
 
+	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
+
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
 	onRequest<R, E>(method: string | MessageSignature, handler: GenericRequestHandler<R, E>): Disposable;
 
 	hasPendingResponse(): boolean;
 
+	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
+	sendNotification(type: NotificationType0): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
 	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
+
+	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
@@ -2246,7 +2461,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 
 export namespace ProposedFeatures {
 	export function createAll(_client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
-		let result: (StaticFeature | DynamicFeature<any>)[] = [
+		const result: (StaticFeature | DynamicFeature<any>)[] = [
 			new InlineCompletionItemFeature(_client)
 		];
 		return result;

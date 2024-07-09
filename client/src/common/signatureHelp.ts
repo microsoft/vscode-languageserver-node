@@ -33,11 +33,12 @@ export class SignatureHelpFeature extends TextDocumentLanguageFeature<SignatureH
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let config = ensure(ensure(capabilities, 'textDocument')!, 'signatureHelp')!;
+		const config = ensure(ensure(capabilities, 'textDocument')!, 'signatureHelp')!;
 		config.dynamicRegistration = true;
 		config.signatureInformation = { documentationFormat: [MarkupKind.Markdown, MarkupKind.PlainText] };
 		config.signatureInformation.parameterInformation = { labelOffsetSupport: true };
 		config.signatureInformation.activeParameterSupport = true;
+		config.signatureInformation.noActiveParameterSupport = true;
 		config.contextSupport = true;
 	}
 

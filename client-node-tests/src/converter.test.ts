@@ -6,18 +6,18 @@
 import { strictEqual, deepEqual, ok } from 'assert';
 
 import * as proto from 'vscode-languageclient';
-import * as codeConverter from 'vscode-languageclient/lib/common/codeConverter';
-import * as protocolConverter from 'vscode-languageclient/lib/common/protocolConverter';
-import ProtocolCompletionItem from 'vscode-languageclient/lib/common/protocolCompletionItem';
-import ProtocolInlayHint from 'vscode-languageclient/lib/common/protocolInlayHint';
-import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/lib/common/protocolDiagnostic';
-import * as Is from 'vscode-languageclient/lib/common/utils/is';
-import * as async from 'vscode-languageclient/lib/common/utils/async';
+import * as codeConverter from 'vscode-languageclient/$test/common/codeConverter';
+import * as protocolConverter from 'vscode-languageclient/$test/common/protocolConverter';
+import ProtocolCompletionItem from 'vscode-languageclient/$test/common/protocolCompletionItem';
+import ProtocolInlayHint from 'vscode-languageclient/$test/common/protocolInlayHint';
+import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/$test/common/protocolDiagnostic';
+import * as Is from 'vscode-languageclient/$test/common/utils/is';
+import * as async from 'vscode-languageclient/$test/common/utils/async';
 
 import * as vscode from 'vscode';
 
 const c2p: codeConverter.Converter = codeConverter.createConverter();
-const p2c: protocolConverter.Converter = protocolConverter.createConverter(undefined, false, false);
+const p2c: protocolConverter.Converter = protocolConverter.createConverter(undefined, false, false, false);
 
 interface InsertReplaceRange {
 	inserting: vscode.Range;
@@ -87,7 +87,7 @@ suite('Async Array', () => {
 	});
 
 	test('map', async() => {
-		const ranges: proto.Range[] = new Array(10000);
+		const ranges: proto.Range[] = new Array(20000);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
@@ -123,7 +123,7 @@ suite('Async Array', () => {
 	}).timeout(5000);
 
 	test('forEach', async() => {
-		const ranges: proto.Range[] = new Array(7500);
+		const ranges: proto.Range[] = new Array(30000);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i + 1, 0, i + 2, 1);
 		}
@@ -134,7 +134,7 @@ suite('Async Array', () => {
 			sum += codeRange.start.line;
 		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
 		ok(yielded > 0);
-		strictEqual(sum, 28128750);
+		strictEqual(sum, 450015000);
 	}).timeout(5000);
 });
 
@@ -888,10 +888,17 @@ suite('Protocol Converter', () => {
 
 		signatureInfo.documentation = 'documentation';
 		signatureInfo.parameters = [{ label: 'label' }];
+		signatureInfo.activeParameter = 1;
 		result = await p2c.asSignatureInformation(signatureInfo);
 		strictEqual(result.label, signatureInfo.label);
 		strictEqual(result.documentation, signatureInfo.documentation);
+		strictEqual(result.activeParameter, signatureInfo.activeParameter);
 		ok(result.parameters.every(value => value instanceof vscode.ParameterInformation));
+
+		// VS Code uses -1 where LSP uses `null`.
+		signatureInfo.activeParameter = null;
+		result = await p2c.asSignatureInformation(signatureInfo);
+		strictEqual(result.activeParameter, -1);
 
 		ok((await p2c.asSignatureInformations([signatureInfo])).every(value => value instanceof vscode.SignatureInformation));
 	});
@@ -909,6 +916,11 @@ suite('Protocol Converter', () => {
 		ok(result.signatures.every(value => value instanceof vscode.SignatureInformation));
 		strictEqual(result.activeSignature, 0);
 		strictEqual(result.activeParameter, 0);
+
+		// VS Code uses -1 where LSP uses `null`.
+		signatureHelp.activeParameter = null;
+		result = await p2c.asSignatureHelp(signatureHelp);
+		strictEqual(result.activeParameter, -1);
 
 		signatureHelp.activeSignature = 1;
 		signatureHelp.activeParameter = 2;
@@ -1137,14 +1149,16 @@ suite('Protocol Converter', () => {
 
 	test('Command', async () => {
 		const command = proto.Command.create('title', 'commandId');
+		command.tooltip = 'tooltip';
 		command.arguments = ['args'];
 
 		const result = p2c.asCommand(command);
 		strictEqual(result.title, command.title);
+		strictEqual(result.tooltip, command.tooltip);
 		strictEqual(result.command, command.command);
 		strictEqual(result.arguments, command.arguments);
 
-		ok((await p2c.asCommands([command])).every(elem => !!elem.title && !!elem.command));
+		ok((await p2c.asCommands([command])).every(elem => !!elem.title && !!elem.tooltip && !!elem.command));
 		strictEqual(await p2c.asCommands(undefined), undefined);
 		strictEqual(await p2c.asCommands(null), undefined);
 		deepEqual(await p2c.asCommands([]), []);
@@ -1200,7 +1214,7 @@ suite('Protocol Converter', () => {
 	test('Uri Rewrite', () => {
 		const converter = protocolConverter.createConverter((value: string) => {
 			return vscode.Uri.parse(`${value}.vscode`);
-		}, false, false);
+		}, false, false, false);
 
 		const result = converter.asUri('file://localhost/folder/file');
 		strictEqual('file://localhost/folder/file.vscode', result.toString());
@@ -1237,7 +1251,7 @@ suite('Protocol Converter', () => {
 
 		const result = await p2c.asInlayHints(items);
 		ok(result.every(hint => hint instanceof ProtocolInlayHint));
-		for (var i = 0; i < result.length; i++) {
+		for (let i = 0; i < result.length; i++) {
 			positionEqual(result[i].position, items[i].position);
 		}
 		strictEqual((result[0] as ProtocolInlayHint).data, '1');

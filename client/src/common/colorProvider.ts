@@ -36,7 +36,7 @@ export class ColorProviderFeature extends TextDocumentLanguageFeature<boolean | 
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
-		let [id, options] = this.getRegistration(documentSelector, capabilities.colorProvider);
+		const [id, options] = this.getRegistration(documentSelector, capabilities.colorProvider);
 		if (!id || !options) {
 			return;
 		}

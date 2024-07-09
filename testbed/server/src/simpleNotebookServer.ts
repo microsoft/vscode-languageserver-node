@@ -10,7 +10,7 @@ import {
 
 import {
 	CompletionItem, createConnection, Diagnostic, Hover, InitializeError, InitializeResult, MarkupKind, Range, ResponseError,
-	TextDocuments, TextDocumentSyncKind, ProposedFeatures, Proposed, DiagnosticSeverity
+	TextDocuments, TextDocumentSyncKind, ProposedFeatures, DiagnosticSeverity
 } from 'vscode-languageserver/node';
 
 const patterns = [
@@ -53,7 +53,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 });
 
 documents.onDidChangeContent((event) => {
-	let document = event.document;
+	const document = event.document;
 	void connection.sendDiagnostics({ uri: document.uri, diagnostics: computeDiagnostics(document.getText()) });
 });
 
@@ -76,7 +76,7 @@ connection.onDeclaration((params, token) => {
 
 connection.onCompletion((params, token): CompletionItem[] => {
 	const result: CompletionItem[] = [];
-	let item = CompletionItem.create('foo');
+	const item = CompletionItem.create('foo');
 	result.push(item);
 	return result;
 });

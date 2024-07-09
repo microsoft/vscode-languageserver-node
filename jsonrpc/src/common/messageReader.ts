@@ -50,7 +50,7 @@ export interface MessageReader {
 
 export namespace MessageReader {
 	export function is(value: any): value is MessageReader {
-		let candidate: MessageReader = value;
+		const candidate: MessageReader = value;
 		return candidate && Is.func(candidate.listen) && Is.func(candidate.dispose) &&
 			Is.func(candidate.onError) && Is.func(candidate.onClose) && Is.func(candidate.onPartialMessage);
 	}

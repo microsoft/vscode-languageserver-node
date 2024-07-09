@@ -2,7 +2,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/vscode-languageclient.svg)](https://npmjs.org/package/vscode-languageclient)
 [![NPM Downloads](https://img.shields.io/npm/dm/vscode-languageclient.svg)](https://npmjs.org/package/vscode-languageclient)
-[![Build Status](https://travis-ci.org/Microsoft/vscode-languageserver-node.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-languageserver-node)
+[![Build Status](https://dev.azure.com/ms/vscode-languageserver-node/_apis/build/status/microsoft.vscode-languageserver-node?branchName=main)](https://dev.azure.com/ms/vscode-languageserver-node/_build/latest?definitionId=439&branchName=main)
 
 This npm module allows VSCode extensions to easily integrate language servers adhering to the [language server protocol](https://github.com/Microsoft/vscode-languageserver-protocol)
 

@@ -70,7 +70,7 @@ export class CompletionItemFeature extends TextDocumentLanguageFeature<Completio
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		let completion = ensure(ensure(capabilities, 'textDocument')!, 'completion')!;
+		const completion = ensure(ensure(capabilities, 'textDocument')!, 'completion')!;
 		completion.dynamicRegistration = true;
 		completion.contextSupport = true;
 		completion.completionItem = {

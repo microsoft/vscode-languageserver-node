@@ -101,5 +101,7 @@
 		"vsdiag",
 		"whitespaces",
 		"XCOPY"
-	]
+	],
+	"githubPullRequests.createDefaultBaseBranch": "repositoryDefault",
+	"typescript.tsserver.experimental.useVsCodeWatcher": true
 }

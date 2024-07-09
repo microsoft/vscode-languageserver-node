@@ -320,7 +320,7 @@ suite('Connection', () => {
 
 		client.listen();
 		client.sendRequest(type, '').then(_result => {
-			assert(false);
+			assert.ok(false);
 		}, () => {
 			done();
 		});
@@ -335,7 +335,7 @@ suite('Connection', () => {
 		client.dispose();
 		try {
 			void client.sendNotification(testNotification);
-			assert(false);
+			assert.ok(false);
 		} catch (error) {
 			done();
 		}
@@ -349,7 +349,7 @@ suite('Connection', () => {
 		client.listen();
 		try {
 			client.listen();
-			assert(false);
+			assert.ok(false);
 		} catch (error) {
 			done();
 		}
@@ -405,7 +405,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
+			assert.ok(false);
 			done();
 		});
 	});
@@ -431,7 +431,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
+			assert.ok(false);
 			done();
 		});
 	});
@@ -443,7 +443,7 @@ suite('Connection', () => {
 
 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onRequest(type, (p1) => {
-			assert(Array.isArray(p1));
+			assert.ok(Array.isArray(p1));
 			assert.strictEqual(p1[0], 10);
 			assert.strictEqual(p1[1], 20);
 			assert.strictEqual(p1[2], 30);
@@ -458,8 +458,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
@@ -470,7 +469,7 @@ suite('Connection', () => {
 
 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
 		server.onNotification(type, (p1) => {
-			assert(Array.isArray(p1));
+			assert.ok(Array.isArray(p1));
 			assert.strictEqual(p1[0], 10);
 			assert.strictEqual(p1[1], 20);
 			assert.strictEqual(p1[2], 30);
@@ -503,8 +502,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
@@ -526,8 +524,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 10);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
@@ -551,8 +548,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 60);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
@@ -576,8 +572,7 @@ suite('Connection', () => {
 			assert.strictEqual(result, 30);
 			done();
 		}, () => {
-			assert(false);
-			done();
+			assert.ok(false);
 		});
 	});
 
@@ -627,6 +622,34 @@ suite('Connection', () => {
 		source.cancel();
 	});
 
+	test('Already cancelled token', (done) => {
+		const type = new hostConnection.RequestType0<void, void>('cancelTest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		function delay(ms: number) {
+			return new Promise(resolve => setTimeout(resolve, ms));
+		}
+
+		const source = new CancellationTokenSource();
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, async t => {
+
+			while (!t.isCancellationRequested) {
+				// regular cancellation requires async for it to work
+				await delay(0);
+			}
+
+			done();
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		source.cancel();
+		void client.sendRequest(type, source.token);
+	});
+
 	test('Custom Cancellation', (done) => {
 		const type = new hostConnection.RequestType0<void, void>('cancelTest');
 		const duplexStream1 = new TestDuplex('ds1');
@@ -655,16 +678,16 @@ suite('Connection', () => {
 	});
 
 	test('Uses custom message handler', (done) => {
-		let type = new RequestType<number, number, void>('test/handleSingleRequest');
-		let duplexStream1 = new TestDuplex('ds1');
-		let duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
 		const asyncLocalStorage = new AsyncLocalStorage();
 
-		let server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
 			messageStrategy: {
 				handleMessage(message, next) {
-					asyncLocalStorage.run(1, () => next(message));
+					void asyncLocalStorage.run(1, () => next(message));
 				}
 			}
 		});
@@ -673,7 +696,7 @@ suite('Connection', () => {
 		});
 		server.listen();
 
-		let client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
 		client.listen();
 		void client.sendRequest(type, 0).then((res) => {
 			assert.strictEqual(res, 1);
@@ -699,5 +722,59 @@ suite('Connection', () => {
 		assert.strictEqual(result, 'foo');
 		clientPort.unref();
 		serverPort.unref();
+	});
+
+	test('Parallelism - unlimited', async () => {
+		const requestOne = new hostConnection.RequestType0<void, void>('test/parallelism_one');
+		const requestTwo = new hostConnection.RequestType0<void, void>('test/parallelism_two');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const log: string[] = [];
+		server.onRequest(requestOne, async () => {
+			log.push('one-start');
+			await new Promise(resolve => setTimeout(resolve, 100));
+			log.push('one-end');
+		});
+		server.onRequest(requestTwo, async () => {
+			log.push('two-start');
+			log.push('two-end');
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		const r1 = client.sendRequest(requestOne);
+		const r2 = client.sendRequest(requestTwo);
+		await Promise.all([r1, r2]);
+		assert.deepStrictEqual(log, ['one-start', 'two-start', 'two-end', 'one-end']);
+	});
+
+	test('Parallelism - limited', async () => {
+		const requestOne = new hostConnection.RequestType0<void, void>('test/parallelism_one');
+		const requestTwo = new hostConnection.RequestType0<void, void>('test/parallelism_two');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, { maxParallelism: 1 });
+		const log: string[] = [];
+		server.onRequest(requestOne, async () => {
+			log.push('one-start');
+			await new Promise(resolve => setTimeout(resolve, 100));
+			log.push('one-end');
+		});
+		server.onRequest(requestTwo, async () => {
+			log.push('two-start');
+			log.push('two-end');
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, { maxParallelism: 1 });
+		client.listen();
+		const r1 = client.sendRequest(requestOne);
+		const r2 = client.sendRequest(requestTwo);
+		await Promise.all([r1, r2]);
+		assert.deepStrictEqual(log, ['one-start', 'one-end', 'two-start', 'two-end']);
 	});
 });

@@ -18,7 +18,7 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
  */
 export interface SemanticTokensFeatureShape {
 	semanticTokens: {
-		refresh(): void;
+		refresh(): Promise<void>;
 		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable;
 		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensPartialResult, void>): Disposable;
 		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable;
@@ -117,7 +117,9 @@ export class SemanticTokensBuilder {
 
 	private _prevLine!: number;
 	private _prevChar!: number;
+	private _dataIsSortedAndDeltaEncoded!: boolean;
 	private _data!: number[];
+	private _dataNonDelta!: number[];
 	private _dataLen!: number;
 
 	private _prevData: number[] | undefined;
@@ -132,24 +134,35 @@ export class SemanticTokensBuilder {
 		this._prevLine = 0;
 		this._prevChar = 0;
 		this._data = [];
+		this._dataNonDelta = [];
 		this._dataLen = 0;
+		this._dataIsSortedAndDeltaEncoded = true;
 	}
 
 	public push(line: number, char: number, length: number, tokenType: number, tokenModifiers: number): void {
+		if (this._dataIsSortedAndDeltaEncoded && (line < this._prevLine || (line === this._prevLine && char < this._prevChar))) {
+			// push calls were ordered and are no longer ordered
+			this._dataIsSortedAndDeltaEncoded = false;
+
+			this._dataNonDelta = SemanticTokensBuilder._deltaDecode(this._data);
+		}
+
 		let pushLine = line;
 		let pushChar = char;
-		if (this._dataLen > 0) {
+		if (this._dataIsSortedAndDeltaEncoded && this._dataLen > 0) {
 			pushLine -= this._prevLine;
 			if (pushLine === 0) {
 				pushChar -= this._prevChar;
 			}
 		}
 
-		this._data[this._dataLen++] = pushLine;
-		this._data[this._dataLen++] = pushChar;
-		this._data[this._dataLen++] = length;
-		this._data[this._dataLen++] = tokenType;
-		this._data[this._dataLen++] = tokenModifiers;
+		const dataSource = this._dataIsSortedAndDeltaEncoded ? this._data : this._dataNonDelta;
+
+		dataSource[this._dataLen++] = pushLine;
+		dataSource[this._dataLen++] = pushChar;
+		dataSource[this._dataLen++] = length;
+		dataSource[this._dataLen++] = tokenType;
+		dataSource[this._dataLen++] = tokenModifiers;
 
 		this._prevLine = line;
 		this._prevChar = char;
@@ -159,18 +172,108 @@ export class SemanticTokensBuilder {
 		return this._id.toString();
 	}
 
+	private static _deltaDecode(data: number[]): number[] {
+		// Remove delta encoding from data
+		const tokenCount = (data.length / 5) | 0;
+		let prevLine = 0;
+		let prevChar = 0;
+		const result: number[] = [];
+		for (let i = 0; i < tokenCount; i++) {
+			const dstOffset = 5 * i;
+			let line = data[dstOffset];
+			let char = data[dstOffset + 1];
+
+			if (line === 0) {
+				// on the same line as previous token
+				line = prevLine;
+				char += prevChar;
+			} else {
+				// on a different line than previous token
+				line += prevLine;
+			}
+
+			const length = data[dstOffset + 2];
+			const tokenType = data[dstOffset + 3];
+			const tokenModifiers = data[dstOffset + 4];
+
+			result[dstOffset + 0] = line;
+			result[dstOffset + 1] = char;
+			result[dstOffset + 2] = length;
+			result[dstOffset + 3] = tokenType;
+			result[dstOffset + 4] = tokenModifiers;
+
+			prevLine = line;
+			prevChar = char;
+		}
+
+		return result;
+	}
+
+	private static _sortAndDeltaEncode(data: number[]): number[] {
+		const pos: number[] = [];
+		const tokenCount = (data.length / 5) | 0;
+		for (let i = 0; i < tokenCount; i++) {
+			pos[i] = i;
+		}
+		pos.sort((a, b) => {
+			const aLine = data[5 * a];
+			const bLine = data[5 * b];
+			if (aLine === bLine) {
+				const aChar = data[5 * a + 1];
+				const bChar = data[5 * b + 1];
+				return aChar - bChar;
+			}
+			return aLine - bLine;
+		});
+		const result = [];
+		let prevLine = 0;
+		let prevChar = 0;
+		for (let i = 0; i < tokenCount; i++) {
+			const srcOffset = 5 * pos[i];
+			const line = data[srcOffset + 0];
+			const char = data[srcOffset + 1];
+			const length = data[srcOffset + 2];
+			const tokenType = data[srcOffset + 3];
+			const tokenModifiers = data[srcOffset + 4];
+
+			const pushLine = line - prevLine;
+			const pushChar = (pushLine === 0 ? char - prevChar : char);
+
+			const dstOffset = 5 * i;
+			result[dstOffset + 0] = pushLine;
+			result[dstOffset + 1] = pushChar;
+			result[dstOffset + 2] = length;
+			result[dstOffset + 3] = tokenType;
+			result[dstOffset + 4] = tokenModifiers;
+
+			prevLine = line;
+			prevChar = char;
+		}
+
+		return result;
+	}
+
+	private getFinalDataDelta(): number[] {
+		if (this._dataIsSortedAndDeltaEncoded) {
+			return this._data;
+		} else {
+			return SemanticTokensBuilder._sortAndDeltaEncode(this._dataNonDelta);
+		}
+	}
+
 	public previousResult(id: string) {
 		if (this.id === id) {
-			this._prevData = this._data;
+			this._prevData = this.getFinalDataDelta();
 		}
 		this.initialize();
 	}
 
 	public build(): SemanticTokens {
 		this._prevData = undefined;
+
 		return {
 			resultId: this.id,
-			data: this._data
+			data: this.getFinalDataDelta()
 		};
 	}
 
@@ -182,7 +285,7 @@ export class SemanticTokensBuilder {
 		if (this._prevData !== undefined) {
 			return {
 				resultId: this.id,
-				edits: (new SemanticTokensDiff(this._prevData, this._data)).computeDiff()
+				edits: (new SemanticTokensDiff(this._prevData, this.getFinalDataDelta())).computeDiff()
 			};
 		} else {
 			return this.build();

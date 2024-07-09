@@ -131,6 +131,11 @@ export type Request = {
 	method: string;
 
 	/**
+	 * The type name of the request if any.
+	 */
+	typeName?: string;
+
+	/**
 	 * The parameter type(s) if any.
 	 */
 	params?: Type | Type[];
@@ -179,6 +184,12 @@ export type Request = {
 	 * available. Is undefined if not known.
 	 */
 	since?: string;
+
+	/**
+	 * All since tags in case there was more than one tag.
+	 * Is undefined of not known.
+	 */
+	sinceTags?: string[];
 
 	/**
 	 * Whether this is a proposed feature. If omitted
@@ -236,7 +247,13 @@ export type Notification = {
 	 */
 	since?: string;
 
-	 /**
+	/**
+	 * All since tags in case there was more than one tag.
+	 * Is undefined of not known.
+	 */
+	sinceTags?: string[];
+
+	/**
 	 * Whether this is a proposed notification. If omitted
 	 * the notification is final.
 	 */
@@ -279,6 +296,12 @@ export type Property = {
 	 * available. Is undefined if not known.
 	 */
 	since?: string;
+
+	/**
+	 * All since tags in case there was more than one tag.
+	 * Is undefined of not known.
+	 */
+	sinceTags?: string[];
 
 	/**
 	 * Whether this is a proposed property. If omitted,
@@ -333,6 +356,12 @@ export type Structure = {
 	since?: string;
 
 	/**
+	 * All since tags in case there was more than one tag.
+	 * Is undefined of not known.
+	 */
+	sinceTags?: string[];
+
+	/**
 	 * Whether this is a proposed structure. If omitted,
 	 * the structure is final.
 	 */
@@ -365,6 +394,12 @@ export type StructureLiteral = {
 	 * available. Is undefined if not known.
 	 */
 	since?: string;
+
+	/**
+	 * All since tags in case there was more than one tag.
+	 * Is undefined of not known.
+	 */
+	sinceTags?: string[];
 
 	/**
 	 * Whether this is a proposed structure. If omitted,
@@ -405,6 +440,12 @@ export type TypeAlias = {
 	 */
 	since?: string;
 
+	/**
+	 * All since tags in case there was more than one tag.
+	 * Is undefined of not known.
+	 */
+	sinceTags?: string[];
+
 	 /**
 	 * Whether this is a proposed type alias. If omitted,
 	 * the type alias is final.
@@ -442,6 +483,12 @@ export type EnumerationEntry = {
 	 * available. Is undefined if not known.
 	 */
 	since?: string;
+
+	/**
+	 * All since tags in case there was more than one tag.
+	 * Is undefined of not known.
+	 */
+	sinceTags?: string[];
 
 	 /**
 	 * Whether this is a proposed enumeration entry. If omitted,
@@ -494,6 +541,12 @@ export type Enumeration = {
 	 * available. Is undefined if not known.
 	 */
 	since?: string;
+
+	/**
+	 * All since tags in case there was more than one tag.
+	 * Is undefined of not known.
+	 */
+	sinceTags?: string[];
 
 	 /**
 	 * Whether this is a proposed enumeration. If omitted,

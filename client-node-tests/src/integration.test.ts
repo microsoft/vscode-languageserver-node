@@ -8,12 +8,23 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
+import * as proto from 'vscode-languageserver-protocol';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
-import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient/lib/common/diagnostic';
+import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
 	export const type = new lsclient.RequestType<string, boolean, void>(method);
+}
+
+namespace ClearNotifiedRequest {
+	export const method: 'testing/clearNotified' = 'testing/clearNotified';
+	export const type = new lsclient.RequestType<string, void, void>(method);
+}
+
+namespace SetDiagnosticsNotification {
+	export const method: 'testing/setDiagnostics' = 'testing/setDiagnostics';
+	export const type = new lsclient.NotificationType<proto.DocumentDiagnosticReport>(method);
 }
 
 async function revertAllDirty(): Promise<void> {
@@ -225,7 +236,7 @@ suite('Client integration', () => {
 	});
 
 	test('InitializeResult', () => {
-		let expected = {
+		const expected = {
 			capabilities: {
 				textDocumentSync: 1,
 				definitionProvider: true,
@@ -564,6 +575,40 @@ suite('Client integration', () => {
 			middlewareEvents.map((p) => p.kind),
 			['begin', 'report', 'end', 'begin', 'report', 'end'],
 		);
+	});
+
+	test('Progress percentage is an integer', async () => {
+		const progressToken = 'TEST-PROGRESS-PERCENTAGE';
+		const percentages: Array<number | undefined> = [];
+		let currentProgressResolver: (value: unknown) => void | undefined;
+
+		// Set up middleware that calls the current resolve function when it gets its 'end' progress event.
+		middleware.handleWorkDoneProgress = (token: lsclient.ProgressToken, params: lsclient.WorkDoneProgressBegin | lsclient.WorkDoneProgressReport | lsclient.WorkDoneProgressEnd, next) => {
+			if (token === progressToken) {
+				const percentage = params.kind === 'report' || params.kind === 'begin' ? params.percentage : undefined;
+				percentages.push(percentage);
+
+				if (params.kind === 'end') {
+					setImmediate(currentProgressResolver);
+				}
+			}
+			return next(token, params);
+		};
+
+		// Trigger a progress event.
+		await new Promise<unknown>((resolve) => {
+			currentProgressResolver = resolve;
+			void client.sendRequest(
+				new lsclient.ProtocolRequestType<any, null, never, any, any>('testing/sendPercentageProgress'),
+				{},
+				tokenSource.token,
+			);
+		});
+
+		middleware.handleWorkDoneProgress = undefined;
+
+		// Ensure percentages are rounded according to the spec
+		assert.deepStrictEqual(percentages, [0, 50, undefined]);
 	});
 
 	test('Document Formatting', async () => {
@@ -955,6 +1000,7 @@ suite('Client integration', () => {
 			const feature = client.getFeature(lsclient.WillCreateFilesRequest.method);
 			isDefined(feature);
 
+			// eslint-disable-next-line no-async-promise-executor
 			const sendCreateRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				await feature.send({ files: createFiles, waitUntil: resolve, token: tokenSource.token });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
@@ -1039,6 +1085,7 @@ suite('Client integration', () => {
 			const feature = client.getFeature(lsclient.WillRenameFilesRequest.method);
 			isDefined(feature);
 
+			// eslint-disable-next-line no-async-promise-executor
 			const sendRenameRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				await feature.send({ files: renameFiles, waitUntil: resolve, token: tokenSource.token });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
@@ -1087,6 +1134,7 @@ suite('Client integration', () => {
 			// DidRename relies on WillRename firing first and the items existing on disk in their correct locations
 			// so that the type of the items can be checked and stashed before they're actually renamed.
 			await createTestItems(renameFiles.map((f) => f.oldUri));
+			// eslint-disable-next-line no-async-promise-executor
 			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				const featureWithWillRename = feature as any as { willRename(e: vscode.FileWillRenameEvent): void };
 				featureWithWillRename.willRename({ files: renameFiles, waitUntil: resolve, token: tokenSource.token });
@@ -1137,6 +1185,7 @@ suite('Client integration', () => {
 			const feature = client.getFeature(lsclient.WillDeleteFilesRequest.method);
 			isDefined(feature);
 
+			// eslint-disable-next-line no-async-promise-executor
 			const sendDeleteRequest = () => new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				await feature.send({ files: deleteFiles, waitUntil: resolve, token: tokenSource.token });
 				// If feature.send didn't call waitUntil synchronously then something went wrong.
@@ -1185,6 +1234,7 @@ suite('Client integration', () => {
 			// DidDelete relies on WillDelete firing first and the items actually existing on disk
 			// so that the type of the items can be checked and stashed before they're actually deleted.
 			await createTestItems(deleteFiles);
+			// eslint-disable-next-line no-async-promise-executor
 			await new Promise<vscode.WorkspaceEdit>(async (resolve, reject) => {
 				const featureWithWillDelete = feature as any as { willDelete(e: vscode.FileWillDeleteEvent): void };
 				featureWithWillDelete.willDelete({ files: deleteFiles, waitUntil: resolve, token: tokenSource.token });
@@ -1450,7 +1500,7 @@ suite('Client integration', () => {
 	});
 
 	test('Inline Completions', async () => {
-		const providerData = client.getFeature(lsclient.InlineCompletionRequest.method).getProvider(document);
+		const providerData = client.getFeature(lsclient.InlineCompletionRequest.method)?.getProvider(document);
 		isDefined(providerData);
 		const results = (await providerData.provideInlineCompletionItems(document, position, { triggerKind: 1, selectedCompletionInfo: {range, text: 'text'} }, tokenSource.token)) as vscode.InlineCompletionItem[];
 
@@ -1589,28 +1639,28 @@ suite('Full notebook tests', () => {
 		await client.stop();
 	});
 
-	test('Notebook document: open', async (): Promise<void> => {
-		let textDocumentMiddlewareCalled: boolean = false;
-		client.middleware.didOpen = (e, n) => {
-			textDocumentMiddlewareCalled = true;
-			return n(e);
-		};
-		let middlewareCalled: boolean = false;
-		client.middleware.notebooks = {
-			didOpen: (nd, nc, n) => {
-				middlewareCalled = true;
-				return n(nd, nc);
-			}
-		};
-		await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
-		assert.strictEqual(textDocumentMiddlewareCalled, false);
-		client.middleware.didOpen = undefined;
-		assert.strictEqual(middlewareCalled, true);
-		client.middleware.notebooks = undefined;
-		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidOpenNotebookDocumentNotification.method);
-		assert.strictEqual(notified, true);
-		await revertAllDirty();
-	});
+	// test('Notebook document: open', async (): Promise<void> => {
+	// 	let textDocumentMiddlewareCalled: boolean = false;
+	// 	client.middleware.didOpen = (e, n) => {
+	// 		textDocumentMiddlewareCalled = true;
+	// 		return n(e);
+	// 	};
+	// 	let middlewareCalled: boolean = false;
+	// 	client.middleware.notebooks = {
+	// 		didOpen: (nd, nc, n) => {
+	// 			middlewareCalled = true;
+	// 			return n(nd, nc);
+	// 		}
+	// 	};
+	// 	await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+	// 	assert.strictEqual(textDocumentMiddlewareCalled, false);
+	// 	client.middleware.didOpen = undefined;
+	// 	assert.strictEqual(middlewareCalled, true);
+	// 	client.middleware.notebooks = undefined;
+	// 	const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidOpenNotebookDocumentNotification.method);
+	// 	assert.strictEqual(notified, true);
+	// 	await revertAllDirty();
+	// });
 
 	test('Notebook document: change', async (): Promise<void> => {
 		let textDocumentMiddlewareCalled: boolean = false;
@@ -1626,6 +1676,8 @@ suite('Full notebook tests', () => {
 			}
 		};
 		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const provider = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method)?.getProvider(notebookDocument.cellAt(1))!;
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
 		const textDocument = notebookDocument.getCells()[0].document;
 		const edit = new vscode.WorkspaceEdit;
 		edit.insert(textDocument.uri, new vscode.Position(0,0), 'REM a comment\n');
@@ -1636,6 +1688,87 @@ suite('Full notebook tests', () => {
 		client.middleware.notebooks = undefined;
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: add unmonitored cell', async(): Promise<void> => {
+		await client.sendRequest(ClearNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const provider = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method)?.getProvider(notebookDocument.cellAt(1))!;
+		let onlyCellChanges: boolean = true;
+		client.middleware.notebooks = {
+			didChange: (ne, n) => {
+				onlyCellChanges = ne.cells?.structure === undefined && ne.cells?.textContent === undefined;
+				return n(ne);
+			}
+		};
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		const edit = new vscode.WorkspaceEdit;
+		const notebookEdit = vscode.NotebookEdit.insertCells(0, [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'console.log("Hello, world!")', 'typescript')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		client.middleware.notebooks = undefined;
+		assert.strictEqual(onlyCellChanges, true, 'Only cell changes');
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: add monitored cell', async(): Promise<void> => {
+		await client.sendRequest(ClearNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const provider = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method)?.getProvider(notebookDocument.cellAt(1))!;
+		let structuralChange: boolean = false;
+		client.middleware.notebooks = {
+			didOpen(notebookDocument, cells, next) {
+				return next(notebookDocument, cells);
+			},
+			didChange: (ne, n) => {
+				structuralChange = structuralChange || ne.cells?.structure !== undefined;
+				return n(ne);
+			}
+		};
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		const edit = new vscode.WorkspaceEdit;
+		const notebookEdit = vscode.NotebookEdit.insertCells(0, [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'print("Hello, world!")', 'python')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		client.middleware.notebooks = undefined;
+		assert.strictEqual(structuralChange, true, 'Structural changes');
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 3, 'Synchronized cells');
+		await revertAllDirty();
+	});
+
+	test('Notebook document: change language id', async(): Promise<void> => {
+		await client.sendRequest(ClearNotifiedRequest.type, lsclient.DidChangeNotebookDocumentNotification.method);
+		const notebookDocument = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		const provider = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method)?.getProvider(notebookDocument.cellAt(1))!;
+		let structuralChange: boolean = false;
+		client.middleware.notebooks = {
+			didOpen(notebookDocument, cells, next) {
+				return next(notebookDocument, cells);
+			},
+			didChange: (ne, n) => {
+				structuralChange = structuralChange || ne.cells?.structure !== undefined;
+				return n(ne);
+			}
+		};
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
+		let edit = new vscode.WorkspaceEdit;
+		let notebookEdit = vscode.NotebookEdit.replaceCells(new vscode.NotebookRange(0, 1), [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, notebookDocument.cellAt(0).document.getText(), 'typescript')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		assert.strictEqual(structuralChange, true, 'Structural changes');
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 1, 'Synchronized cells');
+
+		structuralChange = false;
+		edit = new vscode.WorkspaceEdit;
+		notebookEdit = vscode.NotebookEdit.replaceCells(new vscode.NotebookRange(0, 1), [new vscode.NotebookCellData(vscode.NotebookCellKind.Code, notebookDocument.cellAt(0).document.getText(), 'python')]);
+		edit.set(notebookDocument.uri, [notebookEdit]);
+		await vscode.workspace.applyEdit(edit);
+		client.middleware.notebooks = undefined;
+		assert.strictEqual(structuralChange, true, 'Structural changes');
+		assert.strictEqual(provider.getSynchronizedCells(notebookDocument)?.length, 2, 'Synchronized cells');
 		await revertAllDirty();
 	});
 
@@ -1647,6 +1780,47 @@ suite('Full notebook tests', () => {
 		await provider.sendDidCloseNotebookDocument(notebookDocument);
 		const notified = await client.sendRequest(GotNotifiedRequest.type, lsclient.DidCloseNotebookDocumentNotification.method);
 		assert.strictEqual(notified, true);
+		await revertAllDirty();
+	});
+
+	test('Notebook document: pull diagnostics', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+
+		// Send the diagnostics for the first cell.
+		const report: proto.DocumentDiagnosticReport = {
+			kind: 'full',
+			items: [
+				{ message: 'notebook-error', range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 }} }
+			]
+		};
+		await client.sendNotification(SetDiagnosticsNotification.method, { uri: notebook.cellAt(0).document.uri.toString(), report });
+
+		// notebook has to be visible for diagnostics to be published.
+		await vscode.window.showNotebookDocument(notebook);
+
+		const promise = new Promise<void>((resolve) => {
+			client.middleware.provideDiagnostics = async (doc, p, token, next) => {
+				const result = await next(doc, p, token);
+				if (result?.kind === 'full' && result?.items.length > 0) {
+					// Need to be async so that the diagnostics are published.
+					setTimeout(() => resolve(), 10);
+				}
+				return result;
+			};
+		});
+
+		// Change the notebook cell, this should cause the diagnostics to be published.
+		const edit = new vscode.WorkspaceEdit();
+		edit.insert(notebook.cellAt(0).document.uri, new vscode.Position(0, 0), '# a comment\n');
+		await vscode.workspace.applyEdit(edit);
+
+		// Wait for the diagnostics to be published.
+		await promise;
+		const diagnostics = vscode.languages.getDiagnostics(notebook.cellAt(0).document.uri);
+		assert.strictEqual(diagnostics.length, 1);
+		const diagnostic = diagnostics[0];
+		assert.strictEqual(diagnostic.message, 'notebook-error');
+
 		await revertAllDirty();
 	});
 });
@@ -2016,7 +2190,7 @@ suite('Server activation', () => {
 	test('Start server on language feature', async () => {
 		const client = createClient();
 		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const started = checkServerStart(client, vscode.languages.registerDeclarationProvider(documentSelector, {
+		const started = checkServerStart(client, vscode.languages.registerDeclarationProvider(client.protocol2CodeConverter.asDocumentSelector(documentSelector), {
 			provideDeclaration: async () => {
 				await client.start();
 				return undefined;

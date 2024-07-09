@@ -17,7 +17,7 @@ export function terminate(process: ChildProcess & { pid: number }, cwd?: string)
 			// This we run in Atom execFileSync is available.
 			// Ignore stderr since this is otherwise piped to parent.stderr
 			// which might be already closed.
-			let options: any = {
+			const options: any = {
 				stdio: ['pipe', 'pipe', 'ignore']
 			};
 			if (cwd) {
@@ -30,8 +30,8 @@ export function terminate(process: ChildProcess & { pid: number }, cwd?: string)
 		}
 	} else if (isLinux || isMacintosh) {
 		try {
-			var cmd = join(__dirname, 'terminateProcess.sh');
-			var result = (<any>cp).spawnSync(cmd, [process.pid.toString()]);
+			const cmd = join(__dirname, 'terminateProcess.sh');
+			const result = (<any>cp).spawnSync(cmd, [process.pid.toString()]);
 			return result.error ? false : true;
 		} catch (err) {
 			return false;

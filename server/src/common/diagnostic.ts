@@ -22,7 +22,7 @@ export interface DiagnosticFeatureShape {
 		* Asks the client to refresh all diagnostics provided by this server by
 		* pull for the corresponding documents again.
 		*/
-		refresh(): void;
+		refresh(): Promise<void>;
 
 		/**
 		* Installs a handler for the document diagnostic request.

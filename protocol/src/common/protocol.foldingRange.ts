@@ -15,7 +15,6 @@ import type {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientFoldingRangeKindOptions {
 	/**
@@ -29,7 +28,6 @@ export interface ClientFoldingRangeKindOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientFoldingRangeOptions {
 	/**

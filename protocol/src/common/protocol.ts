@@ -3,12 +3,12 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ProgressToken, RequestHandler, TraceValues } from 'vscode-jsonrpc';
+import { ProgressToken, RequestHandler, TraceValue } from 'vscode-jsonrpc';
 
 import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
 
 import {
-	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, DocumentUri,
+	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, WorkspaceEditMetadata, DocumentUri,
 	TextDocumentIdentifier, VersionedTextDocumentIdentifier, TextDocumentItem, CompletionItem, CompletionList,
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
@@ -118,7 +118,7 @@ import {
 	VersionedNotebookDocumentIdentifier, NotebookDocumentSyncOptions, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType,
 	DidOpenNotebookDocumentParams, DidOpenNotebookDocumentNotification, NotebookCellArrayChange, NotebookDocumentChangeEvent, DidChangeNotebookDocumentParams,
 	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
-	DidCloseNotebookDocumentNotification
+	DidCloseNotebookDocumentNotification, NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook
 } from './protocol.notebook';
 
 import { InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest } from './protocol.inlineCompletion';
@@ -130,14 +130,23 @@ let __noDynamicImport: LocationLink | undefined;
  * A document filter where `language` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentFilterLanguage {
-	/** A language id, like `typescript`. */
+	/**
+	 * A language id, like `typescript`.
+	 */
 	language: string;
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme?: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
+
+	/**
+	 * A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
+	 *
+	 * @since 3.18.0 - support for relative patterns.
+	 */
 	pattern?: string;
 }
 
@@ -145,14 +154,23 @@ export interface TextDocumentFilterLanguage {
  * A document filter where `scheme` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentFilterScheme {
-	/** A language id, like `typescript`. */
+	/**
+	 * A language id, like `typescript`.
+	 */
 	language?: string;
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
+
+	/**
+	 * A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
+	 *
+	 * @since 3.18.0 - support for relative patterns.
+	 */
 	pattern?: string;
 }
 
@@ -160,15 +178,24 @@ export interface TextDocumentFilterScheme {
  * A document filter where `pattern` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentFilterPattern {
-	/** A language id, like `typescript`. */
+	/**
+	 * A language id, like `typescript`.
+	 */
 	language?: string;
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme?: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
-	pattern: string;
+
+	/**
+	 * A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
+	 *
+	 * @since 3.18.0 - support for relative patterns.
+	 */
+	pattern: GlobPattern;
 }
 
 /**
@@ -200,7 +227,7 @@ export type TextDocumentFilter = TextDocumentFilterLanguage | TextDocumentFilter
 export namespace TextDocumentFilter {
 	export function is(value: any): value is TextDocumentFilter {
 		const candidate: TextDocumentFilter = value;
-		return Is.string(candidate) || (Is.string(candidate.language) || Is.string(candidate.scheme) || Is.string(candidate.pattern));
+		return Is.string(candidate) || (Is.string(candidate.language) || Is.string(candidate.scheme) || GlobPattern.is(candidate.pattern));
 	}
 }
 
@@ -208,16 +235,21 @@ export namespace TextDocumentFilter {
  * A notebook document filter where `notebookType` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface NotebookDocumentFilterNotebookType {
-	/** The type of the enclosing notebook. */
+	/**
+	 * The type of the enclosing notebook.
+	 */
 	notebookType: string;
 
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme?: string;
 
-	/** A glob pattern. */
+	/**
+	 * A glob pattern.
+	 */
 	pattern?: string;
 }
 
@@ -225,16 +257,21 @@ export interface NotebookDocumentFilterNotebookType {
  * A notebook document filter where `scheme` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface NotebookDocumentFilterScheme {
-	/** The type of the enclosing notebook. */
+	/**
+	 * The type of the enclosing notebook.
+	 */
 	notebookType?: string;
 
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme: string;
 
-	/** A glob pattern. */
+	/**
+	 * A glob pattern.
+	 */
 	pattern?: string;
 }
 
@@ -242,16 +279,21 @@ export interface NotebookDocumentFilterScheme {
  * A notebook document filter where `pattern` is required field.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface NotebookDocumentFilterPattern {
-	/** The type of the enclosing notebook. */
+	/**
+	 * The type of the enclosing notebook.
+	 */
 	notebookType?: string;
 
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme?: string;
 
-	/** A glob pattern. */
+	/**
+	 * A glob pattern.
+	 */
 	pattern: string;
 }
 
@@ -342,7 +384,7 @@ export namespace DocumentSelector {
 		if (!Array.isArray(value)) {
 			return false;
 		}
-		for (let elem of value) {
+		for (const elem of value) {
 			if (!Is.string(elem) && !TextDocumentFilter.is(elem) && !NotebookCellTextDocumentFilter.is(elem)) {
 				return false;
 			}
@@ -837,6 +879,17 @@ export interface WindowClientCapabilities {
 }
 
 /**
+ * Regular Expression Engines
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export namespace RegularExpressionEngineKind {
+	export const ES2020 = 'ES2020' as const;
+}
+export type RegularExpressionEngineKind = string;
+
+/**
  * Client capabilities specific to regular expressions.
  *
  * @since 3.16.0
@@ -845,7 +898,7 @@ export interface RegularExpressionsClientCapabilities {
 	/**
 	 * The engine's name.
 	 */
-	engine: string;
+	engine: RegularExpressionEngineKind;
 
 	/**
 	 * The engine's version.
@@ -919,7 +972,6 @@ export type PositionEncodingKind = string;
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface StaleRequestSupportOptions {
 	/**
@@ -1119,7 +1171,6 @@ export namespace WorkDoneProgressOptions {
  * Defines workspace specific capabilities of the server.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface WorkspaceOptions {
 	/**
@@ -1364,7 +1415,6 @@ export interface ServerCapabilities<T = LSPAny> {
  *
  * @since 3.15.0
  * @since 3.18.0 ServerInfo type name added.
- * @proposed
  */
 export interface ServerInfo {
 	/**
@@ -1384,7 +1434,6 @@ export interface ServerInfo {
  *
  * @since 3.15.0
  * @since 3.18.0 ClientInfo type name added.
- * @proposed
  */
 export interface ClientInfo {
 	/**
@@ -1473,7 +1522,7 @@ export interface _InitializeParams extends WorkDoneProgressParams {
 	/**
 	 * The initial trace setting. If omitted trace is disabled ('off').
 	 */
-	trace?: TraceValues;
+	trace?: TraceValue;
 }
 
 export type InitializeParams = _InitializeParams & WorkspaceFoldersInitializeParams;
@@ -1664,7 +1713,6 @@ export namespace ShowMessageNotification {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientShowMessageActionItemOptions {
 	/**
@@ -1871,7 +1919,6 @@ export namespace DidOpenTextDocumentNotification {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentContentChangeWholeDocument {
 	/**
@@ -1882,7 +1929,6 @@ export interface TextDocumentContentChangeWholeDocument {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentContentChangePartial {
 	/**
@@ -1915,7 +1961,7 @@ export namespace TextDocumentContentChangeEvent {
 	 * Checks whether the information describes a delta event.
 	 */
 	export function isIncremental(event: TextDocumentContentChangeEvent): event is { range: Range; rangeLength?: uinteger; text: string } {
-		let candidate: { range: Range; rangeLength?: uinteger; text: string } = event as any;
+		const candidate: { range: Range; rangeLength?: uinteger; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range !== undefined &&
 			(candidate.rangeLength === undefined || typeof candidate.rangeLength === 'number');
@@ -1925,7 +1971,7 @@ export namespace TextDocumentContentChangeEvent {
 	 * Checks whether the information describes a full replacement event.
 	 */
 	export function isFull(event: TextDocumentContentChangeEvent): event is { text: string } {
-		let candidate: { range?: Range; rangeLength?: uinteger; text: string } = event as any;
+		const candidate: { range?: Range; rangeLength?: uinteger; text: string } = event as any;
 		return candidate !== undefined && candidate !== null &&
 			typeof candidate.text === 'string' && candidate.range === undefined && candidate.rangeLength === undefined;
 	}
@@ -2228,6 +2274,13 @@ export namespace RelativePattern {
  */
 export type GlobPattern = Pattern | RelativePattern;
 
+export namespace GlobPattern {
+	export function is(value: any): value is GlobPattern {
+		const candidate: GlobPattern = value;
+		return Is.string(candidate) || RelativePattern.is(candidate);
+	}
+}
+
 export interface FileSystemWatcher {
 	/**
 	 * The glob pattern to watch. See {@link GlobPattern glob pattern} for more detail.
@@ -2266,7 +2319,6 @@ export type WatchKind = uinteger;
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientDiagnosticsTagOptions {
 	/**
@@ -2275,10 +2327,11 @@ export interface ClientDiagnosticsTagOptions {
 	valueSet: DiagnosticTag[];
 }
 
+
 /**
- * The publish diagnostic client capabilities.
+ * General diagnostics capabilities for pull and push model.
  */
-export interface PublishDiagnosticsClientCapabilities {
+export interface DiagnosticsCapabilities {
 	/**
 	 * Whether the clients accepts diagnostics with related information.
 	 */
@@ -2291,14 +2344,6 @@ export interface PublishDiagnosticsClientCapabilities {
 	 * @since 3.15.0
 	 */
 	tagSupport?: ClientDiagnosticsTagOptions;
-
-	/**
-	 * Whether the client interprets the version property of the
-	 * `textDocument/publishDiagnostics` notification's parameter.
-	 *
-	 * @since 3.15.0
-	 */
-	versionSupport?: boolean;
 
 	/**
 	 * Client supports a codeDescription property
@@ -2315,6 +2360,19 @@ export interface PublishDiagnosticsClientCapabilities {
 	 * @since 3.16.0
 	 */
 	dataSupport?: boolean;
+}
+
+/**
+ * The publish diagnostic client capabilities.
+ */
+export interface PublishDiagnosticsClientCapabilities extends DiagnosticsCapabilities {
+	/**
+	 * Whether the client interprets the version property of the
+	 * `textDocument/publishDiagnostics` notification's parameter.
+	 *
+	 * @since 3.15.0
+	 */
+	versionSupport?: boolean;
 }
 
 /**
@@ -2373,7 +2431,6 @@ export interface CompletionListCapabilities {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface CompletionItemTagOptions {
 	/**
@@ -2384,7 +2441,6 @@ export interface CompletionItemTagOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCompletionItemResolveOptions {
 	/**
@@ -2395,7 +2451,6 @@ export interface ClientCompletionItemResolveOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCompletionItemInsertTextModeOptions {
 	valueSet: InsertTextMode[];
@@ -2403,7 +2458,6 @@ export interface ClientCompletionItemInsertTextModeOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCompletionItemOptions {
 	/**
@@ -2484,7 +2538,6 @@ export interface ClientCompletionItemOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCompletionItemOptionsKind {
 	/**
@@ -2596,7 +2649,6 @@ export interface CompletionParams extends TextDocumentPositionParams, WorkDonePr
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ServerCompletionItemOptions {
 	/**
@@ -2734,7 +2786,6 @@ export namespace HoverRequest {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSignatureParameterInformationOptions {
 	/**
@@ -2748,7 +2799,6 @@ export interface ClientSignatureParameterInformationOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSignatureInformationOptions {
 	/**
@@ -2769,6 +2819,16 @@ export interface ClientSignatureInformationOptions {
 	 * @since 3.16.0
 	 */
 	activeParameterSupport?: boolean;
+
+	/**
+	 * The client supports the `activeParameter` property on
+	 * `SignatureHelp`/`SignatureInformation` being set to `null` to
+	 * indicate that no parameter should be active.
+	 *
+	 * @since 3.18.0
+   * @proposed
+	 */
+	noActiveParameterSupport?: boolean;
 }
 
 /**
@@ -3117,7 +3177,6 @@ export namespace DocumentSymbolRequest {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCodeActionKindOptions {
 
@@ -3131,7 +3190,6 @@ export interface ClientCodeActionKindOptions {
 }
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCodeActionLiteralOptions {
 	/**
@@ -3143,7 +3201,6 @@ export interface ClientCodeActionLiteralOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientCodeActionResolveOptions {
 	/**
@@ -3211,6 +3268,15 @@ export interface CodeActionClientCapabilities {
 	 * @since 3.16.0
 	 */
 	honorsChangeAnnotations?: boolean;
+
+	/**
+	 * Whether the client supports documentation for a class of
+	 * code actions.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	 documentationSupport?: boolean;
 }
 
 /**
@@ -3234,6 +3300,30 @@ export interface CodeActionParams extends WorkDoneProgressParams, PartialResultP
 }
 
 /**
+ * Documentation for a class of code actions.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface CodeActionKindDocumentation {
+	/**
+	 * The kind of the code action being documented.
+	 *
+	 * If the kind is generic, such as `CodeActionKind.Refactor`, the documentation will be shown whenever any
+	 * refactorings are returned. If the kind if more specific, such as `CodeActionKind.RefactorExtract`, the
+	 * documentation will only be shown when extract refactoring code actions are returned.
+	 */
+	kind: CodeActionKind;
+
+	/**
+	 * Command that is ued to display the documentation to the user.
+	 *
+	 * The title of this documentation code action is taken from {@linkcode Command.title}
+	 */
+	command: Command;
+}
+
+/**
  * Provider options for a {@link CodeActionRequest}.
  */
 export interface CodeActionOptions extends WorkDoneProgressOptions {
@@ -3244,6 +3334,26 @@ export interface CodeActionOptions extends WorkDoneProgressOptions {
 	 * may list out every specific kind they provide.
 	 */
 	codeActionKinds?: CodeActionKind[];
+
+	/**
+	 * Static documentation for a class of code actions.
+	 *
+	 * Documentation from the provider should be shown in the code actions menu if either:
+	 *
+	 * - Code actions of `kind` are requested by the editor. In this case, the editor will show the documentation that
+	 *   most closely matches the requested code action kind. For example, if a provider has documentation for
+	 *   both `Refactor` and `RefactorExtract`, when the user requests code actions for `RefactorExtract`,
+	 *   the editor will use the documentation for `RefactorExtract` instead of the documentation for `Refactor`.
+	 *
+	 * - Any code actions of `kind` are returned by the provider.
+	 *
+	 * At most one documentation entry should be shown per provider.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	documentation?: CodeActionKindDocumentation[];
+
 
 	/**
 	 * The server provides support to resolve additional
@@ -3284,7 +3394,6 @@ export namespace CodeActionResolveRequest {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSymbolKindOptions {
 	/**
@@ -3302,7 +3411,6 @@ export interface ClientSymbolKindOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSymbolTagOptions {
 	/**
@@ -3313,7 +3421,6 @@ export interface ClientSymbolTagOptions {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ClientSymbolResolveOptions {
 	/**
@@ -3362,6 +3469,12 @@ export interface WorkspaceSymbolParams extends WorkDoneProgressParams, PartialRe
 	/**
 	 * A query string to filter symbols by. Clients may send an empty
 	 * string here to request all symbols.
+	 *
+	 * The `query`-parameter should be interpreted in a *relaxed way* as editors
+	 * will apply their own highlighting and scoring on the results. A good rule
+	 * of thumb is to match case-insensitive and to simply check that the
+	 * characters of *query* appear in their order in a candidate symbol.
+	 * Servers shouldn't use prefix, substring, or similar strict matching.
 	 */
 	query: string;
 }
@@ -3884,7 +3997,6 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface PrepareRenamePlaceholder {
 	range: Range;
@@ -3893,7 +4005,6 @@ export interface PrepareRenamePlaceholder {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface PrepareRenameDefaultBehavior {
 	defaultBehavior: boolean;
@@ -3969,7 +4080,6 @@ export namespace ExecuteCommandRequest {
 
 /**
  * @since 3.18.0
- * @proposed
  */
 export interface ChangeAnnotationsSupportOptions {
 	/**
@@ -4020,6 +4130,22 @@ export interface WorkspaceEditClientCapabilities {
 	 * @since 3.16.0
 	 */
 	changeAnnotationSupport?: ChangeAnnotationsSupportOptions;
+
+	/**
+	 * Whether the client supports `WorkspaceEditMetadata` in `WorkspaceEdit`s.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	metadataSupport?: boolean;
+
+	/**
+	 * Whether the client supports snippets as text edits.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	snippetEditSupport?: boolean;
 }
 
 /**
@@ -4037,6 +4163,14 @@ export interface ApplyWorkspaceEditParams {
 	 * The edits to apply.
 	 */
 	edit: WorkspaceEdit;
+
+	/**
+	 * Additional data about the edit.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	metadata?: WorkspaceEditMetadata;
 }
 
 /**
@@ -4131,9 +4265,9 @@ export {
 	VersionedNotebookDocumentIdentifier, NotebookDocumentSyncOptions, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType,
 	DidOpenNotebookDocumentParams, DidOpenNotebookDocumentNotification, NotebookCellArrayChange, NotebookDocumentChangeEvent, DidChangeNotebookDocumentParams,
 	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
-	DidCloseNotebookDocumentNotification,
+	DidCloseNotebookDocumentNotification, NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook,
 	// Inline Completions
-	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest
+	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest,
 };
 
 // To be backwards compatible
