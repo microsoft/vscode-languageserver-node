@@ -16,7 +16,7 @@ import type {
 /**
  * @since 3.18.0
  */
-export interface ClientFoldingRangeKindOptions {
+export type ClientFoldingRangeKindOptions = {
 	/**
 	 * The folding range kind values the client supports. When this
 	 * property exists the client also guarantees that it will
@@ -24,12 +24,12 @@ export interface ClientFoldingRangeKindOptions {
 	 * to a default value when unknown.
 	 */
 	valueSet?: FoldingRangeKind[];
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientFoldingRangeOptions {
+export type ClientFoldingRangeOptions = {
 	/**
 	* If set, the client signals that it supports setting collapsedText on
 	* folding ranges to display custom labels instead of the default text.
@@ -37,7 +37,7 @@ export interface ClientFoldingRangeOptions {
 	* @since 3.17.0
 	*/
 	collapsedText?: boolean;
-}
+};
 
 export interface FoldingRangeClientCapabilities {
 
@@ -84,7 +84,7 @@ export interface FoldingRangeClientCapabilities {
  * @since 3.18.0
  * @proposed
  */
-export interface FoldingRangeWorkspaceClientCapabilities {
+export type FoldingRangeWorkspaceClientCapabilities = {
 
 	/**
 	 * Whether the client implementation supports a refresh request sent from the
@@ -99,7 +99,7 @@ export interface FoldingRangeWorkspaceClientCapabilities {
 	 * @proposed
 	 */
 	refreshSupport?: boolean;
-}
+};
 
 export interface FoldingRangeOptions extends WorkDoneProgressOptions {
 }

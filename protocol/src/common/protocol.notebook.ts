@@ -297,14 +297,14 @@ export type VersionedNotebookDocumentIdentifier = {
 /**
  * @since 3.18.0
  */
-export interface NotebookCellLanguage {
+export type NotebookCellLanguage = {
 	language: string;
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface NotebookDocumentFilterWithNotebook {
+export type NotebookDocumentFilterWithNotebook = {
 	/**
 	 * The notebook to be synced If a string
 	 * value is provided it matches against the
@@ -316,13 +316,13 @@ export interface NotebookDocumentFilterWithNotebook {
 	 * The cells of the matching notebook to be synced.
 	 */
 	cells?: NotebookCellLanguage[];
-}
+};
 
 
 /**
  * @since 3.18.0
  */
-export interface NotebookDocumentFilterWithCells {
+export type NotebookDocumentFilterWithCells = {
 	/**
 	 * The notebook to be synced If a string
 	 * value is provided it matches against the
@@ -334,7 +334,7 @@ export interface NotebookDocumentFilterWithCells {
 	 * The cells of the matching notebook to be synced.
 	 */
 	cells: NotebookCellLanguage[];
-}
+};
 
 /**
  * Options specific to a notebook plus its cells
@@ -451,7 +451,7 @@ export namespace NotebookCellArrayChange {
  *
  * @since 3.18.0
  */
-export interface NotebookDocumentCellChangeStructure {
+export type NotebookDocumentCellChangeStructure = {
 	/**
 	 * The change to the cell array.
 	 */
@@ -466,24 +466,24 @@ export interface NotebookDocumentCellChangeStructure {
 	 * Additional closed cell text documents.
 	 */
 	didClose?: TextDocumentIdentifier[];
-}
+};
 
 /**
  * Content changes to a cell in a notebook document.
  *
  * @since 3.18.0
  */
-export interface NotebookDocumentCellContentChanges {
+export type NotebookDocumentCellContentChanges = {
 	document: VersionedTextDocumentIdentifier;
 	changes: TextDocumentContentChangeEvent[];
-}
+};
 
 /**
  * Cell changes to a notebook document.
  *
  * @since 3.18.0
  */
-export interface NotebookDocumentCellChanges {
+export type NotebookDocumentCellChanges = {
 	/**
 	 * Changes to the cell structure to add or
 	 * remove cells.
@@ -500,7 +500,7 @@ export interface NotebookDocumentCellChanges {
 	 * Changes to the text content of notebook cells.
 	 */
 	textContent?: NotebookDocumentCellContentChanges[];
-}
+};
 
 /**
  * A change event for a notebook document.
