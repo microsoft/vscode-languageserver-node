@@ -132,11 +132,21 @@ let __noDynamicImport: LocationLink | undefined;
  * @since 3.18.0
  */
 export interface TextDocumentFilterLanguage {
-	/** A language id, like `typescript`. */
+	/**
+	 * A language id, like `typescript`.
+	 */
 	language: string;
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme?: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
+
+	/**
+	 * A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
+	 *
+	 * @since 3.18.0 - support for relative patterns.
+	 */
 	pattern?: string;
 }
 
@@ -146,11 +156,21 @@ export interface TextDocumentFilterLanguage {
  * @since 3.18.0
  */
 export interface TextDocumentFilterScheme {
-	/** A language id, like `typescript`. */
+	/**
+	 * A language id, like `typescript`.
+	 */
 	language?: string;
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
+
+	/**
+	 * A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
+	 *
+	 * @since 3.18.0 - support for relative patterns.
+	 */
 	pattern?: string;
 }
 
@@ -160,12 +180,22 @@ export interface TextDocumentFilterScheme {
  * @since 3.18.0
  */
 export interface TextDocumentFilterPattern {
-	/** A language id, like `typescript`. */
+	/**
+	 * A language id, like `typescript`.
+	 */
 	language?: string;
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme?: string;
-	/** A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples. */
-	pattern: string;
+
+	/**
+	 * A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
+	 *
+	 * @since 3.18.0 - support for relative patterns.
+	 */
+	pattern: GlobPattern;
 }
 
 /**
@@ -197,7 +227,7 @@ export type TextDocumentFilter = TextDocumentFilterLanguage | TextDocumentFilter
 export namespace TextDocumentFilter {
 	export function is(value: any): value is TextDocumentFilter {
 		const candidate: TextDocumentFilter = value;
-		return Is.string(candidate) || (Is.string(candidate.language) || Is.string(candidate.scheme) || Is.string(candidate.pattern));
+		return Is.string(candidate) || (Is.string(candidate.language) || Is.string(candidate.scheme) || GlobPattern.is(candidate.pattern));
 	}
 }
 
@@ -207,13 +237,19 @@ export namespace TextDocumentFilter {
  * @since 3.18.0
  */
 export interface NotebookDocumentFilterNotebookType {
-	/** The type of the enclosing notebook. */
+	/**
+	 * The type of the enclosing notebook.
+	 */
 	notebookType: string;
 
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme?: string;
 
-	/** A glob pattern. */
+	/**
+	 * A glob pattern.
+	 */
 	pattern?: string;
 }
 
@@ -223,13 +259,19 @@ export interface NotebookDocumentFilterNotebookType {
  * @since 3.18.0
  */
 export interface NotebookDocumentFilterScheme {
-	/** The type of the enclosing notebook. */
+	/**
+	 * The type of the enclosing notebook.
+	 */
 	notebookType?: string;
 
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme: string;
 
-	/** A glob pattern. */
+	/**
+	 * A glob pattern.
+	 */
 	pattern?: string;
 }
 
@@ -239,13 +281,19 @@ export interface NotebookDocumentFilterScheme {
  * @since 3.18.0
  */
 export interface NotebookDocumentFilterPattern {
-	/** The type of the enclosing notebook. */
+	/**
+	 * The type of the enclosing notebook.
+	 */
 	notebookType?: string;
 
-	/** A Uri {@link Uri.scheme scheme}, like `file` or `untitled`. */
+	/**
+	 * A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
+	 */
 	scheme?: string;
 
-	/** A glob pattern. */
+	/**
+	 * A glob pattern.
+	 */
 	pattern: string;
 }
 
@@ -2225,6 +2273,13 @@ export namespace RelativePattern {
  * @since 3.17.0
  */
 export type GlobPattern = Pattern | RelativePattern;
+
+export namespace GlobPattern {
+	export function is(value: any): value is GlobPattern {
+		const candidate: GlobPattern = value;
+		return Is.string(candidate) || RelativePattern.is(candidate);
+	}
+}
 
 export interface FileSystemWatcher {
 	/**

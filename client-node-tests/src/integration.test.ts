@@ -2190,7 +2190,7 @@ suite('Server activation', () => {
 	test('Start server on language feature', async () => {
 		const client = createClient();
 		assert.strictEqual(client.state, lsclient.State.Stopped);
-		const started = checkServerStart(client, vscode.languages.registerDeclarationProvider(documentSelector, {
+		const started = checkServerStart(client, vscode.languages.registerDeclarationProvider(client.protocol2CodeConverter.asDocumentSelector(documentSelector), {
 			provideDeclaration: async () => {
 				await client.start();
 				return undefined;
