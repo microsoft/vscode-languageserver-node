@@ -187,7 +187,7 @@ export type Request = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -249,7 +249,7 @@ export type Notification = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -299,7 +299,7 @@ export type Property = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -357,7 +357,7 @@ export type Structure = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -397,7 +397,7 @@ export type StructureLiteral = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -442,7 +442,7 @@ export type TypeAlias = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -486,7 +486,7 @@ export type EnumerationEntry = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -544,7 +544,7 @@ export type Enumeration = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 

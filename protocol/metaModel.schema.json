@@ -114,6 +114,13 @@
           "description": "Since when (release number) this enumeration is available. Is undefined if not known.",
           "type": "string"
         },
+        "sinceTags": {
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "supportsCustomValues": {
           "description": "Whether the enumeration supports custom values (e.g. values which are not part of the set defined in `values`). If omitted no custom values are supported.",
           "type": "boolean"
@@ -160,6 +167,13 @@
         "since": {
           "description": "Since when (release number) this enumeration entry is available. Is undefined if not known.",
           "type": "string"
+        },
+        "sinceTags": {
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "value": {
           "description": "The value.",
@@ -393,6 +407,13 @@
         "since": {
           "description": "Since when (release number) this notification is available. Is undefined if not known.",
           "type": "string"
+        },
+        "sinceTags": {
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -449,6 +470,13 @@
         "since": {
           "description": "Since when (release number) this property is available. Is undefined if not known.",
           "type": "string"
+        },
+        "sinceTags": {
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "type": {
           "$ref": "#/definitions/Type",
@@ -540,6 +568,17 @@
         "since": {
           "description": "Since when (release number) this request is available. Is undefined if not known.",
           "type": "string"
+        },
+        "sinceTags": {
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "typeName": {
+          "description": "The type name of the request if any.",
+          "type": "string"
         }
       },
       "required": [
@@ -611,6 +650,13 @@
         "since": {
           "description": "Since when (release number) this structure is available. Is undefined if not known.",
           "type": "string"
+        },
+        "sinceTags": {
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -645,6 +691,13 @@
         "since": {
           "description": "Since when (release number) this structure is available. Is undefined if not known.",
           "type": "string"
+        },
+        "sinceTags": {
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "required": [
@@ -751,6 +804,13 @@
         "since": {
           "description": "Since when (release number) this structure is available. Is undefined if not known.",
           "type": "string"
+        },
+        "sinceTags": {
+          "description": "All since tags in case there was more than one tag. Is undefined if not known.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "type": {
           "$ref": "#/definitions/Type",
