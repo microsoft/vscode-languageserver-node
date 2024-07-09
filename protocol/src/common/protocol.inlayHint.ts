@@ -12,12 +12,12 @@ import type { StaticRegistrationOptions, TextDocumentRegistrationOptions, WorkDo
 /**
  * @since 3.18.0
  */
-export interface ClientInlayHintResolveOptions {
+export type ClientInlayHintResolveOptions = {
 	/**
 	 * The properties that a client can resolve lazily.
 	 */
 	properties: string[];
-}
+};
 /**
  * Inlay hint client capabilities.
  *
