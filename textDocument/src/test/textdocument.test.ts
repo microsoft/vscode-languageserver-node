@@ -136,15 +136,14 @@ suite('Text Document Lines Model Validator', () => {
 
 	test('Invalid inputs at end of line', () => {
 		let document = newDocument('A\nB\rC\r\nD');
-		assert.equal(document.offsetAt(Positions.create(0, 10)), 2);
-		assert.equal(document.offsetAt(Positions.create(1, 10)), 4);
-		assert.equal(document.offsetAt(Positions.create(2, 2)), 6); // between \r and \n
-		assert.equal(document.offsetAt(Positions.create(2, 3)), 7);
-		assert.equal(document.offsetAt(Positions.create(2, 10)), 7);
+		assert.equal(document.offsetAt(Positions.create(0, 10)), 1);
+		assert.equal(document.offsetAt(Positions.create(1, 10)), 3);
+		assert.equal(document.offsetAt(Positions.create(2, 2)), 5); // between \r and \n
+		assert.equal(document.offsetAt(Positions.create(2, 3)), 5);
+		assert.equal(document.offsetAt(Positions.create(2, 10)), 5);
 		assert.equal(document.offsetAt(Positions.create(3, 10)), 8);
 
-		// TODO: this should be (2, 1)!
-		assert.deepEqual(document.positionAt(6), Positions.create(2, 2)); // between \r and \n
+		assert.deepEqual(document.positionAt(6), Positions.create(2, 1)); // between \r and \n
 	});
 });
 
