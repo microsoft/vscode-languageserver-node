@@ -4,13 +4,15 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { strictEqual, ok } from 'assert';
+import { Uri } from 'vscode';
 
 import {
 	Position, Range, TextDocumentIdentifier, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
 	Diagnostic, DiagnosticSeverity, WorkspaceChange, TextDocumentEdit, CreateFile, RenameFile, DeleteFile, ChangeAnnotation,
-	AnnotatedTextEdit,
-	TextEdit
+	AnnotatedTextEdit, TextEdit, type RelativePattern
 } from 'vscode-languageclient';
+
+import { $GlobPattern } from 'vscode-languageclient/$test/common/diagnostic';
 
 suite('Protocol Helper Tests', () => {
 	function rangeEqual(actual: Range, expected: Range) {
@@ -201,5 +203,19 @@ suite('Protocol Helper Tests', () => {
 		strictEqual(annotation.label, 'label');
 		strictEqual(annotation.needsConfirmation, true);
 		strictEqual(annotation.description, 'description');
+	});
+
+	test('Relative Pattern', () => {
+		if (process.platform === 'win32') {
+			const pattern: RelativePattern = { baseUri: Uri.file('C:\\folder1\\folder2').fsPath, pattern: '**/*.txt' };
+			ok($GlobPattern.match(pattern, Uri.file('c:\\folder1\\folder2\\file.txt')));
+			ok($GlobPattern.match(pattern, Uri.file('c:\\folder1\\folder2\\folder3\\file.txt')));
+			ok(!$GlobPattern.match(pattern, Uri.file('c:\\folder1\\folder3\\file.txt')));
+		} else {
+			const pattern: RelativePattern = { baseUri: Uri.file('/folder1/folder2').fsPath, pattern: '**/*.txt' };
+			ok($GlobPattern.match(pattern, Uri.file('/folder1/folder2/file.txt')));
+			ok($GlobPattern.match(pattern, Uri.file('/folder1/folder2/folder3/file.txt')));
+			ok(!$GlobPattern.match(pattern, Uri.file('/folder1/folder3/file.txt')));
+		}
 	});
 });

@@ -250,6 +250,7 @@ export interface Converter {
 	asTypeHierarchyItems(items: ls.TypeHierarchyItem[], token?: code.CancellationToken): Promise<code.TypeHierarchyItem[]>;
 	asTypeHierarchyItems(items: ls.TypeHierarchyItem[] | null, token?: code.CancellationToken): Promise<code.TypeHierarchyItem[] | undefined>;
 
+	asGlobPattern(pattern: undefined | null): undefined;
 	asGlobPattern(pattern: ls.GlobPattern): code.GlobPattern | undefined;
 
 	asInlineCompletionResult(value: undefined | null, token?: code.CancellationToken): Promise<undefined>;
@@ -305,7 +306,7 @@ export function createConverter(
 					result.push({ notebookType: notebookType, scheme: filter.notebook.scheme, pattern: filter.notebook.pattern, language: filter.language });
 				}
 			} else if (TextDocumentFilter.is(filter)) {
-				result.push({ language: filter.language, scheme: filter.scheme, pattern: filter.pattern });
+				result.push({ language: filter.language, scheme: filter.scheme, pattern: asGlobPattern(filter.pattern) });
 			}
 		}
 		return result;
@@ -1438,7 +1439,9 @@ export function createConverter(
 		return async.map(items, (asTypeHierarchyItem as (item: ls.TypeHierarchyItem) => code.TypeHierarchyItem), token);
 	}
 
-	function asGlobPattern(pattern: ls.GlobPattern): code.GlobPattern | undefined {
+	function asGlobPattern(pattern: undefined | null): undefined;
+	function asGlobPattern(pattern: ls.GlobPattern | null | undefined): code.GlobPattern | undefined;
+	function asGlobPattern(pattern: ls.GlobPattern | null | undefined): code.GlobPattern | undefined {
 		if (Is.string(pattern)) {
 			return pattern;
 		}
