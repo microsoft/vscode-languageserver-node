@@ -250,7 +250,7 @@ export type NotebookDocumentFilterNotebookType = {
 	/**
 	 * A glob pattern.
 	 */
-	pattern?: string;
+	pattern?: GlobPattern;
 };
 
 /**
@@ -272,7 +272,7 @@ export type NotebookDocumentFilterScheme = {
 	/**
 	 * A glob pattern.
 	 */
-	pattern?: string;
+	pattern?: GlobPattern;
 };
 
 /**
@@ -294,7 +294,7 @@ export type NotebookDocumentFilterPattern = {
 	/**
 	 * A glob pattern.
 	 */
-	pattern: string;
+	pattern: GlobPattern;
 };
 
 /**

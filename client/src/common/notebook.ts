@@ -4,7 +4,6 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
-import * as minimatch from 'minimatch';
 
 import * as proto from 'vscode-languageserver-protocol';
 import {
@@ -18,6 +17,7 @@ import * as Is from './utils/is';
 import * as _c2p from './codeConverter';
 import * as _p2c from './protocolConverter';
 import { DynamicFeature, FeatureClient, RegistrationData, FeatureState } from './features';
+import { matchGlobPattern } from './utils/globPattern';
 
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -285,11 +285,7 @@ namespace $NotebookDocumentFilter {
 			return false;
 		}
 		if (filter.pattern !== undefined) {
-			const matcher = new minimatch.Minimatch(filter.pattern, { noext: true });
-			if (!matcher.makeRe()) {
-				return false;
-			}
-			if (!matcher.match(uri.fsPath)) {
+			if (!matchGlobPattern(filter.pattern, uri)) {
 				return false;
 			}
 		}
@@ -316,7 +312,7 @@ namespace $NotebookDocumentSyncOptions {
 		return result;
 	}
 
-	function asDocumentFilter(notebookType: string, scheme: string | undefined, pattern: string | undefined, language: string | undefined): proto.NotebookCellTextDocumentFilter {
+	function asDocumentFilter(notebookType: string, scheme: string | undefined, pattern: proto.GlobPattern | undefined, language: string | undefined): proto.NotebookCellTextDocumentFilter {
 		return scheme === undefined && pattern === undefined
 			? { notebook: notebookType, language }
 			: { notebook: { notebookType, scheme, pattern }, language };

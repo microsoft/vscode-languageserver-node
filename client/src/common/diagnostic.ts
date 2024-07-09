@@ -3,8 +3,6 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as minimatch from 'minimatch';
-
 import {
 	Disposable, languages as Languages, window as Window, workspace as Workspace, CancellationToken, ProviderResult, Diagnostic as VDiagnostic,
 	CancellationTokenSource, TextDocument, CancellationError, Event as VEvent, EventEmitter, DiagnosticCollection, Uri, workspace, NotebookCell
@@ -15,11 +13,12 @@ import {
 	DidSaveTextDocumentNotification, DidCloseTextDocumentNotification, LinkedMap, Touch, RAL, TextDocumentFilter, PreviousResultId,
 	DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams, DocumentDiagnosticRequest, DocumentDiagnosticReportKind,
 	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticRequest, WorkspaceDiagnosticParams, DiagnosticOptions, DiagnosticRefreshRequest, DiagnosticTag,
-	NotebookDocumentSyncRegistrationType,
-	type GlobPattern
+	NotebookDocumentSyncRegistrationType
 } from 'vscode-languageserver-protocol';
 
 import { generateUuid } from './utils/uuid';
+import { matchGlobPattern } from './utils/globPattern';
+
 import {
 	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError, type TabsModel
 } from './features';
@@ -756,27 +755,6 @@ class BackgroundScheduler implements Disposable {
 	}
 }
 
-export namespace $GlobPattern {
-	export function match(pattern: GlobPattern, resource: Uri): boolean {
-		let miniMatchPattern: string;
-		if (typeof pattern === 'string') {
-			miniMatchPattern = pattern.replace(/\\/g, '/');
-		} else {
-			try {
-				const baseUri = Uri.parse(typeof pattern.baseUri === 'string' ? pattern.baseUri : pattern.baseUri.uri);
-				miniMatchPattern = baseUri.with({ path: baseUri.path + '/' + pattern.pattern }).fsPath.replace(/\\/g, '/');
-			} catch (error) {
-				return false;
-			}
-		}
-		const matcher = new minimatch.Minimatch(miniMatchPattern, { noext: true });
-		if (!matcher.makeRe()) {
-			return false;
-		}
-		return matcher.match(resource.fsPath);
-	}
-}
-
 class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 
 	public readonly disposable: Disposable;
@@ -802,7 +780,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			if (filter.scheme !== undefined && filter.scheme !== '*' && filter.scheme !== resource.scheme) {
 				return false;
 			}
-			if (filter.pattern !== undefined && !$GlobPattern.match(filter.pattern, resource)) {
+			if (filter.pattern !== undefined && !matchGlobPattern(filter.pattern, resource)) {
 				return false;
 			}
 			return true;
