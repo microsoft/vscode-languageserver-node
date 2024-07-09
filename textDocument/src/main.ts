@@ -320,7 +320,7 @@ class FullTextDocument implements TextDocument {
 	}
 
 	private ensureBeforeEOL(offset: number, lineOffset: number): number {
-		while (offset > lineOffset && isEOLChar(this._content.charCodeAt(offset - 1))) {
+		while (offset > lineOffset && isEOL(this._content.charCodeAt(offset - 1))) {
 			offset--;
 		}
 		return offset;
@@ -452,7 +452,7 @@ function computeLineOffsets(text: string, isAtLineStart: boolean, textOffset = 0
 	const result: number[] = isAtLineStart ? [textOffset] : [];
 	for (let i = 0; i < text.length; i++) {
 		const ch = text.charCodeAt(i);
-		if (isEOLChar(ch)) {
+		if (isEOL(ch)) {
 			if (ch === CharCode.CarriageReturn && i + 1 < text.length && text.charCodeAt(i + 1) === CharCode.LineFeed) {
 				i++;
 			}
@@ -462,7 +462,7 @@ function computeLineOffsets(text: string, isAtLineStart: boolean, textOffset = 0
 	return result;
 }
 
-function isEOLChar(char: number) {
+function isEOL(char: number) {
 	return char === CharCode.CarriageReturn || char === CharCode.LineFeed;
 }
 
