@@ -297,6 +297,8 @@ class FullTextDocument implements TextDocument {
 		// low is the least x for which the line offset is larger than the current offset
 		// or array.length if no line offset is larger than the current offset
 		const line = low - 1;
+
+		offset = this.ensureBeforeEOL(offset, lineOffsets[line]);
 		return { line, character: offset - lineOffsets[line] };
 	}
 
@@ -308,8 +310,20 @@ class FullTextDocument implements TextDocument {
 			return 0;
 		}
 		const lineOffset = lineOffsets[position.line];
+		if (position.character <= 0) {
+			return lineOffset;
+		}
+
 		const nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : this._content.length;
-		return Math.max(Math.min(lineOffset + position.character, nextLineOffset), lineOffset);
+		const offset = Math.min(lineOffset + position.character, nextLineOffset);
+		return this.ensureBeforeEOL(offset, lineOffset);
+	}
+
+	private ensureBeforeEOL(offset: number, lineOffset: number): number {
+		while (offset > lineOffset && isEOL(this._content.charCodeAt(offset - 1))) {
+			offset--;
+		}
+		return offset;
 	}
 
 	public get lineCount() {
@@ -438,7 +452,7 @@ function computeLineOffsets(text: string, isAtLineStart: boolean, textOffset = 0
 	const result: number[] = isAtLineStart ? [textOffset] : [];
 	for (let i = 0; i < text.length; i++) {
 		const ch = text.charCodeAt(i);
-		if (ch === CharCode.CarriageReturn || ch === CharCode.LineFeed) {
+		if (isEOL(ch)) {
 			if (ch === CharCode.CarriageReturn && i + 1 < text.length && text.charCodeAt(i + 1) === CharCode.LineFeed) {
 				i++;
 			}
@@ -446,6 +460,10 @@ function computeLineOffsets(text: string, isAtLineStart: boolean, textOffset = 0
 		}
 	}
 	return result;
+}
+
+function isEOL(char: number) {
+	return char === CharCode.CarriageReturn || char === CharCode.LineFeed;
 }
 
 function getWellformedRange(range: Range): Range {
