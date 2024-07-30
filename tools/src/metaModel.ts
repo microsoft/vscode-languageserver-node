@@ -187,7 +187,7 @@ export type Request = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -209,9 +209,14 @@ export type Request = {
  */
 export type Notification = {
 	/**
-	 * The request's method name.
+	 * The notifications's method name.
 	 */
 	method: string;
+
+	/**
+	 * The type name of the notifications if any.
+	 */
+	typeName?: string;
 
 	/**
 	 * The parameter type(s) if any.
@@ -220,7 +225,7 @@ export type Notification = {
 
 	/**
 	 * Optional a dynamic registration method if it
-	 * different from the request's method.
+	 * different from the notifications's method.
 	 */
 	registrationMethod?: string;
 
@@ -249,7 +254,7 @@ export type Notification = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -299,7 +304,7 @@ export type Property = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -357,7 +362,7 @@ export type Structure = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -397,7 +402,7 @@ export type StructureLiteral = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -442,7 +447,7 @@ export type TypeAlias = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -486,7 +491,7 @@ export type EnumerationEntry = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 
@@ -544,7 +549,7 @@ export type Enumeration = {
 
 	/**
 	 * All since tags in case there was more than one tag.
-	 * Is undefined of not known.
+	 * Is undefined if not known.
 	 */
 	sinceTags?: string[];
 

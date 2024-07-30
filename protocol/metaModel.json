@@ -1936,6 +1936,7 @@
 	"notifications": [
 		{
 			"method": "workspace/didChangeWorkspaceFolders",
+			"typeName": "DidChangeWorkspaceFoldersNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -1945,6 +1946,7 @@
 		},
 		{
 			"method": "window/workDoneProgress/cancel",
+			"typeName": "WorkDoneProgressCancelNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -1954,6 +1956,7 @@
 		},
 		{
 			"method": "workspace/didCreateFiles",
+			"typeName": "DidCreateFilesNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -1968,6 +1971,7 @@
 		},
 		{
 			"method": "workspace/didRenameFiles",
+			"typeName": "DidRenameFilesNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -1982,6 +1986,7 @@
 		},
 		{
 			"method": "workspace/didDeleteFiles",
+			"typeName": "DidDeleteFilesNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -1996,6 +2001,7 @@
 		},
 		{
 			"method": "notebookDocument/didOpen",
+			"typeName": "DidOpenNotebookDocumentNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2011,6 +2017,7 @@
 		},
 		{
 			"method": "notebookDocument/didChange",
+			"typeName": "DidChangeNotebookDocumentNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2024,6 +2031,7 @@
 		},
 		{
 			"method": "notebookDocument/didSave",
+			"typeName": "DidSaveNotebookDocumentNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2039,6 +2047,7 @@
 		},
 		{
 			"method": "notebookDocument/didClose",
+			"typeName": "DidCloseNotebookDocumentNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2054,6 +2063,7 @@
 		},
 		{
 			"method": "initialized",
+			"typeName": "InitializedNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2063,11 +2073,13 @@
 		},
 		{
 			"method": "exit",
+			"typeName": "ExitNotification",
 			"messageDirection": "clientToServer",
 			"documentation": "The exit event is sent from the client to the server to\nask the server to exit its process."
 		},
 		{
 			"method": "workspace/didChangeConfiguration",
+			"typeName": "DidChangeConfigurationNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2081,6 +2093,7 @@
 		},
 		{
 			"method": "window/showMessage",
+			"typeName": "ShowMessageNotification",
 			"messageDirection": "serverToClient",
 			"params": {
 				"kind": "reference",
@@ -2090,6 +2103,7 @@
 		},
 		{
 			"method": "window/logMessage",
+			"typeName": "LogMessageNotification",
 			"messageDirection": "serverToClient",
 			"params": {
 				"kind": "reference",
@@ -2099,6 +2113,7 @@
 		},
 		{
 			"method": "telemetry/event",
+			"typeName": "TelemetryEventNotification",
 			"messageDirection": "serverToClient",
 			"params": {
 				"kind": "reference",
@@ -2108,6 +2123,7 @@
 		},
 		{
 			"method": "textDocument/didOpen",
+			"typeName": "DidOpenTextDocumentNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2121,6 +2137,7 @@
 		},
 		{
 			"method": "textDocument/didChange",
+			"typeName": "DidChangeTextDocumentNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2134,6 +2151,7 @@
 		},
 		{
 			"method": "textDocument/didClose",
+			"typeName": "DidCloseTextDocumentNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2147,6 +2165,7 @@
 		},
 		{
 			"method": "textDocument/didSave",
+			"typeName": "DidSaveTextDocumentNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2160,6 +2179,7 @@
 		},
 		{
 			"method": "textDocument/willSave",
+			"typeName": "WillSaveTextDocumentNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2173,6 +2193,7 @@
 		},
 		{
 			"method": "workspace/didChangeWatchedFiles",
+			"typeName": "DidChangeWatchedFilesNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2186,6 +2207,7 @@
 		},
 		{
 			"method": "textDocument/publishDiagnostics",
+			"typeName": "PublishDiagnosticsNotification",
 			"messageDirection": "serverToClient",
 			"params": {
 				"kind": "reference",
@@ -2195,6 +2217,7 @@
 		},
 		{
 			"method": "$/setTrace",
+			"typeName": "SetTraceNotification",
 			"messageDirection": "clientToServer",
 			"params": {
 				"kind": "reference",
@@ -2203,6 +2226,7 @@
 		},
 		{
 			"method": "$/logTrace",
+			"typeName": "LogTraceNotification",
 			"messageDirection": "serverToClient",
 			"params": {
 				"kind": "reference",
@@ -2211,6 +2235,7 @@
 		},
 		{
 			"method": "$/cancelRequest",
+			"typeName": "CancelNotification",
 			"messageDirection": "both",
 			"params": {
 				"kind": "reference",
@@ -2219,6 +2244,7 @@
 		},
 		{
 			"method": "$/progress",
+			"typeName": "ProgressNotification",
 			"messageDirection": "both",
 			"params": {
 				"kind": "reference",
@@ -5711,7 +5737,7 @@
 						"kind": "base",
 						"name": "string"
 					},
-					"documentation": "A query string to filter symbols by. Clients may send an empty\nstring here to request all symbols."
+					"documentation": "A query string to filter symbols by. Clients may send an empty\nstring here to request all symbols.\n\nThe `query`-parameter should be interpreted in a *relaxed way* as editors\nwill apply their own highlighting and scoring on the results. A good rule\nof thumb is to match case-insensitive and to simply check that the\ncharacters of *query* appear in their order in a candidate symbol.\nServers shouldn't use prefix, substring, or similar strict matching."
 				}
 			],
 			"mixins": [
@@ -8804,7 +8830,7 @@
 						"name": "DiagnosticSeverity"
 					},
 					"optional": true,
-					"documentation": "The diagnostic's severity. Can be omitted. If omitted it is up to the\nclient to interpret diagnostics as error, warning, info or hint."
+					"documentation": "The diagnostic's severity. To avoid interpretation mismatches when a\nserver is used with different clients it is highly recommended that servers\nalways provide a severity value."
 				},
 				{
 					"name": "code",
@@ -11500,11 +11526,12 @@
 				{
 					"name": "pattern",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "GlobPattern"
 					},
 					"optional": true,
-					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
+					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.\n\n@since 3.18.0 - support for relative patterns.",
+					"since": "3.18.0 - support for relative patterns."
 				}
 			],
 			"documentation": "A document filter where `language` is required field.\n\n@since 3.18.0",
@@ -11533,11 +11560,12 @@
 				{
 					"name": "pattern",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "GlobPattern"
 					},
 					"optional": true,
-					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
+					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.\n\n@since 3.18.0 - support for relative patterns.",
+					"since": "3.18.0 - support for relative patterns."
 				}
 			],
 			"documentation": "A document filter where `scheme` is required field.\n\n@since 3.18.0",
@@ -11567,10 +11595,11 @@
 				{
 					"name": "pattern",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "GlobPattern"
 					},
-					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples."
+					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.\n\n@since 3.18.0 - support for relative patterns.",
+					"since": "3.18.0 - support for relative patterns."
 				}
 			],
 			"documentation": "A document filter where `pattern` is required field.\n\n@since 3.18.0",
@@ -11599,8 +11628,8 @@
 				{
 					"name": "pattern",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "GlobPattern"
 					},
 					"optional": true,
 					"documentation": "A glob pattern."
@@ -11632,8 +11661,8 @@
 				{
 					"name": "pattern",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "GlobPattern"
 					},
 					"optional": true,
 					"documentation": "A glob pattern."
@@ -11666,8 +11695,8 @@
 				{
 					"name": "pattern",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "reference",
+						"name": "GlobPattern"
 					},
 					"documentation": "A glob pattern."
 				}
@@ -12497,6 +12526,16 @@
 					},
 					"optional": true,
 					"documentation": "Whether code lens supports dynamic registration."
+				},
+				{
+					"name": "resolveSupport",
+					"type": {
+						"kind": "reference",
+						"name": "ClientCodeLensResolveOptions"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports resolving additional code lens\nproperties via a separate `codeLens/resolve` request.\n\n@since 3.18.0",
+					"since": "3.18.0"
 				}
 			],
 			"documentation": "The client capabilities  of a {@link CodeLensRequest}."
@@ -13399,6 +13438,24 @@
 		},
 		{
 			"name": "ClientCodeActionResolveOptions",
+			"properties": [
+				{
+					"name": "properties",
+					"type": {
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
+					},
+					"documentation": "The properties that a client can resolve lazily."
+				}
+			],
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "ClientCodeLensResolveOptions",
 			"properties": [
 				{
 					"name": "properties",

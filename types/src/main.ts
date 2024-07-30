@@ -1329,12 +1329,12 @@ export namespace WorkspaceEdit {
  * @since 3.18.0
  * @proposed
  */
-export interface WorkspaceEditMetadata {
+export type WorkspaceEditMetadata = {
 	/**
 	 * Signal to the editor that this edit is a refactoring.
 	 */
 	isRefactoring?: boolean;
-}
+};
 
 /**
  * A change to capture text edits for existing resources.
@@ -2453,10 +2453,10 @@ export namespace CompletionItem {
  *
  * @since 3.18.0
  */
-export interface EditRangeWithInsertReplace {
+export type EditRangeWithInsertReplace = {
 	insert: Range;
 	replace: Range;
-}
+};
 
 /**
  * In many cases the items of an actual completion result share the same
@@ -2566,10 +2566,10 @@ export namespace CompletionList {
  * @since 3.18.0
  * @deprecated use MarkupContent instead.
  */
-export interface MarkedStringWithLanguage {
+export type MarkedStringWithLanguage = {
 	language: string;
 	value: string;
-}
+};
 
 /**
  * MarkedString can be used to render human readable text. It is either a markdown string
@@ -3023,7 +3023,9 @@ export namespace SymbolInformation {
  *
  * @since 3.18.0
  */
-export interface LocationUriOnly { uri: DocumentUri }
+export type LocationUriOnly = {
+	uri: DocumentUri;
+};
 
 /**
  * A special workspace symbol that supports locations without a range.
@@ -3366,7 +3368,7 @@ export namespace CodeActionContext {
  *
  * @since 3.18.0
  */
-export interface CodeActionDisabled {
+export type CodeActionDisabled = {
 
 	/**
 	 * Human readable description of why the code action is currently disabled.
@@ -3374,7 +3376,7 @@ export interface CodeActionDisabled {
 	 * This is displayed in the code actions UI.
 	 */
 	reason: string;
-}
+};
 
 /**
  * A code action represents a change that can be performed in code, e.g. to fix a problem or
@@ -4344,7 +4346,7 @@ export namespace InlayHint {
  * @since 3.18.0
  * @proposed
  */
-export interface StringValue {
+export type StringValue = {
 	/**
 	 * The kind of string value.
 	 */
@@ -4354,7 +4356,7 @@ export interface StringValue {
 	 * The snippet string.
 	 */
 	value: string;
-}
+};
 
 export namespace StringValue {
 	export function createSnippet(value: string): StringValue {
@@ -4448,7 +4450,7 @@ export type InlineCompletionTriggerKind = 1 | 2;
  * @since 3.18.0
  * @proposed
  */
-export interface SelectedCompletionInfo {
+export type SelectedCompletionInfo = {
 	/**
 	 * The range that will be replaced if this completion item is accepted.
 	 */
@@ -4458,7 +4460,7 @@ export interface SelectedCompletionInfo {
 	 * The text the range will be replaced with if this completion is accepted.
 	 */
 	text: string;
-}
+};
 
 export namespace SelectedCompletionInfo {
 	export function create(range: Range, text: string): SelectedCompletionInfo {
@@ -4472,7 +4474,7 @@ export namespace SelectedCompletionInfo {
  * @since 3.18.0
  * @proposed
  */
-export interface InlineCompletionContext {
+export type InlineCompletionContext = {
 	/**
 	 * Describes how the inline completion was triggered.
 	 */
@@ -4482,7 +4484,7 @@ export interface InlineCompletionContext {
 	 * Provides information about the currently selected item in the autocomplete widget if it is visible.
 	 */
 	selectedCompletionInfo?: SelectedCompletionInfo;
-}
+};
 
 export namespace InlineCompletionContext{
 	export function create(triggerKind: InlineCompletionTriggerKind, selectedCompletionInfo?: SelectedCompletionInfo): InlineCompletionContext {

@@ -303,7 +303,7 @@ export function createConverter(
 					result.push({notebookType: filter.notebook, language: filter.language});
 				} else {
 					const notebookType = filter.notebook.notebookType ?? '*';
-					result.push({ notebookType: notebookType, scheme: filter.notebook.scheme, pattern: filter.notebook.pattern, language: filter.language });
+					result.push({ notebookType: notebookType, scheme: filter.notebook.scheme, pattern: asGlobPattern(filter.notebook.pattern), language: filter.language });
 				}
 			} else if (TextDocumentFilter.is(filter)) {
 				result.push({ language: filter.language, scheme: filter.scheme, pattern: asGlobPattern(filter.pattern) });

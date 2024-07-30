@@ -131,7 +131,7 @@ let __noDynamicImport: LocationLink | undefined;
  *
  * @since 3.18.0
  */
-export interface TextDocumentFilterLanguage {
+export type TextDocumentFilterLanguage = {
 	/**
 	 * A language id, like `typescript`.
 	 */
@@ -147,15 +147,15 @@ export interface TextDocumentFilterLanguage {
 	 *
 	 * @since 3.18.0 - support for relative patterns.
 	 */
-	pattern?: string;
-}
+	pattern?: GlobPattern;
+};
 
 /**
  * A document filter where `scheme` is required field.
  *
  * @since 3.18.0
  */
-export interface TextDocumentFilterScheme {
+export type TextDocumentFilterScheme = {
 	/**
 	 * A language id, like `typescript`.
 	 */
@@ -171,15 +171,15 @@ export interface TextDocumentFilterScheme {
 	 *
 	 * @since 3.18.0 - support for relative patterns.
 	 */
-	pattern?: string;
-}
+	pattern?: GlobPattern;
+};
 
 /**
  * A document filter where `pattern` is required field.
  *
  * @since 3.18.0
  */
-export interface TextDocumentFilterPattern {
+export type TextDocumentFilterPattern = {
 	/**
 	 * A language id, like `typescript`.
 	 */
@@ -196,7 +196,7 @@ export interface TextDocumentFilterPattern {
 	 * @since 3.18.0 - support for relative patterns.
 	 */
 	pattern: GlobPattern;
-}
+};
 
 /**
  * A document filter denotes a document by different properties like
@@ -236,7 +236,7 @@ export namespace TextDocumentFilter {
  *
  * @since 3.18.0
  */
-export interface NotebookDocumentFilterNotebookType {
+export type NotebookDocumentFilterNotebookType = {
 	/**
 	 * The type of the enclosing notebook.
 	 */
@@ -250,15 +250,15 @@ export interface NotebookDocumentFilterNotebookType {
 	/**
 	 * A glob pattern.
 	 */
-	pattern?: string;
-}
+	pattern?: GlobPattern;
+};
 
 /**
  * A notebook document filter where `scheme` is required field.
  *
  * @since 3.18.0
  */
-export interface NotebookDocumentFilterScheme {
+export type NotebookDocumentFilterScheme = {
 	/**
 	 * The type of the enclosing notebook.
 	 */
@@ -272,15 +272,15 @@ export interface NotebookDocumentFilterScheme {
 	/**
 	 * A glob pattern.
 	 */
-	pattern?: string;
-}
+	pattern?: GlobPattern;
+};
 
 /**
  * A notebook document filter where `pattern` is required field.
  *
  * @since 3.18.0
  */
-export interface NotebookDocumentFilterPattern {
+export type NotebookDocumentFilterPattern = {
 	/**
 	 * The type of the enclosing notebook.
 	 */
@@ -294,8 +294,8 @@ export interface NotebookDocumentFilterPattern {
 	/**
 	 * A glob pattern.
 	 */
-	pattern: string;
-}
+	pattern: GlobPattern;
+};
 
 /**
  * A notebook document filter denotes a notebook document by
@@ -973,7 +973,7 @@ export type PositionEncodingKind = string;
 /**
  * @since 3.18.0
  */
-export interface StaleRequestSupportOptions {
+export type StaleRequestSupportOptions = {
 	/**
 	 * The client will actively cancel the request.
 	 */
@@ -985,7 +985,7 @@ export interface StaleRequestSupportOptions {
 	 * response with error code `ContentModified`
 	 */
 	retryOnContentModified: string[];
-}
+};
 
 /**
  * General client capabilities.
@@ -1172,7 +1172,7 @@ export namespace WorkDoneProgressOptions {
  *
  * @since 3.18.0
  */
-export interface WorkspaceOptions {
+export type WorkspaceOptions = {
 	/**
 	 * The server supports workspace folder.
 	 *
@@ -1186,7 +1186,7 @@ export interface WorkspaceOptions {
 	* @since 3.16.0
 	*/
 	fileOperations?: FileOperationOptions;
-}
+};
 
 /**
  * Defines the capabilities provided by a language
@@ -1416,7 +1416,7 @@ export interface ServerCapabilities<T = LSPAny> {
  * @since 3.15.0
  * @since 3.18.0 ServerInfo type name added.
  */
-export interface ServerInfo {
+export type ServerInfo = {
 	/**
 	 * The name of the server as defined by the server.
 	 */
@@ -1426,7 +1426,7 @@ export interface ServerInfo {
 	 * The server's version as defined by the server.
 	 */
 	version?: string;
-}
+};
 
 
 /**
@@ -1435,7 +1435,7 @@ export interface ServerInfo {
  * @since 3.15.0
  * @since 3.18.0 ClientInfo type name added.
  */
-export interface ClientInfo {
+export type ClientInfo = {
 	/**
 	 * The name of the client as defined by the client.
 	 */
@@ -1445,7 +1445,7 @@ export interface ClientInfo {
 	 * The client's version as defined by the client.
 	 */
 	version?: string;
-}
+};
 
 /**
  * The initialize request is sent from the client to the server.
@@ -1714,14 +1714,14 @@ export namespace ShowMessageNotification {
 /**
  * @since 3.18.0
  */
-export interface ClientShowMessageActionItemOptions {
+export type ClientShowMessageActionItemOptions = {
 	/**
 	 * Whether the client supports additional attributes which
 	 * are preserved and send back to the server in the
 	 * request's response.
 	 */
 	additionalPropertiesSupport?: boolean;
-}
+};
 
 /**
  * Show message request client capabilities
@@ -1920,17 +1920,17 @@ export namespace DidOpenTextDocumentNotification {
 /**
  * @since 3.18.0
  */
-export interface TextDocumentContentChangeWholeDocument {
+export type TextDocumentContentChangeWholeDocument = {
 	/**
 	 * The new text of the whole document.
 	 */
 	text: string;
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface TextDocumentContentChangePartial {
+export type TextDocumentContentChangePartial = {
 	/**
 	 * The range of the document that changed.
 	 */
@@ -1947,7 +1947,7 @@ export interface TextDocumentContentChangePartial {
 	 * The new text for the provided range.
 	 */
 	text: string;
-}
+};
 
 /**
  * An event describing a change to a text document. If only a text is provided
@@ -2320,12 +2320,12 @@ export type WatchKind = uinteger;
 /**
  * @since 3.18.0
  */
-export interface ClientDiagnosticsTagOptions {
+export type ClientDiagnosticsTagOptions = {
 	/**
 	 * The tags supported by the client.
 	 */
 	valueSet: DiagnosticTag[];
-}
+};
 
 
 /**
@@ -2432,34 +2432,34 @@ export interface CompletionListCapabilities {
 /**
  * @since 3.18.0
  */
-export interface CompletionItemTagOptions {
+export type CompletionItemTagOptions = {
 	/**
 	 * The tags supported by the client.
 	 */
 	valueSet: CompletionItemTag[];
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientCompletionItemResolveOptions {
+export type ClientCompletionItemResolveOptions = {
 	/**
 	 * The properties that a client can resolve lazily.
 	 */
 	properties: string[];
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientCompletionItemInsertTextModeOptions {
+export type ClientCompletionItemInsertTextModeOptions = {
 	valueSet: InsertTextMode[];
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientCompletionItemOptions {
+export type ClientCompletionItemOptions = {
 	/**
 	 * Client supports snippets as insert text.
 	 *
@@ -2534,12 +2534,12 @@ export interface ClientCompletionItemOptions {
 	 * @since 3.17.0
 	 */
 	labelDetailsSupport?: boolean;
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientCompletionItemOptionsKind {
+export type ClientCompletionItemOptionsKind = {
 	/**
 	 * The completion item kind values the client supports. When this
 	 * property exists the client also guarantees that it will
@@ -2551,7 +2551,7 @@ export interface ClientCompletionItemOptionsKind {
 	 * the initial version of the protocol.
 	 */
 	valueSet?: CompletionItemKind[];
-}
+};
 
 /**
  * Completion client capabilities
@@ -2650,7 +2650,7 @@ export interface CompletionParams extends TextDocumentPositionParams, WorkDonePr
 /**
  * @since 3.18.0
  */
-export interface ServerCompletionItemOptions {
+export type ServerCompletionItemOptions = {
 	/**
 	 * The server has support for completion item label
 	 * details (see also `CompletionItemLabelDetails`) when
@@ -2659,7 +2659,7 @@ export interface ServerCompletionItemOptions {
 	 * @since 3.17.0
 	 */
 	labelDetailsSupport?: boolean;
-}
+};
 
 /**
  * Completion options.
@@ -2787,7 +2787,7 @@ export namespace HoverRequest {
 /**
  * @since 3.18.0
  */
-export interface ClientSignatureParameterInformationOptions {
+export type ClientSignatureParameterInformationOptions = {
 	/**
 	 * The client supports processing label offsets instead of a
 	 * simple label string.
@@ -2795,12 +2795,12 @@ export interface ClientSignatureParameterInformationOptions {
 	 * @since 3.14.0
 	 */
 	labelOffsetSupport?: boolean;
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientSignatureInformationOptions {
+export type ClientSignatureInformationOptions = {
 	/**
 	 * Client supports the following content formats for the documentation
 	 * property. The order describes the preferred format of the client.
@@ -2826,10 +2826,10 @@ export interface ClientSignatureInformationOptions {
 	 * indicate that no parameter should be active.
 	 *
 	 * @since 3.18.0
-   * @proposed
+     * @proposed
 	 */
 	noActiveParameterSupport?: boolean;
-}
+};
 
 /**
  * Client Capabilities for a {@link SignatureHelpRequest}.
@@ -3178,7 +3178,7 @@ export namespace DocumentSymbolRequest {
 /**
  * @since 3.18.0
  */
-export interface ClientCodeActionKindOptions {
+export type ClientCodeActionKindOptions = {
 
 	/**
 	 * The code action kind values the client supports. When this
@@ -3187,27 +3187,27 @@ export interface ClientCodeActionKindOptions {
 	 * to a default value when unknown.
 	 */
 	valueSet: CodeActionKind[];
-}
+};
 /**
  * @since 3.18.0
  */
-export interface ClientCodeActionLiteralOptions {
+export type ClientCodeActionLiteralOptions = {
 	/**
 	 * The code action kind is support with the following value
 	 * set.
 	 */
 	codeActionKind: ClientCodeActionKindOptions;
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientCodeActionResolveOptions {
+export type ClientCodeActionResolveOptions = {
 	/**
 	 * The properties that a client can resolve lazily.
 	 */
 	properties: string[];
-}
+};
 
 /**
  * The Client Capabilities of a {@link CodeActionRequest}.
@@ -3305,7 +3305,7 @@ export interface CodeActionParams extends WorkDoneProgressParams, PartialResultP
  * @since 3.18.0
  * @proposed
  */
-export interface CodeActionKindDocumentation {
+export type CodeActionKindDocumentation = {
 	/**
 	 * The kind of the code action being documented.
 	 *
@@ -3321,7 +3321,7 @@ export interface CodeActionKindDocumentation {
 	 * The title of this documentation code action is taken from {@linkcode Command.title}
 	 */
 	command: Command;
-}
+};
 
 /**
  * Provider options for a {@link CodeActionRequest}.
@@ -3395,7 +3395,7 @@ export namespace CodeActionResolveRequest {
 /**
  * @since 3.18.0
  */
-export interface ClientSymbolKindOptions {
+export type ClientSymbolKindOptions = {
 	/**
 	 * The symbol kind values the client supports. When this
 	 * property exists the client also guarantees that it will
@@ -3407,28 +3407,28 @@ export interface ClientSymbolKindOptions {
 	 * the initial version of the protocol.
 	 */
 	valueSet?: SymbolKind[];
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientSymbolTagOptions {
+export type ClientSymbolTagOptions = {
 	/**
 	 * The tags supported by the client.
 	 */
 	valueSet: SymbolTag[];
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientSymbolResolveOptions {
+export type ClientSymbolResolveOptions = {
 	/**
 	 * The properties that a client can resolve lazily. Usually
 	 * `location.range`
 	 */
 	properties: string[];
-}
+};
 
 /**
  * Client capabilities for a {@link WorkspaceSymbolRequest}.
@@ -3531,6 +3531,16 @@ export namespace WorkspaceSymbolResolveRequest {
 //---- Code Lens Provider -------------------------------------------
 
 /**
+ * @since 3.18.0
+ */
+export type ClientCodeLensResolveOptions = {
+	/**
+	 * The properties that a client can resolve lazily.
+	 */
+	properties: string[];
+};
+
+/**
  * The client capabilities  of a {@link CodeLensRequest}.
  */
 export interface CodeLensClientCapabilities {
@@ -3538,6 +3548,14 @@ export interface CodeLensClientCapabilities {
 	 * Whether code lens supports dynamic registration.
 	 */
 	dynamicRegistration?: boolean;
+
+	/**
+	 * Whether the client supports resolving additional code lens
+	 * properties via a separate `codeLens/resolve` request.
+	 *
+	 * @since 3.18.0
+	 */
+	resolveSupport?: ClientCodeLensResolveOptions;
 }
 
 /**
@@ -3998,17 +4016,17 @@ export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDon
 /**
  * @since 3.18.0
  */
-export interface PrepareRenamePlaceholder {
+export type PrepareRenamePlaceholder = {
 	range: Range;
 	placeholder: string;
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface PrepareRenameDefaultBehavior {
+export type PrepareRenameDefaultBehavior = {
 	defaultBehavior: boolean;
-}
+};
 
 export type PrepareRenameResult = Range | PrepareRenamePlaceholder | PrepareRenameDefaultBehavior;
 
@@ -4081,14 +4099,14 @@ export namespace ExecuteCommandRequest {
 /**
  * @since 3.18.0
  */
-export interface ChangeAnnotationsSupportOptions {
+export type ChangeAnnotationsSupportOptions = {
 	/**
 	 * Whether the client groups edits with equal labels into tree nodes,
 	 * for instance all edits labelled with "Changes in Strings" would
 	 * be a tree node.
 	 */
 	groupsOnLabel?: boolean;
-}
+};
 
 export interface WorkspaceEditClientCapabilities {
 	/**

@@ -37,18 +37,18 @@ export type TokenFormat = 'relative';
 /**
  * @since 3.18.0
  */
-export interface ClientSemanticTokensRequestFullDelta {
+export type ClientSemanticTokensRequestFullDelta = {
 	/**
 	 * The client will send the `textDocument/semanticTokens/full/delta` request if
 	 * the server provides a corresponding handler.
 	 */
 	delta?: boolean;
-}
+};
 
 /**
  * @since 3.18.0
  */
-export interface ClientSemanticTokensRequestOptions  {
+export type ClientSemanticTokensRequestOptions = {
 
 	/**
 	 * The client will send the `textDocument/semanticTokens/range` request if
@@ -62,7 +62,7 @@ export interface ClientSemanticTokensRequestOptions  {
 	 * the server provides a corresponding handler.
 	 */
 	full?: boolean | ClientSemanticTokensRequestFullDelta;
-}
+};
 
 /**
  * @since 3.16.0
@@ -143,12 +143,12 @@ export interface SemanticTokensClientCapabilities {
  *
  * @since 3.18.0
  */
-export interface SemanticTokensFullDelta {
+export type SemanticTokensFullDelta = {
 	/**
 	 * The server supports deltas for full documents.
 	 */
 	delta?: boolean;
-}
+};
 
 /**
  * @since 3.16.0
