@@ -104,7 +104,7 @@ suite('Text Document Lines Model Validator', () => {
 	});
 
 	test('Invalid inputs at beginning of file', () => {
-		let document = newDocument('ABCDE');
+		const document = newDocument('ABCDE');
 		assert.equal(document.offsetAt(Positions.create(-1, 0)), 0);
 		assert.equal(document.offsetAt(Positions.create(0, -1)), 0);
 		assert.deepEqual(document.positionAt(-1), Positions.create(0, 0));
@@ -127,7 +127,7 @@ suite('Text Document Lines Model Validator', () => {
 	});
 
 	test('Invalid inputs at beginning of line', () => {
-		let document = newDocument('A\nB\rC\r\nD');
+		const document = newDocument('A\nB\rC\r\nD');
 		assert.equal(document.offsetAt(Positions.create(0, -1)), 0);
 		assert.equal(document.offsetAt(Positions.create(1, -1)), 2);
 		assert.equal(document.offsetAt(Positions.create(2, -1)), 4);
@@ -135,7 +135,7 @@ suite('Text Document Lines Model Validator', () => {
 	});
 
 	test('Invalid inputs at end of line', () => {
-		let document = newDocument('A\nB\rC\r\nD');
+		const document = newDocument('A\nB\rC\r\nD');
 		assert.equal(document.offsetAt(Positions.create(0, 10)), 1);
 		assert.equal(document.offsetAt(Positions.create(1, 10)), 3);
 		assert.equal(document.offsetAt(Positions.create(2, 2)), 5); // between \r and \n
