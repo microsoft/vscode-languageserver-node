@@ -530,7 +530,7 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 			if (cellMatches) {
 				// don't use cells from above since there might be more matching cells in the notebook
 				// Since we had a matching cell above we will have matching cells now.
-				const matchingCells = this.mergeCells(syncInfo, [cell]);
+				const matchingCells = this.mergeCells(notebookDocument, syncInfo, [cell]);
 				if (matchingCells !== undefined) {
 					const event = this.asNotebookDocumentChangeEvent(notebookDocument, undefined, syncInfo, matchingCells);
 					if (event !== undefined) {
@@ -911,7 +911,6 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 				}
 			}
 		}
-		const added: vscode.NotebookCell[] = [];
 		if (event.contentChanges !== undefined && event.contentChanges.length > 0) {
 			if (cells === undefined) {
 				cells = new Set(syncInfo.uris);
@@ -922,28 +921,23 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 				}
 				const filtered = this.filterCells(notebookDocument, new Array(...item.addedCells), selector.cells);
 				for (const cell of filtered) {
-					if (!cells.has(cell.document.uri.toString())) {
-						added.push(cell);
-					}
+					cells.add(cell.document.uri.toString());
 				}
 			}
 		}
-		if (cells === undefined && added.length === 0) {
+		if (cells === undefined) {
 			return syncInfo.cells;
 		}
 
+		// Only return the cells that are still in the set, but keep the order
+		// as present in the current notebook.
 		const result: vscode.NotebookCell[] = [];
-		if (cells !== undefined) {
-			for (const item of syncInfo.cells) {
-				if (cells.has(item.document.uri.toString())) {
-					result.push(item);
-				}
+		const current = notebookDocument.getCells();
+		for (const cell of current) {
+			if (cells.has(cell.document.uri.toString())) {
+				result.push(cell);
 			}
 		}
-		if (added.length > 0) {
-			result.push(...added);
-		}
-
 		return result;
 	}
 
@@ -957,10 +951,15 @@ class NotebookDocumentSyncFeatureProvider implements NotebookDocumentSyncFeature
 		return syncInfo !== undefined ? syncInfo.cells : this.getMatchingCells(notebook);
 	}
 
-	private mergeCells(syncInfo: SyncInfo, cells: vscode.NotebookCell[]): vscode.NotebookCell[] {
-		const result = syncInfo.cells.slice();
+	private mergeCells(notebookDocument: vscode.NotebookDocument, syncInfo: SyncInfo, cells: vscode.NotebookCell[]): vscode.NotebookCell[] {
+		const result: vscode.NotebookCell[] = [];
+		const merged = new Set(syncInfo.uris);
 		for (const cell of cells) {
-			if (!syncInfo.uris.has(cell.document.uri.toString())) {
+			merged.add(cell.document.uri.toString());
+		}
+		// Keep the cell order of the current notebook.
+		for (const cell of notebookDocument.getCells()) {
+			if (merged.has(cell.document.uri.toString())) {
 				result.push(cell);
 			}
 		}
