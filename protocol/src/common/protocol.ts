@@ -121,7 +121,13 @@ import {
 	DidCloseNotebookDocumentNotification, NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook
 } from './protocol.notebook';
 
-import { InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest } from './protocol.inlineCompletion';
+import {
+	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest
+} from './protocol.inlineCompletion';
+
+import {
+	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentRequest
+} from './protocol.textDocumentContent';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
@@ -654,6 +660,14 @@ export interface WorkspaceClientCapabilities {
 	 * @proposed
 	 */
 	foldingRange?: FoldingRangeWorkspaceClientCapabilities;
+
+	/**
+	 * Capabilities specific to the `workspace/textDocumentContent` request.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	textDocumentContent?: TextDocumentContentClientCapabilities;
 }
 
 /**
@@ -1186,6 +1200,14 @@ export type WorkspaceOptions = {
 	* @since 3.16.0
 	*/
 	fileOperations?: FileOperationOptions;
+
+	/**
+	 * The server supports the `workspace/textDocumentContent` request.
+	 *
+	 * @since 3.18.0
+	 * @proposed
+	 */
+	textDocumentContent?: TextDocumentContentOptions | TextDocumentContentRegistrationOptions;
 };
 
 /**
@@ -4286,6 +4308,8 @@ export {
 	DidCloseNotebookDocumentNotification, NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook,
 	// Inline Completions
 	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest,
+	// Text Document Content
+	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentRequest
 };
 
 // To be backwards compatible

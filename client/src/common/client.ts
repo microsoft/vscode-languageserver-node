@@ -12,7 +12,8 @@ import {
 	OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DeclarationProvider, ImplementationProvider,
 	DocumentColorProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider, LinkedEditingRangeProvider, TypeHierarchyProvider, WorkspaceSymbolProvider,
 	ProviderResult, TextEdit as VTextEdit, InlineCompletionItemProvider, EventEmitter, type TabChangeEvent, TabInputText, TabInputTextDiff, TabInputCustom,
-	TabInputNotebook
+	TabInputNotebook,
+	type TextDocumentContentProvider
 } from 'vscode';
 
 import {
@@ -38,7 +39,7 @@ import {
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
 	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, HandlerResult,
-	type DidCloseTextDocumentParams
+	type DidCloseTextDocumentParams, type TextDocumentContentRequest
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -94,6 +95,7 @@ import { InlayHintsFeature, InlayHintsMiddleware, InlayHintsProviderShape } from
 import { WorkspaceFoldersFeature, WorkspaceFolderMiddleware } from './workspaceFolder';
 import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature, FileOperationsMiddleware } from './fileOperations';
 import { InlineCompletionItemFeature, InlineCompletionMiddleware } from './inlineCompletion';
+import { TextDocumentContentFeature, type TextDocumentContentMiddleware } from './textDocumentContent';
 import { FileSystemWatcherFeature } from './fileSystemWatcher';
 import { ProgressFeature } from './progress';
 
@@ -342,7 +344,8 @@ export type Middleware = _Middleware & TextDocumentSynchronizationMiddleware & C
 DocumentHighlightMiddleware & DocumentSymbolMiddleware & WorkspaceSymbolMiddleware & ReferencesMiddleware & TypeDefinitionMiddleware & ImplementationMiddleware &
 ColorProviderMiddleware & CodeActionMiddleware & CodeLensMiddleware & FormattingMiddleware & RenameMiddleware & DocumentLinkMiddleware & ExecuteCommandMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
-LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware & InlineCompletionMiddleware & GeneralMiddleware;
+LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware &
+InlineCompletionMiddleware & TextDocumentContentMiddleware & GeneralMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
@@ -1933,6 +1936,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> & DiagnosticFeatureShape;
 	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape;
 	getFeature(request: typeof InlineCompletionRequest.method): (DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>) | undefined;
+	getFeature(request: typeof TextDocumentContentRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<TextDocumentContentProvider> | undefined;
 	getFeature(request: typeof ExecuteCommandRequest.method): DynamicFeature<ExecuteCommandOptions>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
 		return this._dynamicFeatures.get(request);
@@ -2462,7 +2466,8 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 export namespace ProposedFeatures {
 	export function createAll(_client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
 		const result: (StaticFeature | DynamicFeature<any>)[] = [
-			new InlineCompletionItemFeature(_client)
+			new InlineCompletionItemFeature(_client),
+			new TextDocumentContentFeature(_client)
 		];
 		return result;
 	}
