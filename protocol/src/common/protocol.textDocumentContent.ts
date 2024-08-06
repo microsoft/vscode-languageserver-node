@@ -69,3 +69,30 @@ export namespace TextDocumentContentRequest {
 	export const type = new ProtocolRequestType<TextDocumentContentParams, string, void, void, TextDocumentContentRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<TextDocumentContentParams, string, void>;
 }
+
+/**
+ * Parameters for the `workspace/textDocumentContent/refresh` request.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface TextDocumentContentRefreshParams {
+	/**
+	 * The uri of the text document to refresh.
+	 */
+	uri: DocumentUri;
+}
+
+/**
+ * The `workspace/textDocumentContent` request is sent from the server to the client to refresh
+ * the content of a specific text document.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export namespace TextDocumentContentRefreshRequest {
+	export const method: `workspace/textDocumentContent/refresh` = `workspace/textDocumentContent/refresh`;
+	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
+	export const type = new ProtocolRequestType<TextDocumentContentRefreshParams, void, void, void, void>(method);
+	export type HandlerSignature = RequestHandler<TextDocumentContentRefreshParams, void, void>;
+}

@@ -12,8 +12,7 @@ import {
 	OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DeclarationProvider, ImplementationProvider,
 	DocumentColorProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider, LinkedEditingRangeProvider, TypeHierarchyProvider, WorkspaceSymbolProvider,
 	ProviderResult, TextEdit as VTextEdit, InlineCompletionItemProvider, EventEmitter, type TabChangeEvent, TabInputText, TabInputTextDiff, TabInputCustom,
-	TabInputNotebook,
-	type TextDocumentContentProvider
+	TabInputNotebook
 } from 'vscode';
 
 import {
@@ -95,7 +94,7 @@ import { InlayHintsFeature, InlayHintsMiddleware, InlayHintsProviderShape } from
 import { WorkspaceFoldersFeature, WorkspaceFolderMiddleware } from './workspaceFolder';
 import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature, FileOperationsMiddleware } from './fileOperations';
 import { InlineCompletionItemFeature, InlineCompletionMiddleware } from './inlineCompletion';
-import { TextDocumentContentFeature, type TextDocumentContentMiddleware } from './textDocumentContent';
+import { TextDocumentContentFeature, type TextDocumentContentMiddleware, type TextDocumentContentProviderShape } from './textDocumentContent';
 import { FileSystemWatcherFeature } from './fileSystemWatcher';
 import { ProgressFeature } from './progress';
 
@@ -1936,7 +1935,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	getFeature(request: typeof DocumentDiagnosticRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & TextDocumentProviderFeature<DiagnosticProviderShape> & DiagnosticFeatureShape;
 	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape;
 	getFeature(request: typeof InlineCompletionRequest.method): (DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>) | undefined;
-	getFeature(request: typeof TextDocumentContentRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<TextDocumentContentProvider> | undefined;
+	getFeature(request: typeof TextDocumentContentRequest.method): DynamicFeature<TextDocumentRegistrationOptions> & WorkspaceProviderFeature<TextDocumentContentProviderShape> | undefined;
 	getFeature(request: typeof ExecuteCommandRequest.method): DynamicFeature<ExecuteCommandOptions>;
 	public getFeature(request: string): DynamicFeature<any> | undefined {
 		return this._dynamicFeatures.get(request);

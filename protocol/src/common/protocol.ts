@@ -126,7 +126,8 @@ import {
 } from './protocol.inlineCompletion';
 
 import {
-	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentRequest
+	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams,
+	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest
 } from './protocol.textDocumentContent';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
@@ -4309,7 +4310,8 @@ export {
 	// Inline Completions
 	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest,
 	// Text Document Content
-	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentRequest
+	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentRequest,
+	TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest
 };
 
 // To be backwards compatible
