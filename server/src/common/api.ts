@@ -8,6 +8,7 @@ import { SemanticTokensBuilder } from './semanticTokens';
 import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress';
 
 import * as ic from './inlineCompletion.proposed';
+import * as tdc from './textDocumentContent';
 
 export * from 'vscode-languageserver-protocol';
 export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter };
@@ -19,10 +20,11 @@ export { NotebookDocuments };
 export * from './server';
 
 export namespace ProposedFeatures {
-	export const all: Features<_, _, _, _, _, _, ic.InlineCompletionFeatureShape, _> = {
+	export const all: Features<_, _, _, _, _, tdc.TextDocumentContentFeatureShape, ic.InlineCompletionFeatureShape, _> = {
 		__brand: 'features',
+		workspace: tdc.TextDocumentContentFeature,
 		languages: ic.InlineCompletionFeature
 	};
 
-	export type Connection = _Connection<_, _, _, _, _, _, ic.InlineCompletionFeatureShape, _>;
+	export type Connection = _Connection<_, _, _, _, _, tdc.TextDocumentContentFeatureShape, ic.InlineCompletionFeatureShape, _>;
 }

@@ -317,6 +317,9 @@ suite('Client integration', () => {
 						},
 						willDelete: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
 					},
+					textDocumentContent: {
+						scheme: 'content-test'
+					}
 				},
 				linkedEditingRangeProvider: true,
 				diagnosticProvider: {
@@ -1534,6 +1537,24 @@ suite('Client integration', () => {
 		const symbol = await provider.resolveWorkspaceSymbol!(results[0], tokenSource.token);
 		isDefined(symbol);
 		rangeEqual(symbol.location.range, 1, 2, 3, 4);
+	});
+
+	test('Text Document Content', async () => {
+		const providers = client.getFeature(lsclient.TextDocumentContentRequest.method)?.getProviders();
+		isDefined(providers);
+		assert.strictEqual(providers.length, 1);
+		const provider = providers[0].provider;
+		const result = await provider.provideTextDocumentContent(vscode.Uri.parse('content-test:///test.txt'), tokenSource.token);
+		assert.strictEqual(result, 'Some test content');
+
+		let middlewareCalled: boolean = false;
+		middleware.provideTextDocumentContent = (uri, token, next) => {
+			middlewareCalled = true;
+			return next(uri, token);
+		};
+		await provider.provideTextDocumentContent(vscode.Uri.parse('content-test:///test.txt'), tokenSource.token);
+		middleware.provideTextDocumentContent = undefined;
+		assert.strictEqual(middlewareCalled, true);
 	});
 
 	test('General middleware', async () => {

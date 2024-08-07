@@ -11,7 +11,6 @@ import {
 
 import type { Feature, _RemoteWorkspace } from './server';
 
-
 export interface WorkspaceFolders {
 	getWorkspaceFolders(): Promise<WorkspaceFolder[] | null>;
 	onDidChangeWorkspaceFolders: Event<WorkspaceFoldersChangeEvent>;

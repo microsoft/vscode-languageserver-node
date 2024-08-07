@@ -144,6 +144,9 @@ connection.onInitialize((params: InitializeParams): any => {
 					filters: [{ scheme: 'file-test', pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }]
 				},
 			},
+			textDocumentContent: {
+				scheme: 'content-test'
+			}
 		},
 		linkedEditingRangeProvider: true,
 		diagnosticProvider: {
@@ -520,6 +523,10 @@ connection.languages.inlineCompletion.on((_params) => {
 	return [
 		InlineCompletionItem.create('text inline', 'te', Range.create(1,2,3,4))
 	];
+});
+
+connection.workspace.textDocumentContent.on((_params) => {
+	return 'Some test content';
 });
 
 connection.onRequest(

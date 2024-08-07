@@ -17,6 +17,14 @@
 			{
 				"command": "testbed.openFile",
 				"title": "Open Test File"
+			},
+			{
+				"command": "testbed.fileWithContent",
+				"title": "Open file with dynamic content"
+			},
+			{
+				"command": "testbed.refreshContent",
+				"title": "Refresh dynamic content"
 			}
 		],
 		"configuration": {
