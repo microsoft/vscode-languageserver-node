@@ -5,7 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import { commands, ExtensionContext, workspace, window } from 'vscode';
+import { commands, ExtensionContext, workspace, window, Uri } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType } from 'vscode-languageclient/node';
 
 let client: LanguageClient;
@@ -105,6 +105,16 @@ REM or .bmp extension from c:\\source to c:\\images;;`;
 			.then(async doc => {
 				await window.showTextDocument(doc);
 			});
+	});
+
+	commands.registerCommand('testbed.fileWithContent', async () => {
+		const doc = await workspace.openTextDocument(Uri.parse('test-content://file.txt'));
+		await window.showTextDocument(doc);
+	});
+
+	const refreshNotification: NotificationType<string> = new NotificationType<string>('testbed/refreshContent');
+	commands.registerCommand('testbed.refreshContent', async () => {
+		await client.sendNotification(refreshNotification, 'test-content://file.txt');
 	});
 }
 

@@ -17,7 +17,8 @@ import {
 	TextEdit, ProposedFeatures, InsertTextFormat, SelectionRangeRequest, SelectionRange, InsertReplaceEdit,
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
-	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DidChangeConfigurationNotification
+	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DidChangeConfigurationNotification,
+	NotificationType
 } from 'vscode-languageserver/node';
 
 import {
@@ -155,6 +156,9 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					workspaceFolders: {
 						supported: true,
 						changeNotifications: true
+					},
+					textDocumentContent: {
+						scheme: 'test-content'
 					}
 				},
 				implementationProvider: {
@@ -177,7 +181,8 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 					notebookSelector: [{
 						cells: [{ language: 'bat'}]
 					}]
-				}
+				},
+
 			}
 		};
 		setTimeout(() => {
@@ -691,6 +696,17 @@ connection.languages.semanticTokens.onDelta((params) => {
 connection.languages.semanticTokens.onRange((params) => {
 	return { data: [] };
 });
+
+let counter = 0;
+connection.workspace.textDocumentContent.on((_param) => {
+	return `Text content version ${counter++}`;
+});
+
+const refreshNotification: NotificationType<string> = new NotificationType<string>('testbed/refreshContent');
+connection.onNotification(refreshNotification, async (uri) => {
+	await connection.workspace.textDocumentContent.refresh(uri);
+});
+
 
 const notebooks = new NotebookDocuments(TextDocument);
 notebooks.onDidOpen(() => {
