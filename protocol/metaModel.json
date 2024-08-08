@@ -1065,6 +1065,42 @@
 			"proposed": true
 		},
 		{
+			"method": "workspace/textDocumentContent",
+			"typeName": "TextDocumentContentRequest",
+			"result": {
+				"kind": "base",
+				"name": "string"
+			},
+			"messageDirection": "clientToServer",
+			"params": {
+				"kind": "reference",
+				"name": "TextDocumentContentParams"
+			},
+			"registrationOptions": {
+				"kind": "reference",
+				"name": "TextDocumentContentRegistrationOptions"
+			},
+			"documentation": "The `workspace/textDocumentContent` request is sent from the client to the\nserver to request the content of a text document.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
+			"method": "workspace/textDocumentContent/refresh",
+			"typeName": "TextDocumentContentRefreshRequest",
+			"result": {
+				"kind": "base",
+				"name": "null"
+			},
+			"messageDirection": "serverToClient",
+			"params": {
+				"kind": "reference",
+				"name": "TextDocumentContentRefreshParams"
+			},
+			"documentation": "The `workspace/textDocumentContent` request is sent from the server to the client to refresh\nthe content of a specific text document.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
 			"method": "client/registerCapability",
 			"typeName": "RegistrationRequest",
 			"result": {
@@ -4365,6 +4401,57 @@
 				}
 			],
 			"documentation": "Inline completion options used during static or dynamic registration.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
+			"name": "TextDocumentContentParams",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "The uri of the text document."
+				}
+			],
+			"documentation": "Parameters for the `workspace/textDocumentContent` request.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
+			"name": "TextDocumentContentRegistrationOptions",
+			"properties": [],
+			"extends": [
+				{
+					"kind": "reference",
+					"name": "TextDocumentContentOptions"
+				}
+			],
+			"mixins": [
+				{
+					"kind": "reference",
+					"name": "StaticRegistrationOptions"
+				}
+			],
+			"documentation": "Text document content provider registration options.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
+			"name": "TextDocumentContentRefreshParams",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "The uri of the text document to refresh."
+				}
+			],
+			"documentation": "Parameters for the `workspace/textDocumentContent/refresh` request.\n\n@since 3.18.0\n@proposed",
 			"since": "3.18.0",
 			"proposed": true
 		},
@@ -7880,6 +7967,22 @@
 			"proposed": true
 		},
 		{
+			"name": "TextDocumentContentOptions",
+			"properties": [
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The scheme for which the server provides content."
+				}
+			],
+			"documentation": "Text document content provider options.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
 			"name": "Registration",
 			"properties": [
 				{
@@ -10454,6 +10557,26 @@
 					"optional": true,
 					"documentation": "The server is interested in notifications/requests for operations on files.\n\n@since 3.16.0",
 					"since": "3.16.0"
+				},
+				{
+					"name": "textDocumentContent",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "TextDocumentContentOptions"
+							},
+							{
+								"kind": "reference",
+								"name": "TextDocumentContentRegistrationOptions"
+							}
+						]
+					},
+					"optional": true,
+					"documentation": "The server supports the `workspace/textDocumentContent` request.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
 				}
 			],
 			"documentation": "Defines workspace specific capabilities of the server.\n\n@since 3.18.0",
@@ -10970,6 +11093,17 @@
 					},
 					"optional": true,
 					"documentation": "Capabilities specific to the folding range requests scoped to the workspace.\n\n@since 3.18.0\n@proposed",
+					"since": "3.18.0",
+					"proposed": true
+				},
+				{
+					"name": "textDocumentContent",
+					"type": {
+						"kind": "reference",
+						"name": "TextDocumentContentClientCapabilities"
+					},
+					"optional": true,
+					"documentation": "Capabilities specific to the `workspace/textDocumentContent` request.\n\n@since 3.18.0\n@proposed",
 					"since": "3.18.0",
 					"proposed": true
 				}
@@ -12081,6 +12215,23 @@
 				}
 			],
 			"documentation": "Client workspace capabilities specific to folding ranges\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
+			"name": "TextDocumentContentClientCapabilities",
+			"properties": [
+				{
+					"name": "dynamicRegistration",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Text document content provider supports dynamic registration."
+				}
+			],
+			"documentation": "Client capabilities for a text document content provider.\n\n@since 3.18.0\n@proposed",
 			"since": "3.18.0",
 			"proposed": true
 		},
