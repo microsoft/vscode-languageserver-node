@@ -126,7 +126,7 @@ import {
 } from './protocol.inlineCompletion';
 
 import {
-	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams,
+	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentResult,
 	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest
 } from './protocol.textDocumentContent';
 
@@ -4310,8 +4310,8 @@ export {
 	// Inline Completions
 	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest,
 	// Text Document Content
-	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentRequest,
-	TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest
+	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentResult,
+	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest
 };
 
 // To be backwards compatible
