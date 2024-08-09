@@ -699,7 +699,7 @@ connection.languages.semanticTokens.onRange((params) => {
 
 let counter = 0;
 connection.workspace.textDocumentContent.on((_param) => {
-	return `Text content version ${counter++}`;
+	return { text: `Text content version ${counter++}` };
 });
 
 const refreshNotification: NotificationType<string> = new NotificationType<string>('testbed/refreshContent');

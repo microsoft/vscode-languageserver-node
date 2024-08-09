@@ -57,6 +57,22 @@ export interface TextDocumentContentParams {
 }
 
 /**
+ * Result of the `workspace/textDocumentContent` request.
+ *
+ * @since 3.18.0
+ * @proposed
+ */
+export interface TextDocumentContentResult {
+	/**
+	 * The text content of the text document. Please note, that the content of
+	 * any subsequent open notifications for the text document might differ
+	 * from the returned content due to whitespace and line ending
+	 * normalizations done on the client
+	 */
+	text: string;
+}
+
+/**
  * The `workspace/textDocumentContent` request is sent from the client to the
  * server to request the content of a text document.
  *
@@ -66,8 +82,8 @@ export interface TextDocumentContentParams {
 export namespace TextDocumentContentRequest {
 	export const method: 'workspace/textDocumentContent' = 'workspace/textDocumentContent';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
-	export const type = new ProtocolRequestType<TextDocumentContentParams, string, void, void, TextDocumentContentRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<TextDocumentContentParams, string, void>;
+	export const type = new ProtocolRequestType<TextDocumentContentParams, TextDocumentContentResult, void, void, TextDocumentContentRegistrationOptions>(method);
+	export type HandlerSignature = RequestHandler<TextDocumentContentParams, TextDocumentContentResult, void>;
 }
 
 /**

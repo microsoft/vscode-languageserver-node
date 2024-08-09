@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { TextDocumentContentRefreshRequest, TextDocumentContentRequest, type Disposable, type DocumentUri, type RequestHandler, type TextDocumentContentParams } from 'vscode-languageserver-protocol';
+import { TextDocumentContentRefreshRequest, TextDocumentContentRequest, type Disposable, type DocumentUri, type RequestHandler, type TextDocumentContentParams, type TextDocumentContentResult } from 'vscode-languageserver-protocol';
 
 import type { Feature, _RemoteWorkspace } from './server';
 
@@ -16,7 +16,7 @@ import type { Feature, _RemoteWorkspace } from './server';
 export interface TextDocumentContentFeatureShape {
 	textDocumentContent: {
 		refresh(uri: DocumentUri): Promise<void>;
-		on(handler: RequestHandler<TextDocumentContentParams, string | null, void>): Disposable;
+		on(handler: RequestHandler<TextDocumentContentParams, TextDocumentContentResult | null, void>): Disposable;
 	};
 }
 
@@ -27,7 +27,7 @@ export const TextDocumentContentFeature: Feature<_RemoteWorkspace, TextDocumentC
 				refresh: (uri: DocumentUri): Promise<void> => {
 					return this.connection.sendRequest(TextDocumentContentRefreshRequest.type, { uri });
 				},
-				on: (handler: RequestHandler<TextDocumentContentParams, string | null, void>): Disposable => {
+				on: (handler: RequestHandler<TextDocumentContentParams, TextDocumentContentResult | null, void>): Disposable => {
 					return this.connection.onRequest(TextDocumentContentRequest.type, (params, cancel) => {
 						return handler(params, cancel);
 					});

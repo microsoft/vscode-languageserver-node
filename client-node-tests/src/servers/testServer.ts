@@ -526,7 +526,7 @@ connection.languages.inlineCompletion.on((_params) => {
 });
 
 connection.workspace.textDocumentContent.on((_params) => {
-	return 'Some test content';
+	return { text: 'Some test content' };
 });
 
 connection.onRequest(

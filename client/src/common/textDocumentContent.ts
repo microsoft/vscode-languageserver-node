@@ -68,7 +68,7 @@ export class TextDocumentContentFeature extends WorkspaceFeature<TextDocumentCon
 						if (token.isCancellationRequested) {
 							return null;
 						}
-						return result;
+						return result.text;
 					}, (error) => {
 						return client.handleFailedRequest(TextDocumentContentRequest.type, token, error, null);
 					});
