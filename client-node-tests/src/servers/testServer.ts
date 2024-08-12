@@ -145,7 +145,7 @@ connection.onInitialize((params: InitializeParams): any => {
 				},
 			},
 			textDocumentContent: {
-				scheme: 'content-test'
+				schemes: ['content-test']
 			}
 		},
 		linkedEditingRangeProvider: true,

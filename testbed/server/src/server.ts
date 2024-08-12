@@ -158,7 +158,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 						changeNotifications: true
 					},
 					textDocumentContent: {
-						scheme: 'test-content'
+						schemes: ['test-content']
 					}
 				},
 				implementationProvider: {

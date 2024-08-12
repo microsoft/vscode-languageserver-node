@@ -318,7 +318,7 @@ suite('Client integration', () => {
 						willDelete: { filters: [{ scheme: fsProvider.scheme, pattern: { glob: '**/deleted-static/**{/,/*.txt}' } }] },
 					},
 					textDocumentContent: {
-						scheme: 'content-test'
+						schemes: ['content-test']
 					}
 				},
 				linkedEditingRangeProvider: true,

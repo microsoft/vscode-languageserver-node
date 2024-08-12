@@ -4,9 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
-import { StaticRegistrationOptions, TextDocumentContentRefreshRequest, TextDocumentContentRequest, type ClientCapabilities, type ServerCapabilities, type TextDocumentContentParams, type TextDocumentContentRegistrationOptions } from 'vscode-languageserver-protocol';
+import { StaticRegistrationOptions, TextDocumentContentRefreshRequest, TextDocumentContentRequest, type ClientCapabilities, type RegistrationType, type ServerCapabilities, type TextDocumentContentParams, type TextDocumentContentRegistrationOptions } from 'vscode-languageserver-protocol';
 
-import { WorkspaceFeature, ensure, type FeatureClient } from './features';
+import { ensure, type DynamicFeature, type FeatureClient, type FeatureState, type RegistrationData } from './features';
 import * as UUID from './utils/uuid';
 
 
@@ -19,14 +19,35 @@ export interface TextDocumentContentMiddleware {
 }
 
 export interface TextDocumentContentProviderShape {
-	provider: vscode.TextDocumentContentProvider;
+	scheme: string;
 	onDidChangeEmitter: vscode.EventEmitter<vscode.Uri>;
+	provider: vscode.TextDocumentContentProvider;
 }
 
-export class TextDocumentContentFeature extends WorkspaceFeature<TextDocumentContentRegistrationOptions, TextDocumentContentProviderShape, TextDocumentContentMiddleware> {
+export class TextDocumentContentFeature implements DynamicFeature<TextDocumentContentRegistrationOptions> {
+
+	private readonly _client: FeatureClient<TextDocumentContentMiddleware>;
+	private readonly _registrations: Map<string, { disposable: vscode.Disposable; providers: TextDocumentContentProviderShape[] }> = new Map();
 
 	constructor(client: FeatureClient<TextDocumentContentMiddleware>) {
-		super(client, TextDocumentContentRequest.type);
+		this._client = client;
+	}
+
+	public getState(): FeatureState {
+		const registrations = this._registrations.size > 0;
+		return { kind: 'workspace', id: TextDocumentContentRequest.method, registrations };
+	}
+
+	public get registrationType(): RegistrationType<TextDocumentContentRegistrationOptions> {
+		return TextDocumentContentRequest.type;
+	}
+
+	public getProviders(): TextDocumentContentProviderShape[] {
+		const result: TextDocumentContentProviderShape[] = [];
+		for (const registration of this._registrations.values()) {
+			result.push(...registration.providers);
+		}
+		return result;
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
@@ -38,8 +59,12 @@ export class TextDocumentContentFeature extends WorkspaceFeature<TextDocumentCon
 		const client = this._client;
 		client.onRequest(TextDocumentContentRefreshRequest.type, async (params) => {
 			const uri = client.protocol2CodeConverter.asUri(params.uri);
-			for (const provider of this.getProviders()) {
-				provider.onDidChangeEmitter.fire(uri);
+			for (const registrations of this._registrations.values()) {
+				for (const provider of registrations.providers) {
+					if (provider.scheme !== uri.scheme) {
+						provider.onDidChangeEmitter.fire(uri);
+					}
+				}
 			}
 		});
 
@@ -54,7 +79,18 @@ export class TextDocumentContentFeature extends WorkspaceFeature<TextDocumentCon
 		});
 	}
 
-	protected registerLanguageProvider(options: TextDocumentContentRegistrationOptions): [vscode.Disposable, TextDocumentContentProviderShape] {
+	public register(data: RegistrationData<TextDocumentContentRegistrationOptions>): void {
+		const registrations: TextDocumentContentProviderShape[] = [];
+		const disposables: vscode.Disposable[] = [];
+		for (const scheme of data.registerOptions.schemes) {
+			const [disposable, registration] = this.registerTextDocumentContentProvider(scheme);
+			registrations.push(registration);
+			disposables.push(disposable);
+		}
+		this._registrations.set(data.id, { disposable: vscode.Disposable.from(...disposables), providers: registrations });
+	}
+
+	private registerTextDocumentContentProvider(scheme: string): [vscode.Disposable, TextDocumentContentProviderShape] {
 		const eventEmitter: vscode.EventEmitter<vscode.Uri> = new vscode.EventEmitter<vscode.Uri>();
 		const provider: vscode.TextDocumentContentProvider = {
 			onDidChange: eventEmitter.event,
@@ -79,6 +115,21 @@ export class TextDocumentContentFeature extends WorkspaceFeature<TextDocumentCon
 					: provideTextDocumentContent(uri, token);
 			}
 		};
-		return [vscode.workspace.registerTextDocumentContentProvider(options.scheme, provider), { provider, onDidChangeEmitter: eventEmitter }];
+		return [vscode.workspace.registerTextDocumentContentProvider(scheme, provider), { scheme, onDidChangeEmitter: eventEmitter, provider }];
+	}
+
+	public unregister(id: string): void {
+		const registration = this._registrations.get(id);
+		if (registration !== undefined) {
+			this._registrations.delete(id);
+			registration.disposable.dispose();
+		}
+	}
+
+	public clear(): void {
+		this._registrations.forEach((registration) => {
+			registration.disposable.dispose();
+		});
+		this._registrations.clear();
 	}
 }
