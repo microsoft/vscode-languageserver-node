@@ -30,9 +30,9 @@ export type TextDocumentContentClientCapabilities = {
  */
 export type TextDocumentContentOptions = {
 	/**
-	 * The scheme for which the server provides content.
+	 * The schemes for which the server provides content.
 	 */
-	scheme: string;
+	schemes: string[];
 };
 
 /**
