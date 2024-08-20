@@ -1068,8 +1068,8 @@
 			"method": "workspace/textDocumentContent",
 			"typeName": "TextDocumentContentRequest",
 			"result": {
-				"kind": "base",
-				"name": "string"
+				"kind": "reference",
+				"name": "TextDocumentContentResult"
 			},
 			"messageDirection": "clientToServer",
 			"params": {
@@ -4421,6 +4421,22 @@
 			"proposed": true
 		},
 		{
+			"name": "TextDocumentContentResult",
+			"properties": [
+				{
+					"name": "text",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The text content of the text document. Please note, that the content of\nany subsequent open notifications for the text document might differ\nfrom the returned content due to whitespace and line ending\nnormalizations done on the client"
+				}
+			],
+			"documentation": "Result of the `workspace/textDocumentContent` request.\n\n@since 3.18.0\n@proposed",
+			"since": "3.18.0",
+			"proposed": true
+		},
+		{
 			"name": "TextDocumentContentRegistrationOptions",
 			"properties": [],
 			"extends": [
@@ -6876,7 +6892,7 @@
 						"kind": "base",
 						"name": "uinteger"
 					},
-					"documentation": "Line position in a document (zero-based).\n\nIf a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.\nIf a line number is negative, it defaults to 0."
+					"documentation": "Line position in a document (zero-based)."
 				},
 				{
 					"name": "character",
@@ -6884,7 +6900,7 @@
 						"kind": "base",
 						"name": "uinteger"
 					},
-					"documentation": "Character offset on a line in a document (zero-based).\n\nThe meaning of this offset is determined by the negotiated\n`PositionEncodingKind`.\n\nIf the character value is greater than the line length it defaults back to the\nline length."
+					"documentation": "Character offset on a line in a document (zero-based).\n\nThe meaning of this offset is determined by the negotiated\n`PositionEncodingKind`."
 				}
 			],
 			"documentation": "Position in a text document expressed as zero-based line and character\noffset. Prior to 3.17 the offsets were always based on a UTF-16 string\nrepresentation. So a string of the form `a𐐀b` the character offset of the\ncharacter `a` is 0, the character offset of `𐐀` is 1 and the character\noffset of b is 3 since `𐐀` is represented using two code units in UTF-16.\nSince 3.17 clients and servers can agree on a different string encoding\nrepresentation (e.g. UTF-8). The client announces it's supported encoding\nvia the client capability [`general.positionEncodings`](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#clientCapabilities).\nThe value is an array of position encodings the client supports, with\ndecreasing preference (e.g. the encoding at index `0` is the most preferred\none). To stay backwards compatible the only mandatory encoding is UTF-16\nrepresented via the string `utf-16`. The server can pick one of the\nencodings offered by the client and signals that encoding back to the\nclient via the initialize result's property\n[`capabilities.positionEncoding`](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#serverCapabilities). If the string value\n`utf-16` is missing from the client's capability `general.positionEncodings`\nservers can safely assume that the client supports UTF-16. If the server\nomits the position encoding in its initialize result the encoding defaults\nto the string value `utf-16`. Implementation considerations: since the\nconversion from one encoding into another requires the content of the\nfile / line the conversion is best done where the file is read which is\nusually on the server side.\n\nPositions are line end character agnostic. So you can not specify a position\nthat denotes `\\r|\\n` or `\\n|` where `|` represents the character offset.\n\n@since 3.17.0 - support for negotiated position encoding.",
@@ -7970,12 +7986,15 @@
 			"name": "TextDocumentContentOptions",
 			"properties": [
 				{
-					"name": "scheme",
+					"name": "schemes",
 					"type": {
-						"kind": "base",
-						"name": "string"
+						"kind": "array",
+						"element": {
+							"kind": "base",
+							"name": "string"
+						}
 					},
-					"documentation": "The scheme for which the server provides content."
+					"documentation": "The schemes for which the server provides content."
 				}
 			],
 			"documentation": "Text document content provider options.\n\n@since 3.18.0\n@proposed",
