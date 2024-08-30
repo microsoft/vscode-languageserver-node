@@ -1811,7 +1811,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this._onStop = Promise.resolve();
 			this._onStart = undefined;
 		} else if (handlerResult.action === CloseAction.Restart) {
-			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.', !handlerResult.handled);
+			this.info(handlerResult.message ?? 'Connection to server got closed. Server will restart.', undefined, !handlerResult.handled);
 			this.cleanUp(ShutdownMode.Restart);
 			this.$state = ClientState.Initial;
 			this._onStop = Promise.resolve();
