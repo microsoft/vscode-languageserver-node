@@ -742,6 +742,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
 		if (item.disabled !== undefined) { result.disabled = { reason: item.disabled.reason }; }
+		if (item.isAI !== undefined) { result.llmGenerated = item.isAI; }
 		return result;
 	}
 
@@ -756,6 +757,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
 		if (item.disabled !== undefined) { result.disabled = { reason: item.disabled.reason }; }
+		if (item.isAI !== undefined) { result.llmGenerated = item.isAI; }
 		return result;
 	}
 

@@ -1020,6 +1020,7 @@ export function createConverter(
 		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
 		if (item.disabled !== undefined) { result.disabled = { reason: item.disabled.reason }; }
+		if (item.llmGenerated !== undefined) { result.isAI = item.llmGenerated; }
 		return result;
 	}
 

@@ -41,6 +41,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 		cap.isPreferredSupport = true;
 		cap.disabledSupport = true;
 		cap.dataSupport = true;
+		cap.llmGeneratedSupport = true;
 		// We can only resolve the edit property.
 		cap.resolveSupport = {
 			properties: ['edit', 'command']
