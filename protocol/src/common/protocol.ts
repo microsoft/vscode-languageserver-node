@@ -3300,13 +3300,6 @@ export interface CodeActionClientCapabilities {
 	 * @proposed
 	 */
 	 documentationSupport?: boolean;
-
-	/**
-	 * Whether code action supports the `llmGenerated` property.
-	 *
-	 * @since 3.17.0 - proposed
-	 */
-	llmGeneratedSupport?: boolean;
 }
 
 /**
