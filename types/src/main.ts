@@ -3375,7 +3375,7 @@ export type CodeActionDisabled = {
 /**
  * Code action tags are extra annotations that tweak the rendering of a code action.
  *
- * @since 3.18.0
+ * @since 3.18.0 - proposed
  */
 export namespace CodeActionTag {
 	/**
