@@ -3373,13 +3373,13 @@ export type CodeActionDisabled = {
 };
 
 /**
- * Code action tags are extra annotations that tweak the rendering of a code action.
+ * Code action tags are extra annotations that tweak the behavior of a code action.
  *
  * @since 3.18.0 - proposed
  */
 export namespace CodeActionTag {
 	/**
-	 * Render a code action as LLM-generated, usually using a sparkle icon.
+	 * Marks the code action as LLM-generated.
 	 */
 	export const LLMGenerated = 1;
 
