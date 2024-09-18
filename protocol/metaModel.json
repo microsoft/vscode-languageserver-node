@@ -5168,8 +5168,18 @@
 						"name": "CompletionItemDefaults"
 					},
 					"optional": true,
-					"documentation": "In many cases the items of an actual completion result share the same\nvalue for properties like `commitCharacters` or the range of a text\nedit. A completion list can therefore define item defaults which will\nbe used if a completion item itself doesn't specify the value.\n\nIf a completion list specifies a default value and a completion item\nalso specifies a corresponding value the one from the item is used.\n\nServers are only allowed to return default values if the client\nsignals support for this via the `completionList.itemDefaults`\ncapability.\n\n@since 3.17.0",
+					"documentation": "In many cases the items of an actual completion result share the same\nvalue for properties like `commitCharacters` or the range of a text\nedit. A completion list can therefore define item defaults which will\nbe used if a completion item itself doesn't specify the value.\n\nIf a completion list specifies a default value and a completion item\nalso specifies a corresponding value, the rules for combining these are\ndefined by `applyKinds` (if the client supports it), defaulting to\n\"replace\".\n\nServers are only allowed to return default values if the client\nsignals support for this via the `completionList.itemDefaults`\ncapability.\n\n@since 3.17.0",
 					"since": "3.17.0"
+				},
+				{
+					"name": "applyKind",
+					"type": {
+						"kind": "reference",
+						"name": "CompletionItemApplyKinds"
+					},
+					"optional": true,
+					"documentation": "Specifies how fields from a completion item should be combined with those\nfrom `completionList.itemDefaults`.\n\nIn unspecified, all fields will be treated as \"replace\".\n\nIf a field's value is \"replace\", the value from a completion item (if\nprovided and not `null`) will always be used instead of the value from\n`completionItem.itemDefaults`.\n\nIf a field's value is \"merge\", the values will be merged using the rules\ndefined against each field below.\n\nServers are only allowed to return `applyKind` if the client\nsignals support for this via the `completionList.applyKindSupport`\ncapability.\n\n@since 3.18.0",
+					"since": "3.18.0"
 				},
 				{
 					"name": "items",
@@ -9182,8 +9192,35 @@
 					"since": "3.17.0"
 				}
 			],
-			"documentation": "In many cases the items of an actual completion result share the same\nvalue for properties like `commitCharacters` or the range of a text\nedit. A completion list can therefore define item defaults which will\nbe used if a completion item itself doesn't specify the value.\n\nIf a completion list specifies a default value and a completion item\nalso specifies a corresponding value the one from the item is used.\n\nServers are only allowed to return default values if the client\nsignals support for this via the `completionList.itemDefaults`\ncapability.\n\n@since 3.17.0",
+			"documentation": "In many cases the items of an actual completion result share the same\nvalue for properties like `commitCharacters` or the range of a text\nedit. A completion list can therefore define item defaults which will\nbe used if a completion item itself doesn't specify the value.\n\nIf a completion list specifies a default value and a completion item\nalso specifies a corresponding value, the rules for combining these are\ndefined by `applyKinds` (if the client supports it), defaulting to\n\"replace\".\n\nServers are only allowed to return default values if the client\nsignals support for this via the `completionList.itemDefaults`\ncapability.\n\n@since 3.17.0",
 			"since": "3.17.0"
+		},
+		{
+			"name": "CompletionItemApplyKinds",
+			"properties": [
+				{
+					"name": "commitCharacters",
+					"type": {
+						"kind": "reference",
+						"name": "ApplyKind"
+					},
+					"optional": true,
+					"documentation": "Specifies whether commitCharacters on a completion will replace or be\nmerged with those in `completionList.itemDefaults.commitCharacters`.\n\nIf \"replace\", the commit characters from the completion item will\nalways be used unless not provided, in which case those from\n`completionList.itemDefaults.commitCharacters` will be used. An\nempty list can be used if a completion item does not have any commit\ncharacters and also should not use those from\n`completionList.itemDefaults.commitCharacters`.\n\nIf \"merge\" the commitCharacters for the completion will be the union\nof all values in both `completionList.itemDefaults.commitCharacters`\nand the completion's own `commitCharacters`.\n\n@since 3.18.0",
+					"since": "3.18.0"
+				},
+				{
+					"name": "data",
+					"type": {
+						"kind": "reference",
+						"name": "ApplyKind"
+					},
+					"optional": true,
+					"documentation": "Specifies whether the `data` field on a completion will replace or\nbe merged with data from `completionList.itemDefaults.data`.\n\nIf \"replace\", the data from the completion item will be used if\nprovided (and not `null`), otherwise\n`completionList.itemDefaults.data` will be used. An empty object can\nbe used if a completion item does not have any data but also should\nnot use the value from `completionList.itemDefaults.data`.\n\nIf \"merge\", a shallow merge will be performed between\n`completionList.itemDefaults.data` and the completion's own data\nusing the following rules:\n\n- If a completion's `data` field is not provided (or `null`), the\n  entire `data` field from `completionList.itemDefaults.data` will be\n  used as-is.\n- If a completion's `data` field is provided, each field will\n  overwrite the field of the same name in\n  `completionList.itemDefaults.data` but no merging of nested fields\n  within that value will occur.\n\n@since 3.18.0",
+					"since": "3.18.0"
+				}
+			],
+			"documentation": "Specifies how fields from a completion item should be combined with those\nfrom `completionList.itemDefaults`.\n\nIn unspecified, all fields will be treated as \"replace\".\n\nIf a field's value is \"replace\", the value from a completion item (if\nprovided and not `null`) will always be used instead of the value from\n`completionItem.itemDefaults`.\n\nIf a field's value is \"merge\", the values will be merged using the rules\ndefined against each field below.\n\nServers are only allowed to return `applyKind` if the client\nsignals support for this via the `completionList.applyKindSupport`\ncapability.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "CompletionOptions",
@@ -13537,6 +13574,16 @@
 					"optional": true,
 					"documentation": "The client supports the following itemDefaults on\na completion list.\n\nThe value lists the supported property names of the\n`CompletionList.itemDefaults` object. If omitted\nno properties are supported.\n\n@since 3.17.0",
 					"since": "3.17.0"
+				},
+				{
+					"name": "applyKindSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Specifies whether the client supports `CompletionList.applyKind` to\nindicate how supported values from `completionList.itemDefaults`\nand `completion` will be combined.\n\nIf a client supports `applyKind` it must support it for all fields\nthat it supports that are listed in `CompletionList.applyKind`. This\nmeans when clients add support for new/future fields in completion\nitems the MUST also support merge for them if those fields are\ndefined in `CompletionList.applyKind`.\n\n@since 3.18.0",
+					"since": "3.18.0"
 				}
 			],
 			"documentation": "The client supports the following `CompletionList` specific\ncapabilities.\n\n@since 3.17.0",
@@ -15256,6 +15303,27 @@
 				}
 			],
 			"documentation": "How a completion was triggered"
+		},
+		{
+			"name": "ApplyKind",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "Replace",
+					"value": "replace",
+					"documentation": "The value from the individual item (if provided and not `null`) will be\nused instead of the default."
+				},
+				{
+					"name": "Merge",
+					"value": "merge",
+					"documentation": "The value from the item will be merged with the default.\n\nThe specific rules for mergeing values are defined against each field\nthat supports merging."
+				}
+			],
+			"documentation": "Defines how values from a set of defaults and an individual item will be\nmerged.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "SignatureHelpTriggerKind",
