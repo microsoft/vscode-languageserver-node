@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { strictEqual, deepEqual, ok } from 'assert';
+import { strictEqual, deepEqual, ok, deepStrictEqual } from 'assert';
 
 import * as proto from 'vscode-languageclient';
 import * as codeConverter from 'vscode-languageclient/$test/common/codeConverter';
@@ -857,6 +857,133 @@ suite('Protocol Converter', () => {
 		strictEqual(result.items.length, 1);
 		strictEqual(result.items[0].label, 'item');
 		ok(result.items[0].insertText instanceof vscode.SnippetString);
+	});
+
+	test('Completion Result - applyKind:default - commitCharacters', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults:  { commitCharacters: ['d'] },
+			items: [{ label: 'item', commitCharacters: ['i'] }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		deepStrictEqual(result.items[0].commitCharacters, ['i']);
+	});
+
+	test('Completion Result - applyKind:replace - commitCharacters', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { commitCharacters: ['1'] },
+			// Set other fields to "merge" to ensure the correct field was used.
+			applyKind: { commitCharacters: 'replace', data: 'merge' },
+			items: [{ label: 'item', commitCharacters: ['2'] }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		deepStrictEqual(result.items[0].commitCharacters, ['2']);
+	});
+
+	test('Completion Result - applyKind:replace - commitCharacters - item empty', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { commitCharacters: ['1'] },
+			// Set other fields to "merge" to ensure the correct field was used.
+			applyKind: { commitCharacters: 'replace', data: 'merge' },
+			items: [{ label: 'item', commitCharacters: [] }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		deepStrictEqual(result.items[0].commitCharacters, []);
+	});
+
+	test('Completion Result - applyKind:merge - commitCharacters - both supplied with overlaps', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { commitCharacters: ['d', 'b'] },
+			applyKind: { commitCharacters: 'merge' },
+			items: [{ label: 'item', commitCharacters: ['b', 'i'] }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		deepStrictEqual(result.items[0].commitCharacters, ['d', 'b', 'i']);
+	});
+
+	test('Completion Result - applyKind:merge - commitCharacters - only default supplied', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { commitCharacters: ['d'] },
+			applyKind: { commitCharacters: 'merge' },
+			items: [{ label: 'item' }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		deepStrictEqual(result.items[0].commitCharacters, ['d']);
+	});
+
+	test('Completion Result - applyKind:merge - commitCharacters - only item supplied', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { },
+			applyKind: { commitCharacters: 'merge' },
+			items: [{ label: 'item', commitCharacters: ['i'] }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		deepStrictEqual(result.items[0].commitCharacters, ['i']);
+	});
+
+	test('Completion Result - applyKind:default - data', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { data: { 'd': 'd' } },
+			items: [{ label: 'item', data: { 'i': 'i' } }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		const protoResult = await c2p.asCompletionItem(result.items[0]);
+		deepStrictEqual(protoResult.data, {'i': 'i'});
+	});
+
+	test('Completion Result - applyKind:replace - data', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { data: { 'd': 'd' } },
+			// Set other fields to "merge" to ensure the correct field was used.
+			applyKind: { data: 'replace', commitCharacters: 'merge' },
+			items: [{ label: 'item', data: { 'i': 'i' } }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		const protoResult = await c2p.asCompletionItem(result.items[0]);
+		deepStrictEqual(protoResult.data, {'i': 'i'});
+	});
+
+	test('Completion Result - applyKind:merge - data - both supplied', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { data: { 'd': 'd' } },
+			applyKind: { data: 'merge' },
+			items: [{ label: 'item', data: { 'i': 'i' } }]
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		const protoResult = await c2p.asCompletionItem(result.items[0]);
+		deepStrictEqual(protoResult.data, {'d': 'd', 'i': 'i'});
+	});
+
+	test('Completion Result - applyKind:merge - data - default supplied, item null', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { data: { 'd': 'd' } },
+			applyKind: { data: 'merge' },
+			items: [{ label: 'item', data: null }] // null treated like undefined
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		const protoResult = await c2p.asCompletionItem(result.items[0]);
+		deepStrictEqual(protoResult.data, {'d': 'd'}); // gets default
+	});
+
+	test('Completion Result - applyKind:merge - data - both supplied, item has null fields', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { data: { 'd': 'd' } },
+			applyKind: { data: 'merge' },
+			items: [{ label: 'item', data: { 'd': null, 'i': 'i'} }] // null treated like undefined
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		const protoResult = await c2p.asCompletionItem(result.items[0]);
+		deepStrictEqual(protoResult.data, {'d': 'd', 'i': 'i'}); // gets default for 'd'
 	});
 
 	test('Parameter Information', async () => {

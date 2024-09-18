@@ -2450,6 +2450,21 @@ export interface CompletionListCapabilities {
 	 * @since 3.17.0
 	 */
 	itemDefaults?: string[];
+
+	/**
+	 * Specifies whether the client supports `CompletionList.applyKind` to
+	 * indicate how supported values from `completionList.itemDefaults`
+	 * and `completion` will be combined.
+	 *
+	 * If a client supports `applyKind` it must support it for all fields
+	 * that it supports that are listed in `CompletionList.applyKind`. This
+	 * means when clients add support for new/future fields in completion
+	 * items the MUST also support merge for them if those fields are
+	 * defined in `CompletionList.applyKind`.
+	 *
+	 * @since 3.18.0
+	 */
+	applyKindSupport?: boolean;
 }
 
 /**

@@ -514,7 +514,7 @@ export function createConverter(
 		const list = <ls.CompletionList>value;
 		const { defaultRange, commitCharacters } = getCompletionItemDefaults(list, allCommitCharacters);
 		const converted = await async.map(list.items, (item) => {
-			return asCompletionItem(item, commitCharacters, defaultRange, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat, list.itemDefaults?.data);
+			return asCompletionItem(item, commitCharacters, list.applyKind?.commitCharacters, defaultRange, list.itemDefaults?.insertTextMode, list.itemDefaults?.insertTextFormat, list.itemDefaults?.data, list.applyKind?.data);
 		}, token);
 		return new code.CompletionList(converted, list.isIncomplete);
 	}
@@ -560,7 +560,16 @@ export function createConverter(
 		return result;
 	}
 
-	function asCompletionItem(item: ls.CompletionItem, defaultCommitCharacters?: string[], defaultRange?: code.Range | InsertReplaceRange,  defaultInsertTextMode?: ls.InsertTextMode, defaultInsertTextFormat?: ls.InsertTextFormat, defaultData?: ls.LSPAny): ProtocolCompletionItem {
+	function asCompletionItem(
+		item: ls.CompletionItem,
+		defaultCommitCharacters?: string[],
+		commitCharactersApplyKind?: ls.ApplyKind,
+		defaultRange?: code.Range | InsertReplaceRange,
+		defaultInsertTextMode?: ls.InsertTextMode,
+		defaultInsertTextFormat?: ls.InsertTextFormat,
+		defaultData?: ls.LSPAny,
+		dataApplyKind?: ls.ApplyKind,
+	): ProtocolCompletionItem {
 		const tags: code.CompletionItemTag[] = asCompletionItemTags(item.tags);
 		const label = asCompletionItemLabel(item);
 		const result = new ProtocolCompletionItem(label);
@@ -586,9 +595,7 @@ export function createConverter(
 		}
 		if (item.sortText) { result.sortText = item.sortText; }
 		if (item.additionalTextEdits) { result.additionalTextEdits = asTextEditsSync(item.additionalTextEdits); }
-		const commitCharacters = item.commitCharacters !== undefined
-			? Is.stringArray(item.commitCharacters) ? item.commitCharacters : undefined
-			: defaultCommitCharacters;
+		const commitCharacters = applyCommitCharacters(item, defaultCommitCharacters, commitCharactersApplyKind);
 		if (commitCharacters) { result.commitCharacters = commitCharacters.slice(); }
 		if (item.command) { result.command = asCommand(item.command); }
 		if (item.deprecated === true || item.deprecated === false) {
@@ -598,7 +605,7 @@ export function createConverter(
 			}
 		}
 		if (item.preselect === true || item.preselect === false) { result.preselect = item.preselect; }
-		const data = item.data ?? defaultData;
+		const data = applyData(item, defaultData, dataApplyKind);
 		if (data !== undefined) { result.data = data; }
 		if (tags.length > 0) {
 			result.tags = tags;
@@ -611,6 +618,50 @@ export function createConverter(
 			}
 		}
 		return result;
+	}
+
+	function applyCommitCharacters(item: ls.CompletionItem, defaultCommitCharacters: string[] | undefined, applyKind: ls.ApplyKind | undefined): string[] | undefined {
+		if (applyKind === ls.ApplyKind.Merge) {
+			if (!defaultCommitCharacters && !item.commitCharacters) {
+				return undefined;
+			}
+			const set = new Set<string>();
+			if (defaultCommitCharacters) {
+				for (const char of defaultCommitCharacters) {
+					set.add(char);
+				}
+			}
+			if (Is.stringArray(item.commitCharacters)) {
+				for (const char of item.commitCharacters) {
+					set.add(char);
+				}
+			}
+			return Array.from(set);
+		}
+
+		return item.commitCharacters !== undefined
+			? Is.stringArray(item.commitCharacters) ? item.commitCharacters : undefined
+			: defaultCommitCharacters;
+	}
+
+	function applyData(item: ls.CompletionItem, defaultData: any, applyKind: ls.ApplyKind | undefined): string[] | undefined {
+		if (applyKind === ls.ApplyKind.Merge) {
+			const data = {
+				...defaultData,
+			};
+
+			if (item.data) {
+				Object.entries(item.data).forEach(([key, value]) => {
+					if (value !== undefined && value !== null) {
+						data[key] = value;
+					}
+				});
+			}
+
+			return data;
+		}
+
+		return item.data ?? defaultData;
 	}
 
 	function asCompletionItemLabel(item: ls.CompletionItem): code.CompletionItemLabel | string {
