@@ -986,6 +986,18 @@ suite('Protocol Converter', () => {
 		deepStrictEqual(protoResult.data, {'d': 'd', 'i': 'i'}); // gets default for 'd'
 	});
 
+	test('Completion Result - applyKind:merge - data - both supplied, item has non-null falsy fields', async () => {
+		const completionResult: proto.CompletionList = {
+			isIncomplete: false,
+			itemDefaults: { data: { 'd1': 'd1', 'd2': 'd2' } },
+			applyKind: { data: 'merge' },
+			items: [{ label: 'item', data: { 'd1': 0, 'd2': ''} }] // Both falsy, but should be used.
+		};
+		const result = await p2c.asCompletionResult(completionResult);
+		const protoResult = await c2p.asCompletionItem(result.items[0]);
+		deepStrictEqual(protoResult.data, {'d1': 0, 'd2': ''});
+	});
+
 	test('Parameter Information', async () => {
 		const parameterInfo: proto.ParameterInformation = {
 			label: 'label'
