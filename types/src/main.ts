@@ -3373,6 +3373,26 @@ export type CodeActionDisabled = {
 };
 
 /**
+ * Code action tags are extra annotations that tweak the behavior of a code action.
+ *
+ * @since 3.18.0 - proposed
+ */
+export namespace CodeActionTag {
+	/**
+	 * Marks the code action as LLM-generated.
+	 */
+	export const LLMGenerated = 1;
+
+	/**
+	 * Checks whether the given literal conforms to the {@link CodeActionTag} interface.
+	 */
+	export function is(value: any): value is CodeActionTag {
+		return Is.defined(value) && value === CodeActionTag.LLMGenerated;
+	}
+}
+export type CodeActionTag = 1;
+
+/**
  * A code action represents a change that can be performed in code, e.g. to fix a problem or
  * to refactor code.
  *
@@ -3446,6 +3466,13 @@ export interface CodeAction {
 	 * @since 3.16.0
 	 */
 	data?: LSPAny;
+
+	/**
+ 	 * Tags for this code action.
+	 *
+	 * @since 3.18.0 - proposed
+	 */
+	tags?: CodeActionTag[];
 }
 
 export namespace CodeAction {
@@ -3499,7 +3526,8 @@ export namespace CodeAction {
 			(candidate.edit !== undefined || candidate.command !== undefined) &&
 			(candidate.command === undefined || Command.is(candidate.command)) &&
 			(candidate.isPreferred === undefined || Is.boolean(candidate.isPreferred)) &&
-			(candidate.edit === undefined || WorkspaceEdit.is(candidate.edit));
+			(candidate.edit === undefined || WorkspaceEdit.is(candidate.edit)) &&
+			(candidate.tags === undefined || Is.typedArray(candidate.tags, CodeActionTag.is));
 	}
 }
 

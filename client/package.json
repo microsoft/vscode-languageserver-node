@@ -15,7 +15,7 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
-	"enabledApiProposals": [],
+	"enabledApiProposals": ["codeActionAI"],
 	"exports": {
 		".": {
 			"types": "./lib/common/api.d.ts",

@@ -9,7 +9,8 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeActionRequest, CodeActionOptions, CodeActionRegistrationOptions, CodeActionParams, CodeActionResolveRequest, CodeActionKind
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeActionRequest, CodeActionOptions, CodeActionRegistrationOptions, CodeActionParams, CodeActionResolveRequest, CodeActionKind,
+	CodeActionTag
 } from 'vscode-languageserver-protocol';
 
 import * as UUID from './utils/uuid';
@@ -63,6 +64,9 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 		};
 		cap.honorsChangeAnnotations = true;
 		cap.documentationSupport = true;
+		cap.tagSupport = {
+			valueSet: [CodeActionTag.LLMGenerated]
+		};
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {

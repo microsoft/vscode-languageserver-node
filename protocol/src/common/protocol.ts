@@ -13,7 +13,8 @@ import {
 	Hover, SignatureHelp, Definition, DefinitionLink, ReferenceContext, DocumentHighlight, SymbolInformation,
 	CodeLens, CodeActionContext, FormattingOptions, DocumentLink, MarkupKind, SymbolKind, CompletionItemKind,
 	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer,
-	InsertTextMode, LSPAny, WorkspaceSymbol, URI, WorkspaceFolder
+	InsertTextMode, LSPAny, WorkspaceSymbol, URI, WorkspaceFolder,
+	CodeActionTag
 } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
@@ -3300,7 +3301,25 @@ export interface CodeActionClientCapabilities {
 	 * @proposed
 	 */
 	 documentationSupport?: boolean;
+
+	/**
+	 * Client supports the tag property on a code action. Clients
+	 * supporting tags have to handle unknown tags gracefully.
+	 *
+	 * @since 3.18.0 - proposed
+	 */
+	tagSupport?: CodeActionTagOptions;
 }
+
+/**
+ * @since 3.18.0 - proposed
+ */
+export type CodeActionTagOptions = {
+	/**
+	 * The tags supported by the client.
+	 */
+	valueSet: CodeActionTag[];
+};
 
 /**
  * The parameters of a {@link CodeActionRequest}.

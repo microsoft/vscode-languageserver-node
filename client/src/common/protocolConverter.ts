@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+/// <reference path="../../typings/vscode.proposed.codeActionAI.d.ts" />
 
 import * as code from 'vscode';
 import * as ls from 'vscode-languageserver-protocol';
@@ -1020,6 +1021,10 @@ export function createConverter(
 		if (item.command !== undefined) { result.command = asCommand(item.command); }
 		if (item.isPreferred !== undefined) { result.isPreferred = item.isPreferred; }
 		if (item.disabled !== undefined) { result.disabled = { reason: item.disabled.reason }; }
+		if (item.tags?.includes(ls.CodeActionTag.LLMGenerated)) {
+			result.isAI = true;
+		}
+
 		return result;
 	}
 

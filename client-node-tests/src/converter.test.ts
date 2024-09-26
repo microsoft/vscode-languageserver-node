@@ -1547,6 +1547,26 @@ suite('Code Converter', () => {
 		strictEqual(result.triggerKind, proto.CodeActionTriggerKind.Automatic);
 	});
 
+	test('CodeAction - LLMGenerated tag c2p', () => {
+		const item: vscode.CodeAction = {
+			title: 'title',
+			isAI: true
+		};
+
+		const result = c2p.asCodeActionSync(item);
+		strictEqual(result.tags![0], proto.CodeActionTag.LLMGenerated);
+	});
+
+	test('CodeAction - LLMGenerated tag p2c', async () => {
+		const item: proto.CodeAction = {
+			title: 'title',
+			tags: [proto.CodeActionTag.LLMGenerated]
+		};
+
+		const result = await p2c.asCodeAction(item);
+		strictEqual(result.isAI, true);
+	});
+
 	test('Uri Rewrite', () => {
 		const converter = codeConverter.createConverter((value: vscode.Uri) => {
 			return `${value.toString()}.vscode`;
