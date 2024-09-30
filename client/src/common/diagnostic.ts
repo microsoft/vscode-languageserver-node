@@ -543,7 +543,7 @@ class DiagnosticRequestor implements Disposable {
 					}
 					return converted;
 				};
-				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
+				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token, resultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
 					const partialResultToken: string = generateUuid();
 					const disposable = this.client.onProgress(WorkspaceDiagnosticRequest.partialResult, partialResultToken, async (partialResult) => {
 						if (partialResult === undefined || partialResult === null) {
