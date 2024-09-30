@@ -2231,7 +2231,7 @@ export namespace ApplyKind {
 	 * The value from the individual item (if provided and not `null`) will be
 	 * used instead of the default.
 	 */
-	export const Replace: 'replace' = 'replace';
+	export const Replace: 1 = 1;
 
 	/**
 	 * The value from the item will be merged with the default.
@@ -2239,7 +2239,7 @@ export namespace ApplyKind {
 	 * The specific rules for mergeing values are defined against each field
 	 * that supports merging.
 	 */
-	export const Merge: 'merge' = 'merge';
+	export const Merge: 2 = 2;
 }
 
 /**
@@ -2248,7 +2248,7 @@ export namespace ApplyKind {
  *
  * @since 3.18.0
  */
-export type ApplyKind = 'replace' | 'merge';
+export type ApplyKind = 1 | 2;
 
 /**
  * Additional details for a completion item label.

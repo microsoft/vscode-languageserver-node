@@ -874,7 +874,7 @@ suite('Protocol Converter', () => {
 			isIncomplete: false,
 			itemDefaults: { commitCharacters: ['1'] },
 			// Set other fields to "merge" to ensure the correct field was used.
-			applyKind: { commitCharacters: 'replace', data: 'merge' },
+			applyKind: { commitCharacters: proto.ApplyKind.Replace, data: proto.ApplyKind.Merge },
 			items: [{ label: 'item', commitCharacters: ['2'] }]
 		};
 		const result = await p2c.asCompletionResult(completionResult);
@@ -886,7 +886,7 @@ suite('Protocol Converter', () => {
 			isIncomplete: false,
 			itemDefaults: { commitCharacters: ['1'] },
 			// Set other fields to "merge" to ensure the correct field was used.
-			applyKind: { commitCharacters: 'replace', data: 'merge' },
+			applyKind: { commitCharacters: proto.ApplyKind.Replace, data: proto.ApplyKind.Merge },
 			items: [{ label: 'item', commitCharacters: [] }]
 		};
 		const result = await p2c.asCompletionResult(completionResult);
@@ -897,7 +897,7 @@ suite('Protocol Converter', () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: false,
 			itemDefaults: { commitCharacters: ['d', 'b'] },
-			applyKind: { commitCharacters: 'merge' },
+			applyKind: { commitCharacters: proto.ApplyKind.Merge },
 			items: [{ label: 'item', commitCharacters: ['b', 'i'] }]
 		};
 		const result = await p2c.asCompletionResult(completionResult);
@@ -908,7 +908,7 @@ suite('Protocol Converter', () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: false,
 			itemDefaults: { commitCharacters: ['d'] },
-			applyKind: { commitCharacters: 'merge' },
+			applyKind: { commitCharacters: proto.ApplyKind.Merge },
 			items: [{ label: 'item' }]
 		};
 		const result = await p2c.asCompletionResult(completionResult);
@@ -919,7 +919,7 @@ suite('Protocol Converter', () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: false,
 			itemDefaults: { },
-			applyKind: { commitCharacters: 'merge' },
+			applyKind: { commitCharacters: proto.ApplyKind.Merge },
 			items: [{ label: 'item', commitCharacters: ['i'] }]
 		};
 		const result = await p2c.asCompletionResult(completionResult);
@@ -942,7 +942,7 @@ suite('Protocol Converter', () => {
 			isIncomplete: false,
 			itemDefaults: { data: { 'd': 'd' } },
 			// Set other fields to "merge" to ensure the correct field was used.
-			applyKind: { data: 'replace', commitCharacters: 'merge' },
+			applyKind: { data: proto.ApplyKind.Replace, commitCharacters: proto.ApplyKind.Merge },
 			items: [{ label: 'item', data: { 'i': 'i' } }]
 		};
 		const result = await p2c.asCompletionResult(completionResult);
@@ -954,7 +954,7 @@ suite('Protocol Converter', () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: false,
 			itemDefaults: { data: { 'd': 'd' } },
-			applyKind: { data: 'merge' },
+			applyKind: { data: proto.ApplyKind.Merge },
 			items: [{ label: 'item', data: { 'i': 'i' } }]
 		};
 		const result = await p2c.asCompletionResult(completionResult);
@@ -966,7 +966,7 @@ suite('Protocol Converter', () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: false,
 			itemDefaults: { data: { 'd': 'd' } },
-			applyKind: { data: 'merge' },
+			applyKind: { data: proto.ApplyKind.Merge },
 			items: [{ label: 'item', data: null }] // null treated like undefined
 		};
 		const result = await p2c.asCompletionResult(completionResult);
@@ -978,7 +978,7 @@ suite('Protocol Converter', () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: false,
 			itemDefaults: { data: { 'd': 'd' } },
-			applyKind: { data: 'merge' },
+			applyKind: { data: proto.ApplyKind.Merge },
 			items: [{ label: 'item', data: { 'd': null, 'i': 'i'} }] // null treated like undefined
 		};
 		const result = await p2c.asCompletionResult(completionResult);
@@ -990,7 +990,7 @@ suite('Protocol Converter', () => {
 		const completionResult: proto.CompletionList = {
 			isIncomplete: false,
 			itemDefaults: { data: { 'd1': 'd1', 'd2': 'd2' } },
-			applyKind: { data: 'merge' },
+			applyKind: { data: proto.ApplyKind.Merge },
 			items: [{ label: 'item', data: { 'd1': 0, 'd2': ''} }] // Both falsy, but should be used.
 		};
 		const result = await p2c.asCompletionResult(completionResult);
