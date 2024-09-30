@@ -5178,7 +5178,7 @@
 						"name": "CompletionItemApplyKinds"
 					},
 					"optional": true,
-					"documentation": "Specifies how fields from a completion item should be combined with those\nfrom `completionList.itemDefaults`.\n\nIn unspecified, all fields will be treated as \"replace\".\n\nIf a field's value is \"replace\", the value from a completion item (if\nprovided and not `null`) will always be used instead of the value from\n`completionItem.itemDefaults`.\n\nIf a field's value is \"merge\", the values will be merged using the rules\ndefined against each field below.\n\nServers are only allowed to return `applyKind` if the client\nsignals support for this via the `completionList.applyKindSupport`\ncapability.\n\n@since 3.18.0",
+					"documentation": "Specifies how fields from a completion item should be combined with those\nfrom `completionList.itemDefaults`.\n\nIf unspecified, all fields will be treated as \"replace\".\n\nIf a field's value is \"replace\", the value from a completion item (if\nprovided and not `null`) will always be used instead of the value from\n`completionItem.itemDefaults`.\n\nIf a field's value is \"merge\", the values will be merged using the rules\ndefined against each field below.\n\nServers are only allowed to return `applyKind` if the client\nsignals support for this via the `completionList.applyKindSupport`\ncapability.\n\n@since 3.18.0",
 					"since": "3.18.0"
 				},
 				{
@@ -9219,7 +9219,7 @@
 					"since": "3.18.0"
 				}
 			],
-			"documentation": "Specifies how fields from a completion item should be combined with those\nfrom `completionList.itemDefaults`.\n\nIn unspecified, all fields will be treated as \"replace\".\n\nIf a field's value is \"replace\", the value from a completion item (if\nprovided and not `null`) will always be used instead of the value from\n`completionItem.itemDefaults`.\n\nIf a field's value is \"merge\", the values will be merged using the rules\ndefined against each field below.\n\nServers are only allowed to return `applyKind` if the client\nsignals support for this via the `completionList.applyKindSupport`\ncapability.\n\n@since 3.18.0",
+			"documentation": "Specifies how fields from a completion item should be combined with those\nfrom `completionList.itemDefaults`.\n\nIf unspecified, all fields will be treated as \"replace\".\n\nIf a field's value is \"replace\", the value from a completion item (if\nprovided and not `null`) will always be used instead of the value from\n`completionItem.itemDefaults`.\n\nIf a field's value is \"merge\", the values will be merged using the rules\ndefined against each field below.\n\nServers are only allowed to return `applyKind` if the client\nsignals support for this via the `completionList.applyKindSupport`\ncapability.\n\n@since 3.18.0",
 			"since": "3.18.0"
 		},
 		{
