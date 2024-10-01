@@ -1387,13 +1387,18 @@ suite('Client integration', () => {
 		});
 
 		let middlewareCalled: boolean = false;
+		let reporterCalled: boolean = false;
 		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = (resultIds, token, reporter, next) => {
 			middlewareCalled = true;
-			return next(resultIds, token, reporter);
+			return next(resultIds, token, (chunk) => {
+				reporterCalled = true;
+				reporter(chunk);
+			});
 		};
 		await provider.diagnostics.provideWorkspaceDiagnostics([], tokenSource.token, () => {});
 		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = undefined;
 		assert.strictEqual(middlewareCalled, true);
+		assert.strictEqual(reporterCalled, true);
 	});
 
 	test('Type Hierarchy', async () => {
