@@ -2221,6 +2221,36 @@ export namespace InsertTextMode {
 export type InsertTextMode = 1 | 2;
 
 /**
+ * Defines how values from a set of defaults and an individual item will be
+ * merged.
+ *
+ * @since 3.18.0
+ */
+export namespace ApplyKind {
+	/**
+	 * The value from the individual item (if provided and not `null`) will be
+	 * used instead of the default.
+	 */
+	export const Replace: 1 = 1;
+
+	/**
+	 * The value from the item will be merged with the default.
+	 *
+	 * The specific rules for mergeing values are defined against each field
+	 * that supports merging.
+	 */
+	export const Merge: 2 = 2;
+}
+
+/**
+ * Defines how values from a set of defaults and an individual item will be
+ * merged.
+ *
+ * @since 3.18.0
+ */
+export type ApplyKind = 1 | 2;
+
+/**
  * Additional details for a completion item label.
  *
  * @since 3.17.0
@@ -2459,7 +2489,9 @@ export type EditRangeWithInsertReplace = {
  * be used if a completion item itself doesn't specify the value.
  *
  * If a completion list specifies a default value and a completion item
- * also specifies a corresponding value the one from the item is used.
+ * also specifies a corresponding value, the rules for combining these are
+ * defined by `applyKinds` (if the client supports it), defaulting to
+ * ApplyKind.Replace.
  *
  * Servers are only allowed to return default values if the client
  * signals support for this via the `completionList.itemDefaults`
@@ -2505,6 +2537,72 @@ export interface CompletionItemDefaults {
 }
 
 /**
+ * Specifies how fields from a completion item should be combined with those
+ * from `completionList.itemDefaults`.
+ *
+ * If unspecified, all fields will be treated as ApplyKind.Replace.
+ *
+ * If a field's value is ApplyKind.Replace, the value from a completion item (if
+ * provided and not `null`) will always be used instead of the value from
+ * `completionItem.itemDefaults`.
+ *
+ * If a field's value is ApplyKind.Merge, the values will be merged using the rules
+ * defined against each field below.
+ *
+ * Servers are only allowed to return `applyKind` if the client
+ * signals support for this via the `completionList.applyKindSupport`
+ * capability.
+ *
+ * @since 3.18.0
+ */
+export interface CompletionItemApplyKinds {
+	/**
+	 * Specifies whether commitCharacters on a completion will replace or be
+	 * merged with those in `completionList.itemDefaults.commitCharacters`.
+	 *
+	 * If ApplyKind.Replace, the commit characters from the completion item will
+	 * always be used unless not provided, in which case those from
+	 * `completionList.itemDefaults.commitCharacters` will be used. An
+	 * empty list can be used if a completion item does not have any commit
+	 * characters and also should not use those from
+	 * `completionList.itemDefaults.commitCharacters`.
+	 *
+	 * If ApplyKind.Merge the commitCharacters for the completion will be the
+	 * union of all values in both `completionList.itemDefaults.commitCharacters`
+	 * and the completion's own `commitCharacters`.
+	 *
+	 * @since 3.18.0
+	 */
+	commitCharacters?: ApplyKind;
+
+	/**
+	 * Specifies whether the `data` field on a completion will replace or
+	 * be merged with data from `completionList.itemDefaults.data`.
+	 *
+	 * If ApplyKind.Replace, the data from the completion item will be used if
+	 * provided (and not `null`), otherwise
+	 * `completionList.itemDefaults.data` will be used. An empty object can
+	 * be used if a completion item does not have any data but also should
+	 * not use the value from `completionList.itemDefaults.data`.
+	 *
+	 * If ApplyKind.Merge, a shallow merge will be performed between
+	 * `completionList.itemDefaults.data` and the completion's own data
+	 * using the following rules:
+	 *
+	 * - If a completion's `data` field is not provided (or `null`), the
+	 *   entire `data` field from `completionList.itemDefaults.data` will be
+	 *   used as-is.
+	 * - If a completion's `data` field is provided, each field will
+	 *   overwrite the field of the same name in
+	 *   `completionList.itemDefaults.data` but no merging of nested fields
+	 *   within that value will occur.
+	 *
+	 * @since 3.18.0
+	 */
+	data?: ApplyKind;
+}
+
+/**
  * Represents a collection of {@link CompletionItem completion items} to be presented
  * in the editor.
  */
@@ -2524,7 +2622,9 @@ export interface CompletionList {
 	 * be used if a completion item itself doesn't specify the value.
 	 *
 	 * If a completion list specifies a default value and a completion item
-	 * also specifies a corresponding value the one from the item is used.
+	 * also specifies a corresponding value, the rules for combining these are
+	 * defined by `applyKinds` (if the client supports it), defaulting to
+	 * ApplyKind.Replace.
 	 *
 	 * Servers are only allowed to return default values if the client
 	 * signals support for this via the `completionList.itemDefaults`
@@ -2533,6 +2633,27 @@ export interface CompletionList {
 	 * @since 3.17.0
 	 */
 	itemDefaults?: CompletionItemDefaults;
+
+	/**
+	 * Specifies how fields from a completion item should be combined with those
+	 * from `completionList.itemDefaults`.
+	 *
+	 * If unspecified, all fields will be treated as ApplyKind.Replace.
+	 *
+	 * If a field's value is ApplyKind.Replace, the value from a completion item
+	 * (if provided and not `null`) will always be used instead of the value
+	 * from `completionItem.itemDefaults`.
+	 *
+	 * If a field's value is ApplyKind.Merge, the values will be merged using
+	 * the rules defined against each field below.
+	 *
+	 * Servers are only allowed to return `applyKind` if the client
+	 * signals support for this via the `completionList.applyKindSupport`
+	 * capability.
+	 *
+	 * @since 3.18.0
+	 */
+	applyKind?: CompletionItemApplyKinds;
 
 	/**
 	 * The completion items.

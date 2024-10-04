@@ -92,7 +92,8 @@ export class CompletionItemFeature extends TextDocumentLanguageFeature<Completio
 		completion.completionList = {
 			itemDefaults: [
 				'commitCharacters', 'editRange', 'insertTextFormat', 'insertTextMode', 'data'
-			]
+			],
+			applyKindSupport: true,
 		};
 	}
 
