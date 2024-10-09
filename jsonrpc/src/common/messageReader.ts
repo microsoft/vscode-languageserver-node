@@ -72,6 +72,7 @@ export abstract class AbstractMessageReader implements MessageReader {
 	public dispose(): void {
 		this.errorEmitter.dispose();
 		this.closeEmitter.dispose();
+		this.partialMessageEmitter.dispose();
 	}
 
 	public get onError(): Event<Error> {
