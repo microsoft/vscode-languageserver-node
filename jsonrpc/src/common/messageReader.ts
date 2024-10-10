@@ -11,6 +11,7 @@ import { Message } from './messages';
 import { ContentDecoder, ContentTypeDecoder } from './encoding';
 import { Disposable } from './api';
 import { Semaphore } from './semaphore';
+import { DisposableStore } from './disposable';
 
 /**
  * A callback that receives each incoming JSON-RPC message.
@@ -170,7 +171,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 
 	private readable: RAL.ReadableStream;
 	private options: ResolvedMessageReaderOptions;
-	private callback!: DataCallback;
+	private callback: DataCallback | undefined;
 
 	private nextMessageLength: number;
 	private messageToken: number;
@@ -199,16 +200,20 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 	}
 
 	public listen(callback: DataCallback): Disposable {
+		if (this.callback !== undefined) {
+			throw new Error('Reader can only listen once.');
+		}
 		this.nextMessageLength = -1;
 		this.messageToken = 0;
 		this.partialMessageTimer = undefined;
 		this.callback = callback;
-		const result = this.readable.onData((data: Uint8Array) => {
+		const disposables = new DisposableStore();
+		disposables.add(this.readable.onData((data: Uint8Array) => {
 			this.onData(data);
-		});
-		this.readable.onError((error: any) => this.fireError(error));
-		this.readable.onClose(() => this.fireClose());
-		return result;
+		}));
+		disposables.add(this.readable.onError((error: any) => this.fireError(error)));
+		disposables.add(this.readable.onClose(() => this.fireClose()));
+		return disposables;
 	}
 
 	private onData(data: Uint8Array): void {
@@ -250,7 +255,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 						? await this.options.contentDecoder.decode(body)
 						: body;
 					const message = await this.options.contentTypeDecoder.decode(bytes, this.options);
-					this.callback(message);
+					this.callback!(message);
 				}).catch((error) => {
 					this.fireError(error);
 				});
