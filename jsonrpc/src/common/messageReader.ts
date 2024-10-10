@@ -170,7 +170,8 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 
 	private readable: RAL.ReadableStream;
 	private options: ResolvedMessageReaderOptions;
-	private callback!: DataCallback;
+	private dataEmitter: Emitter<Message>;
+	private onDataDispose: Disposable;
 
 	private nextMessageLength: number;
 	private messageToken: number;
@@ -188,6 +189,10 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 		this.nextMessageLength = -1;
 		this.messageToken = 0;
 		this.readSemaphore = new Semaphore(1);
+		this.dataEmitter = new Emitter();
+		this.onDataDispose = this.readable.onData((data: Uint8Array) => {
+			this.onData(data);
+		});
 	}
 
 	public set partialMessageTimeout(timeout: number) {
@@ -202,13 +207,9 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 		this.nextMessageLength = -1;
 		this.messageToken = 0;
 		this.partialMessageTimer = undefined;
-		this.callback = callback;
-		const result = this.readable.onData((data: Uint8Array) => {
-			this.onData(data);
-		});
 		this.readable.onError((error: any) => this.fireError(error));
 		this.readable.onClose(() => this.fireClose());
-		return result;
+		return this.dataEmitter.event(callback);
 	}
 
 	private onData(data: Uint8Array): void {
@@ -250,7 +251,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 						? await this.options.contentDecoder.decode(body)
 						: body;
 					const message = await this.options.contentTypeDecoder.decode(bytes, this.options);
-					this.callback(message);
+					this.dataEmitter.fire(message);
 				}).catch((error) => {
 					this.fireError(error);
 				});
