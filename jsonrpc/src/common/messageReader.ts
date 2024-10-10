@@ -191,7 +191,9 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 		this.readSemaphore = new Semaphore(1);
 		this.dataEmitter = new Emitter();
 		this.onDataDispose = this.readable.onData((data: Uint8Array) => {
-			this.onData(data);
+			if(!this.dataEmitter.isEmpty()){
+				this.onData(data);
+			}
 		});
 	}
 

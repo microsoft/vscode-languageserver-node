@@ -168,4 +168,8 @@ export class Emitter<T> {
 			this._callbacks = undefined;
 		}
 	}
+
+	public isEmpty(): boolean {
+		return this._callbacks?.isEmpty() ?? true;
+	}
 }
