@@ -195,6 +195,12 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 		});
 	}
 
+	public dispose(): void {
+		super.dispose();
+		this.onDataDispose.dispose();
+		this.dataEmitter.dispose();
+	}
+
 	public set partialMessageTimeout(timeout: number) {
 		this._partialMessageTimeout = timeout;
 	}
