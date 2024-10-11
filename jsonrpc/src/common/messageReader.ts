@@ -171,7 +171,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 	private readable: RAL.ReadableStream;
 	private options: ResolvedMessageReaderOptions;
 	private dataEmitter: Emitter<Message>;
-	private onDataDispose: Disposable;
+	private disposables: Disposable[] = [];
 
 	private nextMessageLength: number;
 	private messageToken: number;
@@ -190,17 +190,22 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 		this.messageToken = 0;
 		this.readSemaphore = new Semaphore(1);
 		this.dataEmitter = new Emitter();
-		this.onDataDispose = this.readable.onData((data: Uint8Array) => {
-			if(!this.dataEmitter.isEmpty()){
-				this.onData(data);
-			}
-		});
+		this.partialMessageTimer = undefined;
+		this.disposables.push(
+			this.readable.onData((data: Uint8Array) => {
+				if(!this.dataEmitter.isEmpty()){
+					this.onData(data);
+				}
+			}),
+			this.readable.onError((error: any) => this.fireError(error)),
+			this.readable.onClose(() => this.fireClose()),
+			this.dataEmitter,
+		);
 	}
 
 	public dispose(): void {
 		super.dispose();
-		this.onDataDispose.dispose();
-		this.dataEmitter.dispose();
+		this.disposables.forEach((d) => d.dispose());
 	}
 
 	public set partialMessageTimeout(timeout: number) {
@@ -212,17 +217,11 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 	}
 
 	public listen(callback: DataCallback): Disposable {
-		this.nextMessageLength = -1;
-		this.messageToken = 0;
-		this.partialMessageTimer = undefined;
-		this.readable.onError((error: any) => this.fireError(error));
-		this.readable.onClose(() => this.fireClose());
 		return this.dataEmitter.event(callback);
 	}
 
 	private onData(data: Uint8Array): void {
 		try {
-
 			this.buffer.append(data);
 			while (true) {
 				if (this.nextMessageLength === -1) {
