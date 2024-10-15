@@ -2045,6 +2045,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		diagnostics.codeDescriptionSupport = true;
 		diagnostics.dataSupport = true;
 
+		const textDocumentFilter = ensure(ensure(result, 'textDocument')!, 'filters')!;
+		textDocumentFilter.relativePatternSupport = true;
+
 		const windowCapabilities = ensure(result, 'window')!;
 		const showMessage = ensure(windowCapabilities, 'showMessage')!;
 		showMessage.messageActionItem = { additionalPropertiesSupport: true };
