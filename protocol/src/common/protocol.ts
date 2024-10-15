@@ -153,7 +153,9 @@ export type TextDocumentFilterLanguage = {
 	/**
 	 * A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 	 *
-	 * @since 3.18.0 - support for relative patterns.
+	 * @since 3.18.0 - support for relative patterns. Whether clients support
+	 * relative patterns depends on the client capability
+	 * `textDocuments.filters.relativePatternSupport`.
 	 */
 	pattern?: GlobPattern;
 };
@@ -177,7 +179,9 @@ export type TextDocumentFilterScheme = {
 	/**
 	 * A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 	 *
-	 * @since 3.18.0 - support for relative patterns.
+	 * @since 3.18.0 - support for relative patterns. Whether clients support
+	 * relative patterns depends on the client capability
+	 * `textDocuments.filters.relativePatternSupport`.
 	 */
 	pattern?: GlobPattern;
 };
@@ -201,7 +205,9 @@ export type TextDocumentFilterPattern = {
 	/**
 	 * A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 	 *
-	 * @since 3.18.0 - support for relative patterns.
+	 * @since 3.18.0 - support for relative patterns. Whether clients support
+	 * relative patterns depends on the client capability
+	 * `textDocuments.filters.relativePatternSupport`.
 	 */
 	pattern: GlobPattern;
 };
@@ -370,7 +376,7 @@ export namespace NotebookCellTextDocumentFilter {
  * A document filter describes a top level text document or
  * a notebook cell document.
  *
- * @since 3.17.0 - proposed support for NotebookCellTextDocumentFilter.
+ * @since 3.17.0 - support for NotebookCellTextDocumentFilter.
  */
 export type DocumentFilter = TextDocumentFilter | NotebookCellTextDocumentFilter;
 
@@ -681,6 +687,13 @@ export interface TextDocumentClientCapabilities {
 	 * Defines which synchronization capabilities the client supports.
 	 */
 	synchronization?: TextDocumentSyncClientCapabilities;
+
+	/**
+	 * Defines which filters the client supports.
+	 *
+	 * @since 3.18.0
+	 */
+	filters?: TextDocumentFilterClientCapabilities;
 
 	/**
 	 * Capabilities specific to the `textDocument/completion` request.
@@ -1833,6 +1846,16 @@ export namespace TelemetryEventNotification {
 	export const method: 'telemetry/event' = 'telemetry/event';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolNotificationType<LSPAny, void>(method);
+}
+
+export interface TextDocumentFilterClientCapabilities {
+
+	/**
+	 * The client supports Relative Patterns.
+	 *
+	 * @since 3.18.0
+	 */
+	relativePatternSupport?: boolean;
 }
 
 //---- Text document notifications ----
