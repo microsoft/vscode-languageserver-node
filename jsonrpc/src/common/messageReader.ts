@@ -180,15 +180,29 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 	private _partialMessageTimeout: number;
 	private readSemaphore: Semaphore<void>;
 
+	private disposables = new DisposableStore();
 	public constructor(readable: RAL.ReadableStream, options?: RAL.MessageBufferEncoding | MessageReaderOptions) {
 		super();
 		this.readable = readable;
 		this.options = ResolvedMessageReaderOptions.fromOptions(options);
 		this.buffer = RAL().messageBuffer.create(this.options.charset);
 		this._partialMessageTimeout = 10000;
+		this.partialMessageTimer = undefined;
 		this.nextMessageLength = -1;
 		this.messageToken = 0;
 		this.readSemaphore = new Semaphore(1);
+
+		this.disposables.add(this.readable.onData((data: Uint8Array) => {
+			if(this.callback){this.onData(data);}
+		}));
+		this.disposables.add(this.readable.onError((error: any) => this.fireError(error)));
+		this.disposables.add(this.readable.onClose(() => this.fireClose()));
+	}
+
+	public dispose(): void {
+		super.dispose();
+		this.disposables.dispose();
+		this.callback = undefined;
 	}
 
 	public set partialMessageTimeout(timeout: number) {
@@ -203,17 +217,8 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 		if (this.callback !== undefined) {
 			throw new Error('Reader can only listen once.');
 		}
-		this.nextMessageLength = -1;
-		this.messageToken = 0;
-		this.partialMessageTimer = undefined;
 		this.callback = callback;
-		const disposables = new DisposableStore();
-		disposables.add(this.readable.onData((data: Uint8Array) => {
-			this.onData(data);
-		}));
-		disposables.add(this.readable.onError((error: any) => this.fireError(error)));
-		disposables.add(this.readable.onClose(() => this.fireClose()));
-		return disposables;
+		return Disposable.create(() => this.callback = undefined);
 	}
 
 	private onData(data: Uint8Array): void {
