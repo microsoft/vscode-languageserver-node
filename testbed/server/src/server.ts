@@ -519,6 +519,9 @@ connection.onWorkspaceSymbol((params) => {
 
 connection.onCodeAction((params) => {
 	const document = documents.get(params.textDocument.uri);
+	if (document === undefined) {
+		return [];
+	}
 	const change: WorkspaceChange = new WorkspaceChange();
 	change.createFile(`${folder}/newFile.bat`, { overwrite: true });
 	const a = change.getTextEditChange(document);
