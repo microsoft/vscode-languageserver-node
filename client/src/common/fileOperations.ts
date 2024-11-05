@@ -164,7 +164,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 						// If we can't determine the file type than we treat it as a match.
 						// Dropping it would be another alternative.
 						if (fileType === undefined) {
-							this._client.error(`Failed to determine file type for ${uri.toString()}.`);
+							this._client.info(`Unable to determine file type for ${uri.toString()}. Treating as a match.`);
 							return true;
 						}
 						if ((fileType === code.FileType.File && filter.kind === proto.FileOperationPatternKind.file) || (fileType === code.FileType.Directory && filter.kind === proto.FileOperationPatternKind.folder)) {
