@@ -88,6 +88,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/tsconfig-gen
 
       - name: textDocument
+        dependsOn: tsconfigGen
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -114,6 +115,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
+        dependsOn: textDocument
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -140,6 +142,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
+        dependsOn: types
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -166,6 +169,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       - name: protocol
+        dependsOn: jsonrpc
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -192,6 +196,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/protocol
 
       - name: server
+        dependsOn: protocol
         testPlatforms:
           - name: Linux
             nodeVersions:
@@ -218,6 +223,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/server
 
       - name: client
+        dependsOn: server
         testPlatforms:
           - name: Linux
             nodeVersions:
