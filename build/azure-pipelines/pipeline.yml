@@ -83,7 +83,6 @@ extends:
         ghTagPrefix: release/tsconfigGen/
         tag: ${{ parameters.quality }}
         preReleaseTag: next
-        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishTsconfigGen }}
         workingDirectory: $(Build.SourcesDirectory)/tsconfig-gen
 
@@ -110,7 +109,6 @@ extends:
         ghTagPrefix: release/textDocument/
         tag: ${{ parameters.quality }}
         preReleaseTag: next
-        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishTextDocument }}
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
@@ -137,7 +135,6 @@ extends:
         ghTagPrefix: release/types/
         tag: ${{ parameters.quality }}
         preReleaseTag: next
-        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishTypes }}
         workingDirectory: $(Build.SourcesDirectory)/types
 
@@ -164,7 +161,6 @@ extends:
         ghTagPrefix: release/jsonrpc/
         tag: ${{ parameters.quality }}
         preReleaseTag: next
-        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishJsonrpc }}
         workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
@@ -191,7 +187,6 @@ extends:
         ghTagPrefix: release/protocol/
         tag: ${{ parameters.quality }}
         preReleaseTag: next
-        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishProtocol }}
         workingDirectory: $(Build.SourcesDirectory)/protocol
 
@@ -218,7 +213,6 @@ extends:
         ghTagPrefix: release/server/
         tag: ${{ parameters.quality }}
         preReleaseTag: next
-        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishServer }}
         workingDirectory: $(Build.SourcesDirectory)/server
 
@@ -245,6 +239,5 @@ extends:
         ghTagPrefix: release/client/
         tag: ${{ parameters.quality }}
         preReleaseTag: next
-        preReleaseTagAddToLatest: true
         publishPackage: ${{ parameters.publishClient }}
         workingDirectory: $(Build.SourcesDirectory)/client
