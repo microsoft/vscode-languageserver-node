@@ -51,6 +51,7 @@ export namespace DocumentColorRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentColorParams, ColorInformation[], ColorInformation[], void, DocumentColorRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
+	export const capabilities: { client: 'textDocument.colorProvider'; server: 'colorProvider' } = { client: 'textDocument.colorProvider', server: 'colorProvider' };
 }
 
 /**

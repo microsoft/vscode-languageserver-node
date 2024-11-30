@@ -49,6 +49,7 @@ export namespace WorkspaceFoldersRequest {
 	export const type = new ProtocolRequestType0<WorkspaceFolder[] | null, never, void, void>(method);
 	export type HandlerSignature = RequestHandler0<WorkspaceFolder[] | null, void>;
 	export type MiddlewareSignature = (token: CancellationToken, next: HandlerSignature) => HandlerResult<WorkspaceFolder[] | null, void>;
+	export const capabilities: { client: 'workspace.workspaceFolders'; server: 'workspace.workspaceFolders' } = { client: 'workspace.workspaceFolders', server: 'workspace.workspaceFolders' };
 }
 
 /**
@@ -61,6 +62,7 @@ export namespace DidChangeWorkspaceFoldersNotification {
 	export const type = new ProtocolNotificationType<DidChangeWorkspaceFoldersParams, void>(method);
 	export type HandlerSignature = NotificationHandler<DidChangeWorkspaceFoldersParams>;
 	export type MiddlewareSignature = (params: DidChangeWorkspaceFoldersParams, next: HandlerSignature) => void;
+	export const capabilities: { server: 'workspace.workspaceFolders.changeNotifications' } = { server: 'workspace.workspaceFolders.changeNotifications' };
 }
 
 /**

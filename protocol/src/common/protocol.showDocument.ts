@@ -81,4 +81,5 @@ export namespace ShowDocumentRequest {
 	export const type = new ProtocolRequestType<ShowDocumentParams, ShowDocumentResult, void, void, void>(method);
 	export type HandlerSignature = RequestHandler<ShowDocumentParams, ShowDocumentResult, void>;
 	export type MiddlewareSignature = (params: ShowDocumentParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<ShowDocumentResult, void>;
+	export const capabilities: { client: 'window.showDocument.support' } = { client: 'window.showDocument.support' };
 }

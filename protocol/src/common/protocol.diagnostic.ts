@@ -13,7 +13,6 @@ import type {
 	DiagnosticsCapabilities
 } from './protocol';
 
-
 /**
  * Client capabilities specific to diagnostic pull requests.
  *
@@ -269,6 +268,7 @@ export namespace DocumentDiagnosticRequest {
 	export const type = new ProtocolRequestType<DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DiagnosticServerCancellationData, DiagnosticRegistrationOptions>(method);
 	export const partialResult = new ProgressType<DocumentDiagnosticReportPartialResult>();
 	export type HandlerSignature = RequestHandler<DocumentDiagnosticParams, DocumentDiagnosticReport, void>;
+	export const capabilities: { client: 'textDocument.diagnostic'; server: 'diagnosticProvider' } = { client: 'textDocument.diagnostic', server: 'diagnosticProvider' };
 }
 
 /**
@@ -382,6 +382,7 @@ export namespace WorkspaceDiagnosticRequest {
 	export const type = new ProtocolRequestType<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, DiagnosticServerCancellationData, void>(method);
 	export const partialResult = new ProgressType<WorkspaceDiagnosticReportPartialResult>();
 	export type HandlerSignature = RequestHandler<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport | null, void>;
+	export const capabilities: { client: 'workspace.diagnostics'; server: 'diagnosticProvider.workspaceDiagnostics' } = { client: 'workspace.diagnostics', server: 'diagnosticProvider.workspaceDiagnostics' };
 }
 
 /**
@@ -394,4 +395,5 @@ export namespace DiagnosticRefreshRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
+	export const capabilities: { client: 'workspace.diagnostics.refreshSupport' } = { client: 'workspace.diagnostics.refreshSupport' };
 }

@@ -90,6 +90,7 @@ export namespace InlineValueRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlineValueParams, InlineValue[] | null, InlineValue[], void, InlineValueRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlineValueParams, InlineValue[] | null, void>;
+	export const capabilities: { client: 'textDocument.inlineValue'; server: 'inlineValueProvider' } = { client: 'textDocument.inlineValue', server: 'inlineValueProvider' };
 }
 
 /**
@@ -100,4 +101,5 @@ export namespace InlineValueRefreshRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
+	export const capabilities: { client: 'workspace.inlineValue.refreshSupport' } = { client: 'workspace.inlineValue.refreshSupport' };
 }

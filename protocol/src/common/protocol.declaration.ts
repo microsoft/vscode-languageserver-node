@@ -52,4 +52,5 @@ export namespace DeclarationRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DeclarationParams, Declaration | DeclarationLink[] | null, Location[] | DeclarationLink[], void, DeclarationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<DeclarationParams, Declaration | DeclarationLink[] | null, void>;
+	export const capabilities: { client: 'textDocument.declaration'; server: 'declarationProvider' } = { client: 'textDocument.declaration', server: 'declarationProvider' };
 }

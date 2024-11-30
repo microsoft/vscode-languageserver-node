@@ -130,4 +130,5 @@ export namespace MonikerRequest {
 	export const method: 'textDocument/moniker' = 'textDocument/moniker';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<MonikerParams, Moniker[] | null, Moniker[], void, MonikerRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.moniker'; server: 'monikerProvider' } = { client: 'textDocument.moniker', server: 'monikerProvider' };
 }
