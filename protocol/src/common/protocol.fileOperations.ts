@@ -6,6 +6,7 @@
 import { NotificationHandler, RequestHandler } from 'vscode-jsonrpc';
 import { WorkspaceEdit } from 'vscode-languageserver-types';
 import { MessageDirection, ProtocolNotificationType, ProtocolRequestType } from './messages';
+import { CM } from './protocol';
 
 /**
  * Options for notifications/requests for user operations on files.
@@ -292,6 +293,7 @@ export namespace WillCreateFilesRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CreateFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CreateFilesParams, WorkspaceEdit | undefined | null, void>;
+	export const capabilities = CM.create('workspace.fileOperations.willCreate', 'workspace.fileOperations.willCreate');
 }
 
 /**
@@ -305,6 +307,7 @@ export namespace DidCreateFilesNotification {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<CreateFilesParams, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = NotificationHandler<CreateFilesParams>;
+	export const capabilities = CM.create('workspace.fileOperations.didCreate', 'workspace.fileOperations.didCreate');
 }
 
 /**
@@ -318,6 +321,7 @@ export namespace WillRenameFilesRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<RenameFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<RenameFilesParams, WorkspaceEdit | undefined | null, void>;
+	export const capabilities = CM.create('workspace.fileOperations.willRename', 'workspace.fileOperations.willRename');
 }
 
 /**
@@ -331,6 +335,7 @@ export namespace DidRenameFilesNotification {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<RenameFilesParams, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = NotificationHandler<RenameFilesParams>;
+	export const capabilities = CM.create('workspace.fileOperations.didRename', 'workspace.fileOperations.didRename');
 }
 
 /**
@@ -344,6 +349,7 @@ export namespace DidDeleteFilesNotification {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DeleteFilesParams, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = NotificationHandler<DeleteFilesParams>;
+	export const capabilities = CM.create('workspace.fileOperations.didDelete', 'workspace.fileOperations.didDelete');
 }
 
 /**
@@ -357,4 +363,5 @@ export namespace WillDeleteFilesRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DeleteFilesParams, WorkspaceEdit | null, never, void, FileOperationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<DeleteFilesParams, WorkspaceEdit | undefined | null, void>;
+	export const capabilities = CM.create('workspace.fileOperations.willDelete', 'workspace.fileOperations.willDelete');
 }

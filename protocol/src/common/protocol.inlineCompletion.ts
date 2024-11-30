@@ -7,7 +7,7 @@ import { InlineCompletionItem, InlineCompletionContext, InlineCompletionList } f
 import { RequestHandler } from 'vscode-jsonrpc';
 
 import { MessageDirection, ProtocolRequestType } from './messages';
-import type { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentPositionParams } from './protocol';
+import { type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type StaticRegistrationOptions, type WorkDoneProgressParams, type TextDocumentPositionParams, CM } from './protocol';
 
 // ---- capabilities
 
@@ -67,4 +67,5 @@ export namespace InlineCompletionRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlineCompletionParams, InlineCompletionList | InlineCompletionItem[] | null, InlineCompletionItem[], void, InlineCompletionRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlineCompletionParams, InlineCompletionList | InlineCompletionItem[] | null, void>;
+	export const capabilities = CM.create('textDocument.inlineCompletion', 'inlineCompletionProvider');
 }

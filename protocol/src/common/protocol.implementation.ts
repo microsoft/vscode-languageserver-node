@@ -7,9 +7,10 @@ import { RequestHandler } from 'vscode-jsonrpc';
 import { Definition, DefinitionLink, Location, LocationLink } from 'vscode-languageserver-types';
 
 import { MessageDirection, ProtocolRequestType } from './messages';
-import type {
-	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams, WorkDoneProgressParams,
-	WorkDoneProgressOptions
+import {
+	type TextDocumentRegistrationOptions, type StaticRegistrationOptions, type TextDocumentPositionParams, type PartialResultParams, type WorkDoneProgressParams,
+	type WorkDoneProgressOptions,
+	CM
 } from './protocol';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
@@ -53,4 +54,5 @@ export namespace ImplementationRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<ImplementationParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, ImplementationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<ImplementationParams, Definition | DefinitionLink[] | null, void>;
+	export const capabilities = CM.create('textDocument.implementation', 'implementationProvider');
 }

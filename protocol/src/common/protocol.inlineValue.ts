@@ -7,7 +7,7 @@ import { TextDocumentIdentifier, Range, InlineValue, InlineValueContext } from '
 import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 
 import { MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
-import type { TextDocumentRegistrationOptions, WorkDoneProgressOptions, StaticRegistrationOptions, WorkDoneProgressParams } from './protocol';
+import { type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type StaticRegistrationOptions, type WorkDoneProgressParams, CM } from './protocol';
 
 // ---- capabilities
 
@@ -90,6 +90,7 @@ export namespace InlineValueRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlineValueParams, InlineValue[] | null, InlineValue[], void, InlineValueRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlineValueParams, InlineValue[] | null, void>;
+	export const capabilities = CM.create('textDocument.inlineValue', 'inlineValueProvider');
 }
 
 /**
@@ -100,4 +101,5 @@ export namespace InlineValueRefreshRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
+	export const capabilities = CM.create('workspace.inlineValue.refreshSupport', undefined);
 }
