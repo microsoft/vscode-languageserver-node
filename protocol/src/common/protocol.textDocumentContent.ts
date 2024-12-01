@@ -84,6 +84,7 @@ export namespace TextDocumentContentRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<TextDocumentContentParams, TextDocumentContentResult, void, void, TextDocumentContentRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<TextDocumentContentParams, TextDocumentContentResult, void>;
+	export const capabilities: { client: 'workspace.textDocumentContent'; server: 'workspace.textDocumentContent' } = { client: 'workspace.textDocumentContent', server: 'workspace.textDocumentContent' };
 }
 
 /**

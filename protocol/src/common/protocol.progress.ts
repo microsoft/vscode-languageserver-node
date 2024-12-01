@@ -114,6 +114,7 @@ export namespace WorkDoneProgressCreateRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<WorkDoneProgressCreateParams, void, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<WorkDoneProgressCreateParams, void, void>;
+	export const capabilities: { client: 'window.workDoneProgress' } = { client: 'window.workDoneProgress' };
 }
 
 export interface WorkDoneProgressCancelParams {

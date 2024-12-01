@@ -204,6 +204,7 @@ export namespace SemanticTokensRequest {
 	export const type = new ProtocolRequestType<SemanticTokensParams, SemanticTokens | null, SemanticTokensPartialResult, void, SemanticTokensRegistrationOptions>(method);
 	export const registrationMethod: typeof SemanticTokensRegistrationType.method  = SemanticTokensRegistrationType.method;
 	export type HandlerSignature = RequestHandler<SemanticTokensDeltaParams, SemanticTokens | null, void>;
+	export const capabilities: { client: 'textDocument.semanticTokens'; server: 'semanticTokensProvider' } = { client: 'textDocument.semanticTokens', server: 'semanticTokensProvider' };
 }
 
 //------- 'textDocument/semanticTokens/edits' -----
@@ -233,6 +234,7 @@ export namespace SemanticTokensDeltaRequest {
 	export const type = new ProtocolRequestType<SemanticTokensDeltaParams, SemanticTokens | SemanticTokensDelta | null, SemanticTokensPartialResult | SemanticTokensDeltaPartialResult, void, SemanticTokensRegistrationOptions>(method);
 	export const registrationMethod: typeof SemanticTokensRegistrationType.method  = SemanticTokensRegistrationType.method;
 	export type HandlerSignature = RequestHandler<SemanticTokensDeltaParams, SemanticTokens | SemanticTokensDelta | null, void>;
+	export const capabilities: { client: 'textDocument.semanticTokens.requests.full.delta'; server: 'semanticTokensProvider.full.delta' } = { client: 'textDocument.semanticTokens.requests.full.delta', server: 'semanticTokensProvider.full.delta' };
 }
 
 //------- 'textDocument/semanticTokens/range' -----
@@ -261,6 +263,7 @@ export namespace SemanticTokensRangeRequest {
 	export const type = new ProtocolRequestType<SemanticTokensRangeParams, SemanticTokens | null, SemanticTokensPartialResult, void, void>(method);
 	export const registrationMethod: typeof SemanticTokensRegistrationType.method  = SemanticTokensRegistrationType.method;
 	export type HandlerSignature = RequestHandler<SemanticTokensRangeParams, SemanticTokens | null, void>;
+	export const capabilities: { client: 'textDocument.semanticTokens.requests.range'; server: 'semanticTokensProvider.range' } = { client: 'textDocument.semanticTokens.requests.range', server: 'semanticTokensProvider.range' };
 }
 
 //------- 'workspace/semanticTokens/refresh' -----
@@ -289,4 +292,5 @@ export namespace SemanticTokensRefreshRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
+	export const capabilities: { client: 'workspace.semanticTokens.refreshSupport' } = { client: 'workspace.semanticTokens.refreshSupport' };
 }

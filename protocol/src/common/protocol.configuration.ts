@@ -25,6 +25,7 @@ export namespace ConfigurationRequest {
 	export const type = new ProtocolRequestType<ConfigurationParams, LSPAny[], never, void, void>(method);
 	export type HandlerSignature = RequestHandler<ConfigurationParams, LSPAny[], void>;
 	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<LSPAny[], void>;
+	export const capabilities: { client: 'workspace.configuration' } = { client: 'workspace.configuration' };
 }
 
 

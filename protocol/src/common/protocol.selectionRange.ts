@@ -54,4 +54,5 @@ export namespace SelectionRangeRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<SelectionRangeParams, SelectionRange[] | null, SelectionRange[], void, SelectionRangeRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<SelectionRangeParams, SelectionRange[] | null, void>;
+	export const capabilities: { client: 'textDocument.selectionRange'; server: 'selectionRangeProvider' } = { client: 'textDocument.selectionRange', server: 'selectionRangeProvider' };
 }

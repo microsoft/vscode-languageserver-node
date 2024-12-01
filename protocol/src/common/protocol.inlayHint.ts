@@ -105,6 +105,7 @@ export namespace InlayHintRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlayHintParams, InlayHint[] | null, InlayHint[], void, InlayHintRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlayHintParams, InlayHint[] | null, void>;
+	export const capabilities: { client: 'textDocument.inlayHint'; server: 'inlayHintProvider' } = { client: 'textDocument.inlayHint', server: 'inlayHintProvider' };
 }
 
 /**
@@ -119,6 +120,7 @@ export namespace InlayHintResolveRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlayHint, InlayHint, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<InlayHint, InlayHint, void>;
+	export const capabilities: { client: 'textDocument.inlayHint.resolveSupport'; server: 'inlayHintProvider.resolveProvider' } = { client: 'textDocument.inlayHint.resolveSupport', server: 'inlayHintProvider.resolveProvider' };
 }
 
 /**
@@ -129,4 +131,5 @@ export namespace InlayHintRefreshRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
+	export const capabilities: { client: 'workspace.inlayHint.refreshSupport' } = { client: 'workspace.inlayHint.refreshSupport' };
 }

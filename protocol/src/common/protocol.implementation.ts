@@ -53,4 +53,5 @@ export namespace ImplementationRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<ImplementationParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, ImplementationRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<ImplementationParams, Definition | DefinitionLink[] | null, void>;
+	export const capabilities: { client: 'textDocument.implementation'; server: 'implementationProvider' } = { client: 'textDocument.implementation', server: 'implementationProvider' };
 }

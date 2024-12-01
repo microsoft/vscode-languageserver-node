@@ -59,6 +59,7 @@ export namespace CallHierarchyPrepareRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CallHierarchyPrepareParams, CallHierarchyItem[] | null, never, void, CallHierarchyRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void>;
+	export const capabilities: { client: 'textDocument.callHierarchy'; server: 'callHierarchyProvider' } = { client: 'textDocument.callHierarchy', server: 'callHierarchyProvider' };
 }
 
 /**

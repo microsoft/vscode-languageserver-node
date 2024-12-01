@@ -128,6 +128,7 @@ export namespace FoldingRangeRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<FoldingRangeParams, FoldingRange[] | null, FoldingRange[], void, FoldingRangeRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<FoldingRangeParams, FoldingRange[] | null, void>;
+	export const capabilities: { client: 'textDocument.foldingRange'; server: 'foldingRangeProvider' } = { client: 'textDocument.foldingRange', server: 'foldingRangeProvider' };
 }
 
 /**
@@ -139,4 +140,5 @@ export namespace FoldingRangeRefreshRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
+	export const capabilities: { client: 'workspace.foldingRange.refreshSupport' } = { client: 'workspace.foldingRange.refreshSupport' };
 }

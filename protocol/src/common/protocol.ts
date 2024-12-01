@@ -1674,6 +1674,7 @@ export namespace DidChangeConfigurationNotification {
 	export const method: 'workspace/didChangeConfiguration' = 'workspace/didChangeConfiguration';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidChangeConfigurationParams, DidChangeConfigurationRegistrationOptions>(method);
+	export const capabilities: { client: 'workspace.didChangeConfiguration' } = { client: 'workspace.didChangeConfiguration' };
 }
 
 export interface DidChangeConfigurationRegistrationOptions {
@@ -1746,6 +1747,7 @@ export namespace ShowMessageNotification {
 	export const method: 'window/showMessage' = 'window/showMessage';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolNotificationType<ShowMessageParams, void>(method);
+	export const capabilities: { client: 'window.showMessage' } = { client: 'window.showMessage' };
 }
 
 /**
@@ -1809,6 +1811,7 @@ export namespace ShowMessageRequest {
 	export const method: 'window/showMessageRequest' = 'window/showMessageRequest';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ShowMessageRequestParams, MessageActionItem | null, never, void, void>(method);
+	export const capabilities: { client: 'window.showMessage' } = { client: 'window.showMessage' };
 }
 
 /**
@@ -1962,6 +1965,7 @@ export namespace DidOpenTextDocumentNotification {
 	export const method: 'textDocument/didOpen' = 'textDocument/didOpen';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.synchronization'; server: 'textDocumentSync' } = { client: 'textDocument.synchronization', server: 'textDocumentSync' };
 }
 
 /**
@@ -2069,6 +2073,7 @@ export namespace DidChangeTextDocumentNotification {
 	export const method: 'textDocument/didChange' = 'textDocument/didChange';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentChangeRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.synchronization'; server: 'textDocumentSync' } = { client: 'textDocument.synchronization', server: 'textDocumentSync' };
 }
 
 /**
@@ -2094,6 +2099,7 @@ export namespace DidCloseTextDocumentNotification {
 	export const method: 'textDocument/didClose' = 'textDocument/didClose';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.synchronization'; server: 'textDocumentSync' } = { client: 'textDocument.synchronization', server: 'textDocumentSync' };
 }
 
 /**
@@ -2126,6 +2132,7 @@ export namespace DidSaveTextDocumentNotification {
 	export const method: 'textDocument/didSave' = 'textDocument/didSave';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidSaveTextDocumentParams, TextDocumentSaveRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.synchronization.didSave'; server: 'textDocumentSync.save' } = { client: 'textDocument.synchronization.didSave', server: 'textDocumentSync.save' };
 }
 
 /**
@@ -2175,6 +2182,7 @@ export namespace WillSaveTextDocumentNotification {
 	export const method: 'textDocument/willSave' = 'textDocument/willSave';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<WillSaveTextDocumentParams, TextDocumentRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.synchronization.willSave'; server: 'textDocumentSync.willSave' } = { client: 'textDocument.synchronization.willSave', server: 'textDocumentSync.willSave' };
 }
 
 /**
@@ -2189,6 +2197,7 @@ export namespace WillSaveTextDocumentWaitUntilRequest {
 	export const method: 'textDocument/willSaveWaitUntil' = 'textDocument/willSaveWaitUntil';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<WillSaveTextDocumentParams, TextEdit[] | null, never, void, TextDocumentRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.synchronization.willSaveWaitUntil'; server: 'textDocumentSync.willSaveWaitUntil' } = { client: 'textDocument.synchronization.willSaveWaitUntil', server: 'textDocumentSync.willSaveWaitUntil' };
 }
 
 //---- File eventing ----
@@ -2218,6 +2227,7 @@ export namespace DidChangeWatchedFilesNotification {
 	export const method: 'workspace/didChangeWatchedFiles' = 'workspace/didChangeWatchedFiles';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidChangeWatchedFilesParams, DidChangeWatchedFilesRegistrationOptions>(method);
+	export const capabilities: { client: 'workspace.didChangeWatchedFiles' } = { client: 'workspace.didChangeWatchedFiles' };
 }
 
 /**
@@ -2452,6 +2462,7 @@ export namespace PublishDiagnosticsNotification {
 	export const method: 'textDocument/publishDiagnostics' = 'textDocument/publishDiagnostics';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolNotificationType<PublishDiagnosticsParams, void>(method);
+	export const capabilities: { client: 'textDocument.publishDiagnostics' } = { client: 'textDocument.publishDiagnostics' };
 }
 
 //---- Completion Support --------------------------
@@ -2787,6 +2798,7 @@ export namespace CompletionRequest {
 	export const method: 'textDocument/completion' = 'textDocument/completion';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CompletionParams, CompletionItem[] | CompletionList | null, CompletionItem[], void, CompletionRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.completion'; server: 'completionProvider' } = { client: 'textDocument.completion', server: 'completionProvider' };
 }
 
 /**
@@ -2798,6 +2810,7 @@ export namespace CompletionResolveRequest {
 	export const method: 'completionItem/resolve' = 'completionItem/resolve';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CompletionItem, CompletionItem, never, void, void>(method);
+	export const capabilities: { client: 'textDocument.completion.completionItem.resolveSupport'; server: 'completionProvider.resolveProvider' } = { client: 'textDocument.completion.completionItem.resolveSupport', server: 'completionProvider.resolveProvider' };
 }
 
 //---- Hover Support -------------------------------
@@ -2842,6 +2855,7 @@ export namespace HoverRequest {
 	export const method: 'textDocument/hover' = 'textDocument/hover';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<HoverParams, Hover | null, never, void, HoverRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.hover'; server: 'hoverProvider' } = { client: 'textDocument.hover', server: 'hoverProvider' };
 }
 
 //---- SignatureHelp ----------------------------------
@@ -3018,6 +3032,7 @@ export namespace SignatureHelpRequest {
 	export const method: 'textDocument/signatureHelp' = 'textDocument/signatureHelp';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<SignatureHelpParams, SignatureHelp | null, never, void, SignatureHelpRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.signatureHelp'; server: 'signatureHelpProvider' } = { client: 'textDocument.signatureHelp', server: 'signatureHelpProvider' };
 }
 
 //---- Goto Definition -------------------------------------
@@ -3067,6 +3082,7 @@ export namespace DefinitionRequest {
 	export const method: 'textDocument/definition' = 'textDocument/definition';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DefinitionParams, Definition | DefinitionLink[] | null, Location[] | DefinitionLink[], void, DefinitionRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.definition'; server: 'definitionProvider' } = { client: 'textDocument.definition', server: 'definitionProvider' };
 }
 
 //---- Reference Provider ----------------------------------
@@ -3110,6 +3126,7 @@ export namespace ReferencesRequest {
 	export const method: 'textDocument/references' = 'textDocument/references';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<ReferenceParams, Location[] | null, Location[], void, ReferenceRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.references'; server: 'referencesProvider' } = { client: 'textDocument.references', server: 'referencesProvider' };
 }
 
 //---- Document Highlight ----------------------------------
@@ -3152,6 +3169,7 @@ export namespace DocumentHighlightRequest {
 	export const method: 'textDocument/documentHighlight' = 'textDocument/documentHighlight';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentHighlightParams, DocumentHighlight[] | null, DocumentHighlight[], void, DocumentHighlightRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.documentHighlight'; server: 'documentHighlightProvider' } = { client: 'textDocument.documentHighlight', server: 'documentHighlightProvider' };
 }
 
 //---- Document Symbol Provider ---------------------------
@@ -3233,6 +3251,7 @@ export namespace DocumentSymbolRequest {
 	export const method: 'textDocument/documentSymbol' = 'textDocument/documentSymbol';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentSymbolParams, SymbolInformation[] | DocumentSymbol[] | null, SymbolInformation[] | DocumentSymbol[], void, DocumentSymbolRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.documentSymbol'; server: 'documentSymbolProvider' } = { client: 'textDocument.documentSymbol', server: 'documentSymbolProvider' };
 }
 
 //---- Code Action Provider ----------------------------------
@@ -3457,6 +3476,7 @@ export namespace CodeActionRequest {
 	export const method: 'textDocument/codeAction' = 'textDocument/codeAction';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CodeActionParams, (Command | CodeAction)[] | null, (Command | CodeAction)[], void, CodeActionRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.codeAction'; server: 'codeActionProvider' } = { client: 'textDocument.codeAction', server: 'codeActionProvider' };
 }
 
 /**
@@ -3468,6 +3488,7 @@ export namespace CodeActionResolveRequest {
 	export const method: 'codeAction/resolve' = 'codeAction/resolve';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CodeAction, CodeAction, never, void, void>(method);
+	export const capabilities: { client: 'textDocument.codeAction.resolveSupport'; server: 'codeActionProvider.resolveProvider' } = { client: 'textDocument.codeAction.resolveSupport', server: 'codeActionProvider.resolveProvider' };
 }
 
 //---- Workspace Symbol Provider ---------------------------
@@ -3594,6 +3615,7 @@ export namespace WorkspaceSymbolRequest {
 	export const method: 'workspace/symbol' = 'workspace/symbol';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<WorkspaceSymbolParams, SymbolInformation[] | WorkspaceSymbol[] | null, SymbolInformation[] | WorkspaceSymbol[], void, WorkspaceSymbolRegistrationOptions>(method);
+	export const capabilities: { client: 'workspace.symbol'; server: 'workspaceSymbolProvider' } = { client: 'workspace.symbol', server: 'workspaceSymbolProvider' };
 }
 
 /**
@@ -3606,6 +3628,7 @@ export namespace WorkspaceSymbolResolveRequest {
 	export const method: 'workspaceSymbol/resolve' = 'workspaceSymbol/resolve';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<WorkspaceSymbol, WorkspaceSymbol, never, void, void>(method);
+	export const capabilities: { client: 'workspace.symbol.resolveSupport'; server: 'workspaceSymbolProvider.resolveProvider' } = { client: 'workspace.symbol.resolveSupport', server: 'workspaceSymbolProvider.resolveProvider' };
 }
 
 //---- Code Lens Provider -------------------------------------------
@@ -3687,6 +3710,7 @@ export namespace CodeLensRequest {
 	export const method: 'textDocument/codeLens' = 'textDocument/codeLens';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CodeLensParams, CodeLens[] | null, CodeLens[], void, CodeLensRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.codeLens'; server: 'codeLensProvider' } = { client: 'textDocument.codeLens', server: 'codeLensProvider' };
 }
 
 /**
@@ -3696,6 +3720,7 @@ export namespace CodeLensResolveRequest {
 	export const method: 'codeLens/resolve' = 'codeLens/resolve';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CodeLens, CodeLens, never, void, void>(method);
+	export const capabilities: { client: 'textDocument.codeLens.resolveSupport'; server: 'codeLensProvider.resolveProvider' } = { client: 'textDocument.codeLens.resolveSupport', server: 'codeLensProvider.resolveProvider' };
 }
 
 /**
@@ -3707,6 +3732,7 @@ export namespace CodeLensRefreshRequest {
 	export const method: `workspace/codeLens/refresh` = `workspace/codeLens/refresh`;
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
+	export const capabilities: { client: 'workspace.codeLens' } = { client: 'workspace.codeLens' };
 }
 //---- Document Links ----------------------------------------------
 
@@ -3760,6 +3786,7 @@ export namespace DocumentLinkRequest {
 	export const method: 'textDocument/documentLink' = 'textDocument/documentLink';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentLinkParams, DocumentLink[] | null, DocumentLink[], void, DocumentLinkRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.documentLink'; server: 'documentLinkProvider' } = { client: 'textDocument.documentLink', server: 'documentLinkProvider' };
 }
 
 /**
@@ -3771,6 +3798,7 @@ export namespace DocumentLinkResolveRequest {
 	export const method: 'documentLink/resolve' = 'documentLink/resolve';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentLink, DocumentLink, never, void, void>(method);
+	export const capabilities: { client: 'textDocument.documentLink'; server: 'documentLinkProvider.resolveProvider' } = { client: 'textDocument.documentLink', server: 'documentLinkProvider.resolveProvider' };
 }
 
 //---- Formatting ----------------------------------------------
@@ -3819,6 +3847,7 @@ export namespace DocumentFormattingRequest {
 	export const method: 'textDocument/formatting' = 'textDocument/formatting';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentFormattingParams, TextEdit[] | null, never, void, DocumentFormattingRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.formatting'; server: 'documentFormattingProvider' } = { client: 'textDocument.formatting', server: 'documentFormattingProvider' };
 }
 
 /**
@@ -3920,6 +3949,7 @@ export namespace DocumentRangesFormattingRequest {
 	export const method: 'textDocument/rangesFormatting' = 'textDocument/rangesFormatting';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentRangesFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.rangeFormatting'; server: 'documentRangeFormattingProvider' } = { client: 'textDocument.rangeFormatting', server: 'documentRangeFormattingProvider' };
 }
 
 /**
@@ -3991,6 +4021,7 @@ export namespace DocumentOnTypeFormattingRequest {
 	export const method: 'textDocument/onTypeFormatting' = 'textDocument/onTypeFormatting';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentOnTypeFormattingParams, TextEdit[] | null, never, void, DocumentOnTypeFormattingRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.onTypeFormatting'; server: 'documentOnTypeFormattingProvider' } = { client: 'textDocument.onTypeFormatting', server: 'documentOnTypeFormattingProvider' };
 }
 
 //---- Rename ----------------------------------------------
@@ -4088,6 +4119,7 @@ export namespace RenameRequest {
 	export const method: 'textDocument/rename' = 'textDocument/rename';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<RenameParams, WorkspaceEdit | null, never, void, RenameRegistrationOptions>(method);
+	export const capabilities: { client: 'textDocument.rename'; server: 'renameProvider' } = { client: 'textDocument.rename', server: 'renameProvider' };
 }
 
 export interface PrepareRenameParams extends TextDocumentPositionParams, WorkDoneProgressParams {
@@ -4119,6 +4151,7 @@ export namespace PrepareRenameRequest {
 	export const method: 'textDocument/prepareRename' = 'textDocument/prepareRename';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<PrepareRenameParams, PrepareRenameResult | null, never, void, void>(method);
+	export const capabilities: { client: 'textDocument.rename.prepareSupport'; server: 'renameProvider.prepareProvider' } = { client: 'textDocument.rename.prepareSupport', server: 'renameProvider.prepareProvider' };
 }
 
 //---- Command Execution -------------------------------------------
@@ -4172,6 +4205,7 @@ export namespace ExecuteCommandRequest {
 	export const method: 'workspace/executeCommand' = 'workspace/executeCommand';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<ExecuteCommandParams, LSPAny | null, never, void, ExecuteCommandRegistrationOptions>(method);
+	export const capabilities: { client: 'workspace.executeCommand'; server: 'executeCommandProvider' } = { client: 'workspace.executeCommand', server: 'executeCommandProvider' };
 }
 
 //---- Apply Edit request ----------------------------------------
@@ -4310,6 +4344,7 @@ export namespace ApplyWorkspaceEditRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, never, void, void>('workspace/applyEdit');
 	export type HandlerSignature = RequestHandler<ApplyWorkspaceEditParams, ApplyWorkspaceEditResult, void>;
+	export const capabilities: { client: 'workspace.applyEdit' } = { client: 'workspace.applyEdit' };
 }
 
 export {
