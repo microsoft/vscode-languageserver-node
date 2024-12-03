@@ -39,6 +39,7 @@
 		"@types/sinon": "^10.0.20",
 		"@types/uuid": "^9.0.6",
 		"@types/vscode": "1.91.0",
+		"@types/node": "20.1.4",
 		"@vscode/test-electron": "^2.3.9",
 		"find-process": "^1.4.7",
 		"glob": "^10.3.10",
