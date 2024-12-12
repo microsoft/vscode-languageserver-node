@@ -36,14 +36,15 @@
 	"devDependencies": {
 		"@types/glob": "^8.1.0",
 		"@types/minimatch": "^5.1.2",
-		"@types/sinon": "^10.0.20",
-		"@types/uuid": "^9.0.6",
+		"@types/sinon": "^17.0.3",
+		"@types/uuid": "^10.0.0",
 		"@types/vscode": "1.91.0",
-		"@vscode/test-electron": "^2.3.9",
+		"@types/node": "20.17.9",
+		"@vscode/test-electron": "^2.4.1",
 		"find-process": "^1.4.7",
-		"glob": "^10.3.10",
-		"sinon": "^17.0.0",
-		"uuid": "^9.0.1"
+		"glob": "^11.0.0",
+		"sinon": "^19.0.2",
+		"uuid": "^11.0.3"
 	},
 	"enabledApiProposals": []
 }

@@ -7,7 +7,7 @@
 		"node": "*"
 	},
 	"dependencies": {
-		"vscode-uri": "^3.0.1"
+		"vscode-uri": "^3.0.8"
 	},
 	"scripts": {
 		"compile": "tsc -b ./tsconfig.json",

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-/// <reference path="../../typings/thenable.d.ts" />
+/// <reference path="../../typings/thenable.d.ts" preserve="true"/>
 
 import {
 	Message, MessageSignature, RequestMessage, RequestType, RequestType0, RequestType1, RequestType2, RequestType3, RequestType4, RequestType5, RequestType6,
