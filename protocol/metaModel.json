@@ -15207,9 +15207,8 @@
 				}
 			],
 			"supportsCustomValues": true,
-			"documentation": "Predefined Language kinds\n@since 3.18.0\n@proposed",
-			"since": "3.18.0",
-			"proposed": true
+			"documentation": "Predefined Language kinds\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "InlineCompletionTriggerKind",
