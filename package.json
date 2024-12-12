@@ -13,25 +13,25 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"devDependencies": {
-		"@types/assert": "^1.5.8",
-		"@types/mocha": "^10.0.3",
+		"@types/assert": "^1.5.11",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "20.17.9",
 		"@typescript-eslint/eslint-plugin": "^6.9.0",
 		"@typescript-eslint/parser": "^6.9.0",
 		"assert": "^2.1.0",
 		"eslint": "^8.52.0",
 		"http-server": "^14.1.1",
-		"mocha": "^10.2.0",
-		"playwright": "^1.39.0",
-		"rimraf": "^5.0.5",
+		"mocha": "^11.0.1",
+		"playwright": "^1.49.1",
+		"rimraf": "^6.0.1",
 		"shelljs": "^0.8.5",
 		"shx": "^0.3.4",
 		"source-map-support": "^0.5.21",
 		"ts-json-schema-generator": "^1.4.0",
 		"typescript": "5.7.2",
-		"webpack": "^5.94.0",
+		"webpack": "^5.97.1",
 		"webpack-cli": "^5.1.4",
-		"node-polyfill-webpack-plugin": "^2.0.1"
+		"node-polyfill-webpack-plugin": "^4.1.0"
 	},
 	"scripts": {
 		"postinstall": "node ./build/bin/all.js install && cd testbed && npm install && cd .. && npm run symlink:testbed && npx playwright install",
