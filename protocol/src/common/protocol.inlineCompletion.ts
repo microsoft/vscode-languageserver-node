@@ -67,4 +67,5 @@ export namespace InlineCompletionRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<InlineCompletionParams, InlineCompletionList | InlineCompletionItem[] | null, InlineCompletionItem[], void, InlineCompletionRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<InlineCompletionParams, InlineCompletionList | InlineCompletionItem[] | null, void>;
+	export const capabilities: { client: 'textDocument.inlineCompletion'; server: 'inlineCompletionProvider' } = { client: 'textDocument.inlineCompletion', server: 'inlineCompletionProvider' };
 }
