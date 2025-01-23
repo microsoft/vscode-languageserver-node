@@ -26,6 +26,43 @@ export namespace Files {
 	export const resolveModulePath = fm.resolveModulePath;
 }
 
+let _isDetached: boolean | undefined = undefined;
+
+/**
+ * @returns {boolean} True if the process is detached from its parent, false otherwise.
+ *
+ * @description
+ * When a process is detached, it will continue running even if it's parent process
+ * terminates. **But EXIT notifications from the client will be honored regardless.**
+ *
+ * @remarks
+ * This function assumes the parent process has been properly configured with
+ * necessary settings (e.g., using `child_process.unref()`).
+ */
+function isDetached() {
+	// cached result
+	if (_isDetached !== undefined) {
+		return _isDetached;
+	}
+
+	if(process.argv.includes('--detached')) {
+		setDetached();
+	} else {
+		_isDetached = false;
+	}
+	return _isDetached;
+
+	function setDetached() {
+		_isDetached = true;
+
+		// Override the default behavior: when then parent/child communication
+		// channel (e.g. IPC) disconnects, the child terminates.
+		process.on('disconnect', () => {
+			endProtocolConnection();
+		});
+	}
+}
+
 let _protocolConnection: ProtocolConnection | undefined;
 function endProtocolConnection(): void {
 	if (_protocolConnection === undefined) {
@@ -38,10 +75,23 @@ function endProtocolConnection(): void {
 		// did and we can't send an end into the connection.
 	}
 }
+
 let _shutdownReceived: boolean = false;
 let exitTimer: NodeJS.Timer | undefined = undefined;
 
+
+/**
+ * May auto-exit the server if the parent process does not exist.
+ *
+ * We need this due to different behaviors between OS's when the parent terminates:
+ * - Windows terminates the child
+ * - Unix-like may not terminate the child
+ */
 function setupExitTimer(): void {
+	if (isDetached()) {
+		return;
+	}
+
 	const argName = '--clientProcessId';
 	function runTimer(value: string): void {
 		try {
@@ -79,6 +129,10 @@ setupExitTimer();
 
 const watchDog: WatchDog = {
 	initialize: (params: InitializeParams): void => {
+		if (isDetached()) {
+			return;
+		}
+
 		const processId = params.processId;
 		if (Is.number(processId) && exitTimer === undefined) {
 			// We received a parent process id. Set up a timer to periodically check
@@ -104,7 +158,6 @@ const watchDog: WatchDog = {
 		process.exit(code);
 	}
 };
-
 
 /**
  * Creates a new connection based on the processes command line arguments:
@@ -249,11 +302,15 @@ function _createConnection<PConsole = _, PTracer = _, PTelemetry = _, PClient = 
 		const inputStream = <NodeJS.ReadableStream>input;
 		inputStream.on('end', () => {
 			endProtocolConnection();
-			process.exit(_shutdownReceived ? 0 : 1);
+			if (!isDetached()) {
+				process.exit(_shutdownReceived ? 0 : 1);
+			}
 		});
 		inputStream.on('close', () => {
 			endProtocolConnection();
-			process.exit(_shutdownReceived ? 0 : 1);
+			if (!isDetached()) {
+				process.exit(_shutdownReceived ? 0 : 1);
+			}
 		});
 	}
 
