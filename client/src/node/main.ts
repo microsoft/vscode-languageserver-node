@@ -82,6 +82,7 @@ export interface ForkOptions {
 	env?: any;
 	encoding?: string;
 	execArgv?: string[];
+	detached?: boolean;
 }
 
 export interface NodeModule {
@@ -130,6 +131,7 @@ export class LanguageClient extends BaseLanguageClient {
 	private readonly _serverOptions: ServerOptions;
 	private readonly _forceDebug: boolean;
 	private _serverProcess: ChildProcess | undefined;
+	/** Use {@link _setDetached} to set the value unless necessary */
 	private _isDetached: boolean | undefined;
 	private _isInDebugMode: boolean;
 
@@ -285,20 +287,22 @@ export class LanguageClient extends BaseLanguageClient {
 		if (Is.func(server)) {
 			return server().then((result) => {
 				if (MessageTransports.is(result)) {
-					this._isDetached = !!result.detached;
+					this._setDetached(!!result.detached);
 					return result;
 				} else if (StreamInfo.is(result)) {
-					this._isDetached = !!result.detached;
+					this._setDetached(!!result.detached);
 					return { reader: new StreamMessageReader(result.reader), writer: new StreamMessageWriter(result.writer) };
 				} else {
 					let cp: ChildProcess;
+					let isDetached;
 					if (ChildProcessInfo.is(result)) {
 						cp = result.process;
-						this._isDetached = result.detached;
+						isDetached = result.detached;
 					} else {
 						cp = result;
-						this._isDetached = false;
+						isDetached = false;
 					}
+					this._setDetached(isDetached, cp);
 					cp.stderr!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 					return { reader: new StreamMessageReader(cp.stdout!), writer: new StreamMessageWriter(cp.stdin!) };
 				}
@@ -348,6 +352,9 @@ export class LanguageClient extends BaseLanguageClient {
 					} else if (Transport.isSocket(transport)) {
 						args.push(`--socket=${transport.port}`);
 					}
+					if (node.options?.detached) {
+						args.push('--detached');
+					}
 					args.push(`--clientProcessId=${process.pid.toString()}`);
 					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
 						const serverProcess = cp.spawn(runtime, args, execOptions);
@@ -355,6 +362,7 @@ export class LanguageClient extends BaseLanguageClient {
 							return handleChildProcessStartError(serverProcess, `Launching server using runtime ${runtime} failed.`);
 						}
 						this._serverProcess = serverProcess;
+						this._setDetached(!!node.options?.detached, serverProcess);
 						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 						if (transport === TransportKind.ipc) {
 							serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
@@ -369,6 +377,7 @@ export class LanguageClient extends BaseLanguageClient {
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
+							this._setDetached(!!node.options?.detached, process);
 							process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 							process.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 							return transport.onConnected().then((protocol) => {
@@ -382,6 +391,7 @@ export class LanguageClient extends BaseLanguageClient {
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
+							this._setDetached(!!node.options?.detached, process);
 							process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 							process.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 							return transport.onConnected().then((protocol) => {
@@ -404,6 +414,9 @@ export class LanguageClient extends BaseLanguageClient {
 							args.push(`--socket=${transport.port}`);
 						}
 						args.push(`--clientProcessId=${process.pid.toString()}`);
+						if (node.options?.detached) {
+							args.push('--detached');
+						}
 						const options: cp.ForkOptions = node.options ?? Object.create(null);
 						options.env = getEnvironment(options.env, true);
 						options.execArgv = options.execArgv || [];
@@ -413,6 +426,7 @@ export class LanguageClient extends BaseLanguageClient {
 							const sp = cp.fork(node.module, args || [], options);
 							assertStdio(sp);
 							this._serverProcess = sp;
+							this._setDetached(!!options.detached, sp);
 							sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 							if (transport === TransportKind.ipc) {
 								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
@@ -425,6 +439,7 @@ export class LanguageClient extends BaseLanguageClient {
 								const sp = cp.fork(node.module, args || [], options);
 								assertStdio(sp);
 								this._serverProcess = sp;
+								this._setDetached(!!options.detached, sp);
 								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
@@ -436,6 +451,7 @@ export class LanguageClient extends BaseLanguageClient {
 								const sp = cp.fork(node.module, args || [], options);
 								assertStdio(sp);
 								this._serverProcess = sp;
+								this._setDetached(!!options.detached, sp);
 								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 								transport.onConnected().then((protocol) => {
@@ -460,6 +476,9 @@ export class LanguageClient extends BaseLanguageClient {
 				} else if (transport === TransportKind.ipc) {
 					throw new Error(`Transport kind ipc is not support for command executable`);
 				}
+				if (command.options?.detached) {
+					args.push('--detached');
+				}
 				const options = Object.assign({}, command.options);
 				options.cwd = options.cwd || serverWorkingDir;
 				if (transport === undefined || transport === TransportKind.stdio) {
@@ -469,7 +488,7 @@ export class LanguageClient extends BaseLanguageClient {
 					}
 					serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 					this._serverProcess = serverProcess;
-					this._isDetached = !!options.detached;
+					this._setDetached(!!options.detached, serverProcess);
 					return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
 				} else if (transport === TransportKind.pipe) {
 					return createClientPipeTransport(pipeName!).then((transport) => {
@@ -478,7 +497,7 @@ export class LanguageClient extends BaseLanguageClient {
 							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
-						this._isDetached = !!options.detached;
+						this._setDetached(!!options.detached, serverProcess);
 						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 						serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 						return transport.onConnected().then((protocol) => {
@@ -492,7 +511,7 @@ export class LanguageClient extends BaseLanguageClient {
 							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
-						this._isDetached = !!options.detached;
+						this._setDetached(!!options.detached, serverProcess);
 						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 						serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
 						return transport.onConnected().then((protocol) => {
@@ -566,6 +585,21 @@ export class LanguageClient extends BaseLanguageClient {
 			});
 		}
 		return Promise.resolve(undefined);
+	}
+
+	/**
+	 * Setter that should be used for {@link _isDetached}. It performs additional
+	 * actions based on the value set for detached.
+	 */
+	private _setDetached(isDetached: boolean, serverProcess?: cp.ChildProcess) {
+		if (!isDetached) {
+			this._isDetached = false;
+			return;
+		}
+
+		this._isDetached = true;
+		// Ensures the parent can exit even if the child (server) is still running
+		serverProcess?.unref();
 	}
 
 }
