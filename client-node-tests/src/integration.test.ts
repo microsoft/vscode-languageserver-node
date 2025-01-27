@@ -10,7 +10,9 @@ import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import * as proto from 'vscode-languageserver-protocol';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
-import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient';
+import { vsdiag, DiagnosticProviderMiddleware, LanguageClient } from 'vscode-languageclient';
+import { IsDetachedRequest } from './servers/types';
+import { afterEach } from 'mocha';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
@@ -1961,6 +1963,58 @@ class CrashClient extends lsclient.LanguageClient {
 }
 
 suite('Server tests', () => {
+	suite('detached', async function () {
+		const detachedServerModule = path.join(__dirname, 'servers', 'detachedServer.js');
+
+		let client: LanguageClient | undefined;
+
+		afterEach(async function () {
+			await client?.stop();
+		});
+
+		test('servers are NOT detached by default', async () => {
+			const serverOptions: lsclient.ServerOptions = {
+				module: detachedServerModule,
+				transport: lsclient.TransportKind.ipc,
+			};
+			const client = new lsclient.LanguageClient('test svr', serverOptions, {});
+			const res = await client.sendRequest(IsDetachedRequest);
+			assert.strictEqual(res, false);
+		});
+
+		[lsclient.TransportKind.stdio, lsclient.TransportKind.ipc, lsclient.TransportKind.pipe].forEach((transport) => {
+			test(`server detects it is detached using Node ServerOptions when transport: ${transport}`, async () => {
+				const serverOptions: lsclient.ServerOptions = {
+					module: detachedServerModule,
+					transport,
+					options: {
+						detached: true
+					}
+				};
+				const client = new lsclient.LanguageClient('test svr', serverOptions, {});
+				const res = await client.sendRequest(IsDetachedRequest);
+				assert.strictEqual(res, true);
+			});
+		});
+
+		[lsclient.TransportKind.stdio, lsclient.TransportKind.pipe].forEach((transport) => {
+			test(`server detects it is detached using Executable ServerOptions when transport: ${transport}`, async () => {
+				const serverOptions: lsclient.ServerOptions = {
+					command: 'node', // making assumption this exists in the PATH of the test environment
+					args: [detachedServerModule],
+					transport,
+					options: {
+						detached: true
+					}
+				};
+				const client = new lsclient.LanguageClient('test svr', serverOptions, {});
+				const res = await client.sendRequest(IsDetachedRequest);
+				assert.strictEqual(res, true);
+			});
+		});
+
+	});
+
 	test('Stop fails if server crashes after shutdown request', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
