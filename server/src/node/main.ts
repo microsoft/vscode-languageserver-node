@@ -7,6 +7,7 @@
 import { inspect } from 'node:util';
 
 import * as Is from '../common/utils/is';
+import { parseCliOpts } from '../common/utils/process';
 import { Connection, _, _Connection, Features, WatchDog, createConnection as createCommonConnection } from '../common/server';
 
 import * as fm from './files';
@@ -45,14 +46,9 @@ function isDetached() {
 		return _isDetached;
 	}
 
-	if(process.argv.includes('--detached')) {
-		setDetached();
-	} else {
-		_isDetached = false;
-	}
-	return _isDetached;
+	const args = parseCliOpts(process.argv);
 
-	function setDetached() {
+	if (Object.keys(args).includes('detached')) {
 		_isDetached = true;
 
 		// Override the default behavior: when then parent/child communication
@@ -60,11 +56,31 @@ function isDetached() {
 		process.on('disconnect', () => {
 			endProtocolConnection();
 		});
+
+		const timeoutValue = args['detached'];
+		const timeoutMillis = Number(timeoutValue);
+		if (timeoutValue !== undefined && isNaN(timeoutMillis)) {
+			throw Error(`Cli value for flag '--detached' was not a number: ${timeoutMillis}`);
+		}
+		// Keeps the server alive since node may terminate this process if
+		// the parent terminates + this process has nothing in the event loop.
+		setInterval(() => {
+			// Check if the detached server has reached the user-specified lifetime
+			if (_protocolConnectionEndTime && timeoutMillis && Date.now() - _protocolConnectionEndTime >= timeoutMillis) {
+				process.exit(7);
+			}
+		}, 60_000);
+	} else {
+		_isDetached = false;
 	}
+	return _isDetached;
 }
 
 let _protocolConnection: ProtocolConnection | undefined;
+let _protocolConnectionEndTime: number | undefined = undefined;
 function endProtocolConnection(): void {
+	_protocolConnectionEndTime = Date.now();
+
 	if (_protocolConnection === undefined) {
 		return;
 	}
@@ -92,7 +108,6 @@ function setupExitTimer(): void {
 		return;
 	}
 
-	const argName = '--clientProcessId';
 	function runTimer(value: string): void {
 		try {
 			const processId = parseInt(value);
@@ -112,17 +127,11 @@ function setupExitTimer(): void {
 		}
 	}
 
-	for (let i = 2; i < process.argv.length; i++) {
-		const arg = process.argv[i];
-		if (arg === argName && i + 1 < process.argv.length) {
-			runTimer(process.argv[i + 1]);
-			return;
-		} else {
-			const args = arg.split('=');
-			if (args[0] === argName) {
-				runTimer(args[1]);
-			}
-		}
+	const argName = 'clientProcessId';
+	const args = parseCliOpts(process.argv);
+	if (Object.keys(args).includes(argName) && Is.string(args[argName])) {
+		runTimer(args[argName]);
+		return;
 	}
 }
 setupExitTimer();
