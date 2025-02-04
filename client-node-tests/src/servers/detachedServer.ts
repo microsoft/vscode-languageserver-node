@@ -9,11 +9,15 @@
 
 import { createConnection, ProposedFeatures } from 'vscode-languageserver/node';
 import { IsDetachedRequest } from './types';
+import { parseCliOpts } from 'vscode-languageserver/utils';
 
 const connection = createConnection(ProposedFeatures.all);
 
 connection.onRequest(IsDetachedRequest, () => {
-	return process.argv.includes('--detached');
+	const args = parseCliOpts(process.argv);
+	const detached = Object.keys(args).includes('detached');
+	const timeout = args['detached'];
+	return { detached, timeout };
 });
 
 // Initialize the language server connection

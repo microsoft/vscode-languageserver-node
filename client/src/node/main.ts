@@ -57,10 +57,18 @@ namespace Transport {
 	}
 }
 
-export interface ExecutableOptions {
+export interface DetachedOptions {
+	detached?: boolean;
+	/**
+	 * Maximum milliseconds to keep the server alive after the parent/client terminates.
+	 * If undefined it will never terminate.
+	 */
+	detachedTimeout?: number;
+}
+
+export interface ExecutableOptions extends DetachedOptions {
 	cwd?: string;
 	env?: any;
-	detached?: boolean;
 	shell?: boolean;
 }
 
@@ -77,12 +85,11 @@ namespace Executable {
 	}
 }
 
-export interface ForkOptions {
+export interface ForkOptions extends DetachedOptions {
 	cwd?: string;
 	env?: any;
 	encoding?: string;
 	execArgv?: string[];
-	detached?: boolean;
 }
 
 export interface NodeModule {
@@ -354,6 +361,9 @@ export class LanguageClient extends BaseLanguageClient {
 					}
 					if (node.options?.detached) {
 						args.push('--detached');
+						if (node.options.detachedTimeout) {
+							args.push(node.options.detachedTimeout.toString());
+						}
 					}
 					args.push(`--clientProcessId=${process.pid.toString()}`);
 					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
@@ -416,6 +426,9 @@ export class LanguageClient extends BaseLanguageClient {
 						args.push(`--clientProcessId=${process.pid.toString()}`);
 						if (node.options?.detached) {
 							args.push('--detached');
+							if (node.options.detachedTimeout) {
+								args.push(node.options.detachedTimeout.toString());
+							}
 						}
 						const options: cp.ForkOptions = node.options ?? Object.create(null);
 						options.env = getEnvironment(options.env, true);
@@ -478,6 +491,9 @@ export class LanguageClient extends BaseLanguageClient {
 				}
 				if (command.options?.detached) {
 					args.push('--detached');
+					if (command.options.detachedTimeout) {
+						args.push(command.options.detachedTimeout.toString());
+					}
 				}
 				const options = Object.assign({}, command.options);
 				options.cwd = options.cwd || serverWorkingDir;

@@ -1979,7 +1979,7 @@ suite('Server tests', () => {
 			};
 			const client = new lsclient.LanguageClient('test svr', serverOptions, {});
 			const res = await client.sendRequest(IsDetachedRequest);
-			assert.strictEqual(res, false);
+			assert.deepStrictEqual(res, { detached: false });
 		});
 
 		[lsclient.TransportKind.stdio, lsclient.TransportKind.ipc, lsclient.TransportKind.pipe].forEach((transport) => {
@@ -1988,12 +1988,13 @@ suite('Server tests', () => {
 					module: detachedServerModule,
 					transport,
 					options: {
-						detached: true
+						detached: true,
+						detachedTimeout: 1000
 					}
 				};
 				const client = new lsclient.LanguageClient('test svr', serverOptions, {});
 				const res = await client.sendRequest(IsDetachedRequest);
-				assert.strictEqual(res, true);
+				assert.deepStrictEqual(res, { detached: true, timeout: 1000 });
 			});
 		});
 
@@ -2004,12 +2005,13 @@ suite('Server tests', () => {
 					args: [detachedServerModule],
 					transport,
 					options: {
-						detached: true
+						detached: true,
+						detachedTimeout: 1001
 					}
 				};
 				const client = new lsclient.LanguageClient('test svr', serverOptions, {});
 				const res = await client.sendRequest(IsDetachedRequest);
-				assert.strictEqual(res, true);
+				assert.deepStrictEqual(res, { detached: true, timeout: 1001 });
 			});
 		});
 

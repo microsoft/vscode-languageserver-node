@@ -5,4 +5,4 @@
 
 import { RequestType0 } from 'vscode-languageserver';
 
-export const IsDetachedRequest = new RequestType0('isDetached');
+export const IsDetachedRequest = new RequestType0<{detached: boolean; timeout: number }, void>('isDetached');
