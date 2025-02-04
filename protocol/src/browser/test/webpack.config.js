@@ -8,13 +8,17 @@
 'use strict';
 
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = [{
 	context: __dirname,
 	mode: 'none',
 	target: 'webworker',
 	plugins: [
-		new NodePolyfillPlugin()
+		new NodePolyfillPlugin(),
+		new webpack.DefinePlugin({
+      		'process.env.NODE_DEBUG': JSON.stringify(''),
+    	})
 	],
 	resolve: {
 		mainFields: ['module', 'main'],
