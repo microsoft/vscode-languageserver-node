@@ -5,8 +5,7 @@
 
 import { CancellationToken, HandlerResult, RequestHandler } from 'vscode-jsonrpc';
 import { Range, URI } from 'vscode-languageserver-types';
-import { MessageDirection, ProtocolRequestType } from './messages';
-import { CM } from './protocol';
+import { MessageDirection, ProtocolRequestType, CM } from './messages';
 
 /**
  * Client capabilities for the showDocument request.

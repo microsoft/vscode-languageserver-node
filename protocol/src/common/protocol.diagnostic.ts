@@ -7,11 +7,10 @@ import { RequestHandler0, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from 'vscode-languageserver-types';
 
 import * as Is from './utils/is';
-import { MessageDirection, ProtocolRequestType0, ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType0, ProtocolRequestType, CM } from './messages';
 import {
 	type PartialResultParams, type StaticRegistrationOptions, type WorkDoneProgressParams, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions,
 	type DiagnosticsCapabilities,
-	CM
 } from './protocol';
 
 /**

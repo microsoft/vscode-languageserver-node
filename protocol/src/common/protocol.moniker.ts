@@ -3,10 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { MessageDirection, ProtocolRequestType } from './messages';
+import { MessageDirection, ProtocolRequestType, CM } from './messages';
 import {
 	type WorkDoneProgressOptions, type WorkDoneProgressParams, type PartialResultParams, type TextDocumentRegistrationOptions, type TextDocumentPositionParams,
-	CM
 } from './protocol';
 
 /**

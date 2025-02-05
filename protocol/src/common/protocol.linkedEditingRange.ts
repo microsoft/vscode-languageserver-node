@@ -6,11 +6,10 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { Range } from 'vscode-languageserver-types';
 
-import { MessageDirection, ProtocolRequestType } from './messages';
+import { CM, MessageDirection, ProtocolRequestType } from './messages';
 import {
 	type StaticRegistrationOptions, type TextDocumentPositionParams, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions,
 	type WorkDoneProgressParams,
-	CM
 } from './protocol';
 
 /**

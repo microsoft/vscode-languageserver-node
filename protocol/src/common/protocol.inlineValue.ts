@@ -6,8 +6,8 @@
 import { TextDocumentIdentifier, Range, InlineValue, InlineValueContext } from 'vscode-languageserver-types';
 import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 
-import { MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
-import { type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type StaticRegistrationOptions, type WorkDoneProgressParams, CM } from './protocol';
+import { CM, MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
+import { type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type StaticRegistrationOptions, type WorkDoneProgressParams } from './protocol';
 
 // ---- capabilities
 

@@ -6,10 +6,9 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from 'vscode-languageserver-types';
 
-import { MessageDirection, ProtocolRequestType } from './messages';
+import { CM, MessageDirection, ProtocolRequestType } from './messages';
 import {
 	type TextDocumentRegistrationOptions, type StaticRegistrationOptions, type PartialResultParams, type WorkDoneProgressParams, type WorkDoneProgressOptions,
-	CM
 } from './protocol';
 
 //---- Client capability ----

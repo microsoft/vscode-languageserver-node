@@ -76,3 +76,10 @@ export class ProtocolNotificationType<P, RO> extends NotificationType<P> impleme
 		super(method, ParameterStructures.byName);
 	}
 }
+
+export type CM<C extends string | undefined, S extends string | undefined> = { client: C; server: S };
+export namespace CM {
+	export function create<C extends string | undefined, S extends string | undefined>(client: C, server: S): CM<C, S> {
+		return { client, server };
+	}
+}
