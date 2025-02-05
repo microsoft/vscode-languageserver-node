@@ -5,7 +5,7 @@
 
 import { ProgressToken, RequestHandler, TraceValue } from 'vscode-jsonrpc';
 
-import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0 } from './messages';
+import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0, CM } from './messages';
 
 import {
 	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, WorkspaceEditMetadata, DocumentUri,
@@ -133,13 +133,6 @@ import {
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
-
-export type CM<C extends string | undefined, S extends string | undefined> = { client: C; server: S };
-export namespace CM {
-	export function create<C extends string | undefined, S extends string | undefined>(client: C, server: S): CM<C, S> {
-		return { client, server };
-	}
-}
 
 /**
  * A document filter where `language` is required field.

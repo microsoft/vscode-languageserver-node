@@ -5,9 +5,9 @@
 
 import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 import { Range, TextDocumentIdentifier, InlayHint } from 'vscode-languageserver-types';
-import { MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
+import { CM, MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
 
-import { CM, type StaticRegistrationOptions, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type WorkDoneProgressParams } from './protocol';
+import { type StaticRegistrationOptions, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type WorkDoneProgressParams } from './protocol';
 
 /**
  * @since 3.18.0

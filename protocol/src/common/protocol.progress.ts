@@ -6,8 +6,7 @@
 import { NotificationHandler, RequestHandler, ProgressType, ProgressToken } from 'vscode-jsonrpc';
 import { uinteger } from 'vscode-languageserver-types';
 
-import { MessageDirection, ProtocolRequestType, ProtocolNotificationType } from './messages';
-import { CM } from './protocol';
+import { MessageDirection, ProtocolRequestType, ProtocolNotificationType, CM } from './messages';
 
 export interface WorkDoneProgressBegin {
 
