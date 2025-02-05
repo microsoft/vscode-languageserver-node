@@ -7,9 +7,10 @@ import { RequestHandler } from 'vscode-jsonrpc';
 import { CallHierarchyItem, CallHierarchyIncomingCall, CallHierarchyOutgoingCall } from 'vscode-languageserver-types';
 
 import { MessageDirection, ProtocolRequestType } from './messages';
-import type {
-	TextDocumentRegistrationOptions, StaticRegistrationOptions, TextDocumentPositionParams, PartialResultParams,
-	WorkDoneProgressParams, WorkDoneProgressOptions
+import {
+	type TextDocumentRegistrationOptions, type StaticRegistrationOptions, type TextDocumentPositionParams, type PartialResultParams,
+	type WorkDoneProgressParams, type WorkDoneProgressOptions,
+	CM
 } from './protocol';
 
 /**
@@ -59,6 +60,7 @@ export namespace CallHierarchyPrepareRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CallHierarchyPrepareParams, CallHierarchyItem[] | null, never, void, CallHierarchyRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyPrepareParams, CallHierarchyItem[] | null, void>;
+	export const capabilities = CM.create('textDocument.callHierarchy', 'callHierarchyProvider');
 }
 
 /**

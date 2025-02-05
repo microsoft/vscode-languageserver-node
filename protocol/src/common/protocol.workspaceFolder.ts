@@ -7,6 +7,7 @@ import { WorkspaceFolder } from 'vscode-languageserver-types';
 import { RequestHandler0, NotificationHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc';
 
 import { MessageDirection, ProtocolRequestType0, ProtocolNotificationType } from './messages';
+import { CM } from './protocol';
 
 export interface WorkspaceFoldersInitializeParams {
 	/**
@@ -49,6 +50,7 @@ export namespace WorkspaceFoldersRequest {
 	export const type = new ProtocolRequestType0<WorkspaceFolder[] | null, never, void, void>(method);
 	export type HandlerSignature = RequestHandler0<WorkspaceFolder[] | null, void>;
 	export type MiddlewareSignature = (token: CancellationToken, next: HandlerSignature) => HandlerResult<WorkspaceFolder[] | null, void>;
+	export const capabilities = CM.create('workspace.workspaceFolders', 'workspace.workspaceFolders');
 }
 
 /**
@@ -61,6 +63,7 @@ export namespace DidChangeWorkspaceFoldersNotification {
 	export const type = new ProtocolNotificationType<DidChangeWorkspaceFoldersParams, void>(method);
 	export type HandlerSignature = NotificationHandler<DidChangeWorkspaceFoldersParams>;
 	export type MiddlewareSignature = (params: DidChangeWorkspaceFoldersParams, next: HandlerSignature) => void;
+	export const capabilities = CM.create(undefined, 'workspace.workspaceFolders.changeNotifications');
 }
 
 /**

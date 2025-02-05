@@ -7,6 +7,7 @@ import { NotificationHandler, RequestHandler, ProgressType, ProgressToken } from
 import { uinteger } from 'vscode-languageserver-types';
 
 import { MessageDirection, ProtocolRequestType, ProtocolNotificationType } from './messages';
+import { CM } from './protocol';
 
 export interface WorkDoneProgressBegin {
 
@@ -114,6 +115,7 @@ export namespace WorkDoneProgressCreateRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<WorkDoneProgressCreateParams, void, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<WorkDoneProgressCreateParams, void, void>;
+	export const capabilities = CM.create('window.workDoneProgress', undefined);
 }
 
 export interface WorkDoneProgressCancelParams {

@@ -7,8 +7,9 @@ import { RequestHandler } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from 'vscode-languageserver-types';
 
 import { MessageDirection, ProtocolRequestType } from './messages';
-import type {
-	TextDocumentRegistrationOptions, StaticRegistrationOptions, PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions
+import {
+	type TextDocumentRegistrationOptions, type StaticRegistrationOptions, type PartialResultParams, type WorkDoneProgressParams, type WorkDoneProgressOptions,
+	CM
 } from './protocol';
 
 //---- Client capability ----
@@ -51,6 +52,7 @@ export namespace DocumentColorRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentColorParams, ColorInformation[], ColorInformation[], void, DocumentColorRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
+	export const capabilities = CM.create('textDocument.colorProvider', 'colorProvider');
 }
 
 /**

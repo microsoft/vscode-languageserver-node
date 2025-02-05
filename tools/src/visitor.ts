@@ -151,6 +151,8 @@ namespace MessageDirection {
 	}
 }
 
+type Capabilities = { clientCapability?: string; serverCapability?: string };
+
 export default class Visitor {
 
 	private readonly program: ts.Program;
@@ -345,6 +347,9 @@ export default class Visitor {
 			result: TypeInfo.isVoid(requestTypes.result) ? TypeInfo.asJsonType({ kind: 'base', name: 'null' }) : TypeInfo.asJsonType(requestTypes.result),
 			messageDirection: this.getMessageDirection(symbol)
 		};
+		const capabilities = this.getCapabilities(symbol);
+		result.clientCapability = capabilities?.clientCapability;
+		result.serverCapability = capabilities?.serverCapability;
 		result.params = requestTypes.param !== undefined ? asJsonType(requestTypes.param) : undefined;
 		result.partialResult = asJsonType(requestTypes.partialResult);
 		result.errorData = asJsonType(requestTypes.errorData);
@@ -384,6 +389,9 @@ export default class Visitor {
 			typeName: symbol.name,
 			messageDirection: this.getMessageDirection(symbol)
 		};
+		const capabilities = this.getCapabilities(symbol);
+		result.clientCapability = capabilities?.clientCapability;
+		result.serverCapability = capabilities?.serverCapability;
 		result.params = notificationTypes.param !== undefined ? asJsonType(notificationTypes.param) : undefined;
 		result.registrationMethod = this.getRegistrationMethodName(symbol);
 		result.registrationOptions = asJsonType(notificationTypes.registrationOptions);
@@ -574,6 +582,32 @@ export default class Visitor {
 				return { param: typeInfos[0], result: typeInfos[1], partialResult: typeInfos[2], errorData: typeInfos[3], registrationOptions: typeInfos[4] };
 		}
 		return undefined;
+	}
+
+	private getCapabilities(namespace: ts.Symbol): Capabilities | undefined {
+		const capabilities = namespace.exports?.get('capabilities' as ts.__String);
+		if (capabilities === undefined) {
+			return undefined;
+		}
+		const declaration = this.getFirstDeclaration(capabilities);
+		if (declaration === undefined) {
+			return undefined;
+		}
+		if (!ts.isVariableDeclaration(declaration)) {
+			return undefined;
+		}
+		const initializer = declaration.initializer;
+		if (initializer === undefined || !ts.isCallExpression(initializer)) {
+			return undefined;
+		}
+		const result: Capabilities = {};
+		if (initializer.arguments[0] !== undefined && ts.isStringLiteral(initializer.arguments[0])) {
+			result.clientCapability = this.removeQuotes(initializer.arguments[0].getText());
+		}
+		if (initializer.arguments[1] !== undefined && ts.isStringLiteral(initializer.arguments[1])) {
+			result.serverCapability = this.removeQuotes(initializer.arguments[1].getText());
+		}
+		return result;
 	}
 
 	private getNotificationTypes(symbol: ts.Symbol): NotificationTypes | undefined {

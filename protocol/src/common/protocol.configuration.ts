@@ -7,6 +7,7 @@ import { RequestHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc
 import { LSPAny, URI } from 'vscode-languageserver-types';
 
 import { MessageDirection, ProtocolRequestType } from './messages';
+import { CM } from './protocol';
 
 //---- Get Configuration request ----
 
@@ -25,6 +26,7 @@ export namespace ConfigurationRequest {
 	export const type = new ProtocolRequestType<ConfigurationParams, LSPAny[], never, void, void>(method);
 	export type HandlerSignature = RequestHandler<ConfigurationParams, LSPAny[], void>;
 	export type MiddlewareSignature = (params: ConfigurationParams, token: CancellationToken, next: HandlerSignature) => HandlerResult<LSPAny[], void>;
+	export const capabilities = CM.create('workspace.configuration', undefined);
 }
 
 

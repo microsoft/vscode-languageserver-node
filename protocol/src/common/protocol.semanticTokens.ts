@@ -7,8 +7,9 @@ import { TextDocumentIdentifier, Range, uinteger, SemanticTokensEdit, SemanticTo
 import { RequestHandler0, RequestHandler } from 'vscode-jsonrpc';
 
 import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, RegistrationType } from './messages';
-import type {
-	PartialResultParams, WorkDoneProgressParams, WorkDoneProgressOptions, TextDocumentRegistrationOptions, StaticRegistrationOptions
+import {
+	type PartialResultParams, type WorkDoneProgressParams, type WorkDoneProgressOptions, type TextDocumentRegistrationOptions, type StaticRegistrationOptions,
+	CM
 } from './protocol';
 
 /**
@@ -204,6 +205,7 @@ export namespace SemanticTokensRequest {
 	export const type = new ProtocolRequestType<SemanticTokensParams, SemanticTokens | null, SemanticTokensPartialResult, void, SemanticTokensRegistrationOptions>(method);
 	export const registrationMethod: typeof SemanticTokensRegistrationType.method  = SemanticTokensRegistrationType.method;
 	export type HandlerSignature = RequestHandler<SemanticTokensDeltaParams, SemanticTokens | null, void>;
+	export const capabilities = CM.create('textDocument.semanticTokens', 'semanticTokensProvider');
 }
 
 //------- 'textDocument/semanticTokens/edits' -----
@@ -233,6 +235,7 @@ export namespace SemanticTokensDeltaRequest {
 	export const type = new ProtocolRequestType<SemanticTokensDeltaParams, SemanticTokens | SemanticTokensDelta | null, SemanticTokensPartialResult | SemanticTokensDeltaPartialResult, void, SemanticTokensRegistrationOptions>(method);
 	export const registrationMethod: typeof SemanticTokensRegistrationType.method  = SemanticTokensRegistrationType.method;
 	export type HandlerSignature = RequestHandler<SemanticTokensDeltaParams, SemanticTokens | SemanticTokensDelta | null, void>;
+	export const capabilities = CM.create('textDocument.semanticTokens.requests.full.delta', 'semanticTokensProvider.full.delta');
 }
 
 //------- 'textDocument/semanticTokens/range' -----
@@ -261,6 +264,7 @@ export namespace SemanticTokensRangeRequest {
 	export const type = new ProtocolRequestType<SemanticTokensRangeParams, SemanticTokens | null, SemanticTokensPartialResult, void, void>(method);
 	export const registrationMethod: typeof SemanticTokensRegistrationType.method  = SemanticTokensRegistrationType.method;
 	export type HandlerSignature = RequestHandler<SemanticTokensRangeParams, SemanticTokens | null, void>;
+	export const capabilities = CM.create('textDocument.semanticTokens.requests.range', 'semanticTokensProvider.range');
 }
 
 //------- 'workspace/semanticTokens/refresh' -----
@@ -289,4 +293,5 @@ export namespace SemanticTokensRefreshRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
+	export const capabilities = CM.create('workspace.semanticTokens.refreshSupport', undefined);
 }

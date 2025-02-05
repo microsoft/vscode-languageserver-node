@@ -8,11 +8,11 @@ import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from 'vscode
 
 import * as Is from './utils/is';
 import { MessageDirection, ProtocolRequestType0, ProtocolRequestType } from './messages';
-import type {
-	PartialResultParams, StaticRegistrationOptions, WorkDoneProgressParams, TextDocumentRegistrationOptions, WorkDoneProgressOptions,
-	DiagnosticsCapabilities
+import {
+	type PartialResultParams, type StaticRegistrationOptions, type WorkDoneProgressParams, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions,
+	type DiagnosticsCapabilities,
+	CM
 } from './protocol';
-
 
 /**
  * Client capabilities specific to diagnostic pull requests.
@@ -269,6 +269,7 @@ export namespace DocumentDiagnosticRequest {
 	export const type = new ProtocolRequestType<DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DiagnosticServerCancellationData, DiagnosticRegistrationOptions>(method);
 	export const partialResult = new ProgressType<DocumentDiagnosticReportPartialResult>();
 	export type HandlerSignature = RequestHandler<DocumentDiagnosticParams, DocumentDiagnosticReport, void>;
+	export const capabilities = CM.create('textDocument.diagnostic', 'diagnosticProvider');
 }
 
 /**
@@ -382,6 +383,7 @@ export namespace WorkspaceDiagnosticRequest {
 	export const type = new ProtocolRequestType<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, DiagnosticServerCancellationData, void>(method);
 	export const partialResult = new ProgressType<WorkspaceDiagnosticReportPartialResult>();
 	export type HandlerSignature = RequestHandler<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport | null, void>;
+	export const capabilities = CM.create('workspace.diagnostics', 'diagnosticProvider.workspaceDiagnostics');
 }
 
 /**
@@ -394,4 +396,5 @@ export namespace DiagnosticRefreshRequest {
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType0<void, void, void, void>(method);
 	export type HandlerSignature = RequestHandler0<void, void>;
+	export const capabilities = CM.create('workspace.diagnostics.refreshSupport', undefined);
 }

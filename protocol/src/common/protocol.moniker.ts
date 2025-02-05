@@ -4,8 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { MessageDirection, ProtocolRequestType } from './messages';
-import type {
-	WorkDoneProgressOptions, WorkDoneProgressParams, PartialResultParams, TextDocumentRegistrationOptions, TextDocumentPositionParams
+import {
+	type WorkDoneProgressOptions, type WorkDoneProgressParams, type PartialResultParams, type TextDocumentRegistrationOptions, type TextDocumentPositionParams,
+	CM
 } from './protocol';
 
 /**
@@ -130,4 +131,5 @@ export namespace MonikerRequest {
 	export const method: 'textDocument/moniker' = 'textDocument/moniker';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<MonikerParams, Moniker[] | null, Moniker[], void, MonikerRegistrationOptions>(method);
+	export const capabilities = CM.create('textDocument.moniker', 'monikerProvider');
 }

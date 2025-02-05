@@ -7,7 +7,7 @@ import type { DocumentUri } from 'vscode-languageserver-types';
 import type { RequestHandler } from 'vscode-jsonrpc';
 
 import { MessageDirection, ProtocolRequestType } from './messages';
-import type { StaticRegistrationOptions } from './protocol';
+import { type StaticRegistrationOptions, CM } from './protocol';
 
 /**
  * Client capabilities for a text document content provider.
@@ -84,6 +84,7 @@ export namespace TextDocumentContentRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<TextDocumentContentParams, TextDocumentContentResult, void, void, TextDocumentContentRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<TextDocumentContentParams, TextDocumentContentResult, void>;
+	export const capabilities = CM.create('workspace.textDocumentContent', 'workspace.textDocumentContent');
 }
 
 /**

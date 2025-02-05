@@ -27,6 +27,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.implementation",
+			"serverCapability": "implementationProvider",
 			"params": {
 				"kind": "reference",
 				"name": "ImplementationParams"
@@ -80,6 +82,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.typeDefinition",
+			"serverCapability": "typeDefinitionProvider",
 			"params": {
 				"kind": "reference",
 				"name": "TypeDefinitionParams"
@@ -129,6 +133,8 @@
 				]
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.workspaceFolders",
+			"serverCapability": "workspace.workspaceFolders",
 			"documentation": "The `workspace/workspaceFolders` is sent from the server to the client to fetch the open workspace folders."
 		},
 		{
@@ -142,6 +148,7 @@
 				}
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.configuration",
 			"params": {
 				"kind": "reference",
 				"name": "ConfigurationParams"
@@ -159,6 +166,8 @@
 				}
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.colorProvider",
+			"serverCapability": "colorProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DocumentColorParams"
@@ -233,6 +242,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.foldingRange",
+			"serverCapability": "foldingRangeProvider",
 			"params": {
 				"kind": "reference",
 				"name": "FoldingRangeParams"
@@ -258,6 +269,7 @@
 				"name": "null"
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.foldingRange.refreshSupport",
 			"documentation": "@since 3.18.0\n@proposed",
 			"since": "3.18.0",
 			"proposed": true
@@ -286,6 +298,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.declaration",
+			"serverCapability": "declarationProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DeclarationParams"
@@ -335,6 +349,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.selectionRange",
+			"serverCapability": "selectionRangeProvider",
 			"params": {
 				"kind": "reference",
 				"name": "SelectionRangeParams"
@@ -360,6 +376,7 @@
 				"name": "null"
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "window.workDoneProgress",
 			"params": {
 				"kind": "reference",
 				"name": "WorkDoneProgressCreateParams"
@@ -386,6 +403,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.callHierarchy",
+			"serverCapability": "callHierarchyProvider",
 			"params": {
 				"kind": "reference",
 				"name": "CallHierarchyPrepareParams"
@@ -482,6 +501,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.semanticTokens",
+			"serverCapability": "semanticTokensProvider",
 			"params": {
 				"kind": "reference",
 				"name": "SemanticTokensParams"
@@ -519,6 +540,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.semanticTokens.requests.full.delta",
+			"serverCapability": "semanticTokensProvider.full.delta",
 			"params": {
 				"kind": "reference",
 				"name": "SemanticTokensDeltaParams"
@@ -561,6 +584,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.semanticTokens.requests.range",
+			"serverCapability": "semanticTokensProvider.range",
 			"params": {
 				"kind": "reference",
 				"name": "SemanticTokensRangeParams"
@@ -581,6 +606,7 @@
 				"name": "null"
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.semanticTokens.refreshSupport",
 			"documentation": "@since 3.16.0",
 			"since": "3.16.0"
 		},
@@ -592,6 +618,7 @@
 				"name": "ShowDocumentResult"
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "window.showDocument.support",
 			"params": {
 				"kind": "reference",
 				"name": "ShowDocumentParams"
@@ -616,6 +643,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.linkedEditingRange",
+			"serverCapability": "linkedEditingRangeProvider",
 			"params": {
 				"kind": "reference",
 				"name": "LinkedEditingRangeParams"
@@ -644,6 +673,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.fileOperations.willCreate",
+			"serverCapability": "workspace.fileOperations.willCreate",
 			"params": {
 				"kind": "reference",
 				"name": "CreateFilesParams"
@@ -672,6 +703,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.fileOperations.willRename",
+			"serverCapability": "workspace.fileOperations.willRename",
 			"params": {
 				"kind": "reference",
 				"name": "RenameFilesParams"
@@ -700,6 +733,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.fileOperations.willDelete",
+			"serverCapability": "workspace.fileOperations.willDelete",
 			"params": {
 				"kind": "reference",
 				"name": "DeleteFilesParams"
@@ -731,6 +766,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.moniker",
+			"serverCapability": "monikerProvider",
 			"params": {
 				"kind": "reference",
 				"name": "MonikerParams"
@@ -768,6 +805,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.typeHierarchy",
+			"serverCapability": "typeHierarchyProvider",
 			"params": {
 				"kind": "reference",
 				"name": "TypeHierarchyPrepareParams"
@@ -867,6 +906,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.inlineValue",
+			"serverCapability": "inlineValueProvider",
 			"params": {
 				"kind": "reference",
 				"name": "InlineValueParams"
@@ -893,6 +934,7 @@
 				"name": "null"
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.inlineValue.refreshSupport",
 			"documentation": "@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -916,6 +958,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.inlayHint",
+			"serverCapability": "inlayHintProvider",
 			"params": {
 				"kind": "reference",
 				"name": "InlayHintParams"
@@ -942,6 +986,8 @@
 				"name": "InlayHint"
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.inlayHint.resolveSupport",
+			"serverCapability": "inlayHintProvider.resolveProvider",
 			"params": {
 				"kind": "reference",
 				"name": "InlayHint"
@@ -957,6 +1003,7 @@
 				"name": "null"
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.inlayHint.refreshSupport",
 			"documentation": "@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -968,6 +1015,8 @@
 				"name": "DocumentDiagnosticReport"
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.diagnostic",
+			"serverCapability": "diagnosticProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DocumentDiagnosticParams"
@@ -995,6 +1044,8 @@
 				"name": "WorkspaceDiagnosticReport"
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.diagnostics",
+			"serverCapability": "diagnosticProvider.workspaceDiagnostics",
 			"params": {
 				"kind": "reference",
 				"name": "WorkspaceDiagnosticParams"
@@ -1018,6 +1069,7 @@
 				"name": "null"
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.diagnostics.refreshSupport",
 			"documentation": "The diagnostic refresh request definition.\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
@@ -1045,6 +1097,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.inlineCompletion",
+			"serverCapability": "inlineCompletionProvider",
 			"params": {
 				"kind": "reference",
 				"name": "InlineCompletionParams"
@@ -1072,6 +1126,8 @@
 				"name": "TextDocumentContentResult"
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.textDocumentContent",
+			"serverCapability": "workspace.textDocumentContent",
 			"params": {
 				"kind": "reference",
 				"name": "TextDocumentContentParams"
@@ -1173,6 +1229,7 @@
 				]
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "window.showMessage",
 			"params": {
 				"kind": "reference",
 				"name": "ShowMessageRequestParams"
@@ -1199,6 +1256,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.synchronization.willSaveWaitUntil",
+			"serverCapability": "textDocumentSync.willSaveWaitUntil",
 			"params": {
 				"kind": "reference",
 				"name": "WillSaveTextDocumentParams"
@@ -1233,6 +1292,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.completion",
+			"serverCapability": "completionProvider",
 			"params": {
 				"kind": "reference",
 				"name": "CompletionParams"
@@ -1258,6 +1319,8 @@
 				"name": "CompletionItem"
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.completion.completionItem.resolveSupport",
+			"serverCapability": "completionProvider.resolveProvider",
 			"params": {
 				"kind": "reference",
 				"name": "CompletionItem"
@@ -1281,6 +1344,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.hover",
+			"serverCapability": "hoverProvider",
 			"params": {
 				"kind": "reference",
 				"name": "HoverParams"
@@ -1308,6 +1373,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.signatureHelp",
+			"serverCapability": "signatureHelpProvider",
 			"params": {
 				"kind": "reference",
 				"name": "SignatureHelpParams"
@@ -1341,6 +1408,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.definition",
+			"serverCapability": "definitionProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DefinitionParams"
@@ -1390,6 +1459,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.references",
+			"serverCapability": "referencesProvider",
 			"params": {
 				"kind": "reference",
 				"name": "ReferenceParams"
@@ -1427,6 +1498,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.documentHighlight",
+			"serverCapability": "documentHighlightProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DocumentHighlightParams"
@@ -1471,6 +1544,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.documentSymbol",
+			"serverCapability": "documentSymbolProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DocumentSymbolParams"
@@ -1529,6 +1604,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.codeAction",
+			"serverCapability": "codeActionProvider",
 			"params": {
 				"kind": "reference",
 				"name": "CodeActionParams"
@@ -1563,6 +1640,8 @@
 				"name": "CodeAction"
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.codeAction.resolveSupport",
+			"serverCapability": "codeActionProvider.resolveProvider",
 			"params": {
 				"kind": "reference",
 				"name": "CodeAction"
@@ -1596,6 +1675,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.symbol",
+			"serverCapability": "workspaceSymbolProvider",
 			"params": {
 				"kind": "reference",
 				"name": "WorkspaceSymbolParams"
@@ -1634,6 +1715,8 @@
 				"name": "WorkspaceSymbol"
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.symbol.resolveSupport",
+			"serverCapability": "workspaceSymbolProvider.resolveProvider",
 			"params": {
 				"kind": "reference",
 				"name": "WorkspaceSymbol"
@@ -1661,6 +1744,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.codeLens",
+			"serverCapability": "codeLensProvider",
 			"params": {
 				"kind": "reference",
 				"name": "CodeLensParams"
@@ -1686,6 +1771,8 @@
 				"name": "CodeLens"
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.codeLens.resolveSupport",
+			"serverCapability": "codeLensProvider.resolveProvider",
 			"params": {
 				"kind": "reference",
 				"name": "CodeLens"
@@ -1700,6 +1787,7 @@
 				"name": "null"
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.codeLens",
 			"documentation": "A request to refresh all code actions\n\n@since 3.16.0",
 			"since": "3.16.0"
 		},
@@ -1723,6 +1811,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.documentLink",
+			"serverCapability": "documentLinkProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DocumentLinkParams"
@@ -1748,6 +1838,8 @@
 				"name": "DocumentLink"
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.documentLink",
+			"serverCapability": "documentLinkProvider.resolveProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DocumentLink"
@@ -1774,6 +1866,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.formatting",
+			"serverCapability": "documentFormattingProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DocumentFormattingParams"
@@ -1834,6 +1928,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.rangeFormatting",
+			"serverCapability": "documentRangeFormattingProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DocumentRangesFormattingParams"
@@ -1866,6 +1962,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.onTypeFormatting",
+			"serverCapability": "documentOnTypeFormattingProvider",
 			"params": {
 				"kind": "reference",
 				"name": "DocumentOnTypeFormattingParams"
@@ -1893,6 +1991,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.rename",
+			"serverCapability": "renameProvider",
 			"params": {
 				"kind": "reference",
 				"name": "RenameParams"
@@ -1920,6 +2020,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.rename.prepareSupport",
+			"serverCapability": "renameProvider.prepareProvider",
 			"params": {
 				"kind": "reference",
 				"name": "PrepareRenameParams"
@@ -1944,6 +2046,8 @@
 				]
 			},
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.executeCommand",
+			"serverCapability": "executeCommandProvider",
 			"params": {
 				"kind": "reference",
 				"name": "ExecuteCommandParams"
@@ -1962,6 +2066,7 @@
 				"name": "ApplyWorkspaceEditResult"
 			},
 			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.applyEdit",
 			"params": {
 				"kind": "reference",
 				"name": "ApplyWorkspaceEditParams"
@@ -1974,6 +2079,7 @@
 			"method": "workspace/didChangeWorkspaceFolders",
 			"typeName": "DidChangeWorkspaceFoldersNotification",
 			"messageDirection": "clientToServer",
+			"serverCapability": "workspace.workspaceFolders.changeNotifications",
 			"params": {
 				"kind": "reference",
 				"name": "DidChangeWorkspaceFoldersParams"
@@ -1994,6 +2100,8 @@
 			"method": "workspace/didCreateFiles",
 			"typeName": "DidCreateFilesNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.fileOperations.didCreate",
+			"serverCapability": "workspace.fileOperations.didCreate",
 			"params": {
 				"kind": "reference",
 				"name": "CreateFilesParams"
@@ -2009,6 +2117,8 @@
 			"method": "workspace/didRenameFiles",
 			"typeName": "DidRenameFilesNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.fileOperations.didRename",
+			"serverCapability": "workspace.fileOperations.didRename",
 			"params": {
 				"kind": "reference",
 				"name": "RenameFilesParams"
@@ -2024,6 +2134,8 @@
 			"method": "workspace/didDeleteFiles",
 			"typeName": "DidDeleteFilesNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.fileOperations.didDelete",
+			"serverCapability": "workspace.fileOperations.didDelete",
 			"params": {
 				"kind": "reference",
 				"name": "DeleteFilesParams"
@@ -2117,6 +2229,7 @@
 			"method": "workspace/didChangeConfiguration",
 			"typeName": "DidChangeConfigurationNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.didChangeConfiguration",
 			"params": {
 				"kind": "reference",
 				"name": "DidChangeConfigurationParams"
@@ -2131,6 +2244,7 @@
 			"method": "window/showMessage",
 			"typeName": "ShowMessageNotification",
 			"messageDirection": "serverToClient",
+			"clientCapability": "window.showMessage",
 			"params": {
 				"kind": "reference",
 				"name": "ShowMessageParams"
@@ -2161,6 +2275,8 @@
 			"method": "textDocument/didOpen",
 			"typeName": "DidOpenTextDocumentNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.synchronization",
+			"serverCapability": "textDocumentSync",
 			"params": {
 				"kind": "reference",
 				"name": "DidOpenTextDocumentParams"
@@ -2175,6 +2291,8 @@
 			"method": "textDocument/didChange",
 			"typeName": "DidChangeTextDocumentNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.synchronization",
+			"serverCapability": "textDocumentSync",
 			"params": {
 				"kind": "reference",
 				"name": "DidChangeTextDocumentParams"
@@ -2189,6 +2307,8 @@
 			"method": "textDocument/didClose",
 			"typeName": "DidCloseTextDocumentNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.synchronization",
+			"serverCapability": "textDocumentSync",
 			"params": {
 				"kind": "reference",
 				"name": "DidCloseTextDocumentParams"
@@ -2203,6 +2323,8 @@
 			"method": "textDocument/didSave",
 			"typeName": "DidSaveTextDocumentNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.synchronization.didSave",
+			"serverCapability": "textDocumentSync.save",
 			"params": {
 				"kind": "reference",
 				"name": "DidSaveTextDocumentParams"
@@ -2217,6 +2339,8 @@
 			"method": "textDocument/willSave",
 			"typeName": "WillSaveTextDocumentNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "textDocument.synchronization.willSave",
+			"serverCapability": "textDocumentSync.willSave",
 			"params": {
 				"kind": "reference",
 				"name": "WillSaveTextDocumentParams"
@@ -2231,6 +2355,7 @@
 			"method": "workspace/didChangeWatchedFiles",
 			"typeName": "DidChangeWatchedFilesNotification",
 			"messageDirection": "clientToServer",
+			"clientCapability": "workspace.didChangeWatchedFiles",
 			"params": {
 				"kind": "reference",
 				"name": "DidChangeWatchedFilesParams"
@@ -2245,6 +2370,7 @@
 			"method": "textDocument/publishDiagnostics",
 			"typeName": "PublishDiagnosticsNotification",
 			"messageDirection": "serverToClient",
+			"clientCapability": "textDocument.publishDiagnostics",
 			"params": {
 				"kind": "reference",
 				"name": "PublishDiagnosticsParams"
