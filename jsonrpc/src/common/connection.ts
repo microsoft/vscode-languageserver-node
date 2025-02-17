@@ -1327,7 +1327,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			return {
 				dispose: () => {
 					if (method !== undefined) {
-						notificationHandlers.delete(method);
+						if (notificationHandlers.get(method)?.handler === handler) {
+							notificationHandlers.delete(method);
+						}
 					} else {
 						starNotificationHandler = undefined;
 					}
@@ -1341,7 +1343,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			progressHandlers.set(token, handler);
 			return {
 				dispose: () => {
-					progressHandlers.delete(token);
+					if (progressHandlers.get(token) === handler) {
+						progressHandlers.delete(token);
+					}
 				}
 			};
 		},
@@ -1487,7 +1491,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						return;
 					}
 					if (method !== undefined) {
-						requestHandlers.delete(method);
+						if (requestHandlers.get(method)?.handler === handler) {
+							requestHandlers.delete(method);
+						}
 					} else {
 						starRequestHandler = undefined;
 					}
