@@ -1965,7 +1965,7 @@ export namespace DidOpenTextDocumentNotification {
 	export const method: 'textDocument/didOpen' = 'textDocument/didOpen';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>(method);
-	export const capabilities = CM.create('textDocument.synchronization', 'textDocumentSync');
+	export const capabilities = CM.create('textDocument.synchronization', 'textDocumentSync.openClose');
 }
 
 /**
@@ -2099,7 +2099,7 @@ export namespace DidCloseTextDocumentNotification {
 	export const method: 'textDocument/didClose' = 'textDocument/didClose';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolNotificationType<DidCloseTextDocumentParams, TextDocumentRegistrationOptions>(method);
-	export const capabilities = CM.create('textDocument.synchronization', 'textDocumentSync');
+	export const capabilities = CM.create('textDocument.synchronization', 'textDocumentSync.openClose');
 }
 
 /**
