@@ -1330,7 +1330,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						if (notificationHandlers.get(method)?.handler === handler) {
 							notificationHandlers.delete(method);
 						}
-					} else {
+					} else if (starNotificationHandler === type) {
 						starNotificationHandler = undefined;
 					}
 				}
@@ -1494,7 +1494,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						if (requestHandlers.get(method)?.handler === handler) {
 							requestHandlers.delete(method);
 						}
-					} else {
+					} else if (starRequestHandler === type) {
 						starRequestHandler = undefined;
 					}
 				}
