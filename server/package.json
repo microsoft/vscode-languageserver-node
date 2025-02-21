@@ -24,6 +24,10 @@
 		"./browser": {
 			"types": "./lib/browser/main.d.ts",
 			"browser": "./lib/browser/main.js"
+		},
+		"./utils": {
+			"types": "./lib/common/utils/main.d.ts",
+			"default": "./lib/common/utils/main.js"
 		}
 	},
 	"bin": {
