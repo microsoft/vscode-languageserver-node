@@ -3937,6 +3937,7 @@ export namespace DocumentRangeFormattingRequest {
 	export const method: 'textDocument/rangeFormatting' = 'textDocument/rangeFormatting';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentRangeFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
+	export const capabilities = CM.create('textDocument.rangeFormatting', 'documentRangeFormattingProvider');
 }
 
 /**
@@ -3949,7 +3950,7 @@ export namespace DocumentRangesFormattingRequest {
 	export const method: 'textDocument/rangesFormatting' = 'textDocument/rangesFormatting';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<DocumentRangesFormattingParams, TextEdit[] | null, never, void, DocumentRangeFormattingRegistrationOptions>(method);
-	export const capabilities = CM.create('textDocument.rangeFormatting', 'documentRangeFormattingProvider');
+	export const capabilities = CM.create('textDocument.rangeFormatting.rangesSupport', 'documentRangeFormattingProvider.rangesSupport');
 }
 
 /**
