@@ -55,7 +55,7 @@ export class Semaphore<T = void> {
 		const next = this._waiting.shift()!;
 		this._active++;
 		if (this._active > this._capacity) {
-			throw new Error(`To many thunks active`);
+			throw new Error(`Too many thunks active`);
 		}
 		try {
 			const result = next.thunk();
