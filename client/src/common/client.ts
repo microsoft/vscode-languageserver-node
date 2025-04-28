@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import {
-	workspace as Workspace, window as Window, languages as Languages, version as VSCodeVersion, TextDocument, Disposable, OutputChannel,
+	workspace as Workspace, window as Window, languages as Languages, version as VSCodeVersion, TextDocument, Disposable, OutputChannel, LogOutputChannel,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, CancellationToken, WorkspaceEdit as VWorkspaceEdit,
 	MessageItem, WorkspaceFolder as VWorkspaceFolder, env as Env, TextDocumentShowOptions, CancellationError, CancellationTokenSource, FileCreateEvent,
 	FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider,
@@ -348,9 +348,9 @@ InlineCompletionMiddleware & TextDocumentContentMiddleware & GeneralMiddleware;
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
 	diagnosticCollectionName?: string;
-	outputChannel?: OutputChannel;
+	outputChannel?: LogOutputChannel | OutputChannel;
 	outputChannelName?: string;
-	traceOutputChannel?: OutputChannel;
+	traceOutputChannel?: LogOutputChannel | OutputChannel;
 	revealOutputChannelOn?: RevealOutputChannelOn;
 	/**
 	 * The encoding use to read stdout and stderr. Defaults
@@ -615,6 +615,11 @@ class Tabs implements TabsModel {
 	}
 }
 
+function isLogOutputChannel(channel: OutputChannel): channel is LogOutputChannel {
+	const candidate = channel as LogOutputChannel;
+	return candidate.trace !== undefined && candidate.debug !== undefined && candidate.info !== undefined && candidate.warn !== undefined && candidate.error !== undefined;
+}
+
 export abstract class BaseLanguageClient implements FeatureClient<Middleware, LanguageClientOptions> {
 
 	private _id: string;
@@ -642,9 +647,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private readonly _progressDisposables: Map<string | number,  Disposable>;
 
 	private _initializeResult: InitializeResult | undefined;
-	private _outputChannel: OutputChannel | undefined;
+	private _outputChannel: LogOutputChannel | OutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
-	private _traceOutputChannel: OutputChannel | undefined;
+	private _traceOutputChannel: LogOutputChannel | OutputChannel | undefined;
 	private _capabilities!: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
 	private _diagnostics: DiagnosticCollection | undefined;
@@ -756,7 +761,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this._tracer = {
 			log: (messageOrDataObject: string | any, data?: string) => {
 				if (Is.string(messageOrDataObject)) {
-					this.logTrace(messageOrDataObject, data);
+					this.trace(messageOrDataObject, data);
 				} else {
 					this.logObjectTrace(messageOrDataObject);
 				}
@@ -817,14 +822,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this._stateChangeEmitter.event;
 	}
 
-	public get outputChannel(): OutputChannel {
+	public get outputChannel(): LogOutputChannel | OutputChannel {
 		if (!this._outputChannel) {
-			this._outputChannel = Window.createOutputChannel(this._clientOptions.outputChannelName ? this._clientOptions.outputChannelName : this._name);
+			this._outputChannel = Window.createOutputChannel(this._clientOptions.outputChannelName ? this._clientOptions.outputChannelName : this._name, { log: true });
 		}
 		return this._outputChannel;
 	}
 
-	public get traceOutputChannel(): OutputChannel {
+	public get traceOutputChannel(): LogOutputChannel | OutputChannel {
 		if (this._traceOutputChannel) {
 			return this._traceOutputChannel;
 		}
@@ -1160,29 +1165,88 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return data.toString();
 	}
 
+	public trace(message: string, data?: any): void {
+		const mesageWithData = data !== null && data !== undefined ? `${message}\n${this.data2String(data)}` : message;
+		if (isLogOutputChannel(this.traceOutputChannel)) {
+			this.traceOutputChannel.trace(mesageWithData);
+		} else {
+			this.traceOutputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${mesageWithData}`);
+		}
+	}
+
 	public debug(message: string, data?: any, showNotification: boolean = true): void {
-		this.logOutputMessage(MessageType.Debug, RevealOutputChannelOn.Debug, 'Debug', message, data, showNotification);
+		this.logOutputMessage(MessageType.Debug, RevealOutputChannelOn.Debug, message, data, showNotification);
 	}
 
 	public info(message: string, data?: any, showNotification: boolean = true): void {
-		this.logOutputMessage(MessageType.Info, RevealOutputChannelOn.Info, 'Info', message, data, showNotification);
+		this.logOutputMessage(MessageType.Info, RevealOutputChannelOn.Info, message, data, showNotification);
 	}
 
 	public warn(message: string, data?: any, showNotification: boolean = true): void {
-		this.logOutputMessage(MessageType.Warning, RevealOutputChannelOn.Warn, 'Warn', message, data, showNotification);
+		this.logOutputMessage(MessageType.Warning, RevealOutputChannelOn.Warn, message, data, showNotification);
 	}
 
 	public error(message: string, data?: any, showNotification: boolean | 'force' = true): void {
-		this.logOutputMessage(MessageType.Error, RevealOutputChannelOn.Error, 'Error', message, data, showNotification);
+		this.logOutputMessage(MessageType.Error, RevealOutputChannelOn.Error, message, data, showNotification);
 	}
 
-	private logOutputMessage(type: MessageType, reveal: RevealOutputChannelOn, name: string, message: string, data: any | undefined, showNotification: boolean | 'force'): void {
-		this.outputChannel.appendLine(`[${name.padEnd(5)} - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data !== null && data !== undefined) {
-			this.outputChannel.appendLine(this.data2String(data));
+	private logOutputMessage(type: MessageType, reveal: RevealOutputChannelOn, message: string, data: any | undefined, showNotification: boolean | 'force'): void {
+		const mesageWithData = data !== null && data !== undefined ? `${message}\n${this.data2String(data)}` : message;
+		if (isLogOutputChannel(this.outputChannel)) {
+			switch(type) {
+				case MessageType.Debug:
+					this.outputChannel.debug(mesageWithData);
+					break;
+				case MessageType.Log:
+					// There is no log level that corresponds to this message type.
+					// See https://github.com/microsoft/language-server-protocol/issues/2117
+					this.outputChannel.appendLine(mesageWithData);
+					break;
+				case MessageType.Info:
+					this.outputChannel.info(mesageWithData);
+					break;
+				case MessageType.Warning:
+					this.outputChannel.warn(mesageWithData);
+					break;
+				case MessageType.Error:
+					this.outputChannel.error(mesageWithData);
+					break;
+				default:
+					this.outputChannel.appendLine(mesageWithData);
+					break;
+			}
+		} else {
+			let messageTypeString;
+			switch(type) {
+				case MessageType.Debug:
+					messageTypeString = 'Debug';
+					break;
+				case MessageType.Log:
+					messageTypeString = 'Log';
+					break;
+				case MessageType.Info:
+					messageTypeString = 'Info';
+					break;
+				case MessageType.Warning:
+					messageTypeString = 'Warn';
+					break;
+				case MessageType.Error:
+					messageTypeString = 'Error';
+					break;
+				default:
+					messageTypeString = '';
+					break;
+			}
+			this.outputChannel.appendLine(`[${messageTypeString.padEnd(5)} - ${(new Date().toLocaleTimeString())}] ${mesageWithData}`);
 		}
 		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= reveal)) {
 			this.showNotificationMessage(type, message, data);
+		}
+	}
+
+	private logObjectTrace(data: any): void {
+		if (data !== null && data !== undefined) {
+			this.trace(JSON.stringify(data));
 		}
 	}
 
@@ -1201,24 +1265,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				this.outputChannel.show(true);
 			}
 		});
-	}
-
-	private logTrace(message: string, data?: any): void {
-		this.traceOutputChannel.appendLine(`[Trace - ${(new Date().toLocaleTimeString())}] ${message}`);
-		if (data) {
-			this.traceOutputChannel.appendLine(this.data2String(data));
-		}
-	}
-
-	private logObjectTrace(data: any): void {
-		if (data.isLSPMessage && data.type) {
-			this.traceOutputChannel.append(`[LSP   - ${(new Date().toLocaleTimeString())}] `);
-		} else {
-			this.traceOutputChannel.append(`[Trace - ${(new Date().toLocaleTimeString())}] `);
-		}
-		if (data) {
-			this.traceOutputChannel.appendLine(`${JSON.stringify(data)}`);
-		}
 	}
 
 	public needsStart(): boolean {
