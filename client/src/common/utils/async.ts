@@ -261,7 +261,11 @@ export async function map<P, C>(items: ReadonlyArray<P>, func: (item: P) => C, t
 		}
 		index = await new Promise((resolve) => {
 			RAL().timer.setImmediate(() => {
-				resolve(convertBatch(index));
+				if (token !== undefined && token.isCancellationRequested) {
+					resolve(-1);
+				} else {
+					resolve(convertBatch(index));
+				}
 			});
 		});
 	}
@@ -292,7 +296,11 @@ export async function mapAsync<P, C>(items: ReadonlyArray<P>, func: (item: P, to
 		}
 		index = await new Promise((resolve) => {
 			RAL().timer.setImmediate(() => {
-				resolve(convertBatch(index));
+				if (token !== undefined && token.isCancellationRequested) {
+					resolve(-1);
+				} else {
+					resolve(convertBatch(index));
+				}
 			});
 		});
 	}
@@ -323,7 +331,11 @@ export async function forEach<P>(items: ReadonlyArray<P>, func: (item: P) => voi
 		}
 		index = await new Promise((resolve) => {
 			RAL().timer.setImmediate(() => {
-				resolve(runBatch(index));
+				if (token !== undefined && token.isCancellationRequested) {
+					resolve(-1);
+				} else {
+					resolve(runBatch(index));
+				}
 			});
 		});
 	}
