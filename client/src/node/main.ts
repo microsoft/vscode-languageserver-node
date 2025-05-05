@@ -7,8 +7,10 @@ import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 import * as fs from 'fs';
 import * as path from 'path';
+import * as stream from 'stream';
+import * as readline from 'readline';
 
-import { workspace as Workspace, Disposable, version as VSCodeVersion } from 'vscode';
+import { workspace as Workspace, Disposable, version as VSCodeVersion, OutputChannel, LogOutputChannel } from 'vscode';
 
 import * as Is from '../common/utils/is';
 import { BaseLanguageClient, LanguageClientOptions, MessageTransports, ShutdownMode } from '../common/client';
@@ -280,6 +282,24 @@ export class LanguageClient extends BaseLanguageClient {
 			}
 		}
 
+		function isLogOutputChannel(channel: OutputChannel): channel is LogOutputChannel {
+			const candidate = channel as LogOutputChannel;
+			return candidate.trace !== undefined && candidate.debug !== undefined && candidate.info !== undefined && candidate.warn !== undefined && candidate.error !== undefined;
+		}
+
+		function pipeReadableToOutputChannel(input: stream.Readable, outputChannel: OutputChannel) {
+			if (isLogOutputChannel(outputChannel)) {
+				readline.createInterface({
+					input: input,
+					crlfDelay: Infinity,
+					terminal: false,
+					historySize: 0,
+				}).on('line', data => outputChannel.appendLine(data));
+			} else {
+				input.on('data', data => outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+			}
+		}
+
 		const server = this._serverOptions;
 		// We got a function.
 		if (Is.func(server)) {
@@ -299,7 +319,7 @@ export class LanguageClient extends BaseLanguageClient {
 						cp = result;
 						this._isDetached = false;
 					}
-					cp.stderr!.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+					pipeReadableToOutputChannel(cp.stderr!, this.outputChannel);
 					return { reader: new StreamMessageReader(cp.stdout!), writer: new StreamMessageWriter(cp.stdin!) };
 				}
 			});
@@ -355,9 +375,9 @@ export class LanguageClient extends BaseLanguageClient {
 							return handleChildProcessStartError(serverProcess, `Launching server using runtime ${runtime} failed.`);
 						}
 						this._serverProcess = serverProcess;
-						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						pipeReadableToOutputChannel(serverProcess.stderr, this.outputChannel);
 						if (transport === TransportKind.ipc) {
-							serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+							pipeReadableToOutputChannel(serverProcess.stdout, this.outputChannel);
 							return Promise.resolve({ reader: new IPCMessageReader(serverProcess), writer: new IPCMessageWriter(serverProcess) });
 						} else {
 							return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
@@ -369,8 +389,8 @@ export class LanguageClient extends BaseLanguageClient {
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
-							process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-							process.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+							pipeReadableToOutputChannel(process.stderr, this.outputChannel);
+							pipeReadableToOutputChannel(process.stdout, this.outputChannel);
 							return transport.onConnected().then((protocol) => {
 								return { reader: protocol[0], writer: protocol[1] };
 							});
@@ -382,8 +402,8 @@ export class LanguageClient extends BaseLanguageClient {
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
-							process.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-							process.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+							pipeReadableToOutputChannel(process.stderr, this.outputChannel);
+							pipeReadableToOutputChannel(process.stdout, this.outputChannel);
 							return transport.onConnected().then((protocol) => {
 								return { reader: protocol[0], writer: protocol[1] };
 							});
@@ -413,9 +433,9 @@ export class LanguageClient extends BaseLanguageClient {
 							const sp = cp.fork(node.module, args || [], options);
 							assertStdio(sp);
 							this._serverProcess = sp;
-							sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+							pipeReadableToOutputChannel(sp.stderr, this.outputChannel);
 							if (transport === TransportKind.ipc) {
-								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								pipeReadableToOutputChannel(sp.stdout, this.outputChannel);
 								resolve({ reader: new IPCMessageReader(this._serverProcess), writer: new IPCMessageWriter(this._serverProcess) });
 							} else {
 								resolve({ reader: new StreamMessageReader(sp.stdout), writer: new StreamMessageWriter(sp.stdin) });
@@ -425,8 +445,8 @@ export class LanguageClient extends BaseLanguageClient {
 								const sp = cp.fork(node.module, args || [], options);
 								assertStdio(sp);
 								this._serverProcess = sp;
-								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								pipeReadableToOutputChannel(sp.stderr, this.outputChannel);
+								pipeReadableToOutputChannel(sp.stdout, this.outputChannel);
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
 								}, reject);
@@ -436,8 +456,8 @@ export class LanguageClient extends BaseLanguageClient {
 								const sp = cp.fork(node.module, args || [], options);
 								assertStdio(sp);
 								this._serverProcess = sp;
-								sp.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-								sp.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+								pipeReadableToOutputChannel(sp.stderr, this.outputChannel);
+								pipeReadableToOutputChannel(sp.stdout, this.outputChannel);
 								transport.onConnected().then((protocol) => {
 									resolve({ reader: protocol[0], writer: protocol[1] });
 								}, reject);
@@ -467,7 +487,7 @@ export class LanguageClient extends BaseLanguageClient {
 					if (!serverProcess || !serverProcess.pid) {
 						return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 					}
-					serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+					pipeReadableToOutputChannel(serverProcess.stderr, this.outputChannel);
 					this._serverProcess = serverProcess;
 					this._isDetached = !!options.detached;
 					return Promise.resolve({ reader: new StreamMessageReader(serverProcess.stdout), writer: new StreamMessageWriter(serverProcess.stdin) });
@@ -479,8 +499,8 @@ export class LanguageClient extends BaseLanguageClient {
 						}
 						this._serverProcess = serverProcess;
 						this._isDetached = !!options.detached;
-						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-						serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						pipeReadableToOutputChannel(serverProcess.stderr, this.outputChannel);
+						pipeReadableToOutputChannel(serverProcess.stdout, this.outputChannel);
 						return transport.onConnected().then((protocol) => {
 							return { reader: protocol[0], writer: protocol[1] };
 						});
@@ -493,8 +513,8 @@ export class LanguageClient extends BaseLanguageClient {
 						}
 						this._serverProcess = serverProcess;
 						this._isDetached = !!options.detached;
-						serverProcess.stderr.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
-						serverProcess.stdout.on('data', data => this.outputChannel.append(Is.string(data) ? data : data.toString(encoding)));
+						pipeReadableToOutputChannel(serverProcess.stderr, this.outputChannel);
+						pipeReadableToOutputChannel(serverProcess.stdout, this.outputChannel);
 						return transport.onConnected().then((protocol) => {
 							return { reader: protocol[0], writer: protocol[1] };
 						});
