@@ -644,7 +644,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _outputChannel: LogOutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
 	private _traceOutputChannel: LogOutputChannel | undefined;
-	private _logLevelEventDisposable: Disposable | undefined;
 	private _logLevel: LogLevel;
 	private _capabilities!: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
@@ -743,7 +742,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 		this._traceOutputChannel = clientOptions.traceOutputChannel;
 		this._logLevel = LogLevel.Info;
-		this._logLevelEventDisposable = undefined;
 		this._diagnostics = undefined;
 
 		this._inFlightOpenNotifications = new Set();

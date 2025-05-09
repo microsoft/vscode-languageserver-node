@@ -1045,7 +1045,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
 			if ((trace === Trace.Verbose || trace === Trace.Compact) && message.params) {
-				data = `Params: ${stringifyTrace(message.params)}\n\n`;
+				data = `Params: ${stringifyTrace(message.params)}`;
 			}
 			tracer.log(`Sending request '${message.method} - (${message.id})'.`, data);
 		} else {
@@ -1062,9 +1062,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			let data: string | undefined = undefined;
 			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.params) {
-					data = `Params: ${stringifyTrace(message.params)}\n\n`;
+					data = `Params: ${stringifyTrace(message.params)}`;
 				} else {
-					data = 'No parameters provided.\n\n';
+					data = 'No parameters provided.';
 				}
 			}
 			tracer.log(`Sending notification '${message.method}'.`, data);
@@ -1082,12 +1082,12 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			let data: string | undefined = undefined;
 			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.error && message.error.data) {
-					data = `Error data: ${stringifyTrace(message.error.data)}\n\n`;
+					data = `Error data: ${stringifyTrace(message.error.data)}`;
 				} else {
 					if (message.result) {
-						data = `Result: ${stringifyTrace(message.result)}\n\n`;
+						data = `Result: ${stringifyTrace(message.result)}`;
 					} else if (message.error === undefined) {
-						data = 'No result returned.\n\n';
+						data = 'No result returned.';
 					}
 				}
 			}
@@ -1105,7 +1105,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
 			if ((trace === Trace.Verbose || trace === Trace.Compact) && message.params) {
-				data = `Params: ${stringifyTrace(message.params)}\n\n`;
+				data = `Params: ${stringifyTrace(message.params)}`;
 			}
 			tracer.log(`Received request '${message.method} - (${message.id})'.`, data);
 		} else {
@@ -1122,9 +1122,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			let data: string | undefined = undefined;
 			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.params) {
-					data = `Params: ${stringifyTrace(message.params)}\n\n`;
+					data = `Params: ${stringifyTrace(message.params)}`;
 				} else {
-					data = 'No parameters provided.\n\n';
+					data = 'No parameters provided.';
 				}
 			}
 			tracer.log(`Received notification '${message.method}'.`, data);
@@ -1142,12 +1142,12 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			let data: string | undefined = undefined;
 			if (trace === Trace.Verbose || trace === Trace.Compact) {
 				if (message.error && message.error.data) {
-					data = `Error data: ${stringifyTrace(message.error.data)}\n\n`;
+					data = `Error data: ${stringifyTrace(message.error.data)}`;
 				} else {
 					if (message.result) {
-						data = `Result: ${stringifyTrace(message.result)}\n\n`;
+						data = `Result: ${stringifyTrace(message.result)}`;
 					} else if (message.error === undefined) {
-						data = 'No result returned.\n\n';
+						data = 'No result returned.';
 					}
 				}
 			}
