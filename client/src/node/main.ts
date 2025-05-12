@@ -245,7 +245,7 @@ export class LanguageClient extends BaseLanguageClient {
 		}
 	}
 
-	protected createMessageTransports(encoding: string): Promise<MessageTransports> {
+	protected createMessageTransports(_encoding: string): Promise<MessageTransports> {
 
 		function getEnvironment(env: any, fork: boolean): any {
 			if (!env && !fork) {
