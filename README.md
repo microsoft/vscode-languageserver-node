@@ -46,6 +46,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 - support to control the parallelism of the dispatch requests and notification. This is a breaking change since it allows notification handlers to return a promise to control this.
 - make client browser implementation consistent with the node implementation in terms of arguments. This is a breaking change since it re-ordered parameter declarations.
 - Added a `CancellationToken` to the show document middleware to make it consistent with the other middleware. This is a breaking change since it added a required parameter.
+- Using `LogOutputChannel` for the client's output and trace channel instead of the standard VSCode `OutputChannel` type. This is a breaking change for clients that pass in their own log or trace channel via the `LanguageClientOptions`. Instead of using a normal `OutputChannel` you now need to pass in a `LogOutputChannel`.
 
 ## 3.17.5 Protocol, 9.0.1 Client and 9.0.1 Server
 
