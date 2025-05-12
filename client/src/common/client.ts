@@ -644,7 +644,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _outputChannel: LogOutputChannel | undefined;
 	private _disposeOutputChannel: boolean;
 	private _traceOutputChannel: LogOutputChannel | undefined;
-	private _logLevel: LogLevel;
+	private _traceLogLevel: LogLevel;
 	private _capabilities!: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
 	private _diagnostics: DiagnosticCollection | undefined;
@@ -736,12 +736,16 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (clientOptions.outputChannel) {
 			this._outputChannel = clientOptions.outputChannel;
 			this._disposeOutputChannel = false;
+			this._traceLogLevel = this._outputChannel.logLevel;
 		} else {
 			this._outputChannel = undefined;
 			this._disposeOutputChannel = true;
+			this._traceLogLevel = LogLevel.Info;
 		}
 		this._traceOutputChannel = clientOptions.traceOutputChannel;
-		this._logLevel = LogLevel.Info;
+		if (this._traceOutputChannel !== undefined) {
+			this._traceLogLevel = this._traceOutputChannel.logLevel;
+		}
 		this._diagnostics = undefined;
 
 		this._inFlightOpenNotifications = new Set();
@@ -821,6 +825,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public get outputChannel(): LogOutputChannel {
 		if (!this._outputChannel) {
 			this._outputChannel = Window.createOutputChannel(this._clientOptions.outputChannelName ? this._clientOptions.outputChannelName : this._name, { log: true });
+			if (this._traceOutputChannel === undefined) {
+				this._traceLogLevel = this._outputChannel.logLevel;
+			}
 		}
 		return this._outputChannel;
 	}
@@ -1835,14 +1842,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private hookLogLevelChanged(connection: Connection): void {
 		this._listeners.push(this.traceOutputChannel.onDidChangeLogLevel((level) => {
-			this._logLevel = level;
+			this._traceLogLevel = level;
 			this.refreshTrace(connection, true);
 		}));
 	}
 
 	private refreshTrace(connection: Connection, sendNotification: boolean = false): void {
 		const config = Workspace.getConfiguration(this._id);
-		let trace: Trace = this._logLevel !== LogLevel.Trace ? Trace.Off : Trace.Messages;
+		let trace: Trace = this._traceLogLevel !== LogLevel.Trace ? Trace.Off : Trace.Messages;
 		let traceFormat: TraceFormat = TraceFormat.Text;
 		if (config && trace !== Trace.Off) {
 			const traceConfig = config.get('trace.server', 'messages');
