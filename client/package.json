@@ -36,13 +36,13 @@
 	},
 	"devDependencies": {
 		"@types/minimatch": "^5.1.2",
-		"@types/semver": "^7.5.8",
+		"@types/semver": "^7.7.0",
 		"@types/vscode": "1.91.0",
-		"shx": "^0.3.4"
+		"shx": "^0.4.0"
 	},
 	"dependencies": {
 		"minimatch": "^10.0.1",
-		"semver": "^7.6.3",
+		"semver": "^7.7.1",
 		"vscode-languageserver-protocol": "3.17.6-next.12"
 	},
 	"scripts": {
