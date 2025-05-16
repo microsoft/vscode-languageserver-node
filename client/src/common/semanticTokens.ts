@@ -68,7 +68,6 @@ export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean |
     		SemanticTokenTypes.method,
     		SemanticTokenTypes.macro,
     		SemanticTokenTypes.keyword,
-    		SemanticTokenTypes.modifier,
     		SemanticTokenTypes.comment,
     		SemanticTokenTypes.string,
     		SemanticTokenTypes.number,
