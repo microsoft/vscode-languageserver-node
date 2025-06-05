@@ -61,7 +61,7 @@ export class TextDocumentContentFeature implements DynamicFeature<TextDocumentCo
 			const uri = client.protocol2CodeConverter.asUri(params.uri);
 			for (const registrations of this._registrations.values()) {
 				for (const provider of registrations.providers) {
-					if (provider.scheme !== uri.scheme) {
+					if (provider.scheme === uri.scheme) {
 						provider.onDidChangeEmitter.fire(uri);
 					}
 				}
