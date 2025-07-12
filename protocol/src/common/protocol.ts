@@ -659,7 +659,7 @@ export interface WorkspaceClientCapabilities {
 	 *
 	 * @since 3.17.0.
 	 */
-	diagnostics?: DiagnosticWorkspaceClientCapabilities;
+	diagnostic?: DiagnosticWorkspaceClientCapabilities;
 
 	/**
 	 * Capabilities specific to the folding range requests scoped to the workspace.
