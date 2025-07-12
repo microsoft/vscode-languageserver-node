@@ -11273,7 +11273,7 @@
 					"since": "3.17.0."
 				},
 				{
-					"name": "diagnostics",
+					"name": "diagnostic",
 					"type": {
 						"kind": "reference",
 						"name": "DiagnosticWorkspaceClientCapabilities"

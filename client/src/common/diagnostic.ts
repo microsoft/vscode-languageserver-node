@@ -1066,7 +1066,7 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 		// the active editor.
 		capability.relatedDocumentSupport = false;
 
-		ensure(ensure(capabilities, 'workspace')!, 'diagnostics')!.refreshSupport = true;
+		ensure(ensure(capabilities, 'workspace')!, 'diagnostic')!.refreshSupport = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
