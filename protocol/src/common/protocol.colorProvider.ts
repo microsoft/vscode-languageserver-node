@@ -85,4 +85,5 @@ export namespace ColorPresentationRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<ColorPresentationParams, ColorPresentation[], void>;
+	export const capabilities = CM.create('textDocument.colorProvider', 'colorProvider');
 }
