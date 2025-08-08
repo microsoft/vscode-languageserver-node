@@ -35,11 +35,11 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## Next (10.0.0-next.* Client and 10.0.0-next.* Server)
+## Next (10.0.0-next.* Client, 10.0.0-next.* Server and 9.0.0-next.* jsonrpc)
 
 - Upgraded to newer libraries, compilers and package.json exports rules:
-  - Compiler upgraded to `5.5.x`.
-  - Libs now depend on NodeJS `20.9.0` and `es2022`. See also [TypeScript's node  target mapping](https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping).
+  - Compiler upgraded to `5.9.x`.
+  - Libs now depend on NodeJS `22.13.14` and `es2022`. See also [TypeScript's node  target mapping](https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping).
   - `vscode-jsonrpc`, `vscode-languageserver-protocol`, `vscode-languageclient` and `vscode-languageserver` now use the `exports` property instead of having a `main` and `typings` property. This might need adoption in tsconfig.json files around the `module` and `moduleResolution`. The LSP libraries currently use `node16` for both values.
 - added proposed CodeActionKind.RefactorMove
 - snippet support in Workspace edits
@@ -47,6 +47,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 - make client browser implementation consistent with the node implementation in terms of arguments. This is a breaking change since it re-ordered parameter declarations.
 - Added a `CancellationToken` to the show document middleware to make it consistent with the other middleware. This is a breaking change since it added a required parameter.
 - Using `LogOutputChannel` for the client's output and trace channel instead of the standard VSCode `OutputChannel` type. This is a breaking change for clients that pass in their own log or trace channel via the `LanguageClientOptions`. Instead of using a normal `OutputChannel` you now need to pass in a `LogOutputChannel`.
+- LinkedList from `jsonrpc` is not implementing Map anymore.
 
 ## 3.17.5 Protocol, 9.0.1 Client and 9.0.1 Server
 
