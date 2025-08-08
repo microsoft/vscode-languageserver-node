@@ -28,7 +28,7 @@
 		"shx": "^0.4.0",
 		"source-map-support": "^0.5.21",
 		"ts-json-schema-generator": "^2.4.0",
-		"typescript": "5.8.3",
+		"typescript": "5.9.2",
 		"webpack": "^5.99.8",
 		"webpack-cli": "^6.0.1",
 		"node-polyfill-webpack-plugin": "^4.1.0"

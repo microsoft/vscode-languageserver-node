@@ -20,7 +20,7 @@ export namespace Touch {
 
 export type Touch = 0 | 1 | 2;
 
-export class LinkedMap<K, V> implements Map<K, V> {
+export class LinkedMap<K, V> {
 
 	readonly [Symbol.toStringTag] = 'LinkedMap';
 
@@ -162,51 +162,53 @@ export class LinkedMap<K, V> implements Map<K, V> {
 		}
 	}
 
-	public keys(): MapIterator<K> {
-		return this._keys();
-	}
-
-	private *_keys(): Generator<K, BuiltinIteratorReturn, unknown> {
+	public keys(): IterableIterator<K> {
 		const state = this._state;
 		let current = this._head;
-
-		while (true) {
-			if (this._state !== state) {
-				throw new Error(`LinkedMap got modified during iteration.`);
+		const iterator: IterableIterator<K> = {
+			[Symbol.iterator]: () => {
+				return iterator;
+			},
+			next: (): IteratorResult<K> => {
+				if (this._state !== state) {
+					throw new Error(`LinkedMap got modified during iteration.`);
+				}
+				if (current) {
+					const result = { value: current.key, done: false };
+					current = current.next;
+					return result;
+				} else {
+					return { value: undefined, done: true };
+				}
 			}
-			if (!current) {
-				return;
-			}
-
-			const yieldResult = current.key;
-			current = current.next;
-			yield yieldResult;
-		}
+		};
+		return iterator;
 	}
 
-	public values(): MapIterator<V> {
-		return this._values();
-	}
-
-	private *_values(): Generator<V, BuiltinIteratorReturn, unknown> {
+	public values(): IterableIterator<V> {
 		const state = this._state;
 		let current = this._head;
-
-		while (true) {
-			if (this._state !== state) {
-				throw new Error(`LinkedMap got modified during iteration.`);
+		const iterator: IterableIterator<V> = {
+			[Symbol.iterator]: () => {
+				return iterator;
+			},
+			next: (): IteratorResult<V> => {
+				if (this._state !== state) {
+					throw new Error(`LinkedMap got modified during iteration.`);
+				}
+				if (current) {
+					const result = { value: current.value, done: false };
+					current = current.next;
+					return result;
+				} else {
+					return { value: undefined, done: true };
+				}
 			}
-			if (!current) {
-				return;
-			}
-
-			const yieldResult = current.value;
-			current = current.next;
-			yield yieldResult;
-		}
+		};
+		return iterator;
 	}
 
-	public entries(): MapIterator<[K, V]> {
+	public entries(): IterableIterator<[K, V]> {
 		const state = this._state;
 		let current = this._head;
 		const iterator: IterableIterator<[K, V]> = {
@@ -229,26 +231,8 @@ export class LinkedMap<K, V> implements Map<K, V> {
 		return iterator;
 	}
 
-	private *_entries(): Generator<[K, V], BuiltinIteratorReturn, unknown> {
-		const state = this._state;
-		let current = this._head;
-
-		while (true) {
-			if (this._state !== state) {
-				throw new Error(`LinkedMap got modified during iteration.`);
-			}
-			if (!current) {
-				return;
-			}
-
-			const yieldResult: [K, V] = [current.key, current.value];
-			current = current.next;
-			yield yieldResult;
-		}
-	}
-
-	public [Symbol.iterator](): MapIterator<[K, V]> {
-		return this._entries();
+	public [Symbol.iterator](): IterableIterator<[K, V]> {
+		return this.entries();
 	}
 
 	protected trimOld(newSize: number): void {
