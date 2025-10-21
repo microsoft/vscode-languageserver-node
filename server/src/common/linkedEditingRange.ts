@@ -18,12 +18,12 @@ export interface LinkedEditingRangeFeatureShape {
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onLinkedEditingRange(handler: ServerRequestHandler<LinkedEditingRangeParams, LinkedEditingRanges | undefined | null, never, never>): Disposable;
+	onLinkedEditingRange(handler: ServerRequestHandler<LinkedEditingRangeParams, LinkedEditingRanges | undefined | null, void, void>): Disposable;
 }
 
 export const LinkedEditingRangeFeature: Feature<_Languages, LinkedEditingRangeFeatureShape> = (Base) => {
 	return class extends Base {
-		public onLinkedEditingRange(handler: ServerRequestHandler<LinkedEditingRangeParams, LinkedEditingRanges | undefined | null, never, never>): Disposable {
+		public onLinkedEditingRange(handler: ServerRequestHandler<LinkedEditingRangeParams, LinkedEditingRanges | undefined | null, void, void>): Disposable {
 			return this.connection.onRequest(LinkedEditingRangeRequest.type, (params, cancel) => {
 				return handler(params, cancel, this.attachWorkDoneProgress(params), undefined);
 			});
