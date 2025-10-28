@@ -158,8 +158,8 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 	 * being closed.
 	 *
 	 * @param closingDocument The document being closed.
-	 * @returns Whether a pending open notification was because it was for the
-	 *          closing document.
+	 * @returns Whether a pending open notification was dropped because it was
+	 *          for the closing document.
 	 */
 	public async sendPendingOpenNotifications(closingDocument?: string): Promise<boolean> {
 		const notifications = Array.from(this._pendingOpenNotifications.values());
