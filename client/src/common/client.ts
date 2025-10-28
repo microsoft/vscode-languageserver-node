@@ -1004,8 +1004,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
 
-		// Send ony depending open notifications
-		await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
+		// Send any depending open notifications
+		const didDropOpenNotification = await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
+		if (didDropOpenNotification) {
+			// Don't forward this close notification if we dropped the
+			// corresponding open notification.
+			return;
+		}
 
 		// If any document is synced in full mode make sure we flush any pending
 		// full document syncs.
