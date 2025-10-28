@@ -27,6 +27,17 @@ namespace SetDiagnosticsNotification {
 	export const type = new lsclient.NotificationType<proto.DocumentDiagnosticReport>(method);
 }
 
+/**
+ * A custom request to get a list of all text sync notifications that the server
+ * has been sent.
+ *
+ * Implemented in textSyncServer.ts
+ */
+namespace GetNotificationsRequest {
+	export const method: 'testing/getNotifications' = 'testing/getNotifications';
+	export const type = new lsclient.RequestType0<string[], void>(method);
+}
+
 async function revertAllDirty(): Promise<void> {
 	return vscode.commands.executeCommand('_workbench.revertAllDirty');
 }
@@ -2225,5 +2236,75 @@ suite('Server activation', () => {
 		await vscode.commands.executeCommand('vscode.executeDeclarationProvider', uri, position);
 		await started;
 		await client.stop();
+	});
+});
+
+suite('delayOpenNotifications', () => {
+	let client: lsclient.LanguageClient;
+
+	async function startClient(delayOpen: boolean): Promise<void> {
+		const serverModule = path.join(__dirname, './servers/textSyncServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
+			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
+		};
+
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector: [{ language: 'plaintext' }],
+			synchronize: {},
+			initializationOptions: {},
+			middleware: {},
+			textSynchronization: {
+				delayOpenNotifications: delayOpen
+			}
+		};
+		(clientOptions as ({ $testMode?: boolean })).$testMode = true;
+
+		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await client.start();
+	}
+
+	const fakeDocument = {
+		uri: 'untitled:test.txt',
+		languageId: 'plaintext',
+		getText: () => '',
+	} as any as vscode.TextDocument;
+
+	function sendDidOpen(document: vscode.TextDocument) {
+		return client.getFeature(lsclient.DidOpenTextDocumentNotification.method).getProvider(document)!.send(document);
+	}
+
+	function sendDidClose(document: vscode.TextDocument) {
+		return client.getFeature(lsclient.DidCloseTextDocumentNotification.method).getProvider(document)!.send(document);
+	}
+
+	teardown(async () =>  client.stop());
+
+	test('didOpen/didClose are not sent when delayOpenNotifications=true', async () => {
+		await startClient(true);
+
+		await sendDidOpen(fakeDocument);
+		await sendDidClose(fakeDocument);
+
+		// Ensure no notifications.
+		const notifications = await client.sendRequest(GetNotificationsRequest.type);
+		assert.deepStrictEqual(notifications, []);
+	});
+
+	test('didOpen/didClose are always sent when delayOpenNotifications=false', async () => {
+		await startClient(false);
+
+		await sendDidOpen(fakeDocument);
+		await sendDidClose(fakeDocument);
+
+		// Ensure both notifications.
+		const notifications = await client.sendRequest(GetNotificationsRequest.type);
+		assert.deepStrictEqual(
+			notifications,
+			[
+				'textDocument/didOpen',
+				'textDocument/didClose',
+			],
+		);
 	});
 });
