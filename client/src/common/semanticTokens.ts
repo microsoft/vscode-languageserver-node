@@ -177,6 +177,7 @@ export class SemanticTokensFeature extends TextDocumentLanguageFeature<boolean |
 		const hasRangeProvider: boolean = options.range === true;
 		const rangeProvider: vscode.DocumentRangeSemanticTokensProvider | undefined = hasRangeProvider
 			? {
+				onDidChangeSemanticTokens: eventEmitter.event,
 				provideDocumentRangeSemanticTokens: (document: vscode.TextDocument, range: vscode.Range, token: vscode.CancellationToken) => {
 					const client = this._client;
 					const middleware = client.middleware;

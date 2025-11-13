@@ -38,7 +38,7 @@
 		"@types/minimatch": "^5.1.2",
 		"@types/sinon": "^17.0.3",
 		"@types/uuid": "^10.0.0",
-		"@types/vscode": "1.91.0",
+		"@types/vscode": "1.106.0",
 		"@types/node": "20.17.9",
 		"@vscode/test-electron": "^2.4.1",
 		"find-process": "^1.4.7",
