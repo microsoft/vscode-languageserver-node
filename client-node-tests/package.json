@@ -42,7 +42,7 @@
 		"@types/node": "20.17.9",
 		"@vscode/test-electron": "^2.4.1",
 		"find-process": "^1.4.7",
-		"glob": "^11.0.0",
+		"glob": "^11.1.0",
 		"sinon": "^19.0.2",
 		"uuid": "^11.0.3"
 	},
