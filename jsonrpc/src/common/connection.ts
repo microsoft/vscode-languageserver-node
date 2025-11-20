@@ -67,7 +67,7 @@ export class ProgressType<PR> {
 	}
 }
 
-export type HandlerResult<R, E> = R | ResponseError<E> | Thenable<R> | Thenable<ResponseError<E>> | Thenable<R | ResponseError<E>>;
+export type HandlerResult<R, E, _R = R extends null ? (R | undefined) : R> = _R | ResponseError<E> | Thenable<_R> | Thenable<ResponseError<E>> | Thenable<_R | ResponseError<E>>;
 
 export interface StarRequestHandler {
 	(method: string, params: any[] | object | undefined, token: CancellationToken): HandlerResult<any, any>;
@@ -503,65 +503,65 @@ export namespace ConnectionOptions {
 
 export interface MessageConnection {
 	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, R, E>(type: RequestType1<P1, R, E>, p1: P1, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, R, E>(type: RequestType2<P1, P2, R, E>, p1: P1, p2: P2, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, R, E>(type: RequestType3<P1, P2, P3, R, E>, p1: P1, p2: P2, p3: P3, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, R, E>(type: RequestType4<P1, P2, P3, P4, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, R, E>(type: RequestType5<P1, P2, P3, P4, P5, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, R, E>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, R, E>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, R, E>(type: RequestType1<P1, R, E>, p1: NoInfer<P1>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, R, E>(type: RequestType2<P1, P2, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, R, E>(type: RequestType3<P1, P2, P3, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, R, E>(type: RequestType4<P1, P2, P3, P4, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, R, E>(type: RequestType5<P1, P2, P3, P4, P5, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, R, E>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, R, E>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, p8: NoInfer<P8>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, p8: NoInfer<P8>, p9: NoInfer<P9>, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, r0?: ParameterStructures | any, ...rest: any[]): Promise<R>;
 
-	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
-	onRequest<P1, R, E>(type: RequestType1<P1, R, E>, handler: RequestHandler1<P1, R, E>): Disposable;
-	onRequest<P1, P2, R, E>(type: RequestType2<P1, P2, R, E>, handler: RequestHandler2<P1, P2, R, E>): Disposable;
-	onRequest<P1, P2, P3, R, E>(type: RequestType3<P1, P2, P3, R, E>, handler: RequestHandler3<P1, P2, P3, R, E>): Disposable;
-	onRequest<P1, P2, P3, P4, R, E>(type: RequestType4<P1, P2, P3, P4, R, E>, handler: RequestHandler4<P1, P2, P3, P4, R, E>): Disposable;
-	onRequest<P1, P2, P3, P4, P5, R, E>(type: RequestType5<P1, P2, P3, P4, P5, R, E>, handler: RequestHandler5<P1, P2, P3, P4, P5, R, E>): Disposable;
-	onRequest<P1, P2, P3, P4, P5, P6, R, E>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E>, handler: RequestHandler6<P1, P2, P3, P4, P5, P6, R, E>): Disposable;
-	onRequest<P1, P2, P3, P4, P5, P6, P7, R, E>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E>, handler: RequestHandler7<P1, P2, P3, P4, P5, P6, P7, R, E>): Disposable;
-	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>, handler: RequestHandler8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>): Disposable;
-	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>, handler: RequestHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>): Disposable;
+	onRequest<R, E>(type: RequestType0<R, E>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: NoInfer<RequestHandler<P, R, E>>): Disposable;
+	onRequest<P1, R, E>(type: RequestType1<P1, R, E>, handler: NoInfer<RequestHandler1<P1, R, E>>): Disposable;
+	onRequest<P1, P2, R, E>(type: RequestType2<P1, P2, R, E>, handler: NoInfer<RequestHandler2<P1, P2, R, E>>): Disposable;
+	onRequest<P1, P2, P3, R, E>(type: RequestType3<P1, P2, P3, R, E>, handler: NoInfer<RequestHandler3<P1, P2, P3, R, E>>): Disposable;
+	onRequest<P1, P2, P3, P4, R, E>(type: RequestType4<P1, P2, P3, P4, R, E>, handler: NoInfer<RequestHandler4<P1, P2, P3, P4, R, E>>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, R, E>(type: RequestType5<P1, P2, P3, P4, P5, R, E>, handler: NoInfer<RequestHandler5<P1, P2, P3, P4, P5, R, E>>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, P6, R, E>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E>, handler: NoInfer<RequestHandler6<P1, P2, P3, P4, P5, P6, R, E>>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, P6, P7, R, E>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E>, handler: NoInfer<RequestHandler7<P1, P2, P3, P4, P5, P6, P7, R, E>>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>, handler: NoInfer<RequestHandler8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>>): Disposable;
+	onRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>, handler: NoInfer<RequestHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>>): Disposable;
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 	onRequest(handler: StarRequestHandler): Disposable;
 
 	hasPendingResponse(): boolean;
 
 	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
-	sendNotification<P1>(type: NotificationType1<P1>, p1: P1): Promise<void>;
-	sendNotification<P1, P2>(type: NotificationType2<P1, P2>, p1: P1, p2: P2): Promise<void>;
-	sendNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, p1: P1, p2: P2, p3: P3): Promise<void>;
-	sendNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, p1: P1, p2: P2, p3: P3, p4: P4): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, p1: P1, p2: P2, p3: P3, p4: P4, p5: P5, p6: P6, p7: P7, p8: P8, p9: P9): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<P>): Promise<void>;
+	sendNotification<P1>(type: NotificationType1<P1>, p1: NoInfer<P1>): Promise<void>;
+	sendNotification<P1, P2>(type: NotificationType2<P1, P2>, p1: NoInfer<P1>, p2: NoInfer<P2>): Promise<void>;
+	sendNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>): Promise<void>;
+	sendNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, p8: NoInfer<P8>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, p8: NoInfer<P8>, p9: NoInfer<P9>): Promise<void>;
 	sendNotification(method: string, r0?: ParameterStructures | any, ...rest: any[]): Promise<void>;
 
 	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
-	onNotification<P1>(type: NotificationType1<P1>, handler: NotificationHandler1<P1>): Disposable;
-	onNotification<P1, P2>(type: NotificationType2<P1, P2>, handler: NotificationHandler2<P1, P2>): Disposable;
-	onNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, handler: NotificationHandler3<P1, P2, P3>): Disposable;
-	onNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, handler: NotificationHandler4<P1, P2, P3, P4>): Disposable;
-	onNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, handler: NotificationHandler5<P1, P2, P3, P4, P5>): Disposable;
-	onNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, handler: NotificationHandler6<P1, P2, P3, P4, P5, P6>): Disposable;
-	onNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, handler: NotificationHandler7<P1, P2, P3, P4, P5, P6, P7>): Disposable;
-	onNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, handler: NotificationHandler8<P1, P2, P3, P4, P5, P6, P7, P8>): Disposable;
-	onNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, handler: NotificationHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9>): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NoInfer<NotificationHandler<P>>): Disposable;
+	onNotification<P1>(type: NotificationType1<P1>, handler: NoInfer<NotificationHandler1<P1>>): Disposable;
+	onNotification<P1, P2>(type: NotificationType2<P1, P2>, handler: NoInfer<NotificationHandler2<P1, P2>>): Disposable;
+	onNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, handler: NoInfer<NotificationHandler3<P1, P2, P3>>): Disposable;
+	onNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, handler: NoInfer<NotificationHandler4<P1, P2, P3, P4>>): Disposable;
+	onNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, handler: NoInfer<NotificationHandler5<P1, P2, P3, P4, P5>>): Disposable;
+	onNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, handler: NoInfer<NotificationHandler6<P1, P2, P3, P4, P5, P6>>): Disposable;
+	onNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, handler: NoInfer<NotificationHandler7<P1, P2, P3, P4, P5, P6, P7>>): Disposable;
+	onNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, handler: NoInfer<NotificationHandler8<P1, P2, P3, P4, P5, P6, P7, P8>>): Disposable;
+	onNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, handler: NoInfer<NotificationHandler9<P1, P2, P3, P4, P5, P6, P7, P8, P9>>): Disposable;
 	onNotification(method: string, handler: GenericNotificationHandler): Disposable;
 	onNotification(handler: StarNotificationHandler): Disposable;
 
 	onUnhandledNotification: Event<NotificationMessage>;
 
-	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
+	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NoInfer<NotificationHandler<P>>): Disposable;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<P>): Promise<void>;
 
 	onUnhandledProgress: Event<ProgressParams<any>>;
 
@@ -1466,7 +1466,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				}
 			});
 		},
-		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): Disposable => {
+		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: NoInfer<GenericRequestHandler<R, E>>): Disposable => {
 			throwIfClosedOrDisposed();
 
 			let method: string | undefined | null = null;

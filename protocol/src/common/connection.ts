@@ -34,8 +34,8 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -63,8 +63,8 @@ export interface ProtocolConnection {
 	 * @param handler The actual handler.
 	 * @returns A disposable to remove the handler.
 	 */
-	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
-	onRequest<R, E>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
+	onRequest<R, E>(type: RequestType0<R, E>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
 
 	/**
 	 * Installs a request handler.
@@ -73,8 +73,8 @@ export interface ProtocolConnection {
 	 * @param handler The actual handler.
 	 * @returns A disposable to remove the handler.
 	 */
-	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: NoInfer<RequestHandler<P, R, E>>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: NoInfer<RequestHandler<P, R, E>>): Disposable;
 
 	/**
 	 * Installs a request handler.
@@ -109,8 +109,8 @@ export interface ProtocolConnection {
 	 * @returns A promise that resolves when the notification is written to the
 	 * network layer.
 	 */
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: P): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: P): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: NoInfer<P>): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<P>): Promise<void>;
 
 	/**
 	 * Sends a notification.
@@ -148,8 +148,8 @@ export interface ProtocolConnection {
 	 * @param handler The actual handler.
 	 * @returns A disposable to remove the handler.
 	 */
-	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NoInfer<NotificationHandler<P>>): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NoInfer<NotificationHandler<P>>): Disposable;
 
 	/**
 	 * Installs a notification handler.
@@ -167,7 +167,7 @@ export interface ProtocolConnection {
 	 * @param handler the handler
 	 * @returns A disposable to remove the handler.
 	 */
-	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
+	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NoInfer<NotificationHandler<P>>): Disposable;
 
 	/**
 	 * Sends progress.
@@ -177,7 +177,7 @@ export interface ProtocolConnection {
 	 * @returns A promise that resolves when the progress is written to the
 	 * network layer.
 	 */
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<P>): Promise<void>;
 
 	/**
 	 * Enables tracing mode for the connection.

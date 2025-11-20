@@ -12,7 +12,7 @@ import { generateUuid } from './utils/uuid';
 import type { Feature, _RemoteWindow } from './server';
 
 export interface ProgressContext {
-	sendProgress<P>(type: ProgressType<P>, token: ProgressToken, value: P): void;
+	sendProgress<P>(type: ProgressType<P>, token: ProgressToken, value: NoInfer<P>): void;
 }
 
 export interface WorkDoneProgressReporter {

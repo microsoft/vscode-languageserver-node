@@ -335,23 +335,23 @@ export interface BulkRegistration {
 	 * @param type the notification type to register for.
 	 * @param registerParams special registration parameters.
 	 */
-	add<RO>(type: ProtocolNotificationType0<RO>, registerParams: RO): void;
-	add<P, RO>(type: ProtocolNotificationType<P, RO>, registerParams: RO): void;
+	add<RO>(type: ProtocolNotificationType0<RO>, registerParams: NoInfer<RO>): void;
+	add<P, RO>(type: ProtocolNotificationType<P, RO>, registerParams: NoInfer<RO>): void;
 
 	/**
 	 * Adds a single registration.
 	 * @param type the request type to register for.
 	 * @param registerParams special registration parameters.
 	 */
-	add<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, registerParams: RO): void;
-	add<P, PR, R, E, RO>(type: ProtocolRequestType<P, PR, R, E, RO>, registerParams: RO): void;
+	add<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, registerParams: NoInfer<RO>): void;
+	add<P, PR, R, E, RO>(type: ProtocolRequestType<P, PR, R, E, RO>, registerParams: NoInfer<RO>): void;
 
 	/**
 	 * Adds a single registration.
 	 * @param type the notification type to register for.
 	 * @param registerParams special registration parameters.
 	 */
-	add<RO>(type: RegistrationType<RO>, registerParams: RO): void;
+	add<RO>(type: RegistrationType<RO>, registerParams: NoInfer<RO>): void;
 }
 
 export namespace BulkRegistration {
@@ -478,8 +478,8 @@ export interface RemoteClient extends FeatureBase {
 	 * @param registerParams special registration parameters.
 	 * @return a `Disposable` to unregister the listener again.
 	 */
-	register<P, RO>(type: ProtocolNotificationType<P, RO>, registerParams?: RO): Promise<Disposable>;
-	register<RO>(type: ProtocolNotificationType0<RO>, registerParams?: RO): Promise<Disposable>;
+	register<P, RO>(type: ProtocolNotificationType<P, RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
+	register<RO>(type: ProtocolNotificationType0<RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
 
 	/**
 	 * Registers a listener for the given request.
@@ -489,8 +489,8 @@ export interface RemoteClient extends FeatureBase {
 	 * @param registerParams special registration parameters.
 	 * @return the updated unregistration.
 	 */
-	register<P, RO>(unregisteration: BulkUnregistration, type: ProtocolNotificationType<P, RO>, registerParams?: RO): Promise<Disposable>;
-	register<RO>(unregisteration: BulkUnregistration, type: ProtocolNotificationType0<RO>, registerParams?: RO): Promise<Disposable>;
+	register<P, RO>(unregisteration: BulkUnregistration, type: ProtocolNotificationType<P, RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
+	register<RO>(unregisteration: BulkUnregistration, type: ProtocolNotificationType0<RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
 
 	/**
 	 * Registers a listener for the given request.
@@ -499,8 +499,8 @@ export interface RemoteClient extends FeatureBase {
 	 * @param registerParams special registration parameters.
 	 * @return a `Disposable` to unregister the listener again.
 	 */
-	register<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
-	register<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+	register<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
+	register<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
 
 	/**
 	 * Registers a listener for the given request.
@@ -510,8 +510,8 @@ export interface RemoteClient extends FeatureBase {
 	 * @param registerParams special registration parameters.
 	 * @return the updated unregistration.
 	 */
-	register<P, R, PR, E, RO>(unregisteration: BulkUnregistration, type: ProtocolRequestType<P, R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
-	register<R, PR, E, RO>(unregisteration: BulkUnregistration, type: ProtocolRequestType0<R, PR, E, RO>, registerParams?: RO): Promise<Disposable>;
+	register<P, R, PR, E, RO>(unregisteration: BulkUnregistration, type: ProtocolRequestType<P, R, PR, E, RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
+	register<R, PR, E, RO>(unregisteration: BulkUnregistration, type: ProtocolRequestType0<R, PR, E, RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
 
 
 	/**
@@ -521,7 +521,7 @@ export interface RemoteClient extends FeatureBase {
 	 * @param registerParams special registration parameters.
 	 * @return a `Disposable` to unregister the listener again.
 	 */
-	register<RO>(type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
+	register<RO>(type: RegistrationType<RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
 
 	/**
 	 * Registers a listener for the given registration type.
@@ -531,7 +531,7 @@ export interface RemoteClient extends FeatureBase {
 	 * @param registerParams special registration parameters.
 	 * @return the updated unregistration.
 	 */
-	register<RO>(unregisteration: BulkUnregistration, type: RegistrationType<RO>, registerParams?: RO): Promise<Disposable>;
+	register<RO>(unregisteration: BulkUnregistration, type: RegistrationType<RO>, registerParams?: NoInfer<RO>): Promise<Disposable>;
 
 	/**
 	 * Registers a set of listeners.
@@ -901,10 +901,10 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param type The {@link RequestType} describing the request.
 	 * @param handler The handler to install
 	 */
-	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: RequestHandler0<R, E>): Disposable;
-	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: RequestHandler<P, R, E>): Disposable;
-	onRequest<R, PR, E, RO>(type: RequestType0<R, E>, handler: RequestHandler0<R, E>): Disposable;
-	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: RequestHandler<P, R, E>): Disposable;
+	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
+	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: NoInfer<RequestHandler<P, R, E>>): Disposable;
+	onRequest<R, PR, E, RO>(type: RequestType0<R, E>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
+	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: NoInfer<RequestHandler<P, R, E>>): Disposable;
 
 	/**
 	 * Installs a request handler for the given method.
@@ -928,9 +928,9 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param params The request's parameters.
 	 */
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
 	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: P, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Send a request to the client.
@@ -948,9 +948,9 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param handler The handler to install.
 	 */
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
-	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NotificationHandler<P>): Disposable;
+	onNotification<P, RO>(type: ProtocolNotificationType<P, RO>, handler: NoInfer<NotificationHandler<P>>): Disposable;
 	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
-	onNotification<P>(type: NotificationType<P>, handler: NotificationHandler<P>): Disposable;
+	onNotification<P>(type: NotificationType<P>, handler: NoInfer<NotificationHandler<P>>): Disposable;
 
 	/**
 	 * Installs a notification handler for the given method.
@@ -974,9 +974,9 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param params The notification's parameters.
 	 */
 	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params: P): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params: NoInfer<P>): Promise<void>;
 	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params: P): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params: NoInfer<P>): Promise<void>;
 
 	/**
 	 * Send a notification to the client.
@@ -992,7 +992,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param token the token
 	 * @param handler the handler
 	 */
-	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NotificationHandler<P>): Disposable;
+	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NoInfer<NotificationHandler<P>>): Disposable;
 
 	/**
 	 * Sends progress.
@@ -1000,7 +1000,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param token the token to use
 	 * @param value the progress value
 	 */
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: P): Promise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<P>): Promise<void>;
 
 	/**
 	 * Installs a handler for the initialize request.
