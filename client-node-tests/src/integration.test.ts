@@ -34,8 +34,9 @@ namespace SetDiagnosticsNotification {
  * Implemented in textSyncServer.ts
  */
 namespace GetNotificationsRequest {
+	export type NotificationData = { method: string; params: any };
 	export const method: 'testing/getNotifications' = 'testing/getNotifications';
-	export const type = new lsclient.RequestType0<string[], void>(method);
+	export const type = new lsclient.RequestType0<NotificationData[], void>(method);
 }
 
 async function revertAllDirty(): Promise<void> {
@@ -2267,11 +2268,16 @@ suite('delayOpenNotifications', () => {
 	const fakeDocument = {
 		uri: 'untitled:test.txt',
 		languageId: 'plaintext',
+		version: 1,
 		getText: () => '',
 	} as any as vscode.TextDocument;
 
 	function sendDidOpen(document: vscode.TextDocument) {
 		return client.getFeature(lsclient.DidOpenTextDocumentNotification.method).getProvider(document)!.send(document);
+	}
+
+	function sendDidChange(event: vscode.TextDocumentChangeEvent) {
+		return client.getFeature(lsclient.DidChangeTextDocumentNotification.method).getProvider(event.document)!.send(event);
 	}
 
 	function sendDidClose(document: vscode.TextDocument) {
@@ -2300,11 +2306,45 @@ suite('delayOpenNotifications', () => {
 		// Ensure both notifications.
 		const notifications = await client.sendRequest(GetNotificationsRequest.type);
 		assert.deepStrictEqual(
-			notifications,
+			notifications.map((n) => n.method),
 			[
 				'textDocument/didOpen',
 				'textDocument/didClose',
 			],
 		);
+	});
+
+	test.skip('didOpen contains correct version/content for create+edit operation', async () => {
+		// Fails due to
+		// https://github.com/microsoft/vscode-languageserver-node/issues/1695
+		await startClient(true);
+
+		// Simulate did open
+		await sendDidOpen(fakeDocument);
+
+		// Modify the document and trigger change.
+		(fakeDocument as any).version = 2;
+		fakeDocument.getText = () => 'NEW CONTENT';
+		await sendDidChange({
+			document: fakeDocument,
+			reason: undefined,
+			contentChanges: [{
+				range: new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
+				rangeOffset: 0,
+				rangeLength: 0,
+				text: 'NEW CONTENT',
+			}]
+		});
+
+		// Verify both notifications are as expected.
+		const notifications = await client.sendRequest(GetNotificationsRequest.type);
+		assert.equal(notifications.length, 2);
+		const [openNotification, changeNotification] = notifications;
+		assert.equal(openNotification.method, 'textDocument/didOpen');
+		assert.equal(openNotification.params.textDocument.version, 1);
+		assert.equal(openNotification.params.textDocument.text, '');
+		assert.equal(changeNotification.method, 'textDocument/didChange');
+		assert.equal(changeNotification.params.textDocument.version, 2);
+		assert.equal(changeNotification.params.textDocument.text, 'NEW CONTENT');
 	});
 });
