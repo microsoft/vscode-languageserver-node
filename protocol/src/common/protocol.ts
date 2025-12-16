@@ -4076,17 +4076,7 @@ export interface RenameClientCapabilities {
 /**
  * The parameters of a {@link RenameRequest}.
  */
-export interface RenameParams extends WorkDoneProgressParams {
-	/**
-	 * The document to rename.
-	 */
-	textDocument: TextDocumentIdentifier;
-
-	/**
-	 * The position at which this request was sent.
-	 */
-	position: Position;
-
+export interface RenameParams extends TextDocumentPositionParams, WorkDoneProgressParams {
 	/**
 	 * The new name of the symbol. If the given name is not valid the
 	 * request must return a {@link ResponseError} with an
