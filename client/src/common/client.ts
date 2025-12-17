@@ -1170,29 +1170,44 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return data.toString();
 	}
 
+	private shouldLogToOutputChannel(): boolean {
+		if (this.$state !== ClientState.Stopped) {
+			return true;
+		}
+		return this._outputChannel !== undefined;
+	}
+
 	public error(message: string, data?: any, showNotification: boolean | 'force' = true): void {
-		this.outputChannel.error(this.getLogMessage(message, data));
+		if (this.shouldLogToOutputChannel()) {
+			this.outputChannel.error(this.getLogMessage(message, data));
+		}
 		if (showNotification === 'force' || (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Error)) {
 			this.showNotificationMessage(MessageType.Error, message, data);
 		}
 	}
 
 	public warn(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.warn(this.getLogMessage(message, data));
+		if (this.shouldLogToOutputChannel()) {
+			this.outputChannel.warn(this.getLogMessage(message, data));
+		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Warn) {
 			this.showNotificationMessage(MessageType.Warning, message, data);
 		}
 	}
 
 	public info(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.info(this.getLogMessage(message, data));
+		if (this.shouldLogToOutputChannel()) {
+			this.outputChannel.info(this.getLogMessage(message, data));
+		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Info) {
 			this.showNotificationMessage(MessageType.Info, message, data);
 		}
 	}
 
 	public debug(message: string, data?: any, showNotification: boolean = true): void {
-		this.outputChannel.debug(this.getLogMessage(message, data));
+		if (this.shouldLogToOutputChannel()) {
+			this.outputChannel.debug(this.getLogMessage(message, data));
+		}
 		if (showNotification && this._clientOptions.revealOutputChannelOn <= RevealOutputChannelOn.Debug) {
 			this.showNotificationMessage(MessageType.Debug, message, data);
 		}
