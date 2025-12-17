@@ -1320,14 +1320,14 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onDocumentColor(handler: ServerRequestHandler<DocumentColorParams, ColorInformation[], ColorInformation[], void>): Disposable;
+	onDocumentColor(handler: ServerRequestHandler<DocumentColorParams, ColorInformation[] | undefined | null, ColorInformation[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the document color request.
 	 *
 	 * @param handler The corresponding handler.
 	 */
-	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void>): Disposable;
+	onColorPresentation(handler: ServerRequestHandler<ColorPresentationParams, ColorPresentation[] | undefined | null, ColorPresentation[], void>): Disposable;
 
 	/**
 	 * Installs a handler for the folding ranges request.
