@@ -210,14 +210,14 @@ abstract class NotificationFileOperationFeature<I, E extends { readonly files: R
 
 	private _notificationType: proto.ProtocolNotificationType<P, proto.FileOperationRegistrationOptions>;
 	private _accessUri: (i: I) => code.Uri;
-	private _createParams: (e: E) => P;
+	private _createParams: (e: E) => proto.RequestParam<P>;
 
 	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>, event: code.Event<E>,
 		notificationType: proto.ProtocolNotificationType<P, proto.FileOperationRegistrationOptions>,
 		clientCapability: keyof proto.FileOperationClientCapabilities,
 		serverCapability: keyof proto.FileOperationOptions,
 		accessUri: (i: I) => code.Uri,
-		createParams: (e: E) => P)
+		createParams: (e: E) => proto.RequestParam<P>)
 	{
 		super(client, event, notificationType, clientCapability, serverCapability);
 		this._notificationType = notificationType;
@@ -374,14 +374,14 @@ abstract class RequestFileOperationFeature<I, E extends RequestEvent<I>, P> exte
 
 	private _requestType: proto.ProtocolRequestType<P, proto.WorkspaceEdit | null, never, void, proto.FileOperationRegistrationOptions>;
 	private _accessUri: (i: I) => code.Uri;
-	private _createParams: (e: Event<I>) => P;
+	private _createParams: (e: Event<I>) => proto.RequestParam<P>;
 
 	constructor(client: FeatureClient<FileOperationsWorkspaceMiddleware>, event: code.Event<E>,
 		requestType: proto.ProtocolRequestType<P, proto.WorkspaceEdit | null, never, void, proto.FileOperationRegistrationOptions>,
 		clientCapability: keyof proto.FileOperationClientCapabilities,
 		serverCapability: keyof proto.FileOperationOptions,
 		accessUri: (i: I) => code.Uri,
-		createParams: (e: Event<I>) => P)
+		createParams: (e: Event<I>) => proto.RequestParam<P>)
 	{
 		super(client, event, requestType, clientCapability, serverCapability);
 		this._requestType = requestType;

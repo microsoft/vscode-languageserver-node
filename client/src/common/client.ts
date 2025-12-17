@@ -35,7 +35,7 @@ import {
 	TypeHierarchyPrepareRequest, InlineValueRequest, InlayHintRequest, WorkspaceSymbolRequest, TextDocumentRegistrationOptions, FileOperationRegistrationOptions,
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
-	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, HandlerResult,
+	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, RequestParam, HandlerResult,
 	type DidCloseTextDocumentParams, type TextDocumentContentRequest
 } from 'vscode-languageserver-protocol';
 
@@ -875,9 +875,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
-	public sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	public sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
 	public sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	public sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	public async sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
@@ -981,9 +981,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
-	public sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: NoInfer<P>): Promise<void>;
+	public sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: NoInfer<RequestParam<P>>): Promise<void>;
 	public sendNotification(type: NotificationType0): Promise<void>;
-	public sendNotification<P>(type: NotificationType<P>, params?: NoInfer<P>): Promise<void>;
+	public sendNotification<P>(type: NotificationType<P>, params?: NoInfer<RequestParam<P>>): Promise<void>;
 	public sendNotification(method: string): Promise<void>;
 	public sendNotification(method: string, params: any): Promise<void>;
 	public async sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
@@ -1079,7 +1079,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 	}
 
-	public async sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<P>): Promise<void> {
+	public async sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<RequestParam<P>>): Promise<void> {
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
@@ -2362,9 +2362,9 @@ interface Connection {
 	listen(): void;
 
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
 	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R>;
 
 	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
@@ -2376,9 +2376,9 @@ interface Connection {
 	hasPendingResponse(): boolean;
 
 	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: NoInfer<P>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: NoInfer<RequestParam<P>>): Promise<void>;
 	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<P>): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<RequestParam<P>>): Promise<void>;
 	sendNotification(method: string | MessageSignature, params?: any): Promise<void>;
 
 	onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
@@ -2388,7 +2388,7 @@ interface Connection {
 	onNotification(method: string | MessageSignature, handler: GenericNotificationHandler): Disposable;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NoInfer<NotificationHandler<P>>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<P>): Promise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<RequestParam<P>>): Promise<void>;
 
 	trace(value: Trace, tracer: Tracer, sendNotification?: boolean): Promise<void>;
 	trace(value: Trace, tracer: Tracer, traceOptions?: TraceOptions): Promise<void>;

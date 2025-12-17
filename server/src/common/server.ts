@@ -5,7 +5,7 @@
 /// <reference path="../../typings/thenable.d.ts" preserve: true/>
 
 import {
-	CancellationToken, ProtocolRequestType0, RequestHandler0, ProtocolRequestType, RequestHandler, GenericRequestHandler, StarRequestHandler, HandlerResult,
+	CancellationToken, ProtocolRequestType0, RequestHandler0, ProtocolRequestType, RequestHandler, GenericRequestHandler, StarRequestHandler, RequestParam, HandlerResult,
 	ProtocolNotificationType0, NotificationHandler0, ProtocolNotificationType, NotificationHandler, GenericNotificationHandler, StarNotificationHandler, ProgressType,
 	Disposable, InitializeParams, InitializeResult, InitializeError, InitializedParams, DidChangeConfigurationParams, DidChangeWatchedFilesParams,
 	DidOpenTextDocumentParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, WillSaveTextDocumentParams, TextEdit, DidSaveTextDocumentParams,
@@ -928,9 +928,9 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param params The request's parameters.
 	 */
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
 	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Send a request to the client.
@@ -974,9 +974,9 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param params The notification's parameters.
 	 */
 	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params: NoInfer<P>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params: NoInfer<RequestParam<P>>): Promise<void>;
 	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params: NoInfer<P>): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params: NoInfer<RequestParam<P>>): Promise<void>;
 
 	/**
 	 * Send a notification to the client.
@@ -1000,7 +1000,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 * @param token the token to use
 	 * @param value the progress value
 	 */
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<P>): Promise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<RequestParam<P>>): Promise<void>;
 
 	/**
 	 * Installs a handler for the initialize request.

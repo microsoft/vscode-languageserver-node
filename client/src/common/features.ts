@@ -21,7 +21,7 @@ import {
 	FoldingRangeRequest, GenericNotificationHandler, GenericRequestHandler, HoverRequest, ImplementationRequest, InitializeParams, InlayHintRequest, InlineCompletionRegistrationOptions, InlineCompletionRequest, InlineValueRequest,
 	LinkedEditingRangeRequest, MessageSignature, NotebookDocumentSyncRegistrationOptions, NotebookDocumentSyncRegistrationType, NotificationHandler, NotificationHandler0,
 	NotificationType, NotificationType0, ProgressType,  ProtocolNotificationType, ProtocolNotificationType0, ProtocolRequestType, ProtocolRequestType0, ReferencesRequest,
-	RegistrationType, RenameRequest, RequestHandler, RequestHandler0, RequestType, RequestType0, SelectionRangeRequest, SemanticTokensRegistrationType, ServerCapabilities,
+	RegistrationType, RenameRequest, RequestHandler, RequestHandler0, RequestParam, RequestType, RequestType0, SelectionRangeRequest, SemanticTokensRegistrationType, ServerCapabilities,
 	SignatureHelpRequest, StaticRegistrationOptions, TextDocumentIdentifier, TextDocumentRegistrationOptions, TypeDefinitionRequest, TypeHierarchyPrepareRequest, WillCreateFilesRequest,
 	WillDeleteFilesRequest, WillRenameFilesRequest, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WorkDoneProgressOptions, WorkspaceSymbolRequest
 } from 'vscode-languageserver-protocol';
@@ -256,13 +256,13 @@ export namespace DynamicFeature {
 }
 
 interface CreateParamsSignature<E, P> {
-	(data: E): P;
+	(data: E): RequestParam<P>;
 }
 
 export interface NotificationSendEvent<P extends { textDocument: TextDocumentIdentifier }> {
 	textDocument: TextDocument;
 	type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
-	params: P;
+	params: RequestParam<P>;
 }
 
 export interface NotifyingFeature<P extends { textDocument: TextDocumentIdentifier }> {
@@ -412,7 +412,7 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 		return this._onNotificationSent.event;
 	}
 
-	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, params: P): void {
+	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, params: RequestParam<P>): void {
 		this._onNotificationSent.fire({ textDocument, type, params });
 	}
 
@@ -678,9 +678,9 @@ export interface FeatureClient<M, CO = object> {
 	stop(): Promise<void>;
 
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
 	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 
@@ -691,9 +691,9 @@ export interface FeatureClient<M, CO = object> {
 	onRequest<R, E>(method: string, handler: GenericRequestHandler<R, E>): Disposable;
 
 	sendNotification<RO>(type: ProtocolNotificationType0<RO>): Promise<void>;
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: NoInfer<P>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: NoInfer<RequestParam<P>>): Promise<void>;
 	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<P>): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<RequestParam<P>>): Promise<void>;
 	sendNotification(method: string): Promise<void>;
 	sendNotification(method: string, params: any): Promise<void>;
 

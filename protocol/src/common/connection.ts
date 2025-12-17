@@ -7,7 +7,7 @@ import {
 	Message, NotificationMessage, CancellationToken, RequestHandler0, RequestHandler, GenericRequestHandler,
 	NotificationHandler0, NotificationHandler, GenericNotificationHandler, ProgressType, Trace, Tracer, TraceOptions,
 	Disposable, Event, MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, createMessageConnection,
-	RequestType0, RequestType, NotificationType0, NotificationType
+	RequestType0, RequestType, NotificationType0, NotificationType, RequestParam
 } from 'vscode-jsonrpc';
 
 import {
@@ -34,8 +34,8 @@ export interface ProtocolConnection {
 	 * @param token An optional cancellation token.
 	 * @returns A promise resolving to the request's result.
 	 */
-	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
 
 	/**
 	 * Sends a request and returns a promise resolving to the result of the request.
@@ -109,8 +109,8 @@ export interface ProtocolConnection {
 	 * @returns A promise that resolves when the notification is written to the
 	 * network layer.
 	 */
-	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: NoInfer<P>): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<P>): Promise<void>;
+	sendNotification<P, RO>(type: ProtocolNotificationType<P, RO>, params?: NoInfer<RequestParam<P>>): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<RequestParam<P>>): Promise<void>;
 
 	/**
 	 * Sends a notification.
@@ -177,7 +177,7 @@ export interface ProtocolConnection {
 	 * @returns A promise that resolves when the progress is written to the
 	 * network layer.
 	 */
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<P>): Promise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<RequestParam<P>>): Promise<void>;
 
 	/**
 	 * Enables tracing mode for the connection.

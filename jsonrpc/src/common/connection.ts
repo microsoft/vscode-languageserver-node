@@ -67,6 +67,8 @@ export class ProgressType<PR> {
 	}
 }
 
+export type RequestParam<P> = P extends null ? P | undefined : P;
+
 export type HandlerResult<R, E, _R = R extends null ? (R | undefined | void) : R> = _R | ResponseError<E> | Thenable<_R> | Thenable<ResponseError<E>> | Thenable<_R | ResponseError<E>>;
 
 export interface StarRequestHandler {
@@ -503,16 +505,16 @@ export namespace ConnectionOptions {
 
 export interface MessageConnection {
 	sendRequest<R, E>(type: RequestType0<R, E>, token?: CancellationToken): Promise<R>;
-	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<P>, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, R, E>(type: RequestType1<P1, R, E>, p1: NoInfer<P1>, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, R, E>(type: RequestType2<P1, P2, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, R, E>(type: RequestType3<P1, P2, P3, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, R, E>(type: RequestType4<P1, P2, P3, P4, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, R, E>(type: RequestType5<P1, P2, P3, P4, P5, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, R, E>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, R, E>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, p8: NoInfer<P8>, token?: CancellationToken): Promise<R>;
-	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, p8: NoInfer<P8>, p9: NoInfer<P9>, token?: CancellationToken): Promise<R>;
+	sendRequest<P, R, E>(type: RequestType<P, R, E>, params: NoInfer<RequestParam<P>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, R, E>(type: RequestType1<P1, R, E>, p1: NoInfer<RequestParam<P1>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, R, E>(type: RequestType2<P1, P2, R, E>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, R, E>(type: RequestType3<P1, P2, P3, R, E>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, R, E>(type: RequestType4<P1, P2, P3, P4, R, E>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, R, E>(type: RequestType5<P1, P2, P3, P4, P5, R, E>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, R, E>(type: RequestType6<P1, P2, P3, P4, P5, P6, R, E>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>, p6: NoInfer<RequestParam<P6>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, R, E>(type: RequestType7<P1, P2, P3, P4, P5, P6, P7, R, E>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>, p6: NoInfer<RequestParam<P6>>, p7: NoInfer<RequestParam<P7>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, R, E>(type: RequestType8<P1, P2, P3, P4, P5, P6, P7, P8, R, E>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>, p6: NoInfer<RequestParam<P6>>, p7: NoInfer<RequestParam<P7>>, p8: NoInfer<RequestParam<P8>>, token?: CancellationToken): Promise<R>;
+	sendRequest<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>(type: RequestType9<P1, P2, P3, P4, P5, P6, P7, P8, P9, R, E>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>, p6: NoInfer<RequestParam<P6>>, p7: NoInfer<RequestParam<P7>>, p8: NoInfer<RequestParam<P8>>, p9: NoInfer<RequestParam<P9>>, token?: CancellationToken): Promise<R>;
 	sendRequest<R>(method: string, r0?: ParameterStructures | any, ...rest: any[]): Promise<R>;
 
 	onRequest<R, E>(type: RequestType0<R, E>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
@@ -532,16 +534,16 @@ export interface MessageConnection {
 	hasPendingResponse(): boolean;
 
 	sendNotification(type: NotificationType0): Promise<void>;
-	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<P>): Promise<void>;
-	sendNotification<P1>(type: NotificationType1<P1>, p1: NoInfer<P1>): Promise<void>;
-	sendNotification<P1, P2>(type: NotificationType2<P1, P2>, p1: NoInfer<P1>, p2: NoInfer<P2>): Promise<void>;
-	sendNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>): Promise<void>;
-	sendNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, p8: NoInfer<P8>): Promise<void>;
-	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, p1: NoInfer<P1>, p2: NoInfer<P2>, p3: NoInfer<P3>, p4: NoInfer<P4>, p5: NoInfer<P5>, p6: NoInfer<P6>, p7: NoInfer<P7>, p8: NoInfer<P8>, p9: NoInfer<P9>): Promise<void>;
+	sendNotification<P>(type: NotificationType<P>, params?: NoInfer<RequestParam<P>>): Promise<void>;
+	sendNotification<P1>(type: NotificationType1<P1>, p1: NoInfer<RequestParam<P1>>): Promise<void>;
+	sendNotification<P1, P2>(type: NotificationType2<P1, P2>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>): Promise<void>;
+	sendNotification<P1, P2, P3>(type: NotificationType3<P1, P2, P3>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>): Promise<void>;
+	sendNotification<P1, P2, P3, P4>(type: NotificationType4<P1, P2, P3, P4>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5>(type: NotificationType5<P1, P2, P3, P4, P5>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6>(type: NotificationType6<P1, P2, P3, P4, P5, P6>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>, p6: NoInfer<RequestParam<P6>>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7>(type: NotificationType7<P1, P2, P3, P4, P5, P6, P7>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>, p6: NoInfer<RequestParam<P6>>, p7: NoInfer<RequestParam<P7>>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8>(type: NotificationType8<P1, P2, P3, P4, P5, P6, P7, P8>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>, p6: NoInfer<RequestParam<P6>>, p7: NoInfer<RequestParam<P7>>, p8: NoInfer<RequestParam<P8>>): Promise<void>;
+	sendNotification<P1, P2, P3, P4, P5, P6, P7, P8, P9>(type: NotificationType9<P1, P2, P3, P4, P5, P6, P7, P8, P9>, p1: NoInfer<RequestParam<P1>>, p2: NoInfer<RequestParam<P2>>, p3: NoInfer<RequestParam<P3>>, p4: NoInfer<RequestParam<P4>>, p5: NoInfer<RequestParam<P5>>, p6: NoInfer<RequestParam<P6>>, p7: NoInfer<RequestParam<P7>>, p8: NoInfer<RequestParam<P8>>, p9: NoInfer<RequestParam<P9>>): Promise<void>;
 	sendNotification(method: string, r0?: ParameterStructures | any, ...rest: any[]): Promise<void>;
 
 	onNotification(type: NotificationType0, handler: NotificationHandler0): Disposable;
@@ -561,7 +563,7 @@ export interface MessageConnection {
 	onUnhandledNotification: Event<NotificationMessage>;
 
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NoInfer<NotificationHandler<P>>): Disposable;
-	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<P>): Promise<void>;
+	sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<RequestParam<P>>): Promise<void>;
 
 	onUnhandledProgress: Event<ProgressParams<any>>;
 
@@ -1349,7 +1351,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				}
 			};
 		},
-		sendProgress: <P>(_type: ProgressType<P>, token: string | number, value: P): Promise<void> => {
+		sendProgress: <P>(_type: ProgressType<P>, token: string | number, value: RequestParam<P>): Promise<void> => {
 			// This should not await but simple return to ensure that we don't have another
 			// async scheduling. Otherwise one send could overtake another send.
 			return connection.sendNotification(ProgressNotification.type, { token, value });
