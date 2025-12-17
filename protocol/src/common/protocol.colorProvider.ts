@@ -49,8 +49,8 @@ export interface DocumentColorParams extends WorkDoneProgressParams, PartialResu
 export namespace DocumentColorRequest {
 	export const method: 'textDocument/documentColor' = 'textDocument/documentColor';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
-	export const type = new ProtocolRequestType<DocumentColorParams, ColorInformation[], ColorInformation[], void, DocumentColorRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[], void>;
+	export const type = new ProtocolRequestType<DocumentColorParams, ColorInformation[] | null, ColorInformation[], void, DocumentColorRegistrationOptions>(method);
+	export type HandlerSignature = RequestHandler<DocumentColorParams, ColorInformation[] | null, void>;
 	export const capabilities = CM.create('textDocument.colorProvider', 'colorProvider');
 }
 
@@ -83,7 +83,7 @@ export interface ColorPresentationParams extends WorkDoneProgressParams, Partial
 export namespace ColorPresentationRequest {
 	export const method: 'textDocument/colorPresentation' = 'textDocument/colorPresentation';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
-	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>(method);
-	export type HandlerSignature = RequestHandler<ColorPresentationParams, ColorPresentation[], void>;
+	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[] | null, ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>(method);
+	export type HandlerSignature = RequestHandler<ColorPresentationParams, ColorPresentation[] | null, void>;
 	export const capabilities = CM.create('textDocument.colorProvider', 'colorProvider');
 }

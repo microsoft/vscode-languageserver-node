@@ -344,7 +344,7 @@ connection.workspace.onDidRenameFiles((params) => { lastFileOperationRequest = {
 connection.workspace.onDidDeleteFiles((params) => { lastFileOperationRequest = { type: 'delete', params }; });
 
 connection.onRequest(
-	new ProtocolRequestType<null, null, never, any, any>('testing/lastFileOperationRequest'),
+	new ProtocolRequestType<null, unknown, never, any, any>('testing/lastFileOperationRequest'),
 	() => {
 		return lastFileOperationRequest;
 	},

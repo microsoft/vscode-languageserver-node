@@ -27,7 +27,7 @@ export const TextDocumentContentFeature: Feature<_RemoteWorkspace, TextDocumentC
 				refresh: (uri: DocumentUri): Promise<void> => {
 					return this.connection.sendRequest(TextDocumentContentRefreshRequest.type, { uri });
 				},
-				on: (handler: RequestHandler<TextDocumentContentParams, TextDocumentContentResult | null, void>): Disposable => {
+				on: (handler: RequestHandler<TextDocumentContentParams, TextDocumentContentResult, void>): Disposable => {
 					return this.connection.onRequest(TextDocumentContentRequest.type, (params, cancel) => {
 						return handler(params, cancel);
 					});
