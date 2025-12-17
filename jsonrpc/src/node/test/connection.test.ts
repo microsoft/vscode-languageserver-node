@@ -213,7 +213,7 @@ suite('Connection', () => {
 	});
 
 	test('Receives undefined param as null', (done) => {
-		const type = new RequestType<string, string, void>('test/handleSingleRequest');
+		const type = new RequestType<string | null, string, void>('test/handleSingleRequest');
 		const duplexStream1 = new TestDuplex('ds1');
 		const duplexStream2 = new TestDuplex('ds2');
 
