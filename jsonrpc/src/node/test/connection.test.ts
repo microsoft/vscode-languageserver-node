@@ -678,11 +678,11 @@ suite('Connection', () => {
 	});
 
 	test('Uses custom message handler', (done) => {
-		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+		const type = new RequestType<number, number | null, void>('test/handleSingleRequest');
 		const duplexStream1 = new TestDuplex('ds1');
 		const duplexStream2 = new TestDuplex('ds2');
 
-		const asyncLocalStorage = new AsyncLocalStorage();
+		const asyncLocalStorage = new AsyncLocalStorage<number>();
 
 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
 			messageStrategy: {
