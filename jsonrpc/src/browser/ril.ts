@@ -130,6 +130,39 @@ interface RIL extends RAL {
 	};
 }
 
+export class QueueMicrotaskImpl implements Disposable {
+	private isDisposed: boolean;
+	constructor(callback: (...args: any[]) => void, ...args: any[]) {
+		this.isDisposed = false;
+		queueMicrotask(() => {
+			if (!this.isDisposed) {
+				callback(...args);
+			}
+		});
+	}
+
+	dispose(): void {
+		this.isDisposed = true;
+	}
+}
+
+export class PromiseImpl implements Disposable {
+	private isDisposed: boolean;
+	constructor(callback: (...args: any[]) => void, ...args: any[]) {
+		this.isDisposed = false;
+		Promise.resolve().then(() => {
+			if (!this.isDisposed) {
+				callback(...args);
+			}
+		}, () => {
+		});
+	}
+
+	dispose(): void {
+		this.isDisposed = true;
+	}
+}
+
 const _textEncoder = new TextEncoder();
 const _ril: RIL = Object.freeze<RIL>({
 	messageBuffer: Object.freeze({
@@ -166,8 +199,16 @@ const _ril: RIL = Object.freeze<RIL>({
 			return { dispose: () => clearTimeout(handle) };
 		},
 		setImmediate(callback: (...args: any[]) => void, ...args: any[]): Disposable {
-			const handle = setTimeout(callback, 0, ...args);
-			return { dispose: () => clearTimeout(handle) };
+			// Browser don't have setImmediate and setTimeout with 0 delay of 0 can cause problems
+			// in webviews and similar environments due to throttling.
+			if (typeof globalThis.queueMicrotask === 'function') {
+				return new QueueMicrotaskImpl(callback, ...args);
+			} else if (Promise !== undefined) {
+				return new PromiseImpl(callback, ...args);
+			} else {
+				const handle = setTimeout(callback, 0, ...args);
+				return { dispose: () => clearTimeout(handle) };
+			}
 		},
 		setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): Disposable {
 			const handle =  setInterval(callback, ms, ...args);

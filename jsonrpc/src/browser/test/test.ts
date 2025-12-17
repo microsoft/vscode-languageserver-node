@@ -8,7 +8,7 @@ import * as assert from 'assert';
 import { CancellationTokenSource, RequestMessage, RequestType0, ResponseMessage } from '../../common/api';
 import { SharedArrayReceiverStrategy, SharedArraySenderStrategy } from '../../common/sharedArrayCancellation';
 import { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from '../main';
-import RIL from '../ril';
+import RIL, { QueueMicrotaskImpl, PromiseImpl } from '../ril';
 
 function assertDefined<T>(value: T | undefined | null): asserts value is T {
 	assert.ok(value !== undefined && value !== null);
@@ -105,5 +105,62 @@ suite('Browser IPC Reader / Writer', () => {
 		tokenSource.cancel();
 		const result = await promise;
 		assert.ok(result, 'Cancellation failed');
+	});
+
+	test('QueueMicrotaskImpl', async() => {
+		let called = false;
+		new QueueMicrotaskImpl(() => {
+			called = true;
+		});
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		assert.strictEqual(called, true, 'QueueMicrotaskImpl callback not called');
+	});
+
+	test('QueueMicrotaskImpl dispose', async() => {
+		let called = false;
+		const queueMicrotask = new QueueMicrotaskImpl(() => {
+			called = true;
+		});
+		queueMicrotask.dispose();
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		assert.strictEqual(called, false, 'QueueMicrotaskImpl callback called after dispose');
+	});
+
+	test('PromiseImpl', async() => {
+		let called = false;
+		new PromiseImpl(() => {
+			called = true;
+		});
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		assert.strictEqual(called, true, 'PromiseImpl callback not called');
+	});
+
+	test('PromiseImpl dispose', async() => {
+		let called = false;
+		const promiseImpl = new PromiseImpl(() => {
+			called = true;
+		});
+		promiseImpl.dispose();
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		assert.strictEqual(called, false, 'PromiseImpl callback called after dispose');
+	});
+
+	test('setImmediate', async() => {
+		let called = false;
+		RIL().timer.setImmediate(() => {
+			called = true;
+		});
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		assert.strictEqual(called, true, 'setImmediate callback not called');
+	});
+
+	test('setImmediate dispose', async() => {
+		let called = false;
+		const disposable = RIL().timer.setImmediate(() => {
+			called = true;
+		});
+		disposable.dispose();
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		assert.strictEqual(called, false, 'setImmediate callback called after dispose');
 	});
 });
