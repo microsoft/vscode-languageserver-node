@@ -67,7 +67,7 @@ export class ProgressType<PR> {
 	}
 }
 
-export type HandlerResult<R, E, _R = R extends null ? (R | undefined) : R> = _R | ResponseError<E> | Thenable<_R> | Thenable<ResponseError<E>> | Thenable<_R | ResponseError<E>>;
+export type HandlerResult<R, E, _R = R extends null ? (R | undefined | void) : R> = _R | ResponseError<E> | Thenable<_R> | Thenable<ResponseError<E>> | Thenable<_R | ResponseError<E>>;
 
 export interface StarRequestHandler {
 	(method: string, params: any[] | object | undefined, token: CancellationToken): HandlerResult<any, any>;
