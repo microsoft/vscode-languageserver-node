@@ -20,7 +20,7 @@ import { generateUuid } from './utils/uuid';
 import { matchGlobPattern } from './utils/globPattern';
 
 import {
-	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError, type TabsModel
+	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError, type VisibleDocuments
 } from './features';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -285,7 +285,7 @@ class DiagnosticRequestor implements Disposable {
 
 	private isDisposed: boolean;
 	private readonly client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>;
-	private readonly tabs: TabsModel;
+	private readonly visibleDocuments: VisibleDocuments;
 	private readonly options: DiagnosticRegistrationOptions;
 
 	public readonly onDidChangeDiagnosticsEmitter: EventEmitter<void>;
@@ -298,9 +298,9 @@ class DiagnosticRequestor implements Disposable {
 	private workspaceCancellation: CancellationTokenSource | undefined;
 	private workspaceTimeout: Disposable | undefined;
 
-	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: TabsModel, options: DiagnosticRegistrationOptions) {
+	public constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, visibleDocuments: VisibleDocuments, options: DiagnosticRegistrationOptions) {
 		this.client = client;
-		this.tabs = tabs;
+		this.visibleDocuments = visibleDocuments;
 		this.options = options;
 
 		this.isDisposed = false;
@@ -373,7 +373,7 @@ class DiagnosticRequestor implements Disposable {
 				return;
 			}
 			this.openRequests.delete(key);
-			if (!this.tabs.isVisible(document)) {
+			if (!this.visibleDocuments.isVisible(document)) {
 				this.documentStates.unTrack(PullState.document, document);
 				return;
 			}
@@ -767,7 +767,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 	private activeTextDocument: TextDocument | undefined;
 	private readonly backgroundScheduler: BackgroundScheduler;
 
-	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, tabs: TabsModel, options: DiagnosticRegistrationOptions) {
+	constructor(client: FeatureClient<DiagnosticProviderMiddleware, $DiagnosticPullOptions>, visibleDocuments: VisibleDocuments, options: DiagnosticRegistrationOptions) {
 		const diagnosticPullOptions = Object.assign({ onChange: false, onSave: false, onFocus: false }, client.clientOptions.diagnosticPullOptions);
 		const documentSelector = client.protocol2CodeConverter.asDocumentSelector(options.documentSelector!);
 		const disposables: Disposable[] = [];
@@ -810,12 +810,12 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		const matches = (document: TextDocument | Uri): boolean => {
 			return document instanceof Uri
 				? matchResource(document)
-				: Languages.match(documentSelector, document) > 0 && tabs.isVisible(document);
+				: Languages.match(documentSelector, document) > 0 && visibleDocuments.isVisible(document);
 		};
 
 		const matchesCell = (cell: NotebookCell): boolean => {
 			// Cells match if the language is allowed and if the containing notebook is visible.
-			return Languages.match(documentSelector, cell.document) > 0 && tabs.isVisible(cell.notebook.uri);
+			return Languages.match(documentSelector, cell.document) > 0 && visibleDocuments.isVisible(cell.notebook.uri);
 		};
 
 		const isActiveDocument = (document: TextDocument | Uri): boolean => {
@@ -824,7 +824,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				: this.activeTextDocument === document;
 		};
 
-		this.diagnosticRequestor = new DiagnosticRequestor(client, tabs, options);
+		this.diagnosticRequestor = new DiagnosticRequestor(client, visibleDocuments, options);
 		this.backgroundScheduler = new BackgroundScheduler(client, this.diagnosticRequestor);
 
 		const addToBackgroundIfNeeded = (document: TextDocument | Uri): void => {
@@ -882,7 +882,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}
 		}));
 
-		disposables.push(tabs.onOpen((opened) => {
+		disposables.push(visibleDocuments.onOpen((opened) => {
 			for (const resource of opened) {
 				// We already know about this document. This can happen via a document open.
 				if (this.diagnosticRequestor.knows(PullState.document, resource)) {
@@ -902,7 +902,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				//    workspace.textDocuments and Window.activeTextEditor are updated.
 				//
 				// This means: for newly created tab/editors we don't find the underlying
-				// document yet. So we do nothing an rely on the underlying open document event
+				// document yet. So we do nothing and rely on the underlying open document event
 				// to be fired.
 				if (textDocument !== undefined && matches(textDocument)) {
 					this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument!); });
@@ -928,9 +928,9 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}
 		}
 
-		// Pull all tabs if not already pulled as text document
+		// Pull all visible documents if not already pulled as text document
 		if (diagnosticPullOptions.onTabs === true) {
-			for (const resource of tabs.getTabResources()) {
+			for (const resource of visibleDocuments.getResources()) {
 				if (!pulledTextDocuments.has(resource.toString()) && matches(resource)) {
 					this.diagnosticRequestor.pull(resource, () => { addToBackgroundIfNeeded(resource); });
 				}
@@ -1004,8 +1004,8 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}
 		}));
 
-		// Same when a tabs closes.
-		tabs.onClose((closed) => {
+		// Same when a visible document closes.
+		visibleDocuments.onClose((closed) => {
 			for (const document of closed) {
 				this.cleanUpDocument(document);
 			}
@@ -1099,7 +1099,7 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 	}
 
 	protected registerLanguageProvider(options: DiagnosticRegistrationOptions): [Disposable, DiagnosticProviderShape] {
-		const provider = new DiagnosticFeatureProviderImpl(this._client, this._client.tabsModel, options);
+		const provider = new DiagnosticFeatureProviderImpl(this._client, this._client.visibleDocuments, options);
 		return [provider.disposable, provider];
 	}
 }

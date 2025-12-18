@@ -11,7 +11,8 @@ import {
 	OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DeclarationProvider, ImplementationProvider,
 	DocumentColorProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider, LinkedEditingRangeProvider, TypeHierarchyProvider, WorkspaceSymbolProvider,
 	ProviderResult, TextEdit as VTextEdit, InlineCompletionItemProvider, EventEmitter, type TabChangeEvent, TabInputText, TabInputTextDiff, TabInputCustom,
-	TabInputNotebook, type LogOutputChannel} from 'vscode';
+	TabInputNotebook, type LogOutputChannel, type TextEditor
+} from 'vscode';
 
 import {
 	RAL, Message, MessageSignature, Logger, ResponseError, RequestType0, RequestType, NotificationType0, NotificationType,
@@ -48,8 +49,7 @@ import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
-	TextDocumentProviderFeature, WorkspaceProviderFeature,
-	type TabsModel
+	TextDocumentProviderFeature, WorkspaceProviderFeature, type VisibleDocuments
 } from './features';
 
 import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions, DiagnosticFeatureShape } from './diagnostic';
@@ -498,25 +498,23 @@ export enum ShutdownMode {
  * diagnostics we need to de-dupe tabs that show the same resources since
  * we pull on the model not the UI.
  */
-class Tabs implements TabsModel {
+class VisibleDocumentsImpl implements VisibleDocuments {
 
 	private open: Set<string>;
 	private readonly _onOpen: EventEmitter<Set<Uri>>;
 	private readonly _onClose: EventEmitter<Set<Uri>>;
-	private readonly disposable: Disposable;
+	private readonly disposables: Disposable[];
 
 	constructor() {
+		this.disposables = [];
 		this.open = new Set();
 		this._onOpen = new EventEmitter();
 		this._onClose = new EventEmitter();
-		Tabs.fillTabResources(this.open);
-		const openTabsHandler = (event: TabChangeEvent) => {
-			if (event.closed.length === 0 && event.opened.length === 0) {
-				return;
-			}
+		VisibleDocumentsImpl.fillVisibleResources(this.open);
+		const updateVisibleDocuments = () => {
 			const oldTabs = this.open;
 			const currentTabs: Set<string> = new Set();
-			Tabs.fillTabResources(currentTabs);
+			VisibleDocumentsImpl.fillVisibleResources(currentTabs);
 
 			const closed: Set<string> = new Set();
 			const opened: Set<string> = new Set(currentTabs);
@@ -544,11 +542,16 @@ class Tabs implements TabsModel {
 			}
 		};
 
-		if (Window.tabGroups.onDidChangeTabs !== undefined) {
-			this.disposable = Window.tabGroups.onDidChangeTabs(openTabsHandler);
-		} else {
-			this.disposable = { dispose: () => {} };
-		}
+		this.disposables.push(Window.tabGroups.onDidChangeTabs((event: TabChangeEvent) => {
+			if (event.closed.length === 0 && event.opened.length === 0) {
+				return;
+			}
+			updateVisibleDocuments();
+		}));
+
+		this.disposables.push(Window.onDidChangeVisibleTextEditors((_editors: readonly TextEditor[]) => {
+			updateVisibleDocuments();
+		}));
 	}
 
 	public get onClose(): Event<Set<Uri>> {
@@ -560,7 +563,7 @@ class Tabs implements TabsModel {
 	}
 
 	public dispose(): void {
-		this.disposable.dispose();
+		this.disposables.forEach(disposable => disposable.dispose());
 	}
 
 	public isActive(document: TextDocument | Uri): boolean {
@@ -584,13 +587,13 @@ class Tabs implements TabsModel {
 		return this.open.has(uri.toString());
 	}
 
-	public getTabResources(): Set<Uri> {
+	public getResources(): Set<Uri> {
 		const result: Set<Uri> = new Set();
-		Tabs.fillTabResources(new Set(), result);
+		VisibleDocumentsImpl.fillVisibleResources(new Set(), result);
 		return result;
 	}
 
-	private static fillTabResources(strings: Set<string> | undefined, uris?: Set<Uri>): void {
+	private static fillVisibleResources(strings: Set<string> | undefined, uris?: Set<Uri>): void {
 		const seen = strings ?? new Set();
 		for (const group of Window.tabGroups.all) {
 			for (const tab of group.tabs) {
@@ -609,6 +612,14 @@ class Tabs implements TabsModel {
 					seen.add(uri.toString());
 					uris !== undefined && uris.add(uri);
 				}
+			}
+		}
+		// Peek editors are not part of tabs but should be considered visible
+		for (const editor of Window.visibleTextEditors) {
+			const uri = editor.document.uri;
+			if (!seen.has(uri.toString())) {
+				seen.add(uri.toString());
+				uris !== undefined && uris.add(uri);
 			}
 		}
 	}
@@ -668,7 +679,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private readonly _c2p: c2p.Converter;
 	private readonly _p2c: p2c.Converter;
-	private _tabsModel: TabsModel | undefined;
+	private _visibleDocuments: VisibleDocuments | undefined;
 
 	public constructor(id: string, name: string, clientOptions: LanguageClientOptions) {
 		this._id = id;
@@ -807,11 +818,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this._c2p;
 	}
 
-	public get tabsModel(): TabsModel {
-		if (this._tabsModel === undefined) {
-			this._tabsModel = new Tabs();
+	public get visibleDocuments(): VisibleDocuments {
+		if (this._visibleDocuments === undefined) {
+			this._visibleDocuments = new VisibleDocumentsImpl();
 		}
-		return this._tabsModel;
+		return this._visibleDocuments;
 	}
 
 	public get onTelemetry(): Event<any> {
