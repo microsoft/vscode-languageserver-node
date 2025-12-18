@@ -438,8 +438,10 @@ connection.onSignatureHelp((item): SignatureHelp => {
 });
 
 connection.onDefinition((params): DefinitionLink[] => {
+	const uri = URI.parse(params.textDocument.uri);
+	const target = path.join(path.dirname(uri.fsPath), 'peek.bat');
 	return [{
-		targetUri: params.textDocument.uri,
+		targetUri: URI.file(target).toString(),
 		targetRange: { start: { line: 0, character: 2}, end: {line: 5, character: 45 } },
 		targetSelectionRange: { start: { line: 1, character: 5}, end: {line: 1, character: 10 } },
 		originSelectionRange: {
@@ -450,8 +452,10 @@ connection.onDefinition((params): DefinitionLink[] => {
 });
 
 connection.onDeclaration((params): DeclarationLink[] => {
+	const uri = URI.parse(params.textDocument.uri);
+	const target = path.join(path.dirname(uri.fsPath), 'peek.bat');
 	return [{
-		targetUri: params.textDocument.uri,
+		targetUri: URI.file(target).toString(),
 		targetRange: { start: { line: 3, character: 0}, end: {line: 3, character: 10 } },
 		targetSelectionRange: { start: { line: 3, character: 0}, end: {line: 3, character: 10 } },
 		originSelectionRange: {

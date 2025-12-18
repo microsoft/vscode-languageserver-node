@@ -73,8 +73,8 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			if (!this.matches(document)) {
 				return;
 			}
-			const tabsModel = this._client.tabsModel;
-			if (tabsModel.isVisible(document)) {
+			const visibleDocuments = this._client.visibleDocuments;
+			if (visibleDocuments.isVisible(document)) {
 				return super.callback(document);
 			} else {
 				this._pendingOpenNotifications.set(document.uri.toString(), document);
@@ -113,8 +113,8 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 				return;
 			}
 			if (Languages.match(documentSelector, textDocument) > 0 && !this._client.hasDedicatedTextSynchronizationFeature(textDocument)) {
-				const tabsModel = this._client.tabsModel;
-				if (tabsModel.isVisible(textDocument)) {
+				const visibleDocuments = this._client.visibleDocuments;
+				if (visibleDocuments.isVisible(textDocument)) {
 					const middleware = this._client.middleware;
 					const didOpen = (textDocument: TextDocument): Promise<void> => {
 						return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -130,13 +130,13 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 		});
 		if (this._delayOpen && this._pendingOpenListeners === undefined) {
 			this._pendingOpenListeners = [];
-			const tabsModel = this._client.tabsModel;
-			this._pendingOpenListeners.push(tabsModel.onClose((closed) => {
+			const visibleDocuments = this._client.visibleDocuments;
+			this._pendingOpenListeners.push(visibleDocuments.onClose((closed) => {
 				for (const uri of closed) {
 					this._pendingOpenNotifications.delete(uri.toString());
 				}
 			}));
-			this._pendingOpenListeners.push(tabsModel.onOpen((opened) => {
+			this._pendingOpenListeners.push(visibleDocuments.onOpen((opened) => {
 				for (const uri of opened) {
 					const document = this._pendingOpenNotifications.get(uri.toString());
 					if (document !== undefined) {

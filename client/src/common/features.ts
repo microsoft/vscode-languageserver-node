@@ -643,12 +643,12 @@ export interface DedicatedTextSynchronizationFeature {
 	handles(textDocument: TextDocument): boolean;
 }
 
-export interface TabsModel {
+export interface VisibleDocuments {
 	onClose: Event<Set<Uri>>;
 	onOpen: Event<Set<Uri>>;
 	isActive(document: TextDocument | Uri): boolean;
 	isVisible(document: TextDocument | Uri): boolean;
-	getTabResources(): Set<Uri>;
+	getResources(): Set<Uri>;
 }
 
 // Features can refer to other feature when implementing themselves.
@@ -671,7 +671,7 @@ export interface FeatureClient<M, CO = object> {
 	clientOptions: CO;
 	middleware: M;
 
-	tabsModel: TabsModel;
+	visibleDocuments: VisibleDocuments;
 
 	start(): Promise<void>;
 	isRunning(): boolean;
