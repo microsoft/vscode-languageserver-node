@@ -552,6 +552,12 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		if (!documentSelector || !capability) {
 			return undefined;
 		}
+
+		const capabilitySelector = capability ?? (capability as any).documentSelector;
+		if (documentSelector && capabilitySelector && JSON.stringify(documentSelector) !== JSON.stringify(capabilitySelector)) {
+			this._client.info(`Overriding client document selector for ${this._registrationType.method}`, capability);
+		}
+
 		return (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as RO & { documentSelector: DocumentSelector };
 	}
 
