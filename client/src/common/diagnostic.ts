@@ -864,10 +864,6 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.textDocument;
-			// We already know about this document. This can happen via a tab open.
-			if (this.diagnosticRequestor.knows(PullState.document, textDocument)) {
-				return;
-			}
 			if (matches(textDocument)) {
 				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
 			}
