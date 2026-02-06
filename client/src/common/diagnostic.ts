@@ -261,6 +261,13 @@ class DocumentPullStateTracker {
 		return states.has(key);
 	}
 
+	public tracksSameVersion(kind: PullState, document: TextDocument): boolean {
+		const key = document.uri.toString();
+		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
+		const state = states.get(key);
+		return state !== undefined && state.pulledVersion === document.version;
+	}
+
 	public getResultId(kind: PullState, document: TextDocument | Uri): string | undefined {
 		const key = DocumentOrUri.asKey(document);
 		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
@@ -316,6 +323,25 @@ class DiagnosticRequestor implements Disposable {
 	public knows(kind: PullState, document: TextDocument | Uri): boolean {
 		const uri = document instanceof Uri ? document : document.uri;
 		return this.documentStates.tracks(kind, document) || this.openRequests.has(uri.toString());
+	}
+
+	public knowsSameVersion(kind: PullState, document: TextDocument): boolean {
+		if (!this.documentStates.tracksSameVersion(kind, document)) {
+			return false;
+		}
+		const requestState = this.openRequests.get(document.uri.toString());
+		if (requestState === undefined) {
+			return false;
+		}
+		// A reschedule request is independent of a version so it will trigger
+		// on the latest version no matter what.
+		if (requestState.state === RequestStateKind.reschedule) {
+			return true;
+		}
+		if (requestState.state === RequestStateKind.outDated) {
+			return false;
+		}
+		return requestState.version === document.version;
 	}
 
 	private forget(kind: PullState, document: TextDocument | Uri): void {
@@ -408,7 +434,7 @@ class DiagnosticRequestor implements Disposable {
 		const request = this.openRequests.get(key);
 		if (this.options.workspaceDiagnostics) {
 			// If we run workspace diagnostic pull a last time for the diagnostics
-			// and the rely on getting them from the workspace result.
+			// and then rely on getting them from the workspace result.
 			if (request !== undefined) {
 				this.openRequests.set(key, { state: RequestStateKind.reschedule, document: document });
 			} else {
@@ -865,7 +891,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.textDocument;
 			// We already know about this document. This can happen via a tab open.
-			if (this.diagnosticRequestor.knows(PullState.document, textDocument)) {
+			if (this.diagnosticRequestor.knowsSameVersion(PullState.document, textDocument)) {
 				return;
 			}
 			if (matches(textDocument)) {
