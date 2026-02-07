@@ -81,6 +81,7 @@ export namespace CallHierarchyIncomingCallsRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, CallHierarchyIncomingCall[], void, void>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyIncomingCallsParams, CallHierarchyIncomingCall[] | null, void>;
+	export const capabilities = CM.create('textDocument.callHierarchy', 'callHierarchyProvider');
 }
 
 /**
@@ -102,4 +103,5 @@ export namespace CallHierarchyOutgoingCallsRequest {
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
 	export const type = new ProtocolRequestType<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, CallHierarchyOutgoingCall[], void, void>(method);
 	export type HandlerSignature = RequestHandler<CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCall[] | null, void>;
+	export const capabilities = CM.create('textDocument.callHierarchy', 'callHierarchyProvider');
 }
