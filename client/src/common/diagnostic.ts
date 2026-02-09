@@ -261,6 +261,16 @@ class DocumentPullStateTracker {
 		return states.has(key);
 	}
 
+	public tracksVersion(kind: PullState, document: TextDocument): boolean {
+		const key = document.uri.toString();
+		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
+		const existing = states.get(key);
+		if (existing === undefined) {
+			return false;
+		}
+		return existing.pulledVersion === document.version;
+	}
+
 	public getResultId(kind: PullState, document: TextDocument | Uri): string | undefined {
 		const key = DocumentOrUri.asKey(document);
 		const states = kind === PullState.document ? this.documentPullStates : this.workspacePullStates;
@@ -316,6 +326,17 @@ class DiagnosticRequestor implements Disposable {
 	public knows(kind: PullState, document: TextDocument | Uri): boolean {
 		const uri = document instanceof Uri ? document : document.uri;
 		return this.documentStates.tracks(kind, document) || this.openRequests.has(uri.toString());
+	}
+
+	public knowsDocument(document: TextDocument): boolean {
+		const key = document.uri.toString();
+		// If there is an in-flight request, we don't consider this as fully known
+		// since the request may have been issued before the server received the
+		// document content via didOpen.
+		if (this.openRequests.has(key)) {
+			return false;
+		}
+		return this.documentStates.tracksVersion(PullState.document, document);
 	}
 
 	private forget(kind: PullState, document: TextDocument | Uri): void {
@@ -864,6 +885,13 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.textDocument;
+			// If diagnostics have already been pulled for this exact version (e.g. via
+			// a tab event) and there is no in-flight request, we can skip. Otherwise we
+			// need to (re-)pull so the server computes diagnostics based on the content
+			// it received through the didOpen notification.
+			if (this.diagnosticRequestor.knowsDocument(textDocument)) {
+				return;
+			}
 			if (matches(textDocument)) {
 				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
 			}
