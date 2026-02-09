@@ -424,7 +424,7 @@ export class LanguageClient extends BaseLanguageClient {
 							args.push(`--socket=${transport.port}`);
 						}
 						args.push(`--clientProcessId=${process.pid.toString()}`);
-						const options: cp.ForkOptions = node.options ?? Object.create(null);
+						const options: cp.ForkOptions = node.options ? { ...node.options } : Object.create(null);
 						options.env = getEnvironment(options.env, true);
 						options.execArgv = options.execArgv || [];
 						options.cwd = serverWorkingDir;
