@@ -326,13 +326,9 @@ class DiagnosticRequestor implements Disposable {
 	}
 
 	public knowsSameVersion(kind: PullState, document: TextDocument): boolean {
-		const tracksSameVersion = this.documentStates.tracksSameVersion(kind, document);
-		if (!tracksSameVersion) {
-			return false;
-		}
 		const requestState = this.openRequests.get(document.uri.toString());
 		if (requestState === undefined) {
-			return tracksSameVersion;
+			return this.documentStates.tracksSameVersion(kind, document);
 		}
 		// A reschedule request is independent of a version so it will trigger
 		// on the latest version no matter what.
