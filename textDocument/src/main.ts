@@ -450,8 +450,9 @@ const enum CharCode {
 
 function computeLineOffsets(text: string, isAtLineStart: boolean, textOffset = 0): number[] {
 	const result: number[] = isAtLineStart ? [textOffset] : [];
-	for (let i = 0; i < text.length; i++) {
-		const ch = text.charCodeAt(i);
+	const len = Array.from(text).length
+	for (let i = 0; i < len; i++) {
+		const ch = text.codePointAt(i)!;
 		if (isEOL(ch)) {
 			if (ch === CharCode.CarriageReturn && i + 1 < text.length && text.charCodeAt(i + 1) === CharCode.LineFeed) {
 				i++;
