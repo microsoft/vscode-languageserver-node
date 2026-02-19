@@ -152,10 +152,16 @@ suite ('Client Features', () => {
 
 	test('Document Selector - Client and server', () => {
 		const client = createClient(documentSelector);
+		const capabilitySelector = { documentSelector: [{ scheme: 'file', language: 'test' }] } as any;
+
+		client.info = (message, data) => {
+			assert.strictEqual(message, `Overriding client document selector for ${lsclient.FoldingRangeRequest.method}`);
+			assert.deepStrictEqual(data, capabilitySelector);
+		};
 
 		const feature = client.getFeature(lsclient.FoldingRangeRequest.method) as unknown as FoldingRangeTestFeature;
 		{
-			const [, options] = feature.getRegistration(documentSelector, { documentSelector: [{ scheme: 'file', language: 'test' }] });
+			const [, options] = feature.getRegistration(documentSelector, capabilitySelector);
 			isDefined(options);
 			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
 			assert.strictEqual(filter.scheme, 'file');
@@ -165,7 +171,7 @@ suite ('Client Features', () => {
 		{
 			// Note that the old registration spec has no support for providing a document selector.
 			// So ensure that even if we pass one in we will not honor it.
-			const options = feature.getRegistrationOptions(documentSelector, { documentSelector: [{ scheme: 'file', language: 'test' }] } as any);
+			const options = feature.getRegistrationOptions(documentSelector, capabilitySelector);
 			isDefined(options);
 			const filter = options.documentSelector[0] as lsclient.TextDocumentFilter;
 			assert.strictEqual(filter.scheme, 'lsptests');
