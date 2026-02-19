@@ -31,7 +31,7 @@ import {
 
 import {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams,
-	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersServerCapabilities
+	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersClientCapabilities, WorkspaceFoldersServerCapabilities
 } from './protocol.workspaceFolder';
 
 import {
@@ -605,7 +605,7 @@ export interface WorkspaceClientCapabilities {
 	 *
 	 * @since 3.6.0
 	 */
-	workspaceFolders?: boolean;
+	workspaceFolders?: boolean | WorkspaceFoldersClientCapabilities;
 
 	/**
 	 * The client supports `workspace/configuration` requests.
@@ -4394,7 +4394,9 @@ export {
 	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest,
 	// Text Document Content
 	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentResult,
-	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest
+	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest,
+	// Workspace Folders
+	WorkspaceFoldersClientCapabilities
 };
 
 // To be backwards compatible
