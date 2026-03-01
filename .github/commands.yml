@@ -122,6 +122,9 @@
             allowUsers: ['AccessibilityTestingTeam-TCS', 'dixitsonali95', 'Mohini78', 'ChitrarupaSharma', 'mspatil110', 'umasarath52', 'v-umnaik'],
             action: 'updateLabels',
             addLabel: 'a11ymas'
+Morteza
+Janjani 
         },
+[![Release](https://github.com/mattn/efm-langserver/actions/workflows/release.yml/badge.svg)](https://github.com/mattn/efm-langserver/actions/workflows/release.yml)
     ]
 }
