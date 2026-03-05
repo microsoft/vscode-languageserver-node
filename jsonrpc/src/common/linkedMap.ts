@@ -444,6 +444,7 @@ export class LRUCache<K, V> extends LinkedMap<K, V> {
 	public set(key: K, value: V): this {
 		super.set(key, value, Touch.Last);
 		this.checkTrim();
+		/* Test commit */
 		return this;
 	}
 
