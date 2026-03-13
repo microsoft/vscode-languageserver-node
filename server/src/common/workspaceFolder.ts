@@ -6,7 +6,7 @@
 
 import {
 	Event, Emitter, Disposable, ClientCapabilities, WorkspaceFolder, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFoldersNotification,
-	WorkspaceFoldersRequest, ServerCapabilities
+	WorkspaceFoldersRequest, ServerCapabilities, WorkspaceFoldersClientCapabilities
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _RemoteWorkspace } from './server';
@@ -28,7 +28,7 @@ export const WorkspaceFoldersFeature: Feature<_RemoteWorkspace, WorkspaceFolders
 		public initialize(capabilities: ClientCapabilities): void {
 			super.initialize(capabilities);
 			const workspaceCapabilities = capabilities.workspace;
-			if (workspaceCapabilities && workspaceCapabilities.workspaceFolders) {
+			if (workspaceCapabilities && (workspaceCapabilities.workspaceFolders as WorkspaceFoldersClientCapabilities).changeNotifications) {
 				this._onDidChangeWorkspaceFolders = new Emitter<WorkspaceFoldersChangeEvent>();
 				this.connection.onNotification(DidChangeWorkspaceFoldersNotification.type, (params) => {
 					this._onDidChangeWorkspaceFolders!.fire(params.event);
