@@ -283,7 +283,10 @@ connection.onDocumentOnTypeFormatting((_params) => {
 	];
 });
 
-connection.onPrepareRename((_params) => {
+connection.onPrepareRename((params) => {
+	if (params.position.line === 1 && params.position.character === 5) {
+		return { defaultBehavior: true };
+	}
 	return Range.create(1, 1, 1, 2);
 });
 

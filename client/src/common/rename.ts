@@ -98,7 +98,7 @@ export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameO
 								return client.protocol2CodeConverter.asRange(result);
 							} else if (this.isDefaultBehavior(result)) {
 								return result.defaultBehavior === true
-									? null
+									? document.getWordRangeAtPosition(position)
 									: Promise.reject(new Error(`The element can't be renamed.`));
 							} else if (result && Range.is(result.range)) {
 								return {
