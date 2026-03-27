@@ -38,7 +38,7 @@
 		"compile": "tsc -b ./tsconfig.json",
 		"watch": "tsc -b ./tsconfig.watch.json -w",
 		"clean": "rimraf lib && rimraf dist",
-		"lint": "eslint --ext ts src",
+		"lint": "eslint src",
 		"test": "npm run test:node && npm run test:browser",
 		"test:node": "node ../node_modules/mocha/bin/_mocha",
 		"test:browser": "npm run webpack:test:silent && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/protocol/src/browser/test/",

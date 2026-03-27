@@ -81,7 +81,6 @@ class CallbackList {
 			try {
 				ret.push(callbacks[i].apply(contexts[i], args));
 			} catch (e) {
-				// eslint-disable-next-line no-console
 				RAL().console.error(e);
 			}
 		}
