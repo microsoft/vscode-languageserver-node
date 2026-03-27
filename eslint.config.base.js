@@ -1,8 +1,7 @@
 // @ts-check
 'use strict';
 
-const tseslint = require('@typescript-eslint/eslint-plugin');
-const tsParser = require('@typescript-eslint/parser');
+const tseslint = require('typescript-eslint');
 const stylistic = require('@stylistic/eslint-plugin');
 const globals = require('globals');
 
@@ -15,15 +14,14 @@ const globals = require('globals');
  * @returns {import('eslint').Linter.Config[]}
  */
 function createConfig(projects, ignores, extraRules) {
-	/** @type {import('eslint').Linter.Config[]} */
-	const config = [
+	return tseslint.config(
 		{
 			ignores: ['lib/**', 'dist/**', 'node_modules/**', ...(ignores ?? [])],
 		},
 		{
 			files: ['**/*.ts'],
+			extends: [tseslint.configs.base],
 			languageOptions: {
-				parser: tsParser,
 				parserOptions: {
 					ecmaVersion: 6,
 					sourceType: 'module',
@@ -35,7 +33,6 @@ function createConfig(projects, ignores, extraRules) {
 				},
 			},
 			plugins: {
-				'@typescript-eslint': tseslint,
 				'@stylistic': stylistic,
 			},
 			rules: {
@@ -76,8 +73,7 @@ function createConfig(projects, ignores, extraRules) {
 				...extraRules,
 			},
 		},
-	];
-	return config;
+	);
 }
 
 module.exports = { createConfig };
