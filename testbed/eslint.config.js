@@ -4,7 +4,7 @@
 const { createConfig } = require('../eslint.config.base.js');
 
 module.exports = createConfig(
-	['./tsconfig.json'],
+	['./tsconfig.json', './client/tsconfig.json', './server/tsconfig.json'],
 	undefined,
 	{
 		'no-console': 'off',
