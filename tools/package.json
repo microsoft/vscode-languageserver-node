@@ -17,6 +17,6 @@
 		"compile": "tsc -b ./tsconfig.json",
 		"watch": "tsc -b ./tsconfig-watch.json -w",
 		"clean": "rimraf lib && rimraf dist",
-		"lint": "eslint --ext ts src"
+		"lint": "eslint src"
 	}
 }

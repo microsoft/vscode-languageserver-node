@@ -51,7 +51,7 @@
 		"compile": "tsc -b ./tsconfig.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
 		"compile:clean": "git clean -xfd . && npm install && npm run clean && npm run compile",
 		"watch": "tsc -b ./tsconfig.watch.json -w",
-		"lint": "eslint --ext ts src",
+		"lint": "eslint src",
 		"test": "cd ../client-node-tests && npm test && cd ../client",
 		"clean": "rimraf lib",
 		"all": "npm run clean && npm run compile && npm run lint && npm test",

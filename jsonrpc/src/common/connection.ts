@@ -1566,7 +1566,6 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			messageReader.listen(callback);
 		},
 		inspect: (): void => {
-			// eslint-disable-next-line no-console
 			RAL().console.log('inspect');
 		}
 	};

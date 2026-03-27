@@ -41,7 +41,7 @@
 		"compile": "tsc -b ./tsconfig.json",
 		"watch": "tsc -b ./tsconfig.watch.json -w",
 		"clean": "rimraf lib",
-		"lint": "eslint --ext ts src",
+		"lint": "eslint src",
 		"test": "node ../node_modules/mocha/bin/_mocha",
 		"all": "npm run clean && npm run compile && npm run lint && npm test",
 		"compile:publish": "tsc -b ./tsconfig.publish.json",
