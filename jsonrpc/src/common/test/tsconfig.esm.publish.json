@@ -1,0 +1,36 @@
+{
+    "compilerOptions": {
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "rootDir": ".",
+        "types": [
+            "mocha"
+        ],
+        "composite": true,
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": false,
+        "declarationMap": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es2022",
+        "lib": [
+            "es2023"
+        ],
+        "outDir": "../../../lib/esm/common/test",
+        "tsBuildInfoFile": "../../../lib/esm/common/test/publish.tsbuildInfo",
+        "incremental": true
+    },
+    "include": [
+        "."
+    ],
+    "references": [
+        {
+            "path": "../tsconfig.esm.publish.json"
+        }
+    ]
+}

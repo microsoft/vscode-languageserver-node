@@ -157,44 +157,71 @@ const types_publish = {
 const jsonrpc = {
 	name: 'jsonrpc',
 	path: './jsonrpc',
-	out: {
-		dir: './lib',
-		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
-	},
 	sourceFolders: [
 		{
 			path: './src/common',
 			extends: [ common ],
 			exclude: [ 'test' ],
+			out: {
+				dir: '../../lib${libSuffix}/common',
+				buildInfoFile: '../../lib${libSuffix}/common/${buildInfoFile}.tsbuildInfo'
+			}
 		},
 		{
 			path: './src/common/test',
 			extends: [ common, testMixin ],
-			references: [ '..' ]
+			references: [ '..' ],
+			out: {
+				dir: '../../../lib${libSuffix}/common/test',
+				buildInfoFile: '../../../lib${libSuffix}/common/test/${buildInfoFile}.tsbuildInfo'
+			}
 		},
 		{
 			path: './src/browser',
 			extends: [ browser ],
 			exclude: [ 'test' ],
-			references: [ '../common' ]
+			references: [ '../common' ],
+			out: {
+				dir: '../../lib${libSuffix}/browser',
+				buildInfoFile: '../../lib${libSuffix}/browser/${buildInfoFile}.tsbuildInfo'
+			}
 		},
 		{
 			path: './src/browser/test',
 			extends: [ browser, testMixin ],
-			references: [ '..' ]
+			references: [ '..' ],
+			out: {
+				dir: '../../../lib${libSuffix}/browser/test',
+				buildInfoFile: '../../../lib${libSuffix}/browser/test/${buildInfoFile}.tsbuildInfo'
+			}
 		},
 		{
 			path: './src/node',
 			extends: [ node ],
 			exclude: [ 'test' ],
-			references: [ '../common' ]
+			references: [ '../common' ],
+			out: {
+				dir: '../../lib${libSuffix}/node',
+				buildInfoFile: '../../lib${libSuffix}/node/${buildInfoFile}.tsbuildInfo'
+			}
 		},
 		{
 			path: './src/node/test',
 			extends: [ node, testMixin ],
-			references: [ '..' ]
+			references: [ '..' ],
+			out: {
+				dir: '../../../lib${libSuffix}/node/test',
+				buildInfoFile: '../../../lib${libSuffix}/node/test/${buildInfoFile}.tsbuildInfo'
+			}
 		}
 	]
+};
+
+/** @type ProjectDescription */
+const jsonrpc_publish = {
+	name: 'jsonrpc_publish',
+	path: './jsonrpc',
+	references: [ './tsconfig.compat.publish.json', './tsconfig.esm.publish.json' ]
 };
 
 /** @type ProjectDescription */
@@ -275,29 +302,43 @@ const server = {
 const client = {
 	name: 'client',
 	path: './client',
-	out: {
-		dir: './lib',
-		buildInfoFile: '${buildInfoFile}.tsbuildInfo'
-	},
 	sourceFolders: [
 		{
 			path: './src/common',
-			extends: [ common, vscodeMixin ]
+			extends: [ common, vscodeMixin ],
+			out: {
+				dir: '../../lib${libSuffix}/common',
+				buildInfoFile: '../../lib${libSuffix}/common/${buildInfoFile}.tsbuildInfo'
+			}
 		},
 		{
 			path: './src/browser',
 			extends: [ browser, vscodeMixin ],
-			references: [ '../common' ]
+			references: [ '../common' ],
+			out: {
+				dir: '../../lib${libSuffix}/browser',
+				buildInfoFile: '../../lib${libSuffix}/browser/${buildInfoFile}.tsbuildInfo'
+			}
 		},
 		{
 			path: './src/node',
 			extends: [ node, vscodeMixin ],
-			references: [ '../common' ]
+			references: [ '../common' ],
+			out: {
+				dir: '../../lib${libSuffix}/node',
+				buildInfoFile: '../../lib${libSuffix}/node/${buildInfoFile}.tsbuildInfo'
+			}
 		}
 	],
 	references: [ protocol ]
 };
 
+/** @type ProjectDescription */
+const client_publish = {
+	name: 'client_publish',
+	path: './client',
+	references: [ './tsconfig.compat.publish.json', './tsconfig.esm.publish.json' ]
+};
 
 /** @type ProjectDescription */
 const client_node_tests = {
@@ -375,7 +416,7 @@ const compileCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 const compileProjectOptions = {
 	tags: ['compile'],
 	tsconfig: 'tsconfig.json',
-	variables: new Map([['buildInfoFile', 'compile']]),
+	variables: new Map([['buildInfoFile', 'compile'], ['libSuffix', '']]),
 	compilerOptions: compileCompilerOptions
 };
 
@@ -394,7 +435,7 @@ const watchCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 const watchProjectOptions = {
 	tags: ['watch'],
 	tsconfig: 'tsconfig.watch.json',
-	variables: new Map([['buildInfoFile', 'watch']]),
+	variables: new Map([['buildInfoFile', 'watch'], ['libSuffix', '']]),
 	compilerOptions: watchCompilerOptions
 };
 
@@ -413,7 +454,15 @@ const publishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
 const publishProjectOptions = {
 	tags: ['publish'],
 	tsconfig: 'tsconfig.publish.json',
-	variables: new Map([['buildInfoFile', 'publish']]),
+	variables: new Map([['buildInfoFile', 'publish'], ['libSuffix', '']]),
+	compilerOptions: publishCompilerOptions
+};
+
+/** @type ProjectOptions */
+const cjsPublishProjectOptions = {
+	tags: ['publish'],
+	tsconfig: 'tsconfig.compat.publish.json',
+	variables: new Map([['buildInfoFile', 'publish'], ['libSuffix', '']]),
 	compilerOptions: publishCompilerOptions
 };
 
@@ -484,20 +533,41 @@ const esmPublishProjectOptions = {
 	compilerOptions: esmPublishCompilerOptions
 };
 
+/** @type CompilerOptions */
+const esmNodePublishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
+	composite: true,
+	sourceMap: false,
+	declarationMap: false,
+	noUnusedLocals: true,
+	noUnusedParameters: true,
+	target: 'es2022',
+	module: 'esnext',
+	moduleResolution: 'bundler',
+	lib: [ 'es2023' ]
+});
+
+/** @type ProjectOptions */
+const esmNodePublishProjectOptions = {
+	tags: ['esm', 'publish'],
+	tsconfig: 'tsconfig.esm.publish.json',
+	variables: new Map([['buildInfoFile', 'publish'], ['libSuffix', '/esm']]),
+	compilerOptions: esmNodePublishCompilerOptions
+};
+
 /** @type Projects */
 const projects = [
 	[ textDocument, [ umdProjectOptions, umdWatchProjectOptions, esmPublishProjectOptions, umdPublishProjectOptions ] ],
 	[ textDocument_publish, [ publishProjectOptions ] ],
 	[ types, [ umdProjectOptions, umdWatchProjectOptions, esmPublishProjectOptions, umdPublishProjectOptions ] ],
 	[ types_publish, [ publishProjectOptions ]],
-	[ jsonrpc, [ compileProjectOptions, watchProjectOptions ] ],
-	[ createPublishProjectDescription(jsonrpc), [ publishProjectOptions ] ],
+	[ jsonrpc, [ compileProjectOptions, watchProjectOptions, cjsPublishProjectOptions, esmNodePublishProjectOptions ] ],
+	[ jsonrpc_publish, [ publishProjectOptions ] ],
 	[ protocol, [ compileProjectOptions, watchProjectOptions ] ],
 	[ createPublishProjectDescription(protocol), [ publishProjectOptions ] ],
 	[ server, [ compileProjectOptions, watchProjectOptions ] ],
 	[ createPublishProjectDescription(server), [ publishProjectOptions ] ],
-	[ client, [ compileProjectOptions, watchProjectOptions ] ],
-	[ createPublishProjectDescription(client), [ publishProjectOptions ] ],
+	[ client, [ compileProjectOptions, watchProjectOptions, cjsPublishProjectOptions, esmNodePublishProjectOptions ] ],
+	[ client_publish, [ publishProjectOptions ] ],
 	[ client_node_tests, [ compileProjectOptions, watchProjectOptions ] ],
 	[ createPublishProjectDescription(client_node_tests), [ publishProjectOptions ] ],
 	[ tools, [ compileProjectOptions, watchProjectOptions ] ],

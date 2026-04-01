@@ -1,11 +1,13 @@
 {
     "compilerOptions": {
-        "types": [
-            "vscode"
-        ],
-        "module": "node16",
-        "moduleResolution": "node16",
+        "module": "esnext",
+        "moduleResolution": "bundler",
         "rootDir": ".",
+        "types": [
+            "node",
+            "mocha"
+        ],
+        "composite": true,
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
@@ -20,12 +22,16 @@
         "lib": [
             "es2023"
         ],
-        "outDir": "../../lib/common",
-        "tsBuildInfoFile": "../../lib/common/publish.tsbuildInfo",
-        "incremental": true,
-        "composite": true
+        "outDir": "../../../lib/esm/node/test",
+        "tsBuildInfoFile": "../../../lib/esm/node/test/publish.tsbuildInfo",
+        "incremental": true
     },
     "include": [
         "."
+    ],
+    "references": [
+        {
+            "path": "../tsconfig.esm.publish.json"
+        }
     ]
 }

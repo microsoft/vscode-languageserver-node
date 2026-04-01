@@ -1,0 +1,38 @@
+{
+    "compilerOptions": {
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "rootDir": ".",
+        "types": [],
+        "lib": [
+            "es2023",
+            "webworker"
+        ],
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": false,
+        "declarationMap": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es2022",
+        "outDir": "../../lib/esm/browser",
+        "tsBuildInfoFile": "../../lib/esm/browser/publish.tsbuildInfo",
+        "incremental": true,
+        "composite": true
+    },
+    "include": [
+        "."
+    ],
+    "exclude": [
+        "test"
+    ],
+    "references": [
+        {
+            "path": "../common/tsconfig.esm.publish.json"
+        }
+    ]
+}

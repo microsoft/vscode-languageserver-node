@@ -3,8 +3,10 @@
         "module": "node16",
         "moduleResolution": "node16",
         "rootDir": ".",
-        "types": [
-            "node"
+        "types": [],
+        "lib": [
+            "es2023",
+            "webworker"
         ],
         "strict": true,
         "noImplicitAny": true,
@@ -17,11 +19,8 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "target": "es2022",
-        "lib": [
-            "es2023"
-        ],
-        "outDir": "../../lib/node",
-        "tsBuildInfoFile": "../../lib/node/publish.tsbuildInfo",
+        "outDir": "../../lib/browser",
+        "tsBuildInfoFile": "../../lib/browser/publish.tsbuildInfo",
         "incremental": true,
         "composite": true
     },
@@ -33,7 +32,7 @@
     ],
     "references": [
         {
-            "path": "../common/tsconfig.publish.json"
+            "path": "../common/tsconfig.compat.publish.json"
         }
     ]
 }

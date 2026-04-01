@@ -1,12 +1,15 @@
 {
     "compilerOptions": {
         "types": [
-            "node",
-            "vscode"
+            "mocha"
         ],
         "module": "node16",
         "moduleResolution": "node16",
         "rootDir": ".",
+        "lib": [
+            "es2023",
+            "webworker"
+        ],
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
@@ -18,11 +21,8 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "target": "es2022",
-        "lib": [
-            "es2023"
-        ],
-        "outDir": "../../lib/node",
-        "tsBuildInfoFile": "../../lib/node/publish.tsbuildInfo",
+        "outDir": "../../../lib/browser/test",
+        "tsBuildInfoFile": "../../../lib/browser/test/publish.tsbuildInfo",
         "incremental": true
     },
     "include": [
@@ -30,7 +30,7 @@
     ],
     "references": [
         {
-            "path": "../common/tsconfig.publish.json"
+            "path": "../tsconfig.compat.publish.json"
         }
     ]
 }

@@ -1,15 +1,12 @@
 {
     "compilerOptions": {
         "types": [
-            "mocha"
+            "node",
+            "vscode"
         ],
-        "module": "node16",
-        "moduleResolution": "node16",
+        "module": "esnext",
+        "moduleResolution": "bundler",
         "rootDir": ".",
-        "lib": [
-            "es2023",
-            "webworker"
-        ],
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
@@ -21,16 +18,20 @@
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "target": "es2022",
-        "outDir": "../../../lib/browser/test",
-        "tsBuildInfoFile": "../../../lib/browser/test/publish.tsbuildInfo",
-        "incremental": true
+        "lib": [
+            "es2023"
+        ],
+        "outDir": "../../lib/esm/node",
+        "tsBuildInfoFile": "../../lib/esm/node/publish.tsbuildInfo",
+        "incremental": true,
+        "composite": true
     },
     "include": [
         "."
     ],
     "references": [
         {
-            "path": "../tsconfig.publish.json"
+            "path": "../common/tsconfig.esm.publish.json"
         }
     ]
 }

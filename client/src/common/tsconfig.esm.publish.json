@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "types": [
+            "vscode"
+        ],
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "rootDir": ".",
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": false,
+        "declarationMap": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es2022",
+        "lib": [
+            "es2023"
+        ],
+        "outDir": "../../lib/esm/common",
+        "tsBuildInfoFile": "../../lib/esm/common/publish.tsbuildInfo",
+        "incremental": true,
+        "composite": true
+    },
+    "include": [
+        "."
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "incremental": true,
+        "composite": true
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./src/common/tsconfig.compat.publish.json"
+        },
+        {
+            "path": "./src/browser/tsconfig.compat.publish.json"
+        },
+        {
+            "path": "./src/node/tsconfig.compat.publish.json"
+        }
+    ]
+}

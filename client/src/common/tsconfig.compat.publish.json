@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "types": [
-            "mocha"
+            "vscode"
         ],
         "module": "node16",
         "moduleResolution": "node16",
@@ -20,16 +20,12 @@
         "lib": [
             "es2023"
         ],
-        "outDir": "../../../lib/common/test",
-        "tsBuildInfoFile": "../../../lib/common/test/publish.tsbuildInfo",
-        "incremental": true
+        "outDir": "../../lib/common",
+        "tsBuildInfoFile": "../../lib/common/publish.tsbuildInfo",
+        "incremental": true,
+        "composite": true
     },
     "include": [
         "."
-    ],
-    "references": [
-        {
-            "path": "../tsconfig.publish.json"
-        }
     ]
 }
