@@ -179,7 +179,7 @@ export function generateRandomPipeName(): string {
 	}
 
 	let randomLength: number = 32;
-	const fixedLength = 'lsp-.sock'.length;
+	const fixedLength = '/lsp-.sock'.length;
 	const tmpDir: string = fs.realpathSync(XDG_RUNTIME_DIR ?? os.tmpdir());
 	const limit = safeIpcPathLengths.get(process.platform);
 	if (limit !== undefined) {
