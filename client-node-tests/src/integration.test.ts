@@ -714,6 +714,20 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, 2);
 	});
 
+	test('PrepareRename server defaultBehavior result', async () => {
+		const provider = client.getFeature(lsclient.RenameRequest.method).getProvider(document);
+		isDefined(provider);
+		isDefined(provider.prepareRename);
+
+		const defaultBehaviorPosition = new vscode.Position(1, 5);
+		const defaultBehaviorExpected = document.getWordRangeAtPosition(defaultBehaviorPosition);
+		isDefined(defaultBehaviorExpected);
+		const defaultBehaviorResult = await provider.prepareRename(document, defaultBehaviorPosition, tokenSource.token) as vscode.Range;
+
+		isInstanceOf(defaultBehaviorResult, vscode.Range);
+		assert.deepStrictEqual(defaultBehaviorResult, defaultBehaviorExpected);
+	});
+
 	test('Document Link', async () => {
 		const provider = client.getFeature(lsclient.DocumentLinkRequest.method).getProvider(document);
 		isDefined(provider);
