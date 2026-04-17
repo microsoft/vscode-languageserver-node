@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "incremental": true,
+        "composite": true
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./src/common/tsconfig.esm.publish.json"
+        },
+        {
+            "path": "./src/common/test/tsconfig.esm.publish.json"
+        },
+        {
+            "path": "./src/browser/tsconfig.esm.publish.json"
+        },
+        {
+            "path": "./src/browser/test/tsconfig.esm.publish.json"
+        },
+        {
+            "path": "./src/node/tsconfig.esm.publish.json"
+        },
+        {
+            "path": "./src/node/test/tsconfig.esm.publish.json"
+        }
+    ]
+}

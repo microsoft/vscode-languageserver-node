@@ -19,14 +19,17 @@
 	"exports": {
 		".": {
 			"types": "./lib/common/api.d.ts",
+			"import": "./lib/esm/common/api.js",
 			"default": "./lib/common/api.js"
 		},
 		"./node": {
 			"types": "./lib/node/main.d.ts",
+			"import": "./lib/esm/node/main.js",
 			"node": "./lib/node/main.js"
 		},
 		"./browser": {
 			"types": "./lib/browser/main.d.ts",
+			"import": "./lib/esm/browser/main.js",
 			"browser": "./lib/browser/main.js"
 		},
 		"./$test/common/*": {
@@ -55,8 +58,9 @@
 		"test": "cd ../client-node-tests && npm test && cd ../client",
 		"clean": "rimraf lib",
 		"all": "npm run clean && npm run compile && npm run lint && npm test",
-		"compile:publish": "tsc -b ./tsconfig.publish.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
-		"all:publish": "git clean -xfd . && npm install && npm run updateVSCodeVersion && npm run compile:publish && npm run lint && cd ../client-node-tests && npm run all:publish && cd ..",
+		"compile:publish": "tsc -b ./tsconfig.compat.publish.json && shx cp src/node/terminateProcess.sh lib/node/terminateProcess.sh",
+		"compile:esm": "tsc -b ./tsconfig.esm.publish.json && node ../build/bin/fix-esm",
+		"all:publish": "git clean -xfd . && npm install && npm run updateVSCodeVersion && npm run compile:publish && npm run compile:esm && npm run lint && cd ../client-node-tests && npm run all:publish && cd ..",
 		"preversion": "npm test",
 		"updateVSCodeVersion": "node ./bin/updateVSCode.js",
 		"update:vscode-version": "node ./bin/updateVSCode.js"

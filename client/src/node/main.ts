@@ -19,8 +19,8 @@ import { terminate } from './processes';
 import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
 
 // Import SemVer functions individually to avoid circular dependencies in SemVer
-import semverParse = require('semver/functions/parse');
-import semverSatisfies = require('semver/functions/satisfies');
+import semverParse from 'semver/functions/parse';
+import semverSatisfies from 'semver/functions/satisfies';
 
 export * from 'vscode-languageserver-protocol/node';
 export * from '../common/api';

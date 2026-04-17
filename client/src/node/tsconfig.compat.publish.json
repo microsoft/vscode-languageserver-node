@@ -1,0 +1,37 @@
+{
+    "compilerOptions": {
+        "types": [
+            "node",
+            "vscode"
+        ],
+        "module": "node16",
+        "moduleResolution": "node16",
+        "rootDir": ".",
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "stripInternal": true,
+        "sourceMap": false,
+        "declarationMap": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "target": "es2022",
+        "lib": [
+            "es2023"
+        ],
+        "outDir": "../../lib/node",
+        "tsBuildInfoFile": "../../lib/node/publish.tsbuildInfo",
+        "incremental": true,
+        "composite": true
+    },
+    "include": [
+        "."
+    ],
+    "references": [
+        {
+            "path": "../common/tsconfig.compat.publish.json"
+        }
+    ]
+}
