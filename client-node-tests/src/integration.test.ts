@@ -11,6 +11,7 @@ import * as lsclient from 'vscode-languageclient/node';
 import * as proto from 'vscode-languageserver-protocol';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient';
+import { TextDocument } from 'vscode';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
@@ -2242,6 +2243,11 @@ suite('Server activation', () => {
 
 suite('delayOpenNotifications', () => {
 	let client: lsclient.LanguageClient;
+	let middleware: lsclient.Middleware = {};
+
+	suiteSetup(() => {
+		middleware = {};
+	});
 
 	async function startClient(delayOpen: boolean): Promise<void> {
 		const serverModule = path.join(__dirname, './servers/textSyncServer.js');
@@ -2254,7 +2260,7 @@ suite('delayOpenNotifications', () => {
 			documentSelector: [{ language: 'plaintext' }],
 			synchronize: {},
 			initializationOptions: {},
-			middleware: {},
+			middleware,
 			textSynchronization: {
 				delayOpenNotifications: delayOpen
 			}
@@ -2269,7 +2275,7 @@ suite('delayOpenNotifications', () => {
 		uri: 'untitled:test.txt',
 		languageId: 'plaintext',
 		version: 1,
-		getText: () => '',
+		getText: () => 'original line1\noriginal line2\noriginal line3',
 	} as any as vscode.TextDocument;
 
 	function sendDidOpen(document: vscode.TextDocument) {
@@ -2314,25 +2320,33 @@ suite('delayOpenNotifications', () => {
 		);
 	});
 
-	test.skip('didOpen contains correct version/content for create+edit operation', async () => {
-		// Fails due to
-		// https://github.com/microsoft/vscode-languageserver-node/issues/1695
+	test('didOpen contains correct version/content for create+edit operation', async () => {
 		await startClient(true);
+
+		// Set up middleware to capture the (delayed) text document passed for
+		// didOpen.
+		let middlewareDidOpenTextDocument: TextDocument | undefined;
+		middleware.didOpen = (document, next) => {
+			middlewareDidOpenTextDocument = document;
+			return next(document);
+		};
 
 		// Simulate did open
 		await sendDidOpen(fakeDocument);
 
 		// Modify the document and trigger change.
+		const originalText = fakeDocument.getText();
+		const updatedText = 'NEW CONTENT';
 		(fakeDocument as any).version = 2;
-		fakeDocument.getText = () => 'NEW CONTENT';
+		fakeDocument.getText = () => updatedText;
 		await sendDidChange({
 			document: fakeDocument,
 			reason: undefined,
 			contentChanges: [{
 				range: new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)),
 				rangeOffset: 0,
-				rangeLength: 0,
-				text: 'NEW CONTENT',
+				rangeLength: originalText.length,
+				text: updatedText,
 			}]
 		});
 
@@ -2340,11 +2354,30 @@ suite('delayOpenNotifications', () => {
 		const notifications = await client.sendRequest(GetNotificationsRequest.type);
 		assert.equal(notifications.length, 2);
 		const [openNotification, changeNotification] = notifications;
+
 		assert.equal(openNotification.method, 'textDocument/didOpen');
-		assert.equal(openNotification.params.textDocument.version, 1);
-		assert.equal(openNotification.params.textDocument.text, '');
+		const openTextDoc = openNotification.params.textDocument as proto.TextDocumentItem;
+		assert.equal(openTextDoc.version, 1);
+		assert.equal(openTextDoc.text, originalText);
+
 		assert.equal(changeNotification.method, 'textDocument/didChange');
-		assert.equal(changeNotification.params.textDocument.version, 2);
-		assert.equal(changeNotification.params.textDocument.text, 'NEW CONTENT');
+		const changeTextDoc = changeNotification.params.textDocument as proto.VersionedTextDocumentIdentifier;
+		assert.equal(changeTextDoc.version, 2);
+
+		// Also verify the "VS Code" version of the TextDocument passed to the
+		// middleware behaves as the original document would.
+		const line3index = 2; // lines are 0-based
+		const offsetOfLine3word = originalText.indexOf('line3');
+		const lineOffsetOfLine3word = originalText.split('\n')[line3index].indexOf('line3');
+		const textDoc = middlewareDidOpenTextDocument!;
+		const positionOfLine3word = textDoc.positionAt(offsetOfLine3word);
+		const rangeOfLine3word = textDoc.getWordRangeAtPosition(positionOfLine3word);
+		assert.equal(positionOfLine3word.line, line3index);
+		assert.equal(positionOfLine3word.character, lineOffsetOfLine3word);
+		assert.equal(textDoc.lineAt(line3index).text, 'original line3');
+		assert.equal(textDoc.getText(rangeOfLine3word), 'line3');
+		assert.equal(textDoc.offsetAt(positionOfLine3word), offsetOfLine3word);
+		assert.ok(textDoc.validatePosition(positionOfLine3word).isEqual(positionOfLine3word));
+		assert.ok(textDoc.validateRange(rangeOfLine3word!).isEqual(rangeOfLine3word!));
 	});
 });

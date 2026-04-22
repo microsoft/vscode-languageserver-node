@@ -5,7 +5,7 @@
 
 import {
 	workspace as Workspace, languages as Languages, TextDocument, TextDocumentChangeEvent, TextDocumentWillSaveEvent, TextEdit as VTextEdit,
-	DocumentSelector as VDocumentSelector, Event, EventEmitter, Disposable,
+	DocumentSelector as VDocumentSelector, EndOfLine, Event, EventEmitter, Disposable, Position, Range, TextLine,
 	workspace
 } from 'vscode';
 
@@ -22,6 +22,7 @@ import {
 } from './features';
 
 import * as UUID from './utils/uuid';
+import { TextDocument as nodeTextDocument } from 'vscode-languageserver-textdocument';
 
 export interface TextDocumentSynchronizationMiddleware {
 	didOpen?: NextSignature<TextDocument, Promise<void>>;
@@ -77,6 +78,14 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			if (visibleDocuments.isVisible(document)) {
 				return super.callback(document);
 			} else {
+				// Snapshot the text document so that when we send the delayed
+				// notification it is based on the content/version at the time
+				// it would've been sent, and not the updated version.
+				//
+				// See https://github.com/microsoft/vscode-languageserver-node/issues/1695
+
+				document = new TextDocumentSnapshot(document);
+
 				this._pendingOpenNotifications.set(document.uri.toString(), document);
 			}
 		}
@@ -124,7 +133,7 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 					});
 					this._syncedDocuments.set(uri, textDocument);
 				} else {
-					this._pendingOpenNotifications.set(uri, textDocument);
+					this._pendingOpenNotifications.set(uri, new TextDocumentSnapshot(textDocument));
 				}
 			}
 		});
@@ -631,5 +640,176 @@ export class DidSaveTextDocumentFeature extends TextDocumentEventFeature<DidSave
 
 	protected getTextDocument(data: TextDocument): TextDocument {
 		return data;
+	}
+}
+
+class TextDocumentSnapshot implements TextDocument {
+
+	private static readonly DefaultWordRegExp: RegExp = /(-?\d*\.\d\w*)|([^\s`~!@#%^&*()=+[\]{}\\|;:'",.<>/?-]+)/g;
+
+	private readonly liveVsCodeDocument: TextDocument;
+	private readonly snapshotDocument: nodeTextDocument;
+	private readonly content: string;
+	public readonly fileName: string;
+	public readonly isUntitled: boolean;
+	public readonly encoding: string;
+	public readonly isDirty: boolean;
+	public readonly isClosed: boolean;
+	public readonly eol: EndOfLine;
+	private _lineOffsets: number[] | undefined;
+
+	constructor(document: TextDocument) {
+		// Keep the document to handle operations like save().
+		this.liveVsCodeDocument = document;
+
+		// Snapshot all the data.
+		this.content = document.getText();
+		this.snapshotDocument = nodeTextDocument.create(
+			document.uri.toString(),
+			document.languageId,
+			document.version,
+			this.content,
+		);
+		this.fileName = document.fileName;
+		this.isUntitled = document.isUntitled;
+		this.encoding = document.encoding;
+		this.isDirty = document.isDirty;
+		this.isClosed = document.isClosed;
+		this.eol = document.eol;
+	}
+
+	public get uri(): TextDocument['uri'] {
+		return this.liveVsCodeDocument.uri;
+	}
+
+	public get languageId(): string {
+		return this.snapshotDocument.languageId;
+	}
+
+	public get version(): number {
+		return this.snapshotDocument.version;
+	}
+
+	public save(): Thenable<boolean> {
+		return this.liveVsCodeDocument.save();
+	}
+
+	public get lineCount(): number {
+		return this.snapshotDocument.lineCount;
+	}
+
+	public lineAt(line: number): TextLine;
+	public lineAt(position: Position): TextLine;
+	public lineAt(lineOrPosition: number | Position): TextLine {
+		const line = typeof lineOrPosition === 'number' ? lineOrPosition : this.validatePosition(lineOrPosition).line;
+		if (line < 0 || line >= this.lineCount) {
+			throw new RangeError(`Illegal value for line: ${line}`);
+		}
+		const startOffset = this.getLineOffsets()[line];
+		const endOffset = this.getLineEndOffset(line);
+		const text = this.content.substring(startOffset, endOffset);
+		const firstNonWhitespaceCharacterIndex = text.search(/\S/);
+		const range = new Range(new Position(line, 0), new Position(line, text.length));
+		const rangeIncludingLineBreak = line + 1 < this.lineCount
+			? new Range(range.start, new Position(line + 1, 0))
+			: range;
+		return {
+			lineNumber: line,
+			text,
+			range,
+			rangeIncludingLineBreak,
+			firstNonWhitespaceCharacterIndex: firstNonWhitespaceCharacterIndex === -1 ? text.length : firstNonWhitespaceCharacterIndex,
+			isEmptyOrWhitespace: firstNonWhitespaceCharacterIndex === -1,
+		};
+	}
+
+	public offsetAt(position: Position): number {
+		return this.snapshotDocument.offsetAt(position);
+	}
+
+	public positionAt(offset: number): Position {
+		const position = this.snapshotDocument.positionAt(offset);
+		return new Position(position.line, position.character);
+	}
+
+	public getText(range?: Range): string {
+		return this.snapshotDocument.getText(range);
+	}
+
+	public getWordRangeAtPosition(position: Position, regex?: RegExp): Range | undefined {
+		const validatedPosition = this.validatePosition(position);
+		const line = this.lineAt(validatedPosition);
+		if (line.text.length === 0) {
+			return undefined;
+		}
+		const wordDefinition = TextDocumentSnapshot.createWordRegExp(regex);
+		if (''.match(wordDefinition)?.[0]?.length === 0) {
+			return undefined;
+		}
+		let match: RegExpExecArray | null;
+		while ((match = wordDefinition.exec(line.text)) !== null) {
+			if (match[0].length === 0) {
+				break;
+			}
+			const start = match.index;
+			const end = start + match[0].length;
+			if (start <= validatedPosition.character && validatedPosition.character <= end) {
+				return new Range(new Position(line.lineNumber, start), new Position(line.lineNumber, end));
+			}
+		}
+		return undefined;
+	}
+
+	public validateRange(range: Range): Range {
+		return new Range(this.validatePosition(range.start), this.validatePosition(range.end));
+	}
+
+	public validatePosition(position: Position): Position {
+		const line = Math.min(Math.max(position.line, 0), this.lineCount - 1);
+		const character = Math.min(Math.max(position.character, 0), this.getLineLength(line));
+		if (line === position.line && character === position.character) {
+			return position;
+		}
+		return new Position(line, character);
+	}
+
+	private getLineOffsets(): number[] {
+		if (this._lineOffsets === undefined) {
+			this._lineOffsets = [0];
+			for (let index = 0; index < this.content.length; index++) {
+				const charCode = this.content.charCodeAt(index);
+				if (TextDocumentSnapshot.isEol(charCode)) {
+					if (charCode === 13 && index + 1 < this.content.length && this.content.charCodeAt(index + 1) === 10) {
+						index++;
+					}
+					this._lineOffsets.push(index + 1);
+				}
+			}
+		}
+		return this._lineOffsets;
+	}
+
+	private getLineEndOffset(line: number): number {
+		const lineOffsets = this.getLineOffsets();
+		const startOffset = lineOffsets[line];
+		let endOffset = line + 1 < lineOffsets.length ? lineOffsets[line + 1] : this.content.length;
+		while (endOffset > startOffset && TextDocumentSnapshot.isEol(this.content.charCodeAt(endOffset - 1))) {
+			endOffset--;
+		}
+		return endOffset;
+	}
+
+	private getLineLength(line: number): number {
+		return this.getLineEndOffset(line) - this.getLineOffsets()[line];
+	}
+
+	private static createWordRegExp(regex?: RegExp): RegExp {
+		const wordDefinition = regex ?? TextDocumentSnapshot.DefaultWordRegExp;
+		const flags = wordDefinition.flags.includes('g') ? wordDefinition.flags : `${wordDefinition.flags}g`;
+		return new RegExp(wordDefinition.source, flags);
+	}
+
+	private static isEol(charCode: number): boolean {
+		return charCode === 10 || charCode === 13;
 	}
 }
