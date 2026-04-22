@@ -33,6 +33,7 @@ const root = path.dirname(path.dirname(__dirname));
 	await ln.tryLinkJsonRpc(clientFolder);
 	await ln.tryLinkTypes(clientFolder);
 	await ln.tryLinkProtocol(clientFolder);
+	await ln.tryLinkTextDocuments(clientFolder);
 
 	// test-extension
 	let extensionFolder = path.join(root, 'client-node-tests');
