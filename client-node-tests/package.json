@@ -44,7 +44,7 @@
 		"find-process": "^1.4.7",
 		"glob": "^11.1.0",
 		"sinon": "^19.0.2",
-		"uuid": "^11.0.3"
+		"uuid": "^14.0.0"
 	},
 	"enabledApiProposals": []
 }
