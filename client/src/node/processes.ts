@@ -29,6 +29,9 @@ export function terminate(process: ChildProcess & { pid: number }, cwd?: string)
 	} else if (isLinux || isMacintosh) {
 		try {
 			const pid = process.pid.toString();
+			if (!/^\d+$/.test(pid)) {
+				return false;
+			}
 			const script = `
 terminateTree() {
 	for cpid in $(pgrep -P "$1"); do
