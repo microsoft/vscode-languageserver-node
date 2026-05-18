@@ -2021,7 +2021,7 @@ suite('Server tests', () => {
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		await client.start();
-		const serverPid = ((client as any)._serverProcess as { pid: number } | undefined)?.pid;
+		const serverPid = client.serverProcess?.pid;
 		assert.strictEqual(typeof serverPid, 'number');
 
 		await assert.rejects(async () => {

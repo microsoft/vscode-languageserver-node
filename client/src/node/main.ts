@@ -189,6 +189,10 @@ export class LanguageClient extends BaseLanguageClient {
 		return this._isInDebugMode;
 	}
 
+	public get serverProcess(): ChildProcess | undefined {
+		return this._serverProcess;
+	}
+
 	public async restart(): Promise<void> {
 		await this.stop();
 		// We are in debug mode. Wait a little before we restart
