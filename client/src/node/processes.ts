@@ -6,8 +6,6 @@
 import * as cp from 'child_process';
 import ChildProcess = cp.ChildProcess;
 
-import { join } from 'path';
-
 const isWindows = (process.platform === 'win32');
 const isMacintosh = (process.platform === 'darwin');
 const isLinux = (process.platform === 'linux');
@@ -30,8 +28,24 @@ export function terminate(process: ChildProcess & { pid: number }, cwd?: string)
 		}
 	} else if (isLinux || isMacintosh) {
 		try {
-			const cmd = join(__dirname, 'terminateProcess.sh');
-			const result = (<any>cp).spawnSync(cmd, [process.pid.toString()]);
+			const pid = process.pid.toString();
+			if (!/^\d+$/.test(pid)) {
+				return false;
+			}
+			const script = `
+terminateTree() {
+	for cpid in $(pgrep -P "$1"); do
+		terminateTree "$cpid"
+	done
+	kill -9 "$1" > /dev/null 2>&1
+}
+
+terminateTree "${pid}"
+`;
+			const result = (<any>cp).spawnSync('/bin/sh', [], {
+				input: script,
+				stdio: ['pipe', 'inherit', 'inherit']
+			});
 			return result.error ? false : true;
 		} catch (err) {
 			return false;
