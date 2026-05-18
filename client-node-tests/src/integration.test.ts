@@ -89,6 +89,25 @@ function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport):
 	assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
 }
 
+function processExists(pid: number): boolean {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+async function waitForProcessExit(pid: number, timeout: number): Promise<void> {
+	const start = Date.now();
+	while (processExists(pid)) {
+		if (Date.now() - start > timeout) {
+			throw new Error(`Process ${pid} didn't exit within ${timeout} ms.`);
+		}
+		await new Promise((resolve) => setTimeout(resolve, 50));
+	}
+}
+
 interface FoldingRangeTestFeature {
 	getRegistration(documentSelector: lsclient.DocumentSelector | undefined, capability: undefined | lsclient.FoldingRangeOptions | (lsclient.FoldingRangeRegistrationOptions & lsclient.StaticRegistrationOptions)): [string | undefined, (lsclient.FoldingRangeRegistrationOptions & { documentSelector: lsclient.DocumentSelector }) | undefined];
 	getRegistrationOptions(documentSelector: lsclient.DocumentSelector | undefined, capability: undefined | lsclient.FoldingRangeOptions) : (lsclient.FoldingRangeRegistrationOptions & { documentSelector: lsclient.DocumentSelector }) | undefined;
@@ -2002,10 +2021,13 @@ suite('Server tests', () => {
 		const clientOptions: lsclient.LanguageClientOptions = {};
 		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
 		await client.start();
+		const serverPid = ((client as any)._serverProcess as { pid: number } | undefined)?.pid;
+		assert.strictEqual(typeof serverPid, 'number');
 
 		await assert.rejects(async () => {
 			await client.stop(100);
 		}, /Stopping the server timed out/);
+		await waitForProcessExit(serverPid!, 10000);
 	});
 
 	test('Server can\'t be stopped right after start', async() => {
