@@ -37,7 +37,7 @@ terminateTree() {
 	kill -9 "$1" > /dev/null 2>&1
 }
 
-terminateTree ${pid}
+terminateTree "${pid}"
 `;
 			const result = (<any>cp).spawnSync('/bin/sh', [], {
 				input: script,

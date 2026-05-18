@@ -102,7 +102,7 @@ async function waitForProcessExit(pid: number, timeout: number): Promise<void> {
 	const start = Date.now();
 	while (processExists(pid)) {
 		if (Date.now() - start > timeout) {
-			throw new Error(`Process ${pid} didn't exit within ${timeout} ms.`);
+			throw new Error(`Process ${pid} did not exit within ${timeout} ms.`);
 		}
 		await new Promise((resolve) => setTimeout(resolve, 50));
 	}
