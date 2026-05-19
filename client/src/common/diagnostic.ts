@@ -426,6 +426,9 @@ class DiagnosticRequestor implements Disposable {
 	}
 
 	public forgetDocument(document: TextDocument | Uri): void {
+		if (this.isDisposed) {
+			return;
+		}
 		const uri = document instanceof Uri ? document : document.uri;
 		const key = uri.toString();
 		const request = this.openRequests.get(key);
@@ -1028,11 +1031,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		}));
 
 		// Same when a visible document closes.
-		visibleDocuments.onClose((closed) => {
+		disposables.push(visibleDocuments.onClose((closed) => {
 			for (const document of closed) {
 				this.cleanUpDocument(document);
 			}
-		});
+		}));
 
 		// We received a did change from the server.
 		this.diagnosticRequestor.onDidChangeDiagnosticsEmitter.event(() => {
