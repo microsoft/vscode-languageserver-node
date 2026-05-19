@@ -7,7 +7,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import * as uuid from 'uuid';
+import { randomUUID } from 'crypto';
 
 import find = require('find-process');
 import { runTests } from '@vscode/test-electron';
@@ -33,7 +33,7 @@ async function go() {
 		const extensionDevelopmentPath = path.resolve(__dirname, '..');
 		const extensionTestsPath = __dirname;
 
-		const testDir = path.join(os.tmpdir(), uuid.v4());
+		const testDir = path.join(os.tmpdir(), randomUUID());
 		fs.mkdirSync(testDir, { recursive: true });
 		const userDataDir = path.join(testDir, 'userData');
 		fs.mkdirSync(userDataDir);
