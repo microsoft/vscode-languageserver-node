@@ -2220,28 +2220,35 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			return this._p2c.asWorkspaceEdit(workspaceEdit);
 		});
 
-		// This is some sort of workaround since the version check should be done by VS Code in the Workspace.applyEdit.
-		// However doing it here adds some safety since the server can lag more behind then an extension.
-		const openTextDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
-		Workspace.textDocuments.forEach((document) => openTextDocuments.set(document.uri.toString(), document));
-		let versionMismatch = false;
-		if (workspaceEdit.documentChanges) {
-			for (const change of workspaceEdit.documentChanges) {
-				if (TextDocumentEdit.is(change) && change.textDocument.version && change.textDocument.version >= 0) {
-					const changeUri = this._p2c.asUri(change.textDocument.uri).toString();
-					const textDocument = openTextDocuments.get(changeUri);
-					if (textDocument && textDocument.version !== change.textDocument.version) {
-						versionMismatch = true;
-						break;
-					}
-				}
-			}
-		}
-		if (versionMismatch) {
+		// Check whether the version provided in the workspace edit matches the version of the open text document.
+		// If not, we can't apply the workspace edit since it might be based on an old version of the document.
+		// CRITICAL: make sure that after this check has run no async operation happens which might cause that
+		// the version of the text document changes. Otherwise we might apply a workspace edit based on an old
+		// version of the document.
+		const valid = this.validateWorkspaceEdit(workspaceEdit);
+		if (!valid) {
 			return Promise.resolve({ applied: false });
 		}
 		return Is.asPromise(Workspace.applyEdit(converted, { isRefactoring: params.metadata?.isRefactoring }).then((value) => { return { applied: value }; }));
 	}
+
+	public validateWorkspaceEdit(workspaceEdit: WorkspaceEdit): boolean {
+		const openTextDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
+		Workspace.textDocuments.forEach((document) => openTextDocuments.set(document.uri.toString(), document));
+		if (workspaceEdit.documentChanges) {
+			for (const change of workspaceEdit.documentChanges) {
+				if (TextDocumentEdit.is(change) && change.textDocument.version !== null && change.textDocument.version >= 0) {
+					const changeUri = this._p2c.asUri(change.textDocument.uri).toString();
+					const textDocument = openTextDocuments.get(changeUri);
+					if (textDocument && textDocument.version !== change.textDocument.version) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
 
 	private static RequestsToCancelOnContentModified: Set<string> = new Set([
 		SemanticTokensRequest.method,
