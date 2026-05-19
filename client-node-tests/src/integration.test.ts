@@ -733,6 +733,18 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, 2);
 	});
 
+	test('Rename failed', async () => {
+		const provider = client.getFeature(lsclient.RenameRequest.method).getProvider(document);
+		isDefined(provider);
+
+		try {
+			const renameResult = await provider.provideRenameEdits(document, new vscode.Position(3333, 3333), 'newName', tokenSource.token);
+			assert.fail(`Expected rename to fail, but got result: ${JSON.stringify(renameResult)}`);
+		} catch (error) {
+			assert.ok(error instanceof Error);
+		}
+	});
+
 	test('Document Link', async () => {
 		const provider = client.getFeature(lsclient.DocumentLinkRequest.method).getProvider(document);
 		isDefined(provider);
@@ -2027,8 +2039,8 @@ suite('Server tests', () => {
 		await assert.rejects(async () => {
 			await client.stop(100);
 		}, /Stopping the server timed out/);
-		await waitForProcessExit(serverPid!, 10000);
-	});
+		await waitForProcessExit(serverPid!, 5000);
+	}).timeout(7500);
 
 	test('Server can\'t be stopped right after start', async() => {
 		const serverOptions: lsclient.ServerOptions = {
