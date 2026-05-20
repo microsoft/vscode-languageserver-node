@@ -4132,7 +4132,7 @@ export type TypeHierarchyItem = {
 };
 
 /**
- * Provide inline value as text.
+ * Returns inline value information as the complete text to be shown.
  *
  * @since 3.17.0
  */
@@ -4168,16 +4168,22 @@ export namespace InlineValueText {
 }
 
 /**
- * Provide inline value through a variable lookup.
- * If only a range is specified, the variable name will be extracted from the underlying document.
- * An optional variable name can be used to override the extracted name.
+ * To compute inline value through a variable lookup.
+ *
+ * If only a range is specified, the variable name should
+ * be extracted from the underlying document.
+ *
+ * An optional variable name could be used to lookup instead
+ * of the extracted name.
  *
  * @since 3.17.0
  */
 export type InlineValueVariableLookup = {
 	/**
 	 * The document range for which the inline value applies.
-	 * The range is used to extract the variable name from the underlying document.
+	 *
+	 * The range could be used to extract the variable name
+	 * from the underlying document.
 	 */
 	range: Range;
 
@@ -4193,7 +4199,8 @@ export type InlineValueVariableLookup = {
 };
 
 /**
- * The InlineValueVariableLookup namespace provides functions to deal with InlineValueVariableLookups.
+ * The InlineValueVariableLookup namespace provides functions to
+ * deal with InlineValueVariableLookups.
  *
  * @since 3.17.0
  */
@@ -4213,21 +4220,27 @@ export namespace InlineValueVariableLookup {
 }
 
 /**
- * Provide an inline value through an expression evaluation.
- * If only a range is specified, the expression will be extracted from the underlying document.
- * An optional expression can be used to override the extracted expression.
+ * To compute an inline value through an expression evaluation.
+ *
+ * If only a range is specified, the expression should be
+ * extracted from the underlying document.
+ *
+ * An optional expression could be evaluated instead of
+ * the extracted expression.
  *
  * @since 3.17.0
  */
 export type InlineValueEvaluatableExpression = {
 	/**
 	 * The document range for which the inline value applies.
-	 * The range is used to extract the evaluatable expression from the underlying document.
+	 *
+	 * The range could be used to extract the evaluatable expression
+	 * from the underlying document.
 	 */
 	range: Range;
 
 	/**
-	 * If specified the expression overrides the extracted expression.
+	 * If specified the expression could be evaluated instead.
 	 */
 	expression?: string;
 };
