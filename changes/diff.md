@@ -21,30 +21,30 @@ I compared the spec under _specifications/lsp/3.18/ with common and main.ts. Bel
 
 ## D. `@since` / `@proposed` tag mismatches
 
-Spec drops `@proposed` for items source still marks proposed:
+> Spec drops `@proposed` for items source still marks proposed:
+>
+> | Item | Spec tag | Source tag | Where in source |
+> |---|---|---|---|
+> | `Command.tooltip` | (no tag) | `@since 3.18.0 @proposed` | main.ts |
+> | `SnippetTextEdit` | `@since 3.18.0` | `@since 3.18.0 @proposed` | main.ts |
+> | `StringValue` | `@since 3.18.0` | `@since 3.18.0 @proposed` | main.ts |
+> | `MessageType.Debug` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.ts |
+> | `ServerCapabilities.inlineCompletionProvider` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.ts |
+> | `TextDocumentClientCapabilities.inlineCompletion` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.ts |
+> | All `InlineCompletion*` types & `InlineCompletionRequest` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.inlineCompletion.ts |
+> | All `TextDocumentContent*` types except `TextDocumentContentResult` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.textDocumentContent.ts |
 
-| Item | Spec tag | Source tag | Where in source |
-|---|---|---|---|
-| `Command.tooltip` | (no tag) | `@since 3.18.0 @proposed` | main.ts |
-| `SnippetTextEdit` | `@since 3.18.0` | `@since 3.18.0 @proposed` | main.ts |
-| `StringValue` | `@since 3.18.0` | `@since 3.18.0 @proposed` | main.ts |
-| `MessageType.Debug` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.ts |
-| `ServerCapabilities.inlineCompletionProvider` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.ts |
-| `TextDocumentClientCapabilities.inlineCompletion` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.ts |
-| All `InlineCompletion*` types & `InlineCompletionRequest` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.inlineCompletion.ts |
-| All `TextDocumentContent*` types except `TextDocumentContentResult` | `@since 3.18.0` | `@since 3.18.0 @proposed` | protocol.textDocumentContent.ts |
-
-Spec adds `@proposed` source does not have:
-
-| Item | Spec tag | Source tag | Where |
-|---|---|---|---|
-| `FoldingRange.collapsedText` | `@since 3.17.0 - proposed` | `@since 3.17.0` | main.ts |
-| `WorkspaceSymbolClientCapabilities.resolveSupport` | `@since 3.17.0 - proposedState` | `@since 3.17.0` | protocol.ts |
+> Spec adds `@proposed` source does not have:
+>
+> | Item | Spec tag | Source tag | Where |
+> |---|---|---|---|
+> | `FoldingRange.collapsedText` | `@since 3.17.0 - proposed` | `@since 3.17.0` | main.ts |
+> | `WorkspaceSymbolClientCapabilities.resolveSupport` | `@since 3.17.0 - proposedState` | `@since 3.17.0` | protocol.ts |
 
 Spec lags a real `@since` qualifier:
 
-- `SignatureHelpClientCapabilities.signatureInformation.noActiveParameterSupport` — source has `@since 3.18.0 @proposed`, spec only `@since 3.18.0`. Source: protocol.ts.
-- `SignatureInformation.activeParameter` / `SignatureHelp.activeParameter` null behavior — spec says "only valid since 3.18.0…"; source omits the version note in main.ts.
+> - `SignatureHelpClientCapabilities.signatureInformation.noActiveParameterSupport` — source has `@since 3.18.0 @proposed`, spec only `@since 3.18.0`. Source: protocol.ts.
+> - `SignatureInformation.activeParameter` / `SignatureHelp.activeParameter` null behavior — spec says "only valid since 3.18.0…"; source omits the version note in main.ts.
 
 ## E. Named types in source that the spec still inlines (no shape difference, but the names are not anchored)
 
