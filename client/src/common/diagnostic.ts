@@ -1096,6 +1096,8 @@ export class DiagnosticFeature extends TextDocumentLanguageFeature<DiagnosticOpt
 		// An easy implementation would be to only show related diagnostics for
 		// the active editor.
 		capability.relatedDocumentSupport = false;
+		// VS Code has no support for markup content in diagnostic messages.
+		capability.markupMessageSupport = false;
 
 		ensure(ensure(capabilities, 'workspace')!, 'diagnostics')!.refreshSupport = true;
 	}

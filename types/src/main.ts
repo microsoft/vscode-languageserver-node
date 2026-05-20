@@ -719,9 +719,12 @@ export interface Diagnostic {
 	source?: string;
 
 	/**
-	 * The diagnostic's message. It usually appears in the user interface
+	 * The diagnostic's message. It usually appears in the user interface.
+	 *
+	 * @since 3.18.0 - support for MarkupContent. This is guarded by the client
+	 * capability `textDocument.diagnostic.markupMessageSupport`.
 	 */
-	message: string;
+	message: string | MarkupContent;
 
 	/**
 	 * Additional metadata about the diagnostic.
@@ -753,7 +756,7 @@ export namespace Diagnostic {
 	/**
 	 * Creates a new Diagnostic literal.
 	 */
-	export function create(range: Range, message: string, severity?: DiagnosticSeverity, code?: integer | string, source?: string, relatedInformation?: DiagnosticRelatedInformation[]): Diagnostic {
+	export function create(range: Range, message: string | MarkupContent, severity?: DiagnosticSeverity, code?: integer | string, source?: string, relatedInformation?: DiagnosticRelatedInformation[]): Diagnostic {
 		const result: Diagnostic = { range, message };
 		if (Is.defined(severity)) {
 			result.severity = severity;
@@ -777,7 +780,7 @@ export namespace Diagnostic {
 		const candidate = value as Diagnostic;
 		return Is.defined(candidate)
 			&& Range.is(candidate.range)
-			&& Is.string(candidate.message)
+			&& (Is.string(candidate.message) || MarkupContent.is(candidate.message))
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
 			&& (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
 			&& (Is.undefined(candidate.codeDescription) || (Is.string(candidate.codeDescription?.href)))
