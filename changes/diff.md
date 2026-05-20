@@ -13,11 +13,11 @@ I compared the spec under _specifications/lsp/3.18/ with common and main.ts. Bel
 
 ## C. Source features missing from the spec entirely
 
-- **`RegularExpressionEngineKind`** (open-set namespace + `ES2020`, `@since 3.18.0 @proposed`, used by `RegularExpressionsClientCapabilities.engine`) — protocol.ts. types/regexp.md still types `engine: string`.
-- **`LanguageKind`** open enum (`@since 3.18.0`) and the proposed values `D`, `Delphi`, `Pascal` — main.ts. types/textDocumentItem.md still types `languageId: string` and the language table lacks `d` and `pascal`. Also: the spec table lists `git-rebase` but source defines `LanguageKind.GitRebase = 'rebase'` (different value), and the spec lists `plaintext` which has no constant in source.
-- **`LocationUriOnly`** (`@since 3.18.0`, used by `WorkspaceSymbol.location`) — main.ts. Not in types/location.md; inlined as `{ uri: DocumentUri }` in workspace/symbol.md.
-- **`WorkspaceClientCapabilities.foldingRange?: FoldingRangeWorkspaceClientCapabilities`** (`@since 3.18.0 @proposed`) — protocol.ts. Not wired into the `ClientCapabilities.workspace` literal in general/initialize.md.
-- **`WorkspaceClientCapabilities.textDocumentContent?: TextDocumentContentClientCapabilities`** and **`WorkspaceOptions.textDocumentContent?: TextDocumentContentOptions | TextDocumentContentRegistrationOptions`** (`@since 3.18.0 @proposed`) — protocol.ts, protocol.ts. Not wired into `ClientCapabilities.workspace` / `ServerCapabilities.workspace` in general/initialize.md. The types themselves are documented in workspace/textDocumentContent.md.
+> - **`RegularExpressionEngineKind`** (open-set namespace + `ES2020`, `@since 3.18.0 @proposed`, used by `RegularExpressionsClientCapabilities.engine`) — protocol.ts. types/regexp.md still types `engine: string`.
+> - **`LanguageKind`** open enum (`@since 3.18.0`) and the proposed values `D`, `Delphi`, `Pascal` — main.ts. types/textDocumentItem.md still types `languageId: string` and the language table lacks `d` and `pascal`. Also: the spec table lists `git-rebase` but source defines `LanguageKind.GitRebase = 'rebase'` (different value), and the spec lists `plaintext` which has no constant in source.
+> - **`LocationUriOnly`** (`@since 3.18.0`, used by `WorkspaceSymbol.location`) — main.ts. Not in types/location.md; inlined as `{ uri: DocumentUri }` in workspace/symbol.md.
+> - **`WorkspaceClientCapabilities.foldingRange?: FoldingRangeWorkspaceClientCapabilities`** (`@since 3.18.0 @proposed`) — protocol.ts. Not wired into the `ClientCapabilities.workspace` literal in general/initialize.md.
+> - **`WorkspaceClientCapabilities.textDocumentContent?: TextDocumentContentClientCapabilities`** and **`WorkspaceOptions.textDocumentContent?: TextDocumentContentOptions | TextDocumentContentRegistrationOptions`** (`@since 3.18.0 @proposed`) — protocol.ts, protocol.ts. Not wired into `ClientCapabilities.workspace` / `ServerCapabilities.workspace` in general/initialize.md. The types themselves are documented in workspace/textDocumentContent.md.
 
 ## D. `@since` / `@proposed` tag mismatches
 

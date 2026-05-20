@@ -1922,7 +1922,7 @@ export namespace LanguageKind {
 	export const Erlang	= 'erlang' as const;
 	export const FSharp	= 'fsharp' as const;
 	export const GitCommit = 'git-commit' as const;
-	export const GitRebase = 'rebase' as const;
+	export const GitRebase = 'git-rebase' as const;
 	export const Go	= 'go' as const;
 	export const Groovy	= 'groovy' as const;
 	export const Handlebars	= 'handlebars' as const;
@@ -1948,6 +1948,7 @@ export namespace LanguageKind {
 	export const Perl = 'perl' as const;
 	export const Perl6 = 'perl6' as const;
 	export const PHP = 'php' as const;
+	export const Plaintext = 'plaintext' as const;
 	export const Powershell	= 'powershell' as const;
 	export const Pug = 'jade' as const;
 	export const Python	= 'python' as const;
