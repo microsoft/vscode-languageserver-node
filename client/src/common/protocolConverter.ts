@@ -326,7 +326,8 @@ export function createConverter(
 	}
 
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
-		const result = new ProtocolDiagnostic(asRange(diagnostic.range), diagnostic.message, asDiagnosticSeverity(diagnostic.severity), diagnostic.data);
+		const message = typeof diagnostic.message === 'string' ? diagnostic.message : diagnostic.message.value;
+		const result = new ProtocolDiagnostic(asRange(diagnostic.range), message, asDiagnosticSeverity(diagnostic.severity), diagnostic.data);
 		if (diagnostic.code !== undefined) {
 			if (typeof diagnostic.code === 'string' || typeof diagnostic.code === 'number') {
 				if (ls.CodeDescription.is(diagnostic.codeDescription)) {
