@@ -2,14 +2,14 @@
 
 I compared the spec under _specifications/lsp/3.18/ with common and main.ts. Below are the actionable findings. Trivial differences (interface vs. type alias, member order in unions, prose wording) are omitted.
 
-## A. Outright shape conflict (should be fixed)
-
-- **`markupMessageSupport` is on the wrong side.** general/initialize.md puts `textDocument.diagnostic.markupMessageSupport` on `ServerCapabilities` ("Whether the server supports MarkupContent…"). In source it is a **client** capability on `DiagnosticClientCapabilities` (protocol.diagnostic.ts), consistent with language/pullDiagnostics.md. Server capabilities have no `textDocument.diagnostic.*` member in source at all.
+> ## A. Outright shape conflict (should be fixed)
+>
+> - **`markupMessageSupport` is on the wrong side.** general/initialize.md puts `textDocument.diagnostic.markupMessageSupport` on `ServerCapabilities` ("Whether the server supports MarkupContent…"). In source it is a **client** capability on `DiagnosticClientCapabilities` (protocol.diagnostic.ts), consistent with language/pullDiagnostics.md. Server capabilities have no `textDocument.diagnostic.*` member in source at all.
 
 ## B. Names referenced in the spec but never defined there
 
-- **`ClientDiagnosticsTagOptions`** (used by `DiagnosticClientCapabilities.tagSupport` in language/pullDiagnostics.md). Defined in source at protocol.ts with `@since 3.18.0`. Inlined in language/publishDiagnostics.md.
-- **`StringValue`** (`{ kind: 'snippet'; value: string }`) is referenced from `InlineCompletionItem.insertText` in language/inlineCompletion.md and from `SnippetTextEdit.snippet` in types/textEdit.md. It exists as a standalone page types/stringValue.md, but neither referencing page links/anchors it — easy to miss. Source: main.ts.
+> - **`ClientDiagnosticsTagOptions`** (used by `DiagnosticClientCapabilities.tagSupport` in language/pullDiagnostics.md). Defined in source at protocol.ts with `@since 3.18.0`. Inlined in language/publishDiagnostics.md.
+> - **`StringValue`** (`{ kind: 'snippet'; value: string }`) is referenced from `InlineCompletionItem.insertText` in language/inlineCompletion.md and from `SnippetTextEdit.snippet` in types/textEdit.md. It exists as a standalone page types/stringValue.md, but neither referencing page links/anchors it — easy to miss. Source: main.ts.
 
 ## C. Source features missing from the spec entirely
 
