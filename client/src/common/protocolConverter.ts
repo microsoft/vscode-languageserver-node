@@ -326,7 +326,11 @@ export function createConverter(
 	}
 
 	function asDiagnostic(diagnostic: ls.Diagnostic): code.Diagnostic {
-		const message = typeof diagnostic.message === 'string' ? diagnostic.message : diagnostic.message.value;
+		const message = typeof diagnostic.message === 'string'
+			? diagnostic.message
+			: diagnostic.message.kind === 'plaintext'
+				? diagnostic.message.value
+				: 'Received a markup diagnostic message but the client does not support it.';
 		const result = new ProtocolDiagnostic(asRange(diagnostic.range), message, asDiagnosticSeverity(diagnostic.severity), diagnostic.data);
 		if (diagnostic.code !== undefined) {
 			if (typeof diagnostic.code === 'string' || typeof diagnostic.code === 'number') {
