@@ -49,6 +49,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 - Using `LogOutputChannel` for the client's output and trace channel instead of the standard VSCode `OutputChannel` type. This is a breaking change for clients that pass in their own log or trace channel via the `LanguageClientOptions`. Instead of using a normal `OutputChannel` you now need to pass in a `LogOutputChannel`.
 - LinkedList from `jsonrpc` is not implementing Map anymore.
 - Possibility to delay open notification and ignore if close notification comes in time.
+- remove `null` from the `textDocument/documentColor` and `textDocument/colorPresentation` request to make it consistent with the specification. This is a breaking change.
 
 ## 3.17.5 Protocol, 9.0.1 Client and 9.0.1 Server
 
