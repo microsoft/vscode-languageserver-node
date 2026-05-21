@@ -287,7 +287,21 @@ connection.onPrepareRename((_params) => {
 	return Range.create(1, 1, 1, 2);
 });
 
-connection.onRenameRequest((_params) => {
+connection.onRenameRequest((params) => {
+	const pos = params.position;
+	if (pos.line === 3333 && pos.character === 3333) {
+		return { documentChanges: [
+			{
+				textDocument: {
+					uri: params.textDocument.uri,
+					version: 9999999
+				},
+				edits: [
+					TextEdit.insert(Position.create(0, 0), 'rename failed')
+				]
+			}
+		]};
+	}
 	return { documentChanges: [] };
 });
 

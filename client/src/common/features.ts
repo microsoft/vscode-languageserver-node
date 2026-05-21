@@ -23,7 +23,8 @@ import {
 	NotificationType, NotificationType0, ProgressType,  ProtocolNotificationType, ProtocolNotificationType0, ProtocolRequestType, ProtocolRequestType0, ReferencesRequest,
 	RegistrationType, RenameRequest, RequestHandler, RequestHandler0, RequestParam, RequestType, RequestType0, SelectionRangeRequest, SemanticTokensRegistrationType, ServerCapabilities,
 	SignatureHelpRequest, StaticRegistrationOptions, TextDocumentIdentifier, TextDocumentRegistrationOptions, TypeDefinitionRequest, TypeHierarchyPrepareRequest, WillCreateFilesRequest,
-	WillDeleteFilesRequest, WillRenameFilesRequest, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WorkDoneProgressOptions, WorkspaceSymbolRequest
+	WillDeleteFilesRequest, WillRenameFilesRequest, WillSaveTextDocumentNotification, WillSaveTextDocumentWaitUntilRequest, WorkDoneProgressOptions, WorkspaceSymbolRequest,
+	type WorkspaceEdit
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -756,4 +757,6 @@ export interface FeatureClient<M, CO = object> {
 	getFeature(request: typeof NotebookDocumentSyncRegistrationType.method): DynamicFeature<NotebookDocumentSyncRegistrationOptions> & NotebookDocumentProviderShape;
 	getFeature(request: typeof InlineCompletionRequest.method): (DynamicFeature<InlineCompletionRegistrationOptions> & TextDocumentProviderFeature<InlineCompletionItemProvider>) | undefined;
 	getFeature(request: typeof ExecuteCommandRequest.method): DynamicFeature<ExecuteCommandOptions>;
+
+	validateWorkspaceEdit(workspaceEdit: WorkspaceEdit): boolean;
 }

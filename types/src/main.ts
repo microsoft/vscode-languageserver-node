@@ -719,9 +719,12 @@ export interface Diagnostic {
 	source?: string;
 
 	/**
-	 * The diagnostic's message. It usually appears in the user interface
+	 * The diagnostic's message. It usually appears in the user interface.
+	 *
+	 * @since 3.18.0 - support for MarkupContent. This is guarded by the client
+	 * capability `textDocument.diagnostic.markupMessageSupport`.
 	 */
-	message: string;
+	message: string | MarkupContent;
 
 	/**
 	 * Additional metadata about the diagnostic.
@@ -753,7 +756,7 @@ export namespace Diagnostic {
 	/**
 	 * Creates a new Diagnostic literal.
 	 */
-	export function create(range: Range, message: string, severity?: DiagnosticSeverity, code?: integer | string, source?: string, relatedInformation?: DiagnosticRelatedInformation[]): Diagnostic {
+	export function create(range: Range, message: string | MarkupContent, severity?: DiagnosticSeverity, code?: integer | string, source?: string, relatedInformation?: DiagnosticRelatedInformation[]): Diagnostic {
 		const result: Diagnostic = { range, message };
 		if (Is.defined(severity)) {
 			result.severity = severity;
@@ -777,7 +780,7 @@ export namespace Diagnostic {
 		const candidate = value as Diagnostic;
 		return Is.defined(candidate)
 			&& Range.is(candidate.range)
-			&& Is.string(candidate.message)
+			&& (Is.string(candidate.message) || MarkupContent.is(candidate.message))
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
 			&& (Is.integer(candidate.code) || Is.string(candidate.code) || Is.undefined(candidate.code))
 			&& (Is.undefined(candidate.codeDescription) || (Is.string(candidate.codeDescription?.href)))
@@ -1919,7 +1922,7 @@ export namespace LanguageKind {
 	export const Erlang	= 'erlang' as const;
 	export const FSharp	= 'fsharp' as const;
 	export const GitCommit = 'git-commit' as const;
-	export const GitRebase = 'rebase' as const;
+	export const GitRebase = 'git-rebase' as const;
 	export const Go	= 'go' as const;
 	export const Groovy	= 'groovy' as const;
 	export const Handlebars	= 'handlebars' as const;
@@ -1945,6 +1948,7 @@ export namespace LanguageKind {
 	export const Perl = 'perl' as const;
 	export const Perl6 = 'perl6' as const;
 	export const PHP = 'php' as const;
+	export const Plaintext = 'plaintext' as const;
 	export const Powershell	= 'powershell' as const;
 	export const Pug = 'jade' as const;
 	export const Python	= 'python' as const;
@@ -2896,6 +2900,9 @@ export interface SignatureHelp {
 	 * In future version of the protocol this property might become
 	 * mandatory (but still nullable) to better express the active parameter if
 	 * the active signature does have any.
+	 *
+	 * Since version 3.16.0 the `SignatureInformation` itself provides a
+	 * `activeParameter` property and it should be used instead of this one.
 	 */
 	activeParameter?: uinteger | null;
 }
@@ -4132,7 +4139,7 @@ export type TypeHierarchyItem = {
 };
 
 /**
- * Provide inline value as text.
+ * Returns inline value information as the complete text to be shown.
  *
  * @since 3.17.0
  */
@@ -4168,16 +4175,22 @@ export namespace InlineValueText {
 }
 
 /**
- * Provide inline value through a variable lookup.
- * If only a range is specified, the variable name will be extracted from the underlying document.
- * An optional variable name can be used to override the extracted name.
+ * To compute inline value through a variable lookup.
+ *
+ * If only a range is specified, the variable name should
+ * be extracted from the underlying document.
+ *
+ * An optional variable name could be used to lookup instead
+ * of the extracted name.
  *
  * @since 3.17.0
  */
 export type InlineValueVariableLookup = {
 	/**
 	 * The document range for which the inline value applies.
-	 * The range is used to extract the variable name from the underlying document.
+	 *
+	 * The range could be used to extract the variable name
+	 * from the underlying document.
 	 */
 	range: Range;
 
@@ -4193,7 +4206,8 @@ export type InlineValueVariableLookup = {
 };
 
 /**
- * The InlineValueVariableLookup namespace provides functions to deal with InlineValueVariableLookups.
+ * The InlineValueVariableLookup namespace provides functions to
+ * deal with InlineValueVariableLookups.
  *
  * @since 3.17.0
  */
@@ -4213,21 +4227,27 @@ export namespace InlineValueVariableLookup {
 }
 
 /**
- * Provide an inline value through an expression evaluation.
- * If only a range is specified, the expression will be extracted from the underlying document.
- * An optional expression can be used to override the extracted expression.
+ * To compute an inline value through an expression evaluation.
+ *
+ * If only a range is specified, the expression should be
+ * extracted from the underlying document.
+ *
+ * An optional expression could be evaluated instead of
+ * the extracted expression.
  *
  * @since 3.17.0
  */
 export type InlineValueEvaluatableExpression = {
 	/**
 	 * The document range for which the inline value applies.
-	 * The range is used to extract the evaluatable expression from the underlying document.
+	 *
+	 * The range could be used to extract the evaluatable expression
+	 * from the underlying document.
 	 */
 	range: Range;
 
 	/**
-	 * If specified the expression overrides the extracted expression.
+	 * If specified the expression could be evaluated instead.
 	 */
 	expression?: string;
 };

@@ -35,16 +35,128 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## Next (10.0.0-next.* Client, 10.0.0-next.* Server and 9.0.0-next.* jsonrpc)
+## Upcoming 3.18.0 Protocol, 9.0.0 JSON-RPC, 10.0.0 Client and 10.0.0 Server.
+
+### Protocol - new requests / notifications
+
+- added `textDocument/inlineCompletion`: inline completion request, params, registration options, and client capabilities. New file protocol.inlineCompletion.ts.
+- added `workspace/textDocumentContent` + `workspace/textDocumentContent/refresh`: server-provided dynamic text document content for custom schemes (multi-scheme registration supported).
+- added `textDocument/rangesFormatting`: format multiple ranges in one request (`DocumentRangesFormattingRequest`, `DocumentRangesFormattingParams`).
+- added `workspace/foldingRange/refresh`: server‑initiated folding-range refresh (`FoldingRangeRefreshRequest`, `FoldingRangeWorkspaceClientCapabilities`).
+- Notebook diagnostic pull and notebook code-action-kind support added on top of the existing notebook feature.
+- added proposed CodeActionKind.RefactorMove
+
+### Protocol - new features
+
+#### Workspace edits — `workspace/applyEdit`, `textDocument/rename`, code actions
+
+- `WorkspaceEdit` may now carry `SnippetTextEdit` entries (snippet support in workspace edits). New client capability `workspace.workspaceEdit.snippetEditSupport`. See main.ts.
+- `WorkspaceEditMetadata` added; `ApplyWorkspaceEditParams.metadata` carries it, with new client capability `workspace.workspaceEdit.metadataSupport`. Currently includes `isRefactoring`. See protocol.ts.
+- `Command.tooltip` proposed on the existing `Command` type. main.ts.
+
+#### Completion — `textDocument/completion` / `completionItem/resolve`
+
+- `CompletionList.itemDefaults` extended with `data` (per‑item default `data` payload).
+- New `CompletionList.applyKind` (`CompletionItemApplyKinds`) describes per-field merge strategy (`Replace`/`Merge`) for `commitCharacters` and `data` between list defaults and individual items. Gated by new client capability `completionList.applyKindSupport`. See main.ts.
+- `EditRangeWithInsertReplace` made a named type and exposed via `CompletionItemDefaults.editRange`.
+- `CompletionItem.textEdit` may carry an `InsertReplaceEdit` (already in 3.17; capabilities cleaned up).
+
+#### Code action — `textDocument/codeAction` / `codeAction/resolve`
+
+- New `CodeAction.tags` field; `CodeActionTag.LLMGenerated` lets servers mark LLM‑generated actions. Client capability `textDocument.codeAction.tagSupport`. - `CodeActionOptions.documentation: CodeActionKindDocumentation[]` — providers can ship docs that appear in the actions menu. Client capability `textDocument.codeAction.documentationSupport`.
+- New code action kind `CodeActionKind.RefactorMove`.
+- New code action kind `CodeActionKind.Notebook` (and notebook code‑action‑kind support in the client).
+
+#### Rename — `textDocument/rename` / `textDocument/prepareRename`
+
+- `PrepareRenameResult` reified as named types: `PrepareRenamePlaceholder` and `PrepareRenameDefaultBehavior` (server can return `{ defaultBehavior: true }` to ask the client to fall back to its default rename behavior).
+
+#### Formatting — `textDocument/rangeFormatting`
+
+- `DocumentRangeFormattingClientCapabilities.rangesSupport` and matching `DocumentRangeFormattingOptions.rangesSupport`: a single capability flag that gates support for the new `textDocument/rangesFormatting` (multi‑range) request alongside the existing single‑range one.
+
+#### Diagnostics — `textDocument/publishDiagnostics` + pull (`textDocument/diagnostic`, `workspace/diagnostic`)
+
+- `Diagnostic.message` may now be a `MarkupContent` (proposed). Client capability `textDocument.diagnostic.markupMessageSupport`.
+
+#### Folding ranges — `textDocument/foldingRange`
+
+- `FoldingRangeClientCapabilities` extended with named `ClientFoldingRangeKindOptions` and `ClientFoldingRangeOptions` (the latter exposes `collapsedText`).
+- New workspace capability bucket `FoldingRangeWorkspaceClientCapabilities` (`refreshSupport`) — pairs with the new `workspace/foldingRange/refresh` request.
+
+#### Semantic tokens — `textDocument/semanticTokens/*`
+
+- `SemanticTokenTypes.label` added.
+- `SemanticTokenTypes` / `SemanticTokenModifiers` redefined as an open set (servers may report values outside the predefined list; clients must tolerate them).
+
+#### Code lens — `textDocument/codeLens` / `codeLens/resolve`
+
+- `CodeLensClientCapabilities.resolveSupport: ClientCodeLensResolveOptions` — lets a client advertise which properties it can resolve lazily.
+
+#### Window / messages
+
+- `MessageType.Debug` (5) added — used by `window/logMessage` (and accepted everywhere `MessageType` appears).
+
+#### Document filters / file watching — affects every request that uses a `DocumentSelector`
+
+- `pattern` is now a `GlobPattern`, so registrations can use `RelativePattern`. Gated by `TextDocumentFilterClientCapabilities.relativePatternSupport`.
+- `RegularExpressionEngineKind` introduced as an open kind type for `RegularExpressionsClientCapabilities.engine`.
+
+#### Markdown content — affects every request that returns `MarkupContent`
+
+- `MarkdownClientCapabilities.supportThemeIcons` (`$(name)` icon syntax in markdown).
+- Trusted‑markdown support extended: `Command` lists for `isTrusted` (`sanitizeIsTrusted` helper / `{ enabledCommands }` form) — applies wherever servers return markdown (hover, signature help, completion docs, etc.).
+
+#### Initialize — `initialize`
+
+- `ClientInfo` and `ServerInfo` reified as named types (returned via `InitializeResult.serverInfo` / sent in `InitializeParams.clientInfo`).
+- New named option types `StaleRequestSupportOptions` and `WorkspaceOptions` for the corresponding sections of `ServerCapabilities`.
+- Capability info (server + client capability paths) attached to every existing request/notification namespace; `messageDirection` constant exposed on every existing message.
+
+#### Notebook document — `notebookDocument/didOpen` / `didChange` / `didSave` / `didClose`
+
+- Granular notebook sync types added on top of the existing ones: `NotebookDocumentFilterWithNotebook`, `NotebookDocumentFilterWithCells`, `NotebookCellLanguage`, `NotebookDocumentCellChangeStructure`, `NotebookDocumentCellContentChanges`, `NotebookDocumentCellChanges`. These do not change the wire format but give the cell-change event a typed shape.
+- Notebook documents now participate in diagnostic pull (`textDocument/diagnostic` and `workspace/diagnostic` may be issued for notebook cells).
+
+#### Document color — `textDocument/colorPresentation`
+
+- Capability info added: clients now signal support via the standard capability-info path (`textDocument.colorProvider`), making client/server capability detection consistent with the other requests.
+
+### Protocol — new data types / shapes
+
+- Workspace edits & rename
+  - `SnippetTextEdit`, `WorkspaceEditMetadata`, `ChangeAnnotationsSupportOptions`.
+  - `PrepareRenameResult` extended with `PrepareRenamePlaceholder` and `PrepareRenameDefaultBehavior`; `RenameParams` now references `TextDocumentPositionParams`.
+- Code actions
+  - `CodeActionTag` (with proposed `LLMGenerated`) and `CodeActionTagOptions`.
+  - `CodeActionKindDocumentation`, `CodeActionKind.RefactorMove` (proposed), `CodeActionDisabled`.
+  - `ClientCodeActionKindOptions`, `ClientCodeActionLiteralOptions`, `ClientCodeActionResolveOptions`.
+- Completion
+  - `CompletionItemDefaults` (incl. `data`), `CompletionItemApplyKinds`, `ApplyKind` (`Replace` | `Merge`) — controls how list defaults merge with per‑item `commitCharacters`/`data`.
+  - `EditRangeWithInsertReplace`, `CompletionItemTagOptions`, `CompletionListCapabilities`, `CompletionClientCapabilities`, `ClientCompletionItemResolveOptions`, `ClientCompletionItemInsertTextModeOptions`, `ClientCompletionItemOptions`, `ClientCompletionItemOptionsKind`, `ServerCompletionItemOptions`.
+- Signature help: `ClientSignatureParameterInformationOptions`, `ClientSignatureInformationOptions`.
+- Symbols / CodeLens: `ClientSymbolKindOptions`, `ClientSymbolTagOptions`, `ClientSymbolResolveOptions`, `ClientCodeLensResolveOptions`, `LocationUriOnly`.
+- Semantic tokens: `SemanticTokenTypes.label`; `ClientSemanticTokensRequestFullDelta`, `ClientSemanticTokensRequestOptions`, `SemanticTokensFullDelta`; open-set semantics for `SemanticTokenTypes`/`SemanticTokenModifiers`.
+- Markdown / messages: `MessageType.Debug`; `MarkdownString.supportThemeIcons`; trusted markdown command lists; `ClientShowMessageActionItemOptions`.
+- Diagnostics: `DiagnosticsCapabilities`, `ClientDiagnosticsTagOptions`, refined `PublishDiagnosticsClientCapabilities`, `DiagnosticClientCapabilities`.
+- Document/notebook filters
+  - `TextDocumentFilterLanguage` / `…Scheme` / `…Pattern` (and the matching `NotebookDocumentFilter*` variants).
+  - `GlobPattern` namespace + relative-pattern support; `TextDocumentFilterClientCapabilities`.
+  - `NotebookDocumentFilterWithCells`, `NotebookDocumentFilterWithNotebook`, `NotebookCellLanguage`, finer-grained notebook change types.
+- Inline completion data: `InlineCompletionItem`, `InlineCompletionList`, `InlineCompletionTriggerKind`, `InlineCompletionContext`, `SelectedCompletionInfo`, `StringValue`.
+- Misc named types: `ServerInfo`, `ClientInfo`, `MessageType` literal, `RegularExpressionEngineKind` (namespaced kind type), `StaleRequestSupportOptions`, `WorkspaceOptions`, `LanguageKind` (open set; D, Pascal, Haskell added).
+- Text content change variants: `TextDocumentContentChangePartial`, `TextDocumentContentChangeWholeDocument`.
+
+### Implementation:
 
 - Upgraded to newer libraries, compilers and package.json exports rules:
   - Compiler upgraded to `5.9.x`.
   - Libs now depend on NodeJS `22.13.14` and `es2022`. See also [TypeScript's node  target mapping](https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping).
   - `vscode-jsonrpc`, `vscode-languageserver-protocol`, `vscode-languageclient` and `vscode-languageserver` now use the `exports` property instead of having a `main` and `typings` property. This might need adoption in tsconfig.json files around the `module` and `moduleResolution`. The LSP libraries currently use `node16` for both values.
-- added proposed CodeActionKind.RefactorMove
-- snippet support in Workspace edits
+`vscode-languageserver-types` ships separate UMD/ESM publishes; `module` export condition added so bundlers pick up the ESM build.
+- removed `null` from the `textDocument/documentColor` and `textDocument/colorPresentation` request to make it consistent with the specification. This is a breaking change.
 - support to control the parallelism of the dispatch requests and notification. This is a breaking change since it allows notification handlers to return a promise to control this.
-- make client browser implementation consistent with the node implementation in terms of arguments. This is a breaking change since it re-ordered parameter declarations.
+- make client browser implementation consistent with the node implementation in terms of arguments. This is a breaking change since its re-ordered parameter declarations.
 - Added a `CancellationToken` to the show document middleware to make it consistent with the other middleware. This is a breaking change since it added a required parameter.
 - Using `LogOutputChannel` for the client's output and trace channel instead of the standard VSCode `OutputChannel` type. This is a breaking change for clients that pass in their own log or trace channel via the `LanguageClientOptions`. Instead of using a normal `OutputChannel` you now need to pass in a `LogOutputChannel`.
 - LinkedList from `jsonrpc` is not implementing Map anymore.

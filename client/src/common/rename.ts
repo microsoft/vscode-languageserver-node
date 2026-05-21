@@ -8,7 +8,8 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, RenameOptions, RenameRegistrationOptions, RenameRequest, PrepareSupportDefaultBehavior, RenameParams, ResponseError, TextDocumentPositionParams, PrepareRenameRequest, Range} from 'vscode-languageserver-protocol';
+	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, RenameOptions, RenameRegistrationOptions, RenameRequest, PrepareSupportDefaultBehavior, RenameParams, ResponseError, TextDocumentPositionParams, PrepareRenameRequest, Range,
+	type WorkspaceEdit} from 'vscode-languageserver-protocol';
 
 import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
@@ -62,20 +63,29 @@ export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameO
 		const provider: RenameProvider = {
 			provideRenameEdits: (document, position, newName, token) => {
 				const client = this._client;
-				const provideRenameEdits: ProvideRenameEditsSignature = (document, position, newName, token) => {
+				const provideRenameEdits: ProvideRenameEditsSignature = async (document, position, newName, token) => {
 					const params: RenameParams = {
 						textDocument: client.code2ProtocolConverter.asTextDocumentIdentifier(document),
 						position: client.code2ProtocolConverter.asPosition(position),
 						newName: newName
 					};
-					return client.sendRequest(RenameRequest.type, params, token).then((result) => {
-						if (token.isCancellationRequested) {
-							return null;
-						}
-						return client.protocol2CodeConverter.asWorkspaceEdit(result, token);
-					}, (error: ResponseError<void>) => {
+					let result: WorkspaceEdit | null = null;
+					try {
+						result = await client.sendRequest(RenameRequest.type, params, token);
+					} catch (error) {
 						return client.handleFailedRequest(RenameRequest.type, token, error, null, false);
-					});
+					}
+					if (token.isCancellationRequested || result === null) {
+						return null;
+					}
+					const converted = await client.protocol2CodeConverter.asWorkspaceEdit(result, token);
+					if (token.isCancellationRequested) {
+						return null;
+					}
+					if (!client.validateWorkspaceEdit(result)) {
+						throw new Error(`The rename edit returned from the server is not valid anymore and cannot be applied.`);
+					}
+					return converted;
 				};
 				const middleware = client.middleware;
 				return middleware.provideRenameEdits
