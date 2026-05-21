@@ -691,7 +691,9 @@ class TextDocumentSnapshot implements TextDocument {
 	}
 
 	public save(): Thenable<boolean> {
-		return this.liveVsCodeDocument.save();
+		return this.version === this.liveVsCodeDocument.version
+			? this.liveVsCodeDocument.save()
+			: Promise.resolve(false);
 	}
 
 	public get lineCount(): number {
