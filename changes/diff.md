@@ -51,18 +51,18 @@ Spec lags a real `@since` qualifier:
 Folder rows below correspond to spec files. Each entry is a type defined in source (`@since 3.18.0` unless noted) that the spec keeps as an anonymous object literal.
 
 > - types/documentFilter.md: `TextDocumentFilterLanguage`, `TextDocumentFilterScheme`, `TextDocumentFilterPattern` (and the resulting discriminated‑union shape of `TextDocumentFilter`). Source: protocol.ts. The page also still types `DocumentSelector = DocumentFilter[]` while source is `(string | DocumentFilter)[]` with a "deprecated since 3.16" note, and source's `DocumentFilter` is `TextDocumentFilter | NotebookCellTextDocumentFilter` (the second arm is only mentioned over in notebook.md).
-- language/codeAction.md: `CodeActionTagOptions`, `ClientCodeActionKindOptions`, `ClientCodeActionLiteralOptions`, `ClientCodeActionResolveOptions`, `CodeActionDisabled`.
-- language/completion.md: `CompletionListCapabilities`, `CompletionItemTagOptions`, `ClientCompletionItemResolveOptions`, `ClientCompletionItemInsertTextModeOptions`, `ClientCompletionItemOptions`, `ClientCompletionItemOptionsKind`, `ServerCompletionItemOptions`, `EditRangeWithInsertReplace`.
-- language/rename.md: `PrepareRenamePlaceholder`, `PrepareRenameDefaultBehavior`, `PrepareRenameResult` (as a named union).
-- language/signatureHelp.md: `ClientSignatureInformationOptions`, `ClientSignatureParameterInformationOptions`.
-- language/foldingRange.md: `ClientFoldingRangeKindOptions`, `ClientFoldingRangeOptions`.
-- language/semanticTokens.md: `ClientSemanticTokensRequestFullDelta`, `ClientSemanticTokensRequestOptions`, `SemanticTokensFullDelta`.
-- language/inlayHint.md: `ClientInlayHintResolveOptions`.
-- language/documentSymbol.md & workspace/symbol.md: `ClientSymbolKindOptions`, `ClientSymbolTagOptions`, `ClientSymbolResolveOptions`.
-- general/initialize.md: `ClientInfo`, `ServerInfo`, `StaleRequestSupportOptions`, `WorkspaceOptions`, `GeneralClientCapabilities`, `WindowClientCapabilities`.
-- _includes/messages/.../showMessageRequest.md: `ClientShowMessageActionItemOptions`. Spec also documents `MessageActionItem` with only `title`, while source declares it with an open index signature `[key: string]: string | boolean | integer | object` (carrier for the `additionalPropertiesSupport` capability).
-- notebookDocument/notebook.md: `NotebookCellLanguage`, `NotebookDocumentFilterWithNotebook`, `NotebookDocumentFilterWithCells`, `NotebookDocumentCellChangeStructure`, `NotebookDocumentCellContentChanges`, `NotebookDocumentCellChanges`. The page also never names the `NotebookDocumentSyncRegistrationType` registration method (`'notebookDocument/sync'`).
-- textDocument/didChange.md: `TextDocumentContentChangePartial`, `TextDocumentContentChangeWholeDocument`.
+> - language/codeAction.md: `CodeActionTagOptions`, `ClientCodeActionKindOptions`, `ClientCodeActionLiteralOptions`, `ClientCodeActionResolveOptions`, `CodeActionDisabled`.
+> - language/completion.md: `CompletionListCapabilities`, `CompletionItemTagOptions`, `ClientCompletionItemResolveOptions`, `ClientCompletionItemInsertTextModeOptions`, `ClientCompletionItemOptions`, `ClientCompletionItemOptionsKind`, `ServerCompletionItemOptions`, `EditRangeWithInsertReplace`.
+> - language/rename.md: `PrepareRenamePlaceholder`, `PrepareRenameDefaultBehavior`, `PrepareRenameResult` (as a named union).
+> - language/signatureHelp.md: `ClientSignatureInformationOptions`, `ClientSignatureParameterInformationOptions`.
+> - language/foldingRange.md: `ClientFoldingRangeKindOptions`, `ClientFoldingRangeOptions`.
+> - language/semanticTokens.md: `ClientSemanticTokensRequestFullDelta`, `ClientSemanticTokensRequestOptions`, `SemanticTokensFullDelta`.
+> - language/inlayHint.md: `ClientInlayHintResolveOptions`.
+> - language/documentSymbol.md & workspace/symbol.md: `ClientSymbolKindOptions`, `ClientSymbolTagOptions`, `ClientSymbolResolveOptions`.
+> - general/initialize.md: `ClientInfo`, `ServerInfo`, `StaleRequestSupportOptions`, `WorkspaceOptions`, `GeneralClientCapabilities`, `WindowClientCapabilities`.
+> - _includes/messages/.../showMessageRequest.md: `ClientShowMessageActionItemOptions`. Spec also documents `MessageActionItem` with only `title`, while source declares it with an open index signature `[key: string]: string | boolean | integer | object` (carrier for the `additionalPropertiesSupport` capability).
+> - notebookDocument/notebook.md: `NotebookCellLanguage`, `NotebookDocumentFilterWithNotebook`, `NotebookDocumentFilterWithCells`, `NotebookDocumentCellChangeStructure`, `NotebookDocumentCellContentChanges`, `NotebookDocumentCellChanges`. The page also never names the `NotebookDocumentSyncRegistrationType` registration method (`'notebookDocument/sync'`).
+> - textDocument/didChange.md: `TextDocumentContentChangePartial`, `TextDocumentContentChangeWholeDocument`.
 
 ## F. Sections that match source
 
