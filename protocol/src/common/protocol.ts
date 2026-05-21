@@ -2641,6 +2641,9 @@ export interface CompletionClientCapabilities {
 	 */
 	completionItem?: ClientCompletionItemOptions;
 
+	/**
+	 * The client supports the following completion item kinds.
+	 */
 	completionItemKind?: ClientCompletionItemOptionsKind;
 
 	/**
@@ -3357,7 +3360,7 @@ export interface CodeActionClientCapabilities {
 	 * @since 3.18.0
 	 * @proposed
 	 */
-	 documentationSupport?: boolean;
+	documentationSupport?: boolean;
 
 	/**
 	 * Client supports the tag property on a code action. Clients
