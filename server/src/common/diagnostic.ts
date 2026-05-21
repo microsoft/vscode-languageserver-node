@@ -36,7 +36,7 @@ export interface DiagnosticFeatureShape {
 		 *
 		 * @param handler The corresponding handler.
 		 */
-		 onWorkspace(handler: ServerRequestHandler<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, DiagnosticServerCancellationData>): Disposable;
+		onWorkspace(handler: ServerRequestHandler<WorkspaceDiagnosticParams, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, DiagnosticServerCancellationData>): Disposable;
 	};
 }
 

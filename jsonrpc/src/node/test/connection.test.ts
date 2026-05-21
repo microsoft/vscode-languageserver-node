@@ -252,24 +252,24 @@ suite('Connection', () => {
 	});
 
 	test('Receives 0 as 0', (done) => {
- 		const type = new RequestType<number, number, void>('test/handleSingleRequest');
- 		const duplexStream1 = new TestDuplex('ds1');
- 		const duplexStream2 = new TestDuplex('ds2');
+		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
 
- 		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
- 		server.onRequest(type, (param) => {
- 			assert.strictEqual(param, 0);
- 			return 0;
- 		});
- 		server.listen();
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, (param) => {
+			assert.strictEqual(param, 0);
+			return 0;
+		});
+		server.listen();
 
- 		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
- 		client.listen();
- 		void client.sendRequest(type, 0).then(result => {
- 			assert.deepEqual(result, 0);
- 			done();
- 		});
- 	});
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		void client.sendRequest(type, 0).then(result => {
+			assert.deepEqual(result, 0);
+			done();
+		});
+	});
 
 	const testNotification = new NotificationType<{ value: boolean }>('testNotification');
 	test('Send and Receive Notification', (done) => {
