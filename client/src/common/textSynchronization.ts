@@ -766,10 +766,11 @@ class TextDocumentSnapshot implements TextDocument {
 		}
 		const lineRange = this._capturedTextDocument.getLineRange(line);
 		const text = this._capturedTextDocument.getText(lineRange);
-		const eolChars = this._capturedTextDocument.getEOLCharacters(line);
 		const firstNonWhitespaceCharacterIndex = text.search(/\S/);
 		const range = new VRange(lineRange.start.line, lineRange.start.character, lineRange.end.line, lineRange.end.character);
-		const rangeIncludingLineBreak = new VRange(lineRange.start.line, lineRange.start.character, lineRange.end.line, lineRange.end.character + eolChars.length);
+		const rangeIncludingLineBreak = line + 1 < this.lineCount
+			? new VRange(range.start.line, range.start.character, line + 1, 0)
+			: range;
 		return {
 			lineNumber: line,
 			text,
@@ -804,7 +805,8 @@ class TextDocumentSnapshot implements TextDocument {
 		if (start === range.start && end === range.end) {
 			return range;
 		}
-		return new VRange(start.line, start.character, end.line, end.character);	}
+		return new VRange(start.line, start.character, end.line, end.character);
+	}
 
 	validatePosition(position: VPosition): VPosition {
 		const line = Math.min(Math.max(position.line, 0), this.lineCount - 1);
