@@ -784,9 +784,10 @@ class TextDocumentSnapshot implements TextDocument {
 		const lineNumber = this.validatePosition(position).line;
 		const lineText = this.lineAt(lineNumber).text;
 
-		const wordRegex = regex || DEFAULT_WORD_REGEXP;
+		const wordRegex = TextDocumentSnapshot.getWordRegExp(regex);
 
 		let match;
+		wordRegex.lastIndex = 0;
 		while ((match = wordRegex.exec(lineText)) !== null) {
 			if (match.index <= position.character && wordRegex.lastIndex >= position.character) {
 				return new VRange(lineNumber, match.index, lineNumber, wordRegex.lastIndex);
@@ -813,5 +814,14 @@ class TextDocumentSnapshot implements TextDocument {
 			return position;
 		}
 		return new VPosition(line, character);
+	}
+
+	private static getWordRegExp(regex?: RegExp): RegExp {
+		const result = regex ?? DefaultWordRegExp;
+		if (result.flags.includes('g')) {
+			return result;
+		}
+		const flags = `${result.flags}g`;
+		return new RegExp(result.source, flags);
 	}
 }
