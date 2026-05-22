@@ -184,6 +184,28 @@ export interface TextDocument {
 	offsetAt(position: Position): number;
 
 	/**
+	 * Gets the range of the entire line, without any newline characters.
+	 *
+	 * @param line the line number.
+	 * @return A range covering the entire line. The range will be valid even
+	 * 		if the line number is out of bounds. The range will contain a start
+	 * 		and end position that are equal if the line is empty or the line
+	 * 		number is negative. If the line number is greater than the number
+	 * 		of lines in the document, the range will cover the remaining text
+	 * 		after the last line.
+	 */
+	getLineRange(line: number): Range;
+
+	/**
+	 * Gets the end of line character(s) for a line.
+	 *
+	 * @param line the line number.
+	 * @return The end of line character(s) for the line. The result will be
+	 * 		an empty string if the line number is out of bounds.
+	 */
+	getEOLCharacters(line: number): string;
+
+	/**
 	 * The number of lines in this document.
 	 *
 	 * @readonly
@@ -302,7 +324,7 @@ class FullTextDocument implements TextDocument {
 		return { line, character: offset - lineOffsets[line] };
 	}
 
-	public offsetAt(position: Position) {
+	public offsetAt(position: Position): number {
 		const lineOffsets = this.getLineOffsets();
 		if (position.line >= lineOffsets.length) {
 			return this._content.length;
@@ -317,6 +339,32 @@ class FullTextDocument implements TextDocument {
 		const nextLineOffset = (position.line + 1 < lineOffsets.length) ? lineOffsets[position.line + 1] : this._content.length;
 		const offset = Math.min(lineOffset + position.character, nextLineOffset);
 		return this.ensureBeforeEOL(offset, lineOffset);
+	}
+
+	public getLineRange(line: number): Range {
+		const lineOffsets = this.getLineOffsets();
+		if (line >= lineOffsets.length) {
+			const lastLine = lineOffsets.length - 1;
+			return { start: { line: lastLine, character: 0 }, end: { line: lastLine, character: this._content.length - lineOffsets[lastLine] } };
+		} else if (line < 0) {
+			return { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
+		}
+		const startOffset = lineOffsets[line];
+		const nextLineOffset = (line + 1 < lineOffsets.length) ? lineOffsets[line + 1] : this._content.length;
+		const endOffset = this.ensureBeforeEOL(nextLineOffset, startOffset);
+		return { start: { line, character: 0 }, end: { line, character: endOffset - startOffset } };
+	}
+
+	public getEOLCharacters(line: number): string {
+		const lineOffsets = this.getLineOffsets();
+		if (line >= lineOffsets.length) {
+			return '';
+		} else if (line < 0) {
+			return '';
+		}
+		const nextLineOffset = (line + 1 < lineOffsets.length) ? lineOffsets[line + 1] : this._content.length;
+		const eolOffset = this.ensureBeforeEOL(nextLineOffset, lineOffsets[line]);
+		return this._content.substring(eolOffset, nextLineOffset);
 	}
 
 	private ensureBeforeEOL(offset: number, lineOffset: number): number {
