@@ -148,6 +148,179 @@ suite('Text Document Lines Model Validator', () => {
 });
 
 
+suite('Text Document getLineRange', () => {
+
+	test('Single line without EOL', () => {
+		const document = newDocument('Hello World');
+		assert.deepEqual(document.getLineRange(0), Ranges.create(0, 0, 0, 11));
+	});
+
+	test('Empty content', () => {
+		const document = newDocument('');
+		assert.deepEqual(document.getLineRange(0), Ranges.create(0, 0, 0, 0));
+	});
+
+	test('Multiple lines with \\n', () => {
+		const document = newDocument('ABCDE\nFGHIJ\nKLMNO');
+		assert.deepEqual(document.getLineRange(0), Ranges.create(0, 0, 0, 5));
+		assert.deepEqual(document.getLineRange(1), Ranges.create(1, 0, 1, 5));
+		assert.deepEqual(document.getLineRange(2), Ranges.create(2, 0, 2, 5));
+	});
+
+	test('Multiple lines with \\r\\n', () => {
+		const document = newDocument('ABCDE\r\nFGHIJ\r\nKLMNO');
+		assert.deepEqual(document.getLineRange(0), Ranges.create(0, 0, 0, 5));
+		assert.deepEqual(document.getLineRange(1), Ranges.create(1, 0, 1, 5));
+		assert.deepEqual(document.getLineRange(2), Ranges.create(2, 0, 2, 5));
+	});
+
+	test('Multiple lines with \\r', () => {
+		const document = newDocument('ABCDE\rFGHIJ\rKLMNO');
+		assert.deepEqual(document.getLineRange(0), Ranges.create(0, 0, 0, 5));
+		assert.deepEqual(document.getLineRange(1), Ranges.create(1, 0, 1, 5));
+		assert.deepEqual(document.getLineRange(2), Ranges.create(2, 0, 2, 5));
+	});
+
+	test('Trailing newline produces empty last line', () => {
+		const document = newDocument('ABCDE\nFGHIJ\n');
+		assert.equal(document.lineCount, 3);
+		assert.deepEqual(document.getLineRange(0), Ranges.create(0, 0, 0, 5));
+		assert.deepEqual(document.getLineRange(1), Ranges.create(1, 0, 1, 5));
+		assert.deepEqual(document.getLineRange(2), Ranges.create(2, 0, 2, 0));
+	});
+
+	test('Empty lines', () => {
+		const document = newDocument('ABCDE\n\nFGHIJ');
+		assert.deepEqual(document.getLineRange(0), Ranges.create(0, 0, 0, 5));
+		assert.deepEqual(document.getLineRange(1), Ranges.create(1, 0, 1, 0));
+		assert.deepEqual(document.getLineRange(2), Ranges.create(2, 0, 2, 5));
+	});
+
+	test('Starts with newline', () => {
+		const document = newDocument('\nABCDE');
+		assert.deepEqual(document.getLineRange(0), Ranges.create(0, 0, 0, 0));
+		assert.deepEqual(document.getLineRange(1), Ranges.create(1, 0, 1, 5));
+	});
+
+	test('Start and end are on the same line', () => {
+		const document = newDocument('ABCDE\nFGHIJ\r\nKLMNO\rPQRST');
+		for (let line = 0; line < document.lineCount; line++) {
+			const range = document.getLineRange(line);
+			assert.equal(range.start.line, range.end.line, `start.line === end.line for line ${line}`);
+			assert.equal(range.start.line, line, `start.line === ${line}`);
+			assert.equal(range.start.character, 0, `start.character === 0 for line ${line}`);
+		}
+	});
+
+	test('Line beyond range clamps to last line', () => {
+		const document = newDocument('ABCDE\nFGHIJ');
+		assert.deepEqual(document.getLineRange(5), Ranges.create(1, 0, 1, 5));
+	});
+
+	test('Line beyond range with trailing newline', () => {
+		const document = newDocument('ABCDE\n');
+		assert.deepEqual(document.getLineRange(5), Ranges.create(1, 0, 1, 0));
+	});
+
+	test('Negative line returns zero range', () => {
+		const document = newDocument('ABCDE\nFGHIJ');
+		assert.deepEqual(document.getLineRange(-1), Ranges.create(0, 0, 0, 0));
+	});
+
+	test('getText with returned range does not include EOL', () => {
+		const document = newDocument('ABCDE\nFGHIJ\r\nKLMNO\rPQRST');
+		assert.equal(document.getText(document.getLineRange(0)), 'ABCDE');
+		assert.equal(document.getText(document.getLineRange(1)), 'FGHIJ');
+		assert.equal(document.getText(document.getLineRange(2)), 'KLMNO');
+		assert.equal(document.getText(document.getLineRange(3)), 'PQRST');
+	});
+});
+
+
+suite('Text Document getEOL', () => {
+
+	test('Single line without EOL', () => {
+		const document = newDocument('Hello World');
+		assert.equal(document.getEOLCharacters(0), '');
+	});
+
+	test('Empty content', () => {
+		const document = newDocument('');
+		assert.equal(document.getEOLCharacters(0), '');
+	});
+
+	test('Multiple lines with \\n', () => {
+		const document = newDocument('ABCDE\nFGHIJ\nKLMNO');
+		assert.equal(document.getEOLCharacters(0), '\n');
+		assert.equal(document.getEOLCharacters(1), '\n');
+		assert.equal(document.getEOLCharacters(2), '');
+	});
+
+	test('Multiple lines with \\r\\n', () => {
+		const document = newDocument('ABCDE\r\nFGHIJ\r\nKLMNO');
+		assert.equal(document.getEOLCharacters(0), '\r\n');
+		assert.equal(document.getEOLCharacters(1), '\r\n');
+		assert.equal(document.getEOLCharacters(2), '');
+	});
+
+	test('Multiple lines with \\r', () => {
+		const document = newDocument('ABCDE\rFGHIJ\rKLMNO');
+		assert.equal(document.getEOLCharacters(0), '\r');
+		assert.equal(document.getEOLCharacters(1), '\r');
+		assert.equal(document.getEOLCharacters(2), '');
+	});
+
+	test('Mixed EOLs', () => {
+		const document = newDocument('ABCDE\nFGHIJ\r\nKLMNO\rPQRST');
+		assert.equal(document.getEOLCharacters(0), '\n');
+		assert.equal(document.getEOLCharacters(1), '\r\n');
+		assert.equal(document.getEOLCharacters(2), '\r');
+		assert.equal(document.getEOLCharacters(3), '');
+	});
+
+	test('Trailing newline produces empty EOL for last line', () => {
+		const document = newDocument('ABCDE\nFGHIJ\n');
+		assert.equal(document.lineCount, 3);
+		assert.equal(document.getEOLCharacters(0), '\n');
+		assert.equal(document.getEOLCharacters(1), '\n');
+		assert.equal(document.getEOLCharacters(2), '');
+	});
+
+	test('Empty lines', () => {
+		const document = newDocument('ABCDE\n\nFGHIJ');
+		assert.equal(document.getEOLCharacters(0), '\n');
+		assert.equal(document.getEOLCharacters(1), '\n');
+		assert.equal(document.getEOLCharacters(2), '');
+	});
+
+	test('Starts with newline', () => {
+		const document = newDocument('\nABCDE');
+		assert.equal(document.getEOLCharacters(0), '\n');
+		assert.equal(document.getEOLCharacters(1), '');
+	});
+
+	test('Line beyond range returns empty string', () => {
+		const document = newDocument('ABCDE\nFGHIJ');
+		assert.equal(document.getEOLCharacters(2), '');
+		assert.equal(document.getEOLCharacters(5), '');
+	});
+
+	test('Negative line returns empty string', () => {
+		const document = newDocument('ABCDE\nFGHIJ');
+		assert.equal(document.getEOLCharacters(-1), '');
+	});
+
+	test('getLineRange end + getEOL reconstructs original line text', () => {
+		const str = 'ABCDE\nFGHIJ\r\nKLMNO\rPQRST';
+		const document = newDocument(str);
+		let reconstructed = '';
+		for (let line = 0; line < document.lineCount; line++) {
+			reconstructed += document.getText(document.getLineRange(line)) + document.getEOLCharacters(line);
+		}
+		assert.equal(reconstructed, str);
+	});
+});
+
 
 suite('Text Document Full Updates', () => {
 	test('One full update', () => {

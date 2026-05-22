@@ -4,9 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {
-	workspace as Workspace, languages as Languages, TextDocument, TextDocumentChangeEvent, TextDocumentWillSaveEvent, TextEdit as VTextEdit,
-	DocumentSelector as VDocumentSelector, Event, EventEmitter, Disposable,
-	workspace
+	workspace as Workspace, languages as Languages, TextDocument, TextLine, TextDocumentChangeEvent, TextDocumentWillSaveEvent, TextEdit as VTextEdit,
+	DocumentSelector as VDocumentSelector, Event, EventEmitter, Disposable, Uri as VUri, workspace, type EndOfLine, Position as VPosition, Range as VRange
 } from 'vscode';
 
 import {
@@ -22,6 +21,7 @@ import {
 } from './features';
 
 import * as UUID from './utils/uuid';
+import { TextDocument as TextDocumentImpl } from 'vscode-languageserver-textdocument';
 
 export interface TextDocumentSynchronizationMiddleware {
 	didOpen?: NextSignature<TextDocument, Promise<void>>;
@@ -77,7 +77,14 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			if (visibleDocuments.isVisible(document)) {
 				return super.callback(document);
 			} else {
-				this._pendingOpenNotifications.set(document.uri.toString(), document);
+				// Snapshot the text document so that when we send the delayed
+				// notification it is based on the content/version at the time
+				// it would've been sent, and not the updated version.
+				//
+				// See https://github.com/microsoft/vscode-languageserver-node/issues/1695
+
+				const snapshot = new TextDocumentSnapshot(document);
+				this._pendingOpenNotifications.set(snapshot.uri.toString(), snapshot);
 			}
 		}
 	}
@@ -631,5 +638,180 @@ export class DidSaveTextDocumentFeature extends TextDocumentEventFeature<DidSave
 
 	protected getTextDocument(data: TextDocument): TextDocument {
 		return data;
+	}
+}
+
+// Copied from https://github.com/microsoft/vscode/src/vs/editor/common/core/wordHelper.ts
+const USUAL_WORD_SEPARATORS = '`~!@#$%^&*()-=+[{]}\\|;:\'",.<>/?';
+
+/**
+ * Create a word definition regular expression based on default word separators.
+ * Optionally provide allowed separators that should be included in words.
+ *
+ * The default would look like this:
+ * /(-?\d*\.\d\w*)|([^\`\~\!\@\#\$\%\^\&\*\(\)\-\=\+\[\{\]\}\\\|\;\:\'\"\,\.\<\>\/\?\s]+)/g
+ */
+function createWordRegExp(allowInWords: string = ''): RegExp {
+	let source = '(-?\\d*\\.\\d\\w*)|([^';
+	for (const sep of USUAL_WORD_SEPARATORS) {
+		if (allowInWords.indexOf(sep) >= 0) {
+			continue;
+		}
+		source += '\\' + sep;
+	}
+	source += '\\s]+)';
+	return new RegExp(source, 'g');
+}
+
+// catches numbers (including floating numbers) in the first group, and alphanum in the second
+const DEFAULT_WORD_REGEXP = createWordRegExp();
+
+class TextDocumentSnapshot implements TextDocument {
+
+	private readonly _extTextDocument: TextDocument;
+	private readonly _capturedTextDocument: TextDocumentImpl;
+
+	private readonly _content: string;
+	private readonly _uri: VUri;
+	private readonly _fileName: string;
+	private readonly _languageId: string;
+	private readonly _version: number;
+	private readonly _eol: EndOfLine;
+	private readonly _isUntitled: boolean;
+	private readonly _encoding: string;
+	private readonly _isDirty: boolean;
+	private readonly _isClosed: boolean;
+
+	constructor(textDocument: TextDocument) {
+		this._extTextDocument = textDocument;
+		this._content = textDocument.getText();
+		this._uri = textDocument.uri;
+		this._fileName = textDocument.fileName;
+		this._languageId = textDocument.languageId;
+		this._version = textDocument.version;
+		this._eol = textDocument.eol;
+		this._isUntitled = textDocument.isUntitled;
+		this._encoding = textDocument.encoding;
+		this._isDirty = textDocument.isDirty;
+		this._isClosed = textDocument.isClosed;
+
+		this._capturedTextDocument = TextDocumentImpl.create(this._uri.toString(), this._languageId, this._version, this._content);
+	}
+
+	public get uri(): VUri {
+		return this._uri;
+	}
+
+	public get languageId(): string {
+		return this._languageId;
+	}
+
+	public get version(): number {
+		return this._version;
+	}
+
+	public get eol(): EndOfLine {
+		return this._eol;
+	}
+
+	public get isUntitled(): boolean {
+		return this._isUntitled;
+	}
+
+	public get encoding(): string {
+		return this._encoding;
+	}
+
+	public get fileName(): string {
+		return this._fileName;
+	}
+
+	public get isDirty(): boolean {
+		return this._isDirty;
+	}
+
+	public get isClosed(): boolean {
+		return this._isClosed;
+	}
+
+	public save(): Thenable<boolean> {
+		return this.version === this._extTextDocument.version
+			? this._extTextDocument.save()
+			: Promise.resolve(false);
+	}
+
+	public get lineCount(): number {
+		return this._capturedTextDocument.lineCount;
+	}
+
+	public offsetAt(position: VPosition): number {
+		return this._capturedTextDocument.offsetAt(position);
+	}
+
+	public positionAt(offset: number): VPosition {
+		const position = this._capturedTextDocument.positionAt(offset);
+		return new VPosition(position.line, position.character);
+	}
+
+	public getText(range?: VRange): string {
+		return this._capturedTextDocument.getText(range);
+	}
+
+	public lineAt(line: number): TextLine;
+	public lineAt(position: VPosition): TextLine;
+	public lineAt(lineOrPosition: VPosition | number): TextLine {
+		const line = typeof lineOrPosition === 'number' ? lineOrPosition : this.validatePosition(lineOrPosition).line;
+		if (line < 0 || line >= this.lineCount) {
+			throw new RangeError(`Illegal value for line: ${line}`);
+		}
+		const lineRange = this._capturedTextDocument.getLineRange(line);
+		const text = this._capturedTextDocument.getText(lineRange);
+		const eolChars = this._capturedTextDocument.getEOLCharacters(line);
+		const firstNonWhitespaceCharacterIndex = text.search(/\S/);
+		const range = new VRange(lineRange.start.line, lineRange.start.character, lineRange.end.line, lineRange.end.character);
+		const rangeIncludingLineBreak = new VRange(lineRange.start.line, lineRange.start.character, lineRange.end.line, lineRange.end.character + eolChars.length);
+		return {
+			lineNumber: line,
+			text,
+			range,
+			rangeIncludingLineBreak,
+			firstNonWhitespaceCharacterIndex: firstNonWhitespaceCharacterIndex === -1 ? text.length : firstNonWhitespaceCharacterIndex,
+			isEmptyOrWhitespace: firstNonWhitespaceCharacterIndex === -1
+		};
+	}
+
+	getWordRangeAtPosition(position: VPosition, regex?: RegExp): VRange | undefined {
+		const lineNumber = this.validatePosition(position).line;
+		const lineText = this.lineAt(lineNumber).text;
+
+		const wordRegex = regex || DEFAULT_WORD_REGEXP;
+
+		let match;
+		while ((match = wordRegex.exec(lineText)) !== null) {
+			if (match.index <= position.character && wordRegex.lastIndex >= position.character) {
+				return new VRange(lineNumber, match.index, lineNumber, wordRegex.lastIndex);
+			}
+		}
+
+		return undefined;
+	}
+
+	validateRange(range: VRange): VRange {
+		const start = this.validatePosition(range.start);
+		const end = this.validatePosition(range.end);
+
+		if (start === range.start && end === range.end) {
+			return range;
+		}
+		return new VRange(start.line, start.character, end.line, end.character);	}
+
+	validatePosition(position: VPosition): VPosition {
+		const line = Math.min(Math.max(position.line, 0), this.lineCount - 1);
+		const lineRange = this._capturedTextDocument.getLineRange(line);
+		const character = Math.min(Math.max(position.character, 0), lineRange.end.character);
+		if (line === position.line && character === position.character) {
+			return position;
+		}
+		return new VPosition(line, character);
 	}
 }
