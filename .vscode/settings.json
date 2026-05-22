@@ -11,21 +11,22 @@
 
 	"task.allowAutomaticTasks": "on",
 
-	"typescript.tsc.autoDetect": "off",
-	"typescript.tsdk": "./node_modules/typescript/lib",
-	"typescript.tsserver.trace": "off",
-	"typescript.format.insertSpaceAfterCommaDelimiter": true,
-	"typescript.format.insertSpaceAfterSemicolonInForStatements": true,
-	"typescript.format.insertSpaceBeforeAndAfterBinaryOperators": true,
-	"typescript.format.insertSpaceAfterKeywordsInControlFlowStatements": true,
-	"typescript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": true,
-	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": false,
-	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": false,
-	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces": false,
-	"typescript.format.placeOpenBraceOnNewLineForFunctions": false,
-	"typescript.format.placeOpenBraceOnNewLineForControlBlocks": false,
+	"js/ts.tsc.autoDetect": "off",
+	"js/ts.tsdk.path": "./node_modules/typescript/lib",
+	"js/ts.format.insertSpaceAfterCommaDelimiter": true,
+	"js/ts.format.insertSpaceAfterSemicolonInForStatements": true,
+	"js/ts.format.insertSpaceBeforeAndAfterBinaryOperators": true,
+	"js/ts.format.insertSpaceAfterKeywordsInControlFlowStatements": true,
+	"js/ts.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": true,
+	"js/ts.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyParenthesis": false,
+	"js/ts.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": false,
+	"js/ts.format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces": false,
+	"js/ts.format.placeOpenBraceOnNewLineForFunctions": false,
+	"js/ts.format.placeOpenBraceOnNewLineForControlBlocks": false,
+	"js/ts.validate.enabled": false,
 
-	"javascript.validate.enable": false,
+	"typescript.tsserver.trace": "off",
+	"typescript.tsserver.experimental.useVsCodeWatcher": true,
 
 	"git.branchProtection": [
 		"main"
@@ -103,5 +104,4 @@
 		"XCOPY"
 	],
 	"githubPullRequests.createDefaultBaseBranch": "repositoryDefault",
-	"typescript.tsserver.experimental.useVsCodeWatcher": true
 }

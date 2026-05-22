@@ -432,7 +432,7 @@ class DiagnosticRequestor implements Disposable {
 		const uri = document instanceof Uri ? document : document.uri;
 		const key = uri.toString();
 		const request = this.openRequests.get(key);
-		if (this.options.workspaceDiagnostics) {
+		if (this.options.workspaceDiagnostics && uri.scheme !== 'untitled') {
 			// If we run workspace diagnostic pull a last time for the diagnostics
 			// and then rely on getting them from the workspace result.
 			if (request !== undefined) {
