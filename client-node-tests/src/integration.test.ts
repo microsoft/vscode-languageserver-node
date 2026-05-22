@@ -2369,7 +2369,6 @@ suite('delayOpenNotifications', () => {
 		await sendDidOpen(fakeDocument);
 
 		// Modify the document and trigger change.
-		// Modify the document and trigger change.
 		const originalText = fakeDocument.getText();
 		const updatedText = 'NEW CONTENT';
 		(fakeDocument as any).version = 2;
