@@ -817,7 +817,7 @@ class TextDocumentSnapshot implements TextDocument {
 	}
 
 	private static getWordRegExp(regex?: RegExp): RegExp {
-		const result = regex ?? DefaultWordRegExp;
+		const result = regex ?? DEFAULT_WORD_REGEXP;
 		if (result.flags.includes('g')) {
 			return result;
 		}
