@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { randomUUID } from 'crypto';
 
-import find = require('find-process');
+import find from 'find-process';
 import { runTests } from '@vscode/test-electron';
 
 function rimraf(location: string) {
