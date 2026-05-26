@@ -113,7 +113,13 @@ class WritableStreamWrapper implements RAL.WritableStream {
 			}
 			this.socket.send(data);
 		} else {
-			this.socket.send(data);
+			if (data.buffer instanceof ArrayBuffer) {
+				this.socket.send(data.buffer);
+			} else {
+				// We can't send a shared array buffer directly, so we need to
+				// create a copy of it.
+				this.socket.send(new Uint8Array(data.buffer).slice().buffer);
+			}
 		}
 		return Promise.resolve();
 	}

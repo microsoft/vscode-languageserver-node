@@ -30,7 +30,7 @@
 		}
 	},
 	"devDependencies": {
-		"@types/msgpack-lite": "^0.1.11",
+		"@types/msgpack-lite": "^0.1.12",
 		"msgpack-lite": "^0.1.26"
 	},
 	"scripts": {
