@@ -788,6 +788,13 @@ export namespace Diagnostic {
 			&& (Is.undefined(candidate.relatedInformation) || Is.typedArray<DiagnosticRelatedInformation>(candidate.relatedInformation, DiagnosticRelatedInformation.is));
 	}
 
+	/**
+	 * Checks whether the given diagnostic's message conforms to the 3.17.0
+	 * version of the protocol where the message is a string.
+	 *
+	 * @param value the diagnostic
+	 * @returns true if the diagnostic's message is a string, false otherwise.
+	 */
 	export function is3_17(value: Diagnostic): value is Omit<Diagnostic, 'message'> & { message: string } {
 		return Is.string(value.message);
 	}
