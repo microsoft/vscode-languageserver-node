@@ -813,7 +813,7 @@ export namespace Diagnostic {
 		} else if (MarkupContent.is(diagnostic.message)) {
 			return diagnostic.message.value;
 		} else {
-			throw new Error(`Unknown message type ${diagnostic.message}`);
+			throw new Error(`Unknown message type ${typeof diagnostic.message}`);
 		}
 	}
 }
