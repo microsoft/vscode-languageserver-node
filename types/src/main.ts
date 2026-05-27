@@ -798,6 +798,24 @@ export namespace Diagnostic {
 	export function is3_17(value: Diagnostic): value is Omit<Diagnostic, 'message'> & { message: string } {
 		return Is.string(value.message);
 	}
+
+	/**
+	 * Gets the message string of a diagnostic. If the message is already a
+	 * string, it is returned as is. If the message is a MarkupContent,
+	 * the value of the MarkupContent is returned. Otherwise an error is thrown.
+	 *
+	 * @param diagnostic the diagnostic to get the message string from.
+	 * @returns the message string of the given diagnostic.
+	 */
+	export function getMessageString(diagnostic: Diagnostic): string {
+		if (Is.string(diagnostic.message)) {
+			return diagnostic.message;
+		} else if (MarkupContent.is(diagnostic.message)) {
+			return diagnostic.message.value;
+		} else {
+			throw new Error(`Unknown message type ${typeof diagnostic.message}`);
+		}
+	}
 }
 
 /**
