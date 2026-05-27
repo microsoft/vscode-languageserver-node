@@ -787,6 +787,10 @@ export namespace Diagnostic {
 			&& (Is.string(candidate.source) || Is.undefined(candidate.source))
 			&& (Is.undefined(candidate.relatedInformation) || Is.typedArray<DiagnosticRelatedInformation>(candidate.relatedInformation, DiagnosticRelatedInformation.is));
 	}
+
+	export function is3_17(value: Diagnostic): value is Omit<Diagnostic, 'message'> & { message: string } {
+		return Is.string(value.message);
+	}
 }
 
 /**
