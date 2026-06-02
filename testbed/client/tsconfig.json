@@ -5,6 +5,7 @@
 		"outDir": "out",
 		"rootDir": "src",
 		"lib": ["ES2023"],
+		"types": [ "node" ],
 		"sourceMap": true,
 		"incremental": true,
 		"tsBuildInfoFile":"./out/tsconfig.tsbuildInfo",
