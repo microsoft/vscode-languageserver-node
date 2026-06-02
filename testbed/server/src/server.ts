@@ -114,7 +114,7 @@ connection.onInitialize((params, cancel, progress): Thenable<InitializeResult> |
 			connection.console.log(`${folder.name} ${folder.uri}`);
 		}
 		if (workspaceFolders.length > 0) {
-			folder = params.workspaceFolders[0].uri;
+			folder = params.workspaceFolders![0].uri;
 		}
 	}
 
@@ -197,13 +197,16 @@ connection.onInitialized((params) => {
 		connection.console.log('Workspace folder changed received');
 	});
 	void connection.workspace.getWorkspaceFolders().then(folders => {
+		if (folders === undefined || folders === null) {
+			return;
+		}
 		for (const folder of folders) {
 			connection.console.log(`Get workspace folders: ${folder.name} ${folder.uri}`);
 		}
 	});
 	const registrationOptions: SemanticTokensRegistrationOptions = {
 		documentSelector: ['bat'],
-		legend: semanticTokensLegend,
+		legend: semanticTokensLegend!,
 		range: false,
 		full: {
 			delta: true
@@ -312,9 +315,9 @@ const patterns = [
 
 function computeDiagnostics(content: string): Diagnostic[] {
 	const result: Diagnostic[] = [];
-	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
+	const lines: RegExpMatchArray | null = content.match(/^.*(\n|\r\n|\r|$)/gm);
 	let lineNumber: number = 0;
-	for (const line of lines) {
+	for (const line of lines ?? []) {
 		const pattern = patterns[Math.floor(Math.random() * 3)];
 		let match: RegExpExecArray | null;
 		while (match = pattern.exec(line)) {
@@ -362,7 +365,7 @@ connection.languages.diagnostics.onWorkspace(async (params, token, _, resultProg
 			index = 0;
 		}
 		const diagnostics = computeDiagnostics(await fs.readFile(toValidate[index], { encoding: 'utf8'} ));
-		resultProgress.report({ items: [
+		resultProgress!.report({ items: [
 			{
 				kind: DocumentDiagnosticReportKind.Full,
 				uri: URI.file(toValidate[index]).toString(),
@@ -665,7 +668,7 @@ function getTokenBuilder(document: TextDocument): SemanticTokensBuilder {
 function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
 	const text = document.getText();
 	const regexp = /\w+/g;
-	let match: RegExpMatchArray;
+	let match: RegExpExecArray | null;
 	let tokenCounter: number = 0;
 	let modifierCounter: number = 0;
 	while ((match = regexp.exec(text)) !== null) {
