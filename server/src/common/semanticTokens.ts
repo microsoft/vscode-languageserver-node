@@ -38,7 +38,7 @@ export const SemanticTokensFeature: Feature<_Languages, SemanticTokensFeatureSha
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				},
-				onDelta: (handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens | undefined | null, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): Disposable => {
+				onDelta: (handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens | undefined | null, SemanticTokensDeltaPartialResult | SemanticTokensPartialResult, void>): Disposable => {
 					const type = SemanticTokensDeltaRequest.type;
 					return this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));

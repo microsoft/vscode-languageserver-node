@@ -668,10 +668,10 @@ function getTokenBuilder(document: TextDocument): SemanticTokensBuilder {
 function buildTokens(builder: SemanticTokensBuilder, document: TextDocument) {
 	const text = document.getText();
 	const regexp = /\w+/g;
-	let match: RegExpMatchArray | null;
+	let match: RegExpExecArray | null;
 	let tokenCounter: number = 0;
 	let modifierCounter: number = 0;
-	while ((match = regexp.exec(text)) !== null && match.index !== undefined) {
+	while ((match = regexp.exec(text)) !== null) {
 		const word = match[0];
 		const position = document.positionAt(match.index);
 		const tokenType = tokenCounter % TokenTypes._;
