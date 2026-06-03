@@ -11,7 +11,6 @@ import type { Feature, _RemoteWorkspace } from './server';
  * Shape of the text document content feature
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentContentFeatureShape {
 	textDocumentContent: {

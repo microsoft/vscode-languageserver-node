@@ -82,7 +82,6 @@ export interface FoldingRangeClientCapabilities {
  * Client workspace capabilities specific to folding ranges
  *
  * @since 3.18.0
- * @proposed
  */
 export type FoldingRangeWorkspaceClientCapabilities = {
 
@@ -96,7 +95,6 @@ export type FoldingRangeWorkspaceClientCapabilities = {
 	 * change that requires such a calculation.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	refreshSupport?: boolean;
 };
@@ -132,8 +130,9 @@ export namespace FoldingRangeRequest {
 }
 
 /**
+ * A request to refresh the folding ranges in a document.
+ *
  * @since 3.18.0
- * @proposed
  */
 export namespace FoldingRangeRefreshRequest {
 	export const method: `workspace/foldingRange/refresh` = `workspace/foldingRange/refresh`;

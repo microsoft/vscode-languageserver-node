@@ -834,7 +834,6 @@ export interface Command {
 	 * An optional tooltip.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	tooltip?: string;
 
@@ -1353,7 +1352,6 @@ export namespace WorkspaceEdit {
  * Additional data about a workspace edit.
  *
  * @since 3.18.0
- * @proposed
  */
 export type WorkspaceEditMetadata = {
 	/**
@@ -1523,7 +1521,6 @@ class TextEditChangeImpl implements TextEditChange {
  * An interactive text edit.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface SnippetTextEdit {
 	/**
@@ -1936,12 +1933,10 @@ export namespace LanguageKind {
 	export const CSS = 'css' as const;
 	/**
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	export const D = 'd' as const;
 	/**
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	export const Delphi = 'pascal' as const;
 	export const Diff = 'diff' as const;
@@ -1971,7 +1966,6 @@ export namespace LanguageKind {
 	export const ObjectiveCPP = 'objective-cpp' as const;
 	/**
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	export const Pascal = 'pascal' as const;
 	export const Perl = 'perl' as const;
@@ -3381,7 +3375,6 @@ export namespace CodeActionKind {
 	 * - ...
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	export const RefactorMove: 'refactor.move' = 'refactor.move';
 
@@ -4535,7 +4528,6 @@ export namespace InlayHint {
  * `${name:default value}`.
  *
  * @since 3.18.0
- * @proposed
  */
 export type StringValue = {
 	/**
@@ -4566,7 +4558,6 @@ export namespace StringValue {
  * An inline completion item represents a text snippet that is proposed inline to complete text that is being typed.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface InlineCompletionItem {
 	/**
@@ -4600,7 +4591,6 @@ export namespace InlineCompletionItem {
  * Represents a collection of {@link InlineCompletionItem inline completion items} to be presented in the editor.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface InlineCompletionList {
 	/**
@@ -4619,7 +4609,6 @@ export namespace InlineCompletionList {
  * Describes how an {@link InlineCompletionItemProvider inline completion provider} was triggered.
  *
  * @since 3.18.0
- * @proposed
  */
 export namespace InlineCompletionTriggerKind {
 	/**
@@ -4639,7 +4628,6 @@ export type InlineCompletionTriggerKind = 1 | 2;
  * Describes the currently selected completion item.
  *
  * @since 3.18.0
- * @proposed
  */
 export type SelectedCompletionInfo = {
 	/**
@@ -4663,7 +4651,6 @@ export namespace SelectedCompletionInfo {
  * Provides information about the context in which an inline completion was requested.
  *
  * @since 3.18.0
- * @proposed
  */
 export type InlineCompletionContext = {
 	/**

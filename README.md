@@ -35,7 +35,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
-## Upcoming 3.18.0 Protocol, 9.0.0 JSON-RPC, 10.0.0 Client and 10.0.0 Server.
+## 3.18.0 Protocol, 9.0.0 JSON-RPC, 10.0.0 Client and 10.0.0 Server.
 
 ### Protocol - new requests / notifications
 
@@ -150,7 +150,7 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 ### Implementation:
 
 - Upgraded to newer libraries, compilers and package.json exports rules:
-  - Compiler upgraded to `5.9.x`.
+  - Compiler upgraded to `6.0.x`.
   - Libs now depend on NodeJS `22.13.14` and `es2022`. See also [TypeScript's node  target mapping](https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping).
   - `vscode-jsonrpc`, `vscode-languageserver-protocol`, `vscode-languageclient` and `vscode-languageserver` now use the `exports` property instead of having a `main` and `typings` property. This might need adoption in tsconfig.json files around the `module` and `moduleResolution`. The LSP libraries currently use `node16` for both values.
 `vscode-languageserver-types` ships separate UMD/ESM publishes; `module` export condition added so bundlers pick up the ESM build.

@@ -665,7 +665,6 @@ export interface WorkspaceClientCapabilities {
 	 * Capabilities specific to the folding range requests scoped to the workspace.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	foldingRange?: FoldingRangeWorkspaceClientCapabilities;
 
@@ -673,7 +672,6 @@ export interface WorkspaceClientCapabilities {
 	 * Capabilities specific to the `workspace/textDocumentContent` request.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	textDocumentContent?: TextDocumentContentClientCapabilities;
 }
@@ -873,7 +871,6 @@ export interface TextDocumentClientCapabilities {
 	 * Client capabilities specific to inline completions.
 	 *
 	 * @since 3.18.0
- 	 * @proposed
 	 */
 	inlineCompletion?: InlineCompletionClientCapabilities;
 }
@@ -911,7 +908,6 @@ export interface WindowClientCapabilities {
  * Regular Expression Engines
  *
  * @since 3.18.0
- * @proposed
  */
 export namespace RegularExpressionEngineKind {
 	export const ES2020 = 'ES2020' as const;
@@ -1220,7 +1216,6 @@ export type WorkspaceOptions = {
 	 * The server supports the `workspace/textDocumentContent` request.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	textDocumentContent?: TextDocumentContentOptions | TextDocumentContentRegistrationOptions;
 };
@@ -1432,7 +1427,6 @@ export interface ServerCapabilities<T = LSPAny> {
 	 * Inline completion options used during static registration.
 	 *
 	 * @since 3.18.0
- 	 * @proposed
 	 */
 	inlineCompletionProvider?: boolean | InlineCompletionOptions;
 
@@ -1717,7 +1711,6 @@ export namespace MessageType {
 	 * A debug message.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	export const Debug = 5;
 }
@@ -2905,7 +2898,6 @@ export type ClientSignatureInformationOptions = {
 	 * indicate that no parameter should be active.
 	 *
 	 * @since 3.18.0
-     * @proposed
 	 */
 	noActiveParameterSupport?: boolean;
 };
@@ -3358,7 +3350,6 @@ export interface CodeActionClientCapabilities {
 	 * code actions.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	documentationSupport?: boolean;
 
@@ -3405,7 +3396,6 @@ export interface CodeActionParams extends WorkDoneProgressParams, PartialResultP
  * Documentation for a class of code actions.
  *
  * @since 3.18.0
- * @proposed
  */
 export type CodeActionKindDocumentation = {
 	/**
@@ -3452,7 +3442,6 @@ export interface CodeActionOptions extends WorkDoneProgressOptions {
 	 * At most one documentation entry should be shown per provider.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	documentation?: CodeActionKindDocumentation[];
 
@@ -3866,7 +3855,6 @@ export interface DocumentRangeFormattingClientCapabilities {
 	 * Whether the client supports formatting multiple ranges at once.
 	 *
 	 * @since 3.18.0
- 	 * @proposed
 	 */
 	rangesSupport?: boolean;
 }
@@ -3895,7 +3883,6 @@ export interface DocumentRangeFormattingParams extends WorkDoneProgressParams {
  * The parameters of a {@link DocumentRangesFormattingRequest}.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface DocumentRangesFormattingParams extends WorkDoneProgressParams {
 	/**
@@ -3922,7 +3909,6 @@ export interface DocumentRangeFormattingOptions extends WorkDoneProgressOptions 
      * Whether the server supports formatting multiple ranges at once.
 	 *
 	 * @since 3.18.0
- 	 * @proposed
      */
 	rangesSupport?: boolean;
 }
@@ -3947,7 +3933,6 @@ export namespace DocumentRangeFormattingRequest {
  * A request to format ranges in a document.
  *
  * @since 3.18.0
- * @proposed
  */
 export namespace DocumentRangesFormattingRequest {
 	export const method: 'textDocument/rangesFormatting' = 'textDocument/rangesFormatting';
@@ -4261,7 +4246,6 @@ export interface WorkspaceEditClientCapabilities {
 	 * Whether the client supports `WorkspaceEditMetadata` in `WorkspaceEdit`s.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	metadataSupport?: boolean;
 
@@ -4269,7 +4253,6 @@ export interface WorkspaceEditClientCapabilities {
 	 * Whether the client supports snippets as text edits.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	snippetEditSupport?: boolean;
 }
@@ -4294,7 +4277,6 @@ export interface ApplyWorkspaceEditParams {
 	 * Additional data about the edit.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	metadata?: WorkspaceEditMetadata;
 }
