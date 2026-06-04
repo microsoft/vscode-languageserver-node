@@ -17,7 +17,6 @@ export interface FoldingRangeFeatureShape {
 		 * Ask the client to refresh all folding ranges
 		 *
 		 * @since 3.18.0.
-		 * @proposed
 		 */
 		refresh(): Promise<void>;
 

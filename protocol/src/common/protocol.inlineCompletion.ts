@@ -15,7 +15,6 @@ import { type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, typ
  * Client capabilities specific to inline completions.
  *
  * @since 3.18.0
- * @proposed
  */
 export type InlineCompletionClientCapabilities = {
 	/**
@@ -28,7 +27,6 @@ export type InlineCompletionClientCapabilities = {
  * Inline completion options used during static registration.
  *
  * @since 3.18.0
- * @proposed
  */
 export type InlineCompletionOptions = WorkDoneProgressOptions;
 
@@ -36,7 +34,6 @@ export type InlineCompletionOptions = WorkDoneProgressOptions;
  * Inline completion options used during static or dynamic registration.
  *
  * @since 3.18.0
- * @proposed
  */
 export type InlineCompletionRegistrationOptions = InlineCompletionOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions;
 
@@ -44,7 +41,6 @@ export type InlineCompletionRegistrationOptions = InlineCompletionOptions & Text
  * A parameter literal used in inline completion requests.
  *
  * @since 3.18.0
- * @proposed
  */
 export type InlineCompletionParams = WorkDoneProgressParams & TextDocumentPositionParams & {
 	/**
@@ -60,7 +56,6 @@ export type InlineCompletionParams = WorkDoneProgressParams & TextDocumentPositi
  * {@link InlineCompletion InlineCompletion[]} or a Thenable that resolves to such.
  *
  * @since 3.18.0
- * @proposed
  */
 export namespace InlineCompletionRequest {
 	export const method: 'textDocument/inlineCompletion' = 'textDocument/inlineCompletion';
