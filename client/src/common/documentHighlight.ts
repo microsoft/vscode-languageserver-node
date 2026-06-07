@@ -15,8 +15,6 @@ import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
-import * as UUID from './utils/uuid';
-
 export interface ProvideDocumentHighlightsSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDocumentHighlight[]>;
 }
@@ -40,7 +38,7 @@ export class DocumentHighlightFeature extends TextDocumentLanguageFeature<boolea
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentHighlightProvider] {

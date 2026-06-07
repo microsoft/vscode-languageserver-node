@@ -16,7 +16,6 @@ import {
 	NotebookDocumentSyncRegistrationType
 } from 'vscode-languageserver-protocol';
 
-import { generateUuid } from './utils/uuid';
 import { matchGlobPattern } from './utils/globPattern';
 
 import {
@@ -575,7 +574,7 @@ class DiagnosticRequestor implements Disposable {
 					return converted;
 				};
 				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token, resultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
-					const partialResultToken: string = generateUuid();
+					const partialResultToken: string = crypto.randomUUID();
 					const disposable = this.client.onProgress(WorkspaceDiagnosticRequest.partialResult, partialResultToken, async (partialResult) => {
 						if (partialResult === undefined || partialResult === null) {
 							resultReporter(null);

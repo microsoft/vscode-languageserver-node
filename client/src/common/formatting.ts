@@ -11,8 +11,6 @@ import {
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentFormattingOptions, DocumentFormattingRequest, TextDocumentRegistrationOptions, DocumentFormattingParams, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingOptions, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentRangesFormattingRequest, DocumentRangesFormattingParams, DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, DocumentFormattingRegistrationOptions} from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
-
 import type * as c2p from './codeConverter';
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
@@ -68,7 +66,7 @@ export class DocumentFormattingFeature extends TextDocumentLanguageFeature<boole
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentFormattingEditProvider] {
@@ -117,7 +115,7 @@ export class DocumentRangeFormattingFeature extends TextDocumentLanguageFeature<
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentRangeFormattingRegistrationOptions): [Disposable, DocumentRangeFormattingEditProvider] {
@@ -190,7 +188,7 @@ export class DocumentOnTypeFormattingFeature extends TextDocumentLanguageFeature
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentOnTypeFormattingRegistrationOptions): [Disposable, OnTypeFormattingEditProvider] {

@@ -28,8 +28,6 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
-import * as UUID from './utils/uuid';
-
 import type * as c2p from './codeConverter';
 import type * as p2c from './protocolConverter';
 
@@ -534,7 +532,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		if (!capability) {
 			return [undefined, undefined];
 		} else if (TextDocumentRegistrationOptions.is(capability)) {
-			const id = StaticRegistrationOptions.hasId(capability) ? capability.id : UUID.generateUuid();
+			const id = StaticRegistrationOptions.hasId(capability) ? capability.id : crypto.randomUUID();
 			const selector = capability.documentSelector ?? documentSelector;
 			if (selector) {
 				return [id, Object.assign({}, capability, { documentSelector: selector })];
@@ -544,7 +542,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 				return [undefined, undefined];
 			}
 			const options: RO & { documentSelector: DocumentSelector } = (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as any;
-			return [UUID.generateUuid(), options];
+			return [crypto.randomUUID(), options];
 		}
 		return [undefined, undefined];
 	}
