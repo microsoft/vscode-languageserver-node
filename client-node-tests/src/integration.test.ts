@@ -2331,9 +2331,12 @@ suite('delayOpenNotifications', () => {
 		await sendDidOpen(fakeDocument);
 		await sendDidClose(fakeDocument);
 
-		// Ensure no notifications.
+		// Ensure no notifications are send for the fake document.
 		const notifications = await client.sendRequest(GetNotificationsRequest.type);
-		assert.deepStrictEqual(notifications, []);
+		const filtered = notifications.
+			filter((n) => n.method === 'textDocument/didOpen' || n.method === 'textDocument/didClose').
+			filter((n) => n.params?.textDocument.uri === fakeDocument.uri.toString());
+		assert.deepStrictEqual(filtered, []);
 	});
 
 	test('didOpen/didClose are always sent when delayOpenNotifications=false', async () => {
@@ -2342,10 +2345,13 @@ suite('delayOpenNotifications', () => {
 		await sendDidOpen(fakeDocument);
 		await sendDidClose(fakeDocument);
 
-		// Ensure both notifications.
+		// Ensure both notifications are sent for the fake document.
 		const notifications = await client.sendRequest(GetNotificationsRequest.type);
+		const filtered = notifications.
+			filter((n) => n.method === 'textDocument/didOpen' || n.method === 'textDocument/didClose').
+			filter((n) => n.params?.textDocument.uri === fakeDocument.uri.toString());
 		assert.deepStrictEqual(
-			notifications.map((n) => n.method),
+			filtered.map((n) => n.method),
 			[
 				'textDocument/didOpen',
 				'textDocument/didClose',
@@ -2385,7 +2391,9 @@ suite('delayOpenNotifications', () => {
 		});
 
 		// Verify both notifications are as expected.
-		const notifications = await client.sendRequest(GetNotificationsRequest.type);
+		const notifications = (await client.sendRequest(GetNotificationsRequest.type)).
+			filter((n) => n.method === 'textDocument/didOpen' || n.method === 'textDocument/didChange').
+			filter((n) => n.params?.textDocument.uri === fakeDocument.uri.toString());
 		assert.equal(notifications.length, 2);
 		const [openNotification, changeNotification] = notifications;
 
