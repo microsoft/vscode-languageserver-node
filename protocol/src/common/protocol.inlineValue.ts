@@ -73,7 +73,8 @@ export type InlineValueParams = WorkDoneProgressParams & {
 
 	/**
 	 * Additional information about the context in which inline values information was
-	 * requested.	 */
+	 * requested.
+	 */
 	context: InlineValueContext;
 };
 
