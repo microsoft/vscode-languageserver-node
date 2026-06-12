@@ -7,10 +7,10 @@ import * as UUID from './utils/uuid';
 
 import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
-import { DynamicFeature, RegistrationData, FeatureClient, NextSignature, FeatureState } from './features';
+import { DynamicFeature, RegistrationData, FeatureClient, NextSignature, FeatureState, ensure } from './features';
 import {
-	ClientCapabilities, InitializeParams, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
-	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, RegistrationType
+	ClientCapabilities, WorkspaceFoldersClientCapabilities, InitializeParams, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
+	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, RegistrationType,
 } from 'vscode-languageserver-protocol';
 
 function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | undefined {
@@ -68,8 +68,8 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 	}
 
 	public fillClientCapabilities(capabilities: ClientCapabilities): void {
-		capabilities.workspace = capabilities.workspace || {};
-		capabilities.workspace.workspaceFolders = true;
+		const workspaceFoldersSupport = ensure(ensure(ensure(capabilities, 'workspace')!, 'workspaceFolders')! as WorkspaceFoldersClientCapabilities, 'changeNotifications')!;
+		workspaceFoldersSupport.dynamicRegistration = true;
 	}
 
 	public initialize(capabilities: ServerCapabilities): void {
