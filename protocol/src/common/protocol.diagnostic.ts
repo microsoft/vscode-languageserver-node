@@ -267,13 +267,24 @@ export type DocumentDiagnosticReportPartialResult = {
 /**
  * The document diagnostic request definition.
  *
+ * When using partial results, the first literal sent needs to be a
+ * DocumentDiagnosticReport followed by n DocumentDiagnosticReportPartialResult
+ * literals:
+ *
+ * ```
+ * DocumentDiagnosticReport
+ * DocumentDiagnosticReportPartialResult
+ * DocumentDiagnosticReportPartialResult
+ * ...
+ * ```
+ *
  * @since 3.17.0
  */
 export namespace DocumentDiagnosticRequest {
 	export const method: 'textDocument/diagnostic' = 'textDocument/diagnostic';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
-	export const type = new ProtocolRequestType<DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportPartialResult, DiagnosticServerCancellationData, DiagnosticRegistrationOptions>(method);
-	export const partialResult = new ProgressType<DocumentDiagnosticReportPartialResult>();
+	export const type = new ProtocolRequestType<DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReport | DocumentDiagnosticReportPartialResult, DiagnosticServerCancellationData, DiagnosticRegistrationOptions>(method);
+	export const partialResult = new ProgressType<DocumentDiagnosticReport | DocumentDiagnosticReportPartialResult>();
 	export type HandlerSignature = RequestHandler<DocumentDiagnosticParams, DocumentDiagnosticReport, void>;
 	export const capabilities = CM.create('textDocument.diagnostic', 'diagnosticProvider');
 }

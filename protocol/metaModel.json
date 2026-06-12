@@ -1027,8 +1027,17 @@
 				"name": "DocumentDiagnosticParams"
 			},
 			"partialResult": {
-				"kind": "reference",
-				"name": "DocumentDiagnosticReportPartialResult"
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "DocumentDiagnosticReport"
+					},
+					{
+						"kind": "reference",
+						"name": "DocumentDiagnosticReportPartialResult"
+					}
+				]
 			},
 			"errorData": {
 				"kind": "reference",
