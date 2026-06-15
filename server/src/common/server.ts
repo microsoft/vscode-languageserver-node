@@ -47,6 +47,8 @@ import { DiagnosticFeatureShape, DiagnosticFeature } from './diagnostic';
 import { NotebookSyncFeatureShape, NotebookSyncFeature } from './notebook';
 import { MonikerFeature, MonikerFeatureShape } from './moniker';
 import type { ConnectionState } from './textDocuments';
+import { InlineCompletionFeature, type InlineCompletionFeatureShape } from './inlineCompletion';
+import { TextDocumentContentFeature, type TextDocumentContentFeatureShape } from './textDocumentContent';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -644,7 +646,7 @@ export interface _RemoteWorkspace extends FeatureBase {
 	applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Promise<ApplyWorkspaceEditResponse>;
 }
 
-export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders & FileOperationsFeatureShape;
+export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders & FileOperationsFeatureShape & TextDocumentContentFeatureShape;
 
 class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 
@@ -680,7 +682,7 @@ class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 	}
 }
 
-const RemoteWorkspaceImpl: new () => RemoteWorkspace = FileOperationsFeature(WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl))) as (new () => RemoteWorkspace);
+const RemoteWorkspaceImpl: new () => RemoteWorkspace = TextDocumentContentFeature(FileOperationsFeature(WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl)))) as (new () => RemoteWorkspace);
 
 /**
  * Interface to log telemetry events. The events are actually send to the client
@@ -830,8 +832,8 @@ export class _LanguagesImpl implements Remote, _Languages {
 	}
 }
 
-export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & TypeHierarchyFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & DiagnosticFeatureShape & MonikerFeatureShape & FoldingRangeFeatureShape;
-const LanguagesImpl: new () => Languages = FoldingRangeFeature(MonikerFeature(DiagnosticFeature(InlayHintFeature(InlineValueFeature(TypeHierarchyFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl))))))))) as (new () => Languages);
+export type Languages = _Languages & CallHierarchy & SemanticTokensFeatureShape & LinkedEditingRangeFeatureShape & TypeHierarchyFeatureShape & InlineValueFeatureShape & InlayHintFeatureShape & DiagnosticFeatureShape & MonikerFeatureShape & FoldingRangeFeatureShape & InlineCompletionFeatureShape;
+const LanguagesImpl: new () => Languages = InlineCompletionFeature(FoldingRangeFeature(MonikerFeature(DiagnosticFeature(InlayHintFeature(InlineValueFeature(TypeHierarchyFeature(LinkedEditingRangeFeature(SemanticTokensFeature(CallHierarchyFeature(_LanguagesImpl)))))))))) as (new () => Languages);
 
 export interface _Notebooks extends FeatureBase {
 	connection: Connection;

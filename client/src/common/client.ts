@@ -2054,6 +2054,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new InlayHintsFeature(this));
 		this.registerFeature(new DiagnosticFeature(this));
 		this.registerFeature(new NotebookDocumentSyncFeature(this));
+		this.registerFeature(new InlineCompletionItemFeature(this));
+		this.registerFeature(new TextDocumentContentFeature(this));
 	}
 
 	public registerProposedFeatures() {
@@ -2522,8 +2524,6 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 export namespace ProposedFeatures {
 	export function createAll(_client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
 		const result: (StaticFeature | DynamicFeature<any>)[] = [
-			new InlineCompletionItemFeature(_client),
-			new TextDocumentContentFeature(_client)
 		];
 		return result;
 	}
