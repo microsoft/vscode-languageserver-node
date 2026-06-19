@@ -3,10 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestType0 } from '../../common/messages';
-import { SharedArrayReceiverStrategy, SharedArraySenderStrategy } from '../../common/sharedArrayCancellation';
+import { RequestType0 } from '../../common/messages.js';
+import { SharedArrayReceiverStrategy, SharedArraySenderStrategy } from '../../common/sharedArrayCancellation.js';
 
-import { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from '../main';
+import { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from '../main.js';
 
 const reader: BrowserMessageReader = new BrowserMessageReader(self);
 const writer: BrowserMessageWriter = new BrowserMessageWriter(self);

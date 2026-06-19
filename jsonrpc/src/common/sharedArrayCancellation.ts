@@ -3,10 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { Event } from './events';
-import { RequestMessage } from './messages';
-import { AbstractCancellationTokenSource, CancellationToken, CancellationTokenSource } from './cancellation';
-import { CancellationId,RequestCancellationReceiverStrategy, CancellationSenderStrategy, MessageConnection } from './connection';
+import { Event } from './events.js';
+import { RequestMessage } from './messages.js';
+import { AbstractCancellationTokenSource, CancellationToken, CancellationTokenSource } from './cancellation.js';
+import { CancellationId,RequestCancellationReceiverStrategy, CancellationSenderStrategy, MessageConnection } from './connection.js';
 
 interface RequestMessageWithCancellationData extends RequestMessage {
 	$cancellationData: SharedArrayBuffer;

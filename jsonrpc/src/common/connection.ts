@@ -4,8 +4,8 @@
  * ------------------------------------------------------------------------------------------ */
 /// <reference path="../../typings/thenable.d.ts" preserve="true"/>
 
-import RAL from './ral';
-import * as Is from './is';
+import RAL from './ral.js';
+import * as Is from './is.js';
 
 import {
 	Message, MessageSignature, RequestMessage, RequestType, RequestType0, RequestType1, RequestType2, RequestType3,
@@ -13,14 +13,14 @@ import {
 	ResponseError, ErrorCodes, NotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
 	NotificationType9, LSPMessageType, _EM, ParameterStructures
-} from './messages';
+} from './messages.js';
 
-import { LinkedMap } from './linkedMap';
-import type { Disposable } from './disposable';
-import { Event, Emitter } from './events';
-import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation';
-import { MessageReader, DataCallback } from './messageReader';
-import { MessageWriter } from './messageWriter';
+import { LinkedMap } from './linkedMap.js';
+import type { Disposable } from './disposable.js';
+import { Event, Emitter } from './events.js';
+import { CancellationTokenSource, CancellationToken, AbstractCancellationTokenSource } from './cancellation.js';
+import { MessageReader, DataCallback } from './messageReader.js';
+import { MessageWriter } from './messageWriter.js';
 
 interface CancelParams {
 	/**

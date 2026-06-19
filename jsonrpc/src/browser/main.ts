@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import RIL from './ril';
+import RIL from './ril.js';
 
 // Install the browser runtime abstract.
 RIL.install();
@@ -11,9 +11,9 @@ RIL.install();
 import {
 	AbstractMessageReader, DataCallback, AbstractMessageWriter, Message, Disposable, Emitter, NullLogger, ConnectionStrategy, ConnectionOptions,
 	createMessageConnection as _createMessageConnection, MessageReader, MessageWriter, Logger, MessageConnection
-} from '../common/api';
+} from '../common/api.js';
 
-export * from '../common/api';
+export * from '../common/api.js';
 
 export class BrowserMessageReader extends AbstractMessageReader implements MessageReader {
 

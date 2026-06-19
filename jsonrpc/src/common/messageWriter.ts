@@ -3,12 +3,12 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import RAL from './ral';
-import * as Is from './is';
-import { Semaphore } from './semaphore';
-import { Message } from './messages';
-import { Event, Emitter } from './events';
-import { ContentEncoder, ContentTypeEncoder } from './encoding';
+import RAL from './ral.js';
+import * as Is from './is.js';
+import { Semaphore } from './semaphore.js';
+import { Message } from './messages.js';
+import { Event, Emitter } from './events.js';
+import { ContentEncoder, ContentTypeEncoder } from './encoding.js';
 
 const ContentLength: string = 'Content-Length: ';
 const CRLF = '\r\n';

@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import RAL from './ral';
+import RAL from './ral.js';
 
-import * as Is from './is';
-import { Event, Emitter } from './events';
-import { Disposable } from './disposable';
+import * as Is from './is.js';
+import { Event, Emitter } from './events.js';
+import { Disposable } from './disposable.js';
 
 /**
  * Defines a CancellationToken. This interface is not

@@ -5,7 +5,7 @@
 
 import {
 	RAL, Disposable, Message, Emitter, ContentTypeEncoderOptions, ContentTypeDecoderOptions, AbstractMessageBuffer
-} from '../common/api';
+} from '../common/api.js';
 
 
 class MessageBuffer extends AbstractMessageBuffer {

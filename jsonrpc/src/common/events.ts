@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import RAL from './ral';
-import { Disposable } from './disposable';
+import RAL from './ral.js';
+import { Disposable } from './disposable.js';
 
 /**
  * Represents a typed event.

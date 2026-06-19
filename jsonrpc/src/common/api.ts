@@ -9,17 +9,17 @@ import {
 	RequestType7, RequestType8, RequestType9, ResponseError, ErrorCodes, NotificationMessage, NotificationType, NotificationType0, NotificationType1,
 	NotificationType2, NotificationType3, NotificationType4, NotificationType5, NotificationType6, NotificationType7, NotificationType8,
 	NotificationType9, ResponseMessage, ParameterStructures, _EM
-} from './messages';
+} from './messages.js';
 
-import { LinkedMap, LRUCache, Touch } from './linkedMap';
-import { Disposable } from './disposable';
-import { Event, Emitter } from './events';
-import { AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken } from './cancellation';
-import { SharedArraySenderStrategy, SharedArrayReceiverStrategy } from './sharedArrayCancellation';
-import { MessageReader, AbstractMessageReader, ReadableStreamMessageReader, DataCallback, MessageReaderOptions, PartialMessageInfo } from './messageReader';
-import { MessageWriter, AbstractMessageWriter, WriteableStreamMessageWriter, MessageWriterOptions } from './messageWriter';
-import { AbstractMessageBuffer } from './messageBuffer';
-import { ContentTypeEncoderOptions, ContentEncoder, ContentTypeEncoder, ContentTypeDecoderOptions, ContentDecoder, ContentTypeDecoder } from './encoding';
+import { LinkedMap, LRUCache, Touch } from './linkedMap.js';
+import { Disposable } from './disposable.js';
+import { Event, Emitter } from './events.js';
+import { AbstractCancellationTokenSource, CancellationTokenSource, CancellationToken } from './cancellation.js';
+import { SharedArraySenderStrategy, SharedArrayReceiverStrategy } from './sharedArrayCancellation.js';
+import { MessageReader, AbstractMessageReader, ReadableStreamMessageReader, DataCallback, MessageReaderOptions, PartialMessageInfo } from './messageReader.js';
+import { MessageWriter, AbstractMessageWriter, WriteableStreamMessageWriter, MessageWriterOptions } from './messageWriter.js';
+import { AbstractMessageBuffer } from './messageBuffer.js';
+import { ContentTypeEncoderOptions, ContentEncoder, ContentTypeEncoder, ContentTypeDecoderOptions, ContentDecoder, ContentTypeDecoder } from './encoding.js';
 import {
 	Logger, ConnectionStrategy, ConnectionOptions, MessageConnection, NullLogger, createMessageConnection,
 	ProgressToken, ProgressType, RequestParam, HandlerResult, StarRequestHandler, GenericRequestHandler,
@@ -28,9 +28,9 @@ import {
 	NotificationHandler4, NotificationHandler5, NotificationHandler6, NotificationHandler7, NotificationHandler8, NotificationHandler9, Trace, TraceValue, TraceFormat,
 	TraceOptions, SetTraceParams, SetTraceNotification, LogTraceParams, LogTraceNotification, Tracer, ConnectionErrors, ConnectionError, CancellationId,
 	CancellationReceiverStrategy, IdCancellationReceiverStrategy, RequestCancellationReceiverStrategy, CancellationSenderStrategy, CancellationStrategy, MessageStrategy, TraceValues
-} from './connection';
+} from './connection.js';
 
-import RAL from './ral';
+import RAL from './ral.js';
 
 export {
 	RAL,

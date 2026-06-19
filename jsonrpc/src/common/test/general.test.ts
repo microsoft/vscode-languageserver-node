@@ -5,7 +5,7 @@
 'use strict';
 
 import assert from 'assert';
-import { Trace } from '../api';
+import { Trace } from '../api.js';
 
 suite('General Tests', () => {
 	test('Trace#fromString', () => {

@@ -9,11 +9,11 @@ import { Duplex  } from 'stream';
 import { inherits } from 'util';
 import { AsyncLocalStorage } from 'async_hooks';
 
-import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../main';
+import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../main.js';
 
-import * as hostConnection from '../main';
-import { getCustomCancellationStrategy } from './customCancellationStrategy';
-import { ParameterStructures } from '../../common/messages';
+import * as hostConnection from '../main.js';
+import { getCustomCancellationStrategy } from './customCancellationStrategy.js';
+import { ParameterStructures } from '../../common/messages.js';
 import { MessageChannel } from 'worker_threads';
 
 interface TestDuplex extends Duplex {

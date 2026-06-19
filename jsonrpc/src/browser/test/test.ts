@@ -5,10 +5,10 @@
 
 import * as assert from 'assert';
 
-import { CancellationTokenSource, RequestMessage, RequestType0, ResponseMessage } from '../../common/api';
-import { SharedArrayReceiverStrategy, SharedArraySenderStrategy } from '../../common/sharedArrayCancellation';
-import { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from '../main';
-import RIL, { QueueMicrotaskImpl, PromiseImpl } from '../ril';
+import { CancellationTokenSource, RequestMessage, RequestType0, ResponseMessage } from '../../common/api.js';
+import { SharedArrayReceiverStrategy, SharedArraySenderStrategy } from '../../common/sharedArrayCancellation.js';
+import { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from '../main.js';
+import RIL, { QueueMicrotaskImpl, PromiseImpl } from '../ril.js';
 
 function assertDefined<T>(value: T | undefined | null): asserts value is T {
 	assert.ok(value !== undefined && value !== null);

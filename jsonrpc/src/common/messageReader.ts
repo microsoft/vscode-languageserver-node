@@ -3,14 +3,14 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import RAL from './ral';
+import RAL from './ral.js';
 
-import * as Is from './is';
-import { Event, Emitter } from './events';
-import { Message } from './messages';
-import { ContentDecoder, ContentTypeDecoder } from './encoding';
-import { Disposable } from './api';
-import { Semaphore } from './semaphore';
+import * as Is from './is.js';
+import { Event, Emitter } from './events.js';
+import { Message } from './messages.js';
+import { ContentDecoder, ContentTypeDecoder } from './encoding.js';
+import { Disposable } from './api.js';
+import { Semaphore } from './semaphore.js';
 
 /**
  * A callback that receives each incoming JSON-RPC message.

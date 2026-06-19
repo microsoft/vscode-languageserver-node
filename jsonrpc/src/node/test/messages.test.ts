@@ -7,10 +7,10 @@ import * as assert from 'assert';
 import * as zlib from 'zlib';
 import * as msgpack from 'msgpack-lite';
 
-import { Message, RequestMessage } from '../../common/messages';
-import { ContentEncoder, ContentDecoder, Encodings, FunctionContentTypeEncoder, FunctionContentTypeDecoder  } from '../../common/encoding';
-import { StreamMessageWriter, StreamMessageReader } from '../../node/main';
-import RIL from '../ril';
+import { Message, RequestMessage } from '../../common/messages.js';
+import { ContentEncoder, ContentDecoder, Encodings, FunctionContentTypeEncoder, FunctionContentTypeDecoder  } from '../../common/encoding.js';
+import { StreamMessageWriter, StreamMessageReader } from '../../node/main.js';
+import RIL from '../ril.js';
 
 import { Writable, Readable } from 'stream';
 import { inherits } from 'util';

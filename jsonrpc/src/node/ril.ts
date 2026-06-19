@@ -7,7 +7,7 @@ import { TextDecoder } from 'util';
 
 import {
 	RAL, Disposable, Message, ContentTypeEncoderOptions, ContentTypeDecoderOptions, AbstractMessageBuffer
-} from '../common/api';
+} from '../common/api.js';
 
 class MessageBuffer extends AbstractMessageBuffer {
 

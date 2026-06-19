@@ -3,9 +3,9 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import type RAL from './ral';
+import type RAL from './ral.js';
 
-import { Message } from './messages';
+import { Message } from './messages.js';
 
 export interface FunctionContentEncoder {
 	name: string;

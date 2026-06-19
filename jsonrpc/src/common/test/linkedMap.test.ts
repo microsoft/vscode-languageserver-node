@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { LinkedMap, Touch, LRUCache } from '../linkedMap';
+import { LinkedMap, Touch, LRUCache } from '../linkedMap.js';
 
 suite('Linked Map', () => {
 	test('Simple', () => {

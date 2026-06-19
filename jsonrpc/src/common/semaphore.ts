@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import RAL from './ral';
+import RAL from './ral.js';
 
 interface Thunk<T> {
 	(): T;

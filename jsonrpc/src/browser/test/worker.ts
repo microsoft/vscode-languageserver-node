@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ResponseMessage } from '../../common/messages';
-import { BrowserMessageReader, BrowserMessageWriter } from '../main';
+import { ResponseMessage } from '../../common/messages.js';
+import { BrowserMessageReader, BrowserMessageWriter } from '../main.js';
 
 const reader: BrowserMessageReader = new BrowserMessageReader(self);
 const writer: BrowserMessageWriter = new BrowserMessageWriter(self);

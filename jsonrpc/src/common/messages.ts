@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as is from './is';
+import * as is from './is.js';
 
 /**
  * A language server message
