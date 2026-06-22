@@ -1,10 +1,11 @@
 {
     "compilerOptions": {
-        "ignoreDeprecations": "6.0",
-        "module": "umd",
-        "moduleResolution": "node",
+        "types": [
+            "mocha"
+        ],
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
-        "types": [],
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
@@ -15,19 +16,20 @@
         "declarationMap": false,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "target": "es5",
+        "target": "es2022",
         "lib": [
-            "es2015"
+            "es2023"
         ],
-        "outDir": "../lib/umd",
-        "tsBuildInfoFile": "../lib/umd/publish.tsbuildInfo",
-        "incremental": true,
-        "composite": true
+        "outDir": "../../lib/test",
+        "tsBuildInfoFile": "../../lib/test/publish.tsbuildInfo",
+        "incremental": true
     },
     "include": [
         "."
     ],
-    "exclude": [
-        "test"
+    "references": [
+        {
+            "path": "../tsconfig.publish.json"
+        }
     ]
 }

@@ -1,11 +1,10 @@
 {
     "compilerOptions": {
-        "ignoreDeprecations": "6.0",
         "types": [
             "mocha"
         ],
-        "module": "umd",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "strict": true,
         "noImplicitAny": true,
@@ -15,14 +14,15 @@
         "stripInternal": true,
         "sourceMap": true,
         "declarationMap": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "target": "es5",
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "assumeChangesOnlyAffectDirectDependencies": true,
+        "target": "es2022",
         "lib": [
-            "es2015"
+            "es2023"
         ],
-        "outDir": "../../lib/umd/test",
-        "tsBuildInfoFile": "../../lib/umd/test/watch.tsbuildInfo",
+        "outDir": "../../lib/test",
+        "tsBuildInfoFile": "../../lib/test/watch.tsbuildInfo",
         "incremental": true
     },
     "include": [

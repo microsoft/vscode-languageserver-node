@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { Range, Position, Hover, MarkedString, TextEdit } from '../main';
+import { Range, Position, Hover, MarkedString, TextEdit } from '../main.js';
 
 suite('Type guards', () => {
 	suite('Position.is', () => {

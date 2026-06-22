@@ -6,10 +6,10 @@
     "files": [],
     "references": [
         {
-            "path": "./tsconfig.esm.publish.json"
+            "path": "./src/tsconfig.publish.json"
         },
         {
-            "path": "./tsconfig.umd.publish.json"
+            "path": "./src/test/tsconfig.publish.json"
         }
     ]
 }

@@ -95,8 +95,8 @@ const textDocument = {
 			path: './src',
 			extends: [ common ],
 			out: {
-				dir: '../lib/${target}',
-				buildInfoFile: '../lib/${target}/${buildInfoFile}.tsbuildInfo'
+				dir: '../lib',
+				buildInfoFile: '../lib/${buildInfoFile}.tsbuildInfo'
 			},
 			exclude: [ 'test' ]
 		},
@@ -104,19 +104,12 @@ const textDocument = {
 			path: './src/test',
 			extends: [ common, testMixin ],
 			out: {
-				dir: '../../lib/${target}/test',
-				buildInfoFile: '../../lib/${target}/test/${buildInfoFile}.tsbuildInfo'
+				dir: '../../lib/test',
+				buildInfoFile: '../../lib/test/${buildInfoFile}.tsbuildInfo'
 			},
 			references: [ '..' ]
 		}
 	]
-};
-
-/** @type ProjectDescription */
-const textDocument_publish = {
-	name: 'textDocument_publish',
-	path: './textDocument',
-	references: [ './tsconfig.esm.publish.json', './tsconfig.umd.publish.json' ]
 };
 
 
@@ -129,8 +122,8 @@ const types = {
 			path: './src',
 			extends: [ common ],
 			out: {
-				dir: '../lib/${target}',
-				buildInfoFile: '../lib/${target}/${buildInfoFile}.tsbuildInfo'
+				dir: '../lib',
+				buildInfoFile: '../lib/${buildInfoFile}.tsbuildInfo'
 			},
 			exclude: [ 'test' ]
 		},
@@ -138,19 +131,12 @@ const types = {
 			path: './src/test',
 			extends: [ common, testMixin ],
 			out: {
-				dir: '../../lib/${target}/test',
-				buildInfoFile: '../../lib/${target}/test/${buildInfoFile}.tsbuildInfo'
+				dir: '../../lib/test',
+				buildInfoFile: '../../lib/test/${buildInfoFile}.tsbuildInfo'
 			},
 			references: [ '..' ]
 		}
 	]
-};
-
-/** @type ProjectDescription */
-const types_publish = {
-	name: 'types_publish',
-	path: './types',
-	references: [ './tsconfig.esm.publish.json', './tsconfig.umd.publish.json' ]
 };
 
 /** @type ProjectDescription */
@@ -417,79 +403,12 @@ const publishProjectOptions = {
 	compilerOptions: publishCompilerOptions
 };
 
-/** @type CompilerOptions */
-const umdCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
-	sourceMap: true,
-	declarationMap: true,
-	noUnusedLocals: true,
-	noUnusedParameters: true,
-	target: 'es5',
-	module: 'umd',
-	moduleResolution: 'node',
-	lib: [ 'es2015' ],
-});
-
-/** @type ProjectOptions */
-const umdProjectOptions = {
-	tags: ['umd', 'compile'],
-	tsconfig: 'tsconfig.json',
-	variables: new Map([['target', 'umd'], ['buildInfoFile', 'compile']]),
-	compilerOptions: umdCompilerOptions
-};
-
-/** @type CompilerOptions */
-const umdWatchCompilerOptions = CompilerOptions.assign(umdCompilerOptions, {
-	noUnusedLocals: false,
-	noUnusedParameters: false,
-	assumeChangesOnlyAffectDirectDependencies: true,
-});
-
-/** @type ProjectOptions */
-const umdWatchProjectOptions = {
-	tags: ['umd', 'watch'],
-	tsconfig: 'tsconfig.watch.json',
-	variables: new Map([['target', 'umd'], ['buildInfoFile', 'watch']]),
-	compilerOptions: umdCompilerOptions
-};
-
-/** @type CompilerOptions */
-const umdPublishCompilerOptions = CompilerOptions.assign(umdCompilerOptions, {
-	sourceMap: false,
-	declarationMap: false
-});
-
-/** @type ProjectOptions */
-const umdPublishProjectOptions = {
-	tags: ['umd', 'publish'],
-	tsconfig: 'tsconfig.umd.publish.json',
-	variables: new Map([['target', 'umd'], ['buildInfoFile', 'publish']]),
-	compilerOptions: umdPublishCompilerOptions
-};
-
-
-/** @type CompilerOptions */
-const esmPublishCompilerOptions = CompilerOptions.assign(defaultCompilerOptions, {
-	sourceMap: false,
-	target: 'es6',
-	module: 'es6',
-	moduleResolution: 'node',
-	lib: [ 'es2015' ]
-});
-
-/** @type ProjectOptions */
-const esmPublishProjectOptions = {
-	tags: ['esm', 'publish'],
-	tsconfig: 'tsconfig.esm.publish.json',
-	variables: new Map([['target', 'esm'], ['buildInfoFile', 'publish']]),
-	compilerOptions: esmPublishCompilerOptions
-};
-
 /** @type Projects */
 const projects = [
-	[ textDocument, [ umdProjectOptions, umdWatchProjectOptions, esmPublishProjectOptions, umdPublishProjectOptions ] ],
-	[ textDocument_publish, [ publishProjectOptions ] ],
-	[ types, [ umdProjectOptions, umdWatchProjectOptions, esmPublishProjectOptions, umdPublishProjectOptions ] ],
-	[ types_publish, [ publishProjectOptions ]],
+	[ textDocument, [ compileProjectOptions, watchProjectOptions ] ],
+	[ createPublishProjectDescription(textDocument), [ publishProjectOptions ] ],
+	[ types, [ compileProjectOptions, watchProjectOptions ] ],
+	[ createPublishProjectDescription(types), [ publishProjectOptions ] ],
 	[ jsonrpc, [ compileProjectOptions, watchProjectOptions ] ],
 	[ createPublishProjectDescription(jsonrpc), [ publishProjectOptions ] ],
 	[ protocol, [ compileProjectOptions, watchProjectOptions ] ],

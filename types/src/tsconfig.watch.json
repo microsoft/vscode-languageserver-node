@@ -1,8 +1,7 @@
 {
     "compilerOptions": {
-        "ignoreDeprecations": "6.0",
-        "module": "umd",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "types": [],
         "strict": true,
@@ -13,14 +12,15 @@
         "stripInternal": true,
         "sourceMap": true,
         "declarationMap": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "target": "es5",
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "assumeChangesOnlyAffectDirectDependencies": true,
+        "target": "es2022",
         "lib": [
-            "es2015"
+            "es2023"
         ],
-        "outDir": "../lib/umd",
-        "tsBuildInfoFile": "../lib/umd/watch.tsbuildInfo",
+        "outDir": "../lib",
+        "tsBuildInfoFile": "../lib/watch.tsbuildInfo",
         "incremental": true,
         "composite": true
     },

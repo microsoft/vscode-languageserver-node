@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 
-import { Position, Range, TextEdit, TextDocument } from '../main';
+import { Position, Range, TextEdit, TextDocument } from '../main.js';
 
 export namespace Positions {
 	export function create(line: number, character: number): Position {

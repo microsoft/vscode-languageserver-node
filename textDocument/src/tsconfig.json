@@ -1,8 +1,7 @@
 {
     "compilerOptions": {
-        "ignoreDeprecations": "6.0",
-        "module": "umd",
-        "moduleResolution": "node",
+        "module": "node16",
+        "moduleResolution": "node16",
         "rootDir": ".",
         "types": [],
         "strict": true,
@@ -15,12 +14,12 @@
         "declarationMap": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "target": "es5",
+        "target": "es2022",
         "lib": [
-            "es2015"
+            "es2023"
         ],
-        "outDir": "../lib/umd",
-        "tsBuildInfoFile": "../lib/umd/compile.tsbuildInfo",
+        "outDir": "../lib",
+        "tsBuildInfoFile": "../lib/compile.tsbuildInfo",
         "incremental": true,
         "composite": true
     },

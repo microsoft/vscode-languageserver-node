@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { TextDocument, Range, Position } from '../main';
+import { TextDocument, Range, Position } from '../main.js';
 
 suite('Text Document Lines Model Validator', () => {
 	function newDocument(str: string) {

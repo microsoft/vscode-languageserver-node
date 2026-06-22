@@ -6,8 +6,8 @@
 
 import * as assert from 'assert';
 
-import { TextDocument } from '../main';
-import { Positions, Ranges } from './helper';
+import { TextDocument } from '../main.js';
+import { Positions, Ranges } from './helper.js';
 
 function newDocument(str: string) {
 	return TextDocument.create('file://foo/bar', 'text', 0, str);

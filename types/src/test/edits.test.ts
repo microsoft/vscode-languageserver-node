@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { TextDocument, TextEdit, Position, Range } from '../main';
+import { TextDocument, TextEdit, Position, Range } from '../main.js';
 
 const applyEdits = TextDocument.applyEdits;
 
