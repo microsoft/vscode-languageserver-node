@@ -5,8 +5,8 @@
 
 import { ClientCapabilities, WorkDoneProgressCreateParams, WorkDoneProgressCreateRequest } from 'vscode-languageserver-protocol';
 
-import { FeatureClient, FeatureState, StaticFeature } from './features';
-import { ProgressPart } from './progressPart';
+import { FeatureClient, FeatureState, StaticFeature } from './features.js';
+import { ProgressPart } from './progressPart.js';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {

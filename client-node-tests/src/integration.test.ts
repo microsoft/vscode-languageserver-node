@@ -6,11 +6,14 @@
 
 import * as assert from 'assert';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import * as proto from 'vscode-languageserver-protocol';
-import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
+import { MemoryFileSystemProvider } from './memoryFileSystemProvider.js';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';

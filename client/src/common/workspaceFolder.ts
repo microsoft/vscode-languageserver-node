@@ -3,11 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as UUID from './utils/uuid';
+import * as UUID from './utils/uuid.js';
 
 import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
-import { DynamicFeature, RegistrationData, FeatureClient, NextSignature, FeatureState } from './features';
+import { DynamicFeature, RegistrationData, FeatureClient, NextSignature, FeatureState } from './features.js';
 import {
 	ClientCapabilities, InitializeParams, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
 	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, RegistrationType

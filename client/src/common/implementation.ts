@@ -9,7 +9,7 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, ImplementationRequest, ImplementationRegistrationOptions, ImplementationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 export interface ProvideImplementationSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]>;

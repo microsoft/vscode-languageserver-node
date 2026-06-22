@@ -11,7 +11,7 @@ import {
 	RequestParam
 } from 'vscode-languageserver-protocol';
 
-import * as Is from './utils/is';
+import * as Is from './utils/is.js';
 
 export interface ProgressContext {
 	onProgress<P>(type: ProgressType<P>, token: string | number, handler: NoInfer<NotificationHandler<P>>): Disposable;

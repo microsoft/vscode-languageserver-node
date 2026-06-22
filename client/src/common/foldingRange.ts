@@ -12,7 +12,7 @@ import {
 	FoldingRangeRegistrationOptions, FoldingRangeOptions, FoldingRangeKind, FoldingRangeRefreshRequest
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 export interface ProvideFoldingRangeSignature {
 	(this: void, document: TextDocument, context: FoldingContext, token: CancellationToken): ProviderResult<VFoldingRange[]>;

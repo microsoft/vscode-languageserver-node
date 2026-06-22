@@ -13,7 +13,7 @@ import {
 	InlineValueRefreshRequest, InlineValueParams, InlineValueRequest,
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 export type ProvideInlineValuesSignature = (this: void, document: TextDocument, viewPort: VRange, context: VInlineValueContext, token: CancellationToken) => ProviderResult<VInlineValue[]>;
 

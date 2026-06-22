@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as cp from 'child_process';
-import ChildProcess = cp.ChildProcess;
+type ChildProcess = cp.ChildProcess;
 
 const isWindows = (process.platform === 'win32');
 const isMacintosh = (process.platform === 'darwin');

@@ -27,11 +27,11 @@ import {
 	type WorkspaceEdit
 } from 'vscode-languageserver-protocol';
 
-import * as Is from './utils/is';
-import * as UUID from './utils/uuid';
+import * as Is from './utils/is.js';
+import * as UUID from './utils/uuid.js';
 
-import type * as c2p from './codeConverter';
-import type * as p2c from './protocolConverter';
+import type * as c2p from './codeConverter.js';
+import type * as p2c from './protocolConverter.js';
 
 export class LSPCancellationError extends CancellationError {
 	public readonly data: object | Object;
@@ -655,14 +655,14 @@ export interface VisibleDocuments {
 // Features can refer to other feature when implementing themselves.
 // Hence the feature client needs to provide access to them. To
 // avoid cyclic dependencies these import MUST ALL be type imports.
-import type { SemanticTokensProviderShape } from './semanticTokens';
-import type { DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeatureShape, DidOpenTextDocumentFeatureShape, DidSaveTextDocumentFeatureShape } from './textSynchronization';
-import type { CodeLensProviderShape } from './codeLens';
-import type { InlineValueProviderShape } from './inlineValue';
-import type { InlayHintsProviderShape } from './inlayHint';
-import type { DiagnosticFeatureShape, DiagnosticProviderShape } from './diagnostic';
-import type { NotebookDocumentProviderShape } from './notebook';
-import { FoldingRangeProviderShape } from './foldingRange';
+import type { SemanticTokensProviderShape } from './semanticTokens.js';
+import type { DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeatureShape, DidOpenTextDocumentFeatureShape, DidSaveTextDocumentFeatureShape } from './textSynchronization.js';
+import type { CodeLensProviderShape } from './codeLens.js';
+import type { InlineValueProviderShape } from './inlineValue.js';
+import type { InlayHintsProviderShape } from './inlayHint.js';
+import type { DiagnosticFeatureShape, DiagnosticProviderShape } from './diagnostic.js';
+import type { NotebookDocumentProviderShape } from './notebook.js';
+import { FoldingRangeProviderShape } from './foldingRange.js';
 
 export interface FeatureClient<M, CO = object> {
 

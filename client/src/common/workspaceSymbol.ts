@@ -13,10 +13,10 @@ import {
 
 import {
 	FeatureClient, ensure, WorkspaceFeature
-} from './features';
+} from './features.js';
 
-import { SupportedSymbolKinds, SupportedSymbolTags } from './documentSymbol';
-import * as UUID from './utils/uuid';
+import { SupportedSymbolKinds, SupportedSymbolTags } from './documentSymbol.js';
+import * as UUID from './utils/uuid.js';
 
 export interface ProvideWorkspaceSymbolsSignature {
 	(this: void, query: string, token: CancellationToken): ProviderResult<VSymbolInformation[]>;

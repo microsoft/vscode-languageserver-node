@@ -11,10 +11,10 @@ import {
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentFormattingOptions, DocumentFormattingRequest, TextDocumentRegistrationOptions, DocumentFormattingParams, DocumentRangeFormattingRegistrationOptions, DocumentRangeFormattingOptions, DocumentRangeFormattingRequest, DocumentRangeFormattingParams, DocumentRangesFormattingRequest, DocumentRangesFormattingParams, DocumentOnTypeFormattingOptions, DocumentOnTypeFormattingRegistrationOptions, DocumentOnTypeFormattingRequest, DocumentOnTypeFormattingParams, DocumentFormattingRegistrationOptions} from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
+import * as UUID from './utils/uuid.js';
 
-import type * as c2p from './codeConverter';
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import type * as c2p from './codeConverter.js';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 
 namespace FileFormattingOptions {

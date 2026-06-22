@@ -11,13 +11,13 @@ import {
 	NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook
 } from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
-import * as Is from './utils/is';
+import * as UUID from './utils/uuid.js';
+import * as Is from './utils/is.js';
 
-import * as _c2p from './codeConverter';
-import * as _p2c from './protocolConverter';
-import { DynamicFeature, FeatureClient, RegistrationData, FeatureState } from './features';
-import { matchGlobPattern } from './utils/globPattern';
+import * as _c2p from './codeConverter.js';
+import * as _p2c from './protocolConverter.js';
+import { DynamicFeature, FeatureClient, RegistrationData, FeatureState } from './features.js';
+import { matchGlobPattern } from './utils/globPattern.js';
 
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {

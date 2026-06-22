@@ -18,9 +18,9 @@ import {
 import {
 	FeatureClient, TextDocumentEventFeature, DynamicFeature, NextSignature, TextDocumentSendFeature, NotifyingFeature, ensure, RegistrationData, DynamicDocumentFeature,
 	NotificationSendEvent
-} from './features';
+} from './features.js';
 
-import * as UUID from './utils/uuid';
+import * as UUID from './utils/uuid.js';
 import { TextDocument as TextDocumentImpl } from 'vscode-languageserver-textdocument';
 
 export interface TextDocumentSynchronizationMiddleware {

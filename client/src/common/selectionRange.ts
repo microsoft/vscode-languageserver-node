@@ -10,7 +10,7 @@ import {
 	SelectionRangeParams, SelectionRangeRequest, SelectionRangeOptions, SelectionRangeRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 export interface ProvideSelectionRangeSignature {
 	(this: void, document: TextDocument, positions: readonly VPosition[], token: CancellationToken): ProviderResult<VSelectionRange[]>;

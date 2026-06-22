@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as cp from 'child_process';
-import ChildProcess = cp.ChildProcess;
+type ChildProcess = cp.ChildProcess;
 import * as fs from 'fs';
 import * as path from 'path';
 import * as stream from 'stream';
@@ -12,18 +12,19 @@ import * as readline from 'readline';
 
 import { workspace as Workspace, Disposable, version as VSCodeVersion, type LogOutputChannel } from 'vscode';
 
-import * as Is from '../common/utils/is';
-import { BaseLanguageClient, LanguageClientOptions, MessageTransports, ShutdownMode } from '../common/client';
+import * as Is from '../common/utils/is.js';
+import { BaseLanguageClient, LanguageClientOptions, MessageTransports, ShutdownMode } from '../common/client.js';
 
-import { terminate } from './processes';
+import { terminate } from './processes.js';
 import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
 
 // Import SemVer functions individually to avoid circular dependencies in SemVer
-import semverParse = require('semver/functions/parse');
-import semverSatisfies = require('semver/functions/satisfies');
+import semverParse from 'semver/functions/parse.js';
+import semverSatisfies from 'semver/functions/satisfies.js';
 
 export * from 'vscode-languageserver-protocol/node';
-export * from '../common/api';
+export * from '../common/api.js';
+export { createMessageConnection, createProtocolConnection } from 'vscode-languageserver-protocol/node';
 
 const REQUIRED_VSCODE_VERSION = '^1.106.0'; // do not change format, updated by `updateVSCode` script
 

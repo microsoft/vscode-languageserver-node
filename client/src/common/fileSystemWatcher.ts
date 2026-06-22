@@ -14,7 +14,7 @@ import {
 
 import {
 	FeatureClient, DynamicFeature, ensure, RegistrationData, FeatureState
-} from './features';
+} from './features.js';
 
 
 export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatchedFilesRegistrationOptions> {

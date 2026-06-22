@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 import { LSPAny } from 'vscode-languageserver-protocol';
-import * as Is from './utils/is';
+import * as Is from './utils/is.js';
 
 /**
  * We keep this for a while to not break servers which adopted

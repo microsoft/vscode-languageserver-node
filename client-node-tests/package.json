@@ -5,6 +5,7 @@
 	"private": true,
 	"description": "",
 	"version": "0.0.1",
+	"type": "module",
 	"engines": {
 		"vscode": "^1.91.0"
 	},
@@ -14,7 +15,7 @@
 	"activationEvents": [
 		"*"
 	],
-	"main": "./extension.js",
+	"main": "./extension.cjs",
 	"contributes": {},
 	"scripts": {
 		"clean": "rimraf lib",

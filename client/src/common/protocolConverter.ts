@@ -7,18 +7,18 @@
 import * as code from 'vscode';
 import * as ls from 'vscode-languageserver-protocol';
 
-import * as Is from './utils/is';
-import * as async from './utils/async';
+import * as Is from './utils/is.js';
+import * as async from './utils/async.js';
 
-import ProtocolCompletionItem from './protocolCompletionItem';
-import ProtocolCodeLens from './protocolCodeLens';
-import ProtocolDocumentLink from './protocolDocumentLink';
-import ProtocolCodeAction from './protocolCodeAction';
-import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic';
-import ProtocolCallHierarchyItem from './protocolCallHierarchyItem';
-import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem';
-import WorkspaceSymbol from './protocolWorkspaceSymbol';
-import ProtocolInlayHint from './protocolInlayHint';
+import ProtocolCompletionItem from './protocolCompletionItem.js';
+import ProtocolCodeLens from './protocolCodeLens.js';
+import ProtocolDocumentLink from './protocolDocumentLink.js';
+import ProtocolCodeAction from './protocolCodeAction.js';
+import { ProtocolDiagnostic, DiagnosticCode } from './protocolDiagnostic.js';
+import ProtocolCallHierarchyItem from './protocolCallHierarchyItem.js';
+import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem.js';
+import WorkspaceSymbol from './protocolWorkspaceSymbol.js';
+import ProtocolInlayHint from './protocolInlayHint.js';
 import { NotebookCellTextDocumentFilter, TextDocumentFilter } from 'vscode-languageserver-protocol';
 
 interface InsertReplaceRange {

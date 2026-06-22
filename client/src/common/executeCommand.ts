@@ -11,9 +11,9 @@ import {
 	ClientCapabilities, ServerCapabilities, ExecuteCommandRegistrationOptions, RegistrationType, ExecuteCommandRequest, ExecuteCommandParams
 } from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
+import * as UUID from './utils/uuid.js';
 
-import { FeatureClient, ensure, DynamicFeature, FeatureState, RegistrationData } from './features';
+import { FeatureClient, ensure, DynamicFeature, FeatureState, RegistrationData } from './features.js';
 
 
 export interface ExecuteCommandSignature {

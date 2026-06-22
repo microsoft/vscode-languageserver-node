@@ -7,8 +7,8 @@ import * as code from 'vscode';
 import * as minimatch from 'minimatch';
 import * as proto from 'vscode-languageserver-protocol';
 
-import { DynamicFeature, RegistrationData, NextSignature, FeatureState, FeatureClient } from './features';
-import * as UUID from './utils/uuid';
+import { DynamicFeature, RegistrationData, NextSignature, FeatureState, FeatureClient } from './features.js';
+import * as UUID from './utils/uuid.js';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {

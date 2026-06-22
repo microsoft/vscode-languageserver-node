@@ -3,12 +3,13 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '../common/api';
+import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '../common/api.js';
 
 import { BrowserMessageReader, BrowserMessageWriter } from 'vscode-languageserver-protocol/browser';
 
 export * from 'vscode-languageserver-protocol/browser';
-export * from '../common/api';
+export * from '../common/api.js';
+export { createMessageConnection, createProtocolConnection } from 'vscode-languageserver-protocol/browser';
 
 export type ServerOptions = Worker | (() => Promise<Worker | MessageTransports>);
 

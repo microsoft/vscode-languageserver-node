@@ -6,8 +6,8 @@
 import * as vscode from 'vscode';
 import { StaticRegistrationOptions, TextDocumentContentRefreshRequest, TextDocumentContentRequest, type ClientCapabilities, type RegistrationType, type ServerCapabilities, type TextDocumentContentParams, type TextDocumentContentRegistrationOptions } from 'vscode-languageserver-protocol';
 
-import { ensure, type DynamicFeature, type FeatureClient, type FeatureState, type RegistrationData } from './features';
-import * as UUID from './utils/uuid';
+import { ensure, type DynamicFeature, type FeatureClient, type FeatureState, type RegistrationData } from './features.js';
+import * as UUID from './utils/uuid.js';
 
 
 export interface ProvideTextDocumentContentSignature {

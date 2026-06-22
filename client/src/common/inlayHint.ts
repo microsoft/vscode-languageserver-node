@@ -13,7 +13,7 @@ import {
 	InlayHintRefreshRequest, InlayHintParams, InlayHintResolveRequest
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 export type ProvideInlayHintsSignature = (this: void, document: TextDocument, viewPort: VRange, token: CancellationToken) => ProviderResult<VInlayHint[]>;
 export type ResolveInlayHintSignature = (this: void, item: VInlayHint, token: CancellationToken) => ProviderResult<VInlayHint>;

@@ -11,9 +11,9 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeLensOptions, CodeLensRegistrationOptions, CodeLensRequest, CodeLensRefreshRequest, CodeLensResolveRequest
 } from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
+import * as UUID from './utils/uuid.js';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 export interface ProvideCodeLensesSignature {
 	(this: void, document: TextDocument, token: CancellationToken): ProviderResult<VCodeLens[]>;

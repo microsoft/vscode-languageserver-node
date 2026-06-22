@@ -10,7 +10,7 @@ import {
 	DocumentColorRegistrationOptions, DocumentColorOptions
 } from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 export interface ProvideDocumentColorsSignature {
 	(document: TextDocument, token: CancellationToken): ProviderResult<VColorInformation[]>;

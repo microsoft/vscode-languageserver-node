@@ -49,6 +49,13 @@ const testMixin = {
 };
 
 /** @type SharableOptions */
+const skipLibCheckMixin = {
+	compilerOptions: {
+		skipLibCheck: true
+	}
+};
+
+/** @type SharableOptions */
 const vscodeMixin = {
 	compilerOptions: {
 		types: ['vscode']
@@ -296,7 +303,7 @@ const client_node_tests = {
 	sourceFolders: [
 		{
 			path: './src',
-			extends: [ node, vscodeMixin, testMixin, browser ],
+			extends: [ node, vscodeMixin, testMixin, browser, skipLibCheckMixin ],
 		}
 	],
 	references: [ protocol, client, server ]

@@ -13,9 +13,9 @@ import {
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
-} from './features';
+} from './features.js';
 
-import * as UUID from './utils/uuid';
+import * as UUID from './utils/uuid.js';
 
 export interface ProvideDocumentHighlightsSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDocumentHighlight[]>;

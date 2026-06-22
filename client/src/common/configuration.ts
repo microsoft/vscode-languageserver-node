@@ -9,10 +9,10 @@ import {
 	ClientCapabilities, ConfigurationRequest, DidChangeConfigurationNotification, DidChangeConfigurationRegistrationOptions, RegistrationType
 } from 'vscode-languageserver-protocol';
 
-import * as Is from './utils/is';
-import * as UUID from './utils/uuid';
+import * as Is from './utils/is.js';
+import * as UUID from './utils/uuid.js';
 
-import { StaticFeature, FeatureClient, FeatureState, DynamicFeature, ensure, RegistrationData } from './features';
+import { StaticFeature, FeatureClient, FeatureState, DynamicFeature, ensure, RegistrationData } from './features.js';
 
 export interface ConfigurationMiddleware {
 	configuration?: ConfigurationRequest.MiddlewareSignature;

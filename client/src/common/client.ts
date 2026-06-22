@@ -40,61 +40,61 @@ import {
 	type DidCloseTextDocumentParams, type TextDocumentContentRequest
 } from 'vscode-languageserver-protocol';
 
-import * as c2p from './codeConverter';
-import * as p2c from './protocolConverter';
+import * as c2p from './codeConverter.js';
+import * as p2c from './protocolConverter.js';
 
-import * as Is from './utils/is';
-import { Delayer, Semaphore } from './utils/async';
-import * as UUID from './utils/uuid';
-import { ProgressPart } from './progressPart';
+import * as Is from './utils/is.js';
+import { Delayer, Semaphore } from './utils/async.js';
+import * as UUID from './utils/uuid.js';
+import { ProgressPart } from './progressPart.js';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
 	TextDocumentProviderFeature, WorkspaceProviderFeature, type VisibleDocuments
-} from './features';
+} from './features.js';
 
-import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions, DiagnosticFeatureShape } from './diagnostic';
-import { NotebookDocumentMiddleware, $NotebookDocumentOptions, NotebookDocumentProviderShape, NotebookDocumentSyncFeature } from './notebook';
+import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions, DiagnosticFeatureShape } from './diagnostic.js';
+import { NotebookDocumentMiddleware, $NotebookDocumentOptions, NotebookDocumentProviderShape, NotebookDocumentSyncFeature } from './notebook.js';
 import {
 	ConfigurationFeature, ConfigurationMiddleware, $ConfigurationOptions, DidChangeConfigurationMiddleware, SyncConfigurationFeature,
 	SynchronizeOptions
-} from './configuration';
+} from './configuration.js';
 import {
 	DidChangeTextDocumentFeature, DidChangeTextDocumentFeatureShape, DidCloseTextDocumentFeature, DidCloseTextDocumentFeatureShape, DidOpenTextDocumentFeature,
 	DidOpenTextDocumentFeatureShape, DidSaveTextDocumentFeature, DidSaveTextDocumentFeatureShape, ResolvedTextDocumentSyncCapabilities, TextDocumentSynchronizationMiddleware, WillSaveFeature,
 	WillSaveWaitUntilFeature
-} from './textSynchronization';
-import { CompletionItemFeature, CompletionMiddleware } from './completion';
-import { HoverFeature, HoverMiddleware } from './hover';
-import { DefinitionFeature, DefinitionMiddleware } from './definition';
-import { SignatureHelpFeature, SignatureHelpMiddleware } from './signatureHelp';
-import { DocumentHighlightFeature, DocumentHighlightMiddleware } from './documentHighlight';
-import { DocumentSymbolFeature, DocumentSymbolMiddleware } from './documentSymbol';
-import { WorkspaceSymbolFeature, WorkspaceSymbolMiddleware } from './workspaceSymbol';
-import { ReferencesFeature, ReferencesMiddleware } from './reference';
-import { TypeDefinitionFeature, TypeDefinitionMiddleware } from './typeDefinition';
-import { ImplementationFeature, ImplementationMiddleware } from './implementation';
-import { ColorProviderFeature, ColorProviderMiddleware } from './colorProvider';
-import { CodeActionFeature, CodeActionMiddleware } from './codeAction';
-import { CodeLensFeature, CodeLensMiddleware, CodeLensProviderShape } from './codeLens';
-import { DocumentFormattingFeature, DocumentOnTypeFormattingFeature, DocumentRangeFormattingFeature, FormattingMiddleware } from './formatting';
-import { RenameFeature, RenameMiddleware } from './rename';
-import { DocumentLinkFeature, DocumentLinkMiddleware } from './documentLink';
-import { ExecuteCommandFeature, ExecuteCommandMiddleware } from './executeCommand';
-import { FoldingRangeFeature, FoldingRangeProviderMiddleware, FoldingRangeProviderShape } from './foldingRange';
-import { DeclarationFeature, DeclarationMiddleware } from './declaration';
-import { SelectionRangeFeature, SelectionRangeProviderMiddleware } from './selectionRange';
-import { CallHierarchyFeature, CallHierarchyMiddleware } from './callHierarchy';
-import { SemanticTokensFeature, SemanticTokensMiddleware, SemanticTokensProviderShape } from './semanticTokens';
-import { LinkedEditingFeature, LinkedEditingRangeMiddleware } from './linkedEditingRange';
-import { TypeHierarchyFeature, TypeHierarchyMiddleware } from './typeHierarchy';
-import { InlineValueFeature, InlineValueMiddleware, InlineValueProviderShape } from './inlineValue';
-import { InlayHintsFeature, InlayHintsMiddleware, InlayHintsProviderShape } from './inlayHint';
-import { WorkspaceFoldersFeature, WorkspaceFolderMiddleware } from './workspaceFolder';
-import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature, FileOperationsMiddleware } from './fileOperations';
-import { InlineCompletionItemFeature, InlineCompletionMiddleware } from './inlineCompletion';
-import { TextDocumentContentFeature, type TextDocumentContentMiddleware, type TextDocumentContentProviderShape } from './textDocumentContent';
-import { FileSystemWatcherFeature } from './fileSystemWatcher';
-import { ProgressFeature } from './progress';
+} from './textSynchronization.js';
+import { CompletionItemFeature, CompletionMiddleware } from './completion.js';
+import { HoverFeature, HoverMiddleware } from './hover.js';
+import { DefinitionFeature, DefinitionMiddleware } from './definition.js';
+import { SignatureHelpFeature, SignatureHelpMiddleware } from './signatureHelp.js';
+import { DocumentHighlightFeature, DocumentHighlightMiddleware } from './documentHighlight.js';
+import { DocumentSymbolFeature, DocumentSymbolMiddleware } from './documentSymbol.js';
+import { WorkspaceSymbolFeature, WorkspaceSymbolMiddleware } from './workspaceSymbol.js';
+import { ReferencesFeature, ReferencesMiddleware } from './reference.js';
+import { TypeDefinitionFeature, TypeDefinitionMiddleware } from './typeDefinition.js';
+import { ImplementationFeature, ImplementationMiddleware } from './implementation.js';
+import { ColorProviderFeature, ColorProviderMiddleware } from './colorProvider.js';
+import { CodeActionFeature, CodeActionMiddleware } from './codeAction.js';
+import { CodeLensFeature, CodeLensMiddleware, CodeLensProviderShape } from './codeLens.js';
+import { DocumentFormattingFeature, DocumentOnTypeFormattingFeature, DocumentRangeFormattingFeature, FormattingMiddleware } from './formatting.js';
+import { RenameFeature, RenameMiddleware } from './rename.js';
+import { DocumentLinkFeature, DocumentLinkMiddleware } from './documentLink.js';
+import { ExecuteCommandFeature, ExecuteCommandMiddleware } from './executeCommand.js';
+import { FoldingRangeFeature, FoldingRangeProviderMiddleware, FoldingRangeProviderShape } from './foldingRange.js';
+import { DeclarationFeature, DeclarationMiddleware } from './declaration.js';
+import { SelectionRangeFeature, SelectionRangeProviderMiddleware } from './selectionRange.js';
+import { CallHierarchyFeature, CallHierarchyMiddleware } from './callHierarchy.js';
+import { SemanticTokensFeature, SemanticTokensMiddleware, SemanticTokensProviderShape } from './semanticTokens.js';
+import { LinkedEditingFeature, LinkedEditingRangeMiddleware } from './linkedEditingRange.js';
+import { TypeHierarchyFeature, TypeHierarchyMiddleware } from './typeHierarchy.js';
+import { InlineValueFeature, InlineValueMiddleware, InlineValueProviderShape } from './inlineValue.js';
+import { InlayHintsFeature, InlayHintsMiddleware, InlayHintsProviderShape } from './inlayHint.js';
+import { WorkspaceFoldersFeature, WorkspaceFolderMiddleware } from './workspaceFolder.js';
+import { DidCreateFilesFeature, DidDeleteFilesFeature, DidRenameFilesFeature, WillCreateFilesFeature, WillDeleteFilesFeature, WillRenameFilesFeature, FileOperationsMiddleware } from './fileOperations.js';
+import { InlineCompletionItemFeature, InlineCompletionMiddleware } from './inlineCompletion.js';
+import { TextDocumentContentFeature, type TextDocumentContentMiddleware, type TextDocumentContentProviderShape } from './textDocumentContent.js';
+import { FileSystemWatcherFeature } from './fileSystemWatcher.js';
+import { ProgressFeature } from './progress.js';
 
 /**
  * Controls when the output channel is revealed.

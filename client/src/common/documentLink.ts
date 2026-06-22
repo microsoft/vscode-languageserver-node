@@ -12,9 +12,9 @@ import {
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
-} from './features';
+} from './features.js';
 
-import * as UUID from './utils/uuid';
+import * as UUID from './utils/uuid.js';
 
 export interface ProvideDocumentLinksSignature {
 	(this: void, document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]>;

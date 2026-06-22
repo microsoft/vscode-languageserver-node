@@ -16,12 +16,12 @@ import {
 	NotebookDocumentSyncRegistrationType
 } from 'vscode-languageserver-protocol';
 
-import { generateUuid } from './utils/uuid';
-import { matchGlobPattern } from './utils/globPattern';
+import { generateUuid } from './utils/uuid.js';
+import { matchGlobPattern } from './utils/globPattern.js';
 
 import {
 	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError, type VisibleDocuments
-} from './features';
+} from './features.js';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {

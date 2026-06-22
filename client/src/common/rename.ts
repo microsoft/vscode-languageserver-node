@@ -11,10 +11,10 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, RenameOptions, RenameRegistrationOptions, RenameRequest, PrepareSupportDefaultBehavior, RenameParams, ResponseError, TextDocumentPositionParams, PrepareRenameRequest, Range,
 	type WorkspaceEdit} from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
-import * as Is from './utils/is';
+import * as UUID from './utils/uuid.js';
+import * as Is from './utils/is.js';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions } from './features.js';
 
 export interface ProvideRenameEditsSignature {
 	(this: void, document: TextDocument, position: VPosition, newName: string, token: CancellationToken): ProviderResult<VWorkspaceEdit>;

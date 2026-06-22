@@ -6,7 +6,7 @@
 import * as code from 'vscode';
 import * as proto from 'vscode-languageserver-protocol';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 export interface ProvideLinkedEditingRangeSignature {
 	(this: void, document: code.TextDocument, position: code.Position, token: code.CancellationToken): code.ProviderResult<code.LinkedEditingRanges>;

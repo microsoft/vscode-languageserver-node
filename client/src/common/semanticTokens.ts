@@ -10,8 +10,8 @@ import { ClientCapabilities, ServerCapabilities, DocumentSelector, SemanticToken
 	SemanticTokensRegistrationType
 } from 'vscode-languageserver-protocol';
 
-import { FeatureClient, TextDocumentLanguageFeature, ensure } from './features';
-import * as Is from './utils/is';
+import { FeatureClient, TextDocumentLanguageFeature, ensure } from './features.js';
+import * as Is from './utils/is.js';
 
 export interface DocumentSemanticsTokensSignature {
 	(this: void, document: vscode.TextDocument, token: vscode.CancellationToken): vscode.ProviderResult<vscode.SemanticTokens>;

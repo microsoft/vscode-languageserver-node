@@ -7,9 +7,12 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import { fileURLToPath } from 'url';
 
 import find from 'find-process';
 import { runTests } from '@vscode/test-electron';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function rimraf(location: string) {
 	const stat = fs.lstatSync(location);
@@ -30,7 +33,7 @@ function rimraf(location: string) {
 async function go() {
 	try {
 		const extensionDevelopmentPath = path.resolve(__dirname, '..');
-		const extensionTestsPath = __dirname;
+		const extensionTestsPath = path.join(__dirname, 'index.js');
 
 		const testDir = path.join(os.tmpdir(), Date.now().toString());
 		fs.mkdirSync(testDir, { recursive: true });

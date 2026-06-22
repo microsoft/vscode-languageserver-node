@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "skipLibCheck": true,
         "module": "node16",
         "moduleResolution": "node16",
         "rootDir": ".",

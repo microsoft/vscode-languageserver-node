@@ -13,9 +13,9 @@ import {
 	CodeActionTag
 } from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
+import * as UUID from './utils/uuid.js';
 
-import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
+import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
 export interface ProvideCodeActionsSignature {
 	(this: void, document: TextDocument, range: VRange, context: VCodeActionContext, token: CancellationToken): ProviderResult<(VCommand | VCodeAction)[]>;
