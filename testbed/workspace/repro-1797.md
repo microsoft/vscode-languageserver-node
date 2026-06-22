@@ -29,7 +29,7 @@ Reproduces [microsoft/vscode-languageserver-node#1797](https://github.com/micros
 3. In the Extension Development Host, open an **unsaved but named** buffer for the
    fake language, e.g. from a terminal:
    ```sh
-   code-insiders ./newFile.testbed
+   code-insiders ./newFile.testbed   # or: code ./newFile.testbed
    ```
    (or create a new file, set its language to `Testbed`, and keep it unsaved).
 4. Type some content, for example:
