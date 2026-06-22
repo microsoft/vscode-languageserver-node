@@ -5,7 +5,7 @@
 
 import { LinkedEditingRangeParams, LinkedEditingRanges, LinkedEditingRangeRequest, Disposable } from 'vscode-languageserver-protocol';
 
-import type { Feature, _Languages, ServerRequestHandler } from './server';
+import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 
 /**
  * Shape of the linked editing feature

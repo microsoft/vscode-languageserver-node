@@ -6,7 +6,7 @@
 
 import { InlineCompletionItem, Disposable, InlineCompletionParams, InlineCompletionList, InlineCompletionRequest } from 'vscode-languageserver-protocol';
 
-import type { Feature, _Languages, ServerRequestHandler } from './server';
+import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 
 /**
  * Shape of the inline completions feature

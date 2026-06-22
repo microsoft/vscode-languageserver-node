@@ -6,10 +6,11 @@
 import {
 	MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, ProtocolConnection, WatchDog, InitializeParams, createProtocolConnection,
 	createConnection as createCommonConnection, Connection, Features, _Connection, _
-} from '../common/api';
+} from '../common/api.js';
 
 export * from 'vscode-languageserver-protocol/browser';
-export * from '../common/api';
+export * from '../common/api.js';
+export { createMessageConnection, createProtocolConnection } from 'vscode-languageserver-protocol/browser';
 
 let _shutdownReceived: boolean = false;
 const watchDog: WatchDog = {

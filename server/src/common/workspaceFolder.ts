@@ -9,7 +9,7 @@ import {
 	WorkspaceFoldersRequest, ServerCapabilities
 } from 'vscode-languageserver-protocol';
 
-import type { Feature, _RemoteWorkspace } from './server';
+import type { Feature, _RemoteWorkspace } from './server.js';
 
 export interface WorkspaceFolders {
 	getWorkspaceFolders(): Promise<WorkspaceFolder[] | null>;

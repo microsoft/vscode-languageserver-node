@@ -5,7 +5,7 @@
 
 import * as assert from 'assert';
 
-import { SemanticTokensDiff } from '../../common/semanticTokens';
+import { SemanticTokensDiff } from '../../common/semanticTokens.js';
 
 suite('Semantic token tests', () => {
 	test('Issue 758', () => {

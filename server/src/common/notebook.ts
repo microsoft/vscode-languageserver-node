@@ -11,8 +11,8 @@ import {
 	DidCloseNotebookDocumentNotification, NotebookDocument, NotebookCell, LSPObject
 } from 'vscode-languageserver-protocol';
 
-import type { Feature, _Notebooks, Connection, } from './server';
-import { TextDocuments, TextDocumentConnection, TextDocumentsConfiguration } from './textDocuments';
+import type { Feature, _Notebooks, Connection, } from './server.js';
+import { TextDocuments, TextDocumentConnection, TextDocumentsConfiguration } from './textDocuments.js';
 
 
 /**

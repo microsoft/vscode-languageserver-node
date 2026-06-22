@@ -28,27 +28,27 @@ import {
 	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, WorkspaceSymbol, WorkspaceSymbolResolveRequest
 } from 'vscode-languageserver-protocol';
 
-import * as Is from './utils/is';
-import * as UUID from './utils/uuid';
-import { WorkDoneProgressReporter, ResultProgressReporter, WindowProgress, ProgressFeature, attachWorkDone, attachPartialResult} from './progress';
-import { Configuration, ConfigurationFeature } from './configuration';
-import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolder';
-import { CallHierarchy, CallHierarchyFeature } from './callHierarchy';
-import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens';
-import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument';
-import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations';
-import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange';
-import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './typeHierarchy';
-import { InlineValueFeatureShape, InlineValueFeature } from './inlineValue';
-import { FoldingRangeFeatureShape, FoldingRangeFeature } from './foldingRange';
+import * as Is from './utils/is.js';
+import * as UUID from './utils/uuid.js';
+import { WorkDoneProgressReporter, ResultProgressReporter, WindowProgress, ProgressFeature, attachWorkDone, attachPartialResult} from './progress.js';
+import { Configuration, ConfigurationFeature } from './configuration.js';
+import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolder.js';
+import { CallHierarchy, CallHierarchyFeature } from './callHierarchy.js';
+import { SemanticTokensFeatureShape, SemanticTokensFeature } from './semanticTokens.js';
+import { ShowDocumentFeatureShape, ShowDocumentFeature } from './showDocument.js';
+import { FileOperationsFeature, FileOperationsFeatureShape } from './fileOperations.js';
+import { LinkedEditingRangeFeature, LinkedEditingRangeFeatureShape } from './linkedEditingRange.js';
+import { TypeHierarchyFeatureShape, TypeHierarchyFeature } from './typeHierarchy.js';
+import { InlineValueFeatureShape, InlineValueFeature } from './inlineValue.js';
+import { FoldingRangeFeatureShape, FoldingRangeFeature } from './foldingRange.js';
 // import { InlineCompletionFeatureShape, InlineCompletionFeature } from './inlineCompletion.proposed';
-import { InlayHintFeatureShape, InlayHintFeature } from './inlayHint';
-import { DiagnosticFeatureShape, DiagnosticFeature } from './diagnostic';
-import { NotebookSyncFeatureShape, NotebookSyncFeature } from './notebook';
-import { MonikerFeature, MonikerFeatureShape } from './moniker';
-import type { ConnectionState } from './textDocuments';
-import { InlineCompletionFeature, type InlineCompletionFeatureShape } from './inlineCompletion';
-import { TextDocumentContentFeature, type TextDocumentContentFeatureShape } from './textDocumentContent';
+import { InlayHintFeatureShape, InlayHintFeature } from './inlayHint.js';
+import { DiagnosticFeatureShape, DiagnosticFeature } from './diagnostic.js';
+import { NotebookSyncFeatureShape, NotebookSyncFeature } from './notebook.js';
+import { MonikerFeature, MonikerFeatureShape } from './moniker.js';
+import type { ConnectionState } from './textDocuments.js';
+import { InlineCompletionFeature, type InlineCompletionFeatureShape } from './inlineCompletion.js';
+import { TextDocumentContentFeature, type TextDocumentContentFeatureShape } from './textDocumentContent.js';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {

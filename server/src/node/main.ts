@@ -6,17 +6,18 @@
 
 import { inspect } from 'node:util';
 
-import * as Is from '../common/utils/is';
-import { Connection, _, _Connection, Features, WatchDog, createConnection as createCommonConnection } from '../common/server';
+import * as Is from '../common/utils/is.js';
+import { Connection, _, _Connection, Features, WatchDog, createConnection as createCommonConnection } from '../common/server.js';
 
-import * as fm from './files';
+import * as fm from './files.js';
 import {
 	ConnectionStrategy, ConnectionOptions, MessageReader, MessageWriter, IPCMessageReader, IPCMessageWriter, createServerPipeTransport,
 	createServerSocketTransport, InitializeParams, createProtocolConnection, Logger, ProtocolConnection
 } from 'vscode-languageserver-protocol/node';
 
 export * from 'vscode-languageserver-protocol/node';
-export * from '../common/api';
+export * from '../common/api.js';
+export { createMessageConnection, createProtocolConnection } from 'vscode-languageserver-protocol/node';
 
 export namespace Files {
 	export const uriToFilePath = fm.uriToFilePath;

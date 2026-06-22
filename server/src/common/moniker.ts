@@ -6,7 +6,7 @@
 
 import { MonikerParams, Moniker, MonikerRequest, Disposable } from 'vscode-languageserver-protocol';
 
-import type { Feature, _Languages, ServerRequestHandler } from './server';
+import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 
 /**
  * Shape of the moniker feature

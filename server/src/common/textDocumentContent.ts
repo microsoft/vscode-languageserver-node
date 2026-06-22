@@ -5,7 +5,7 @@
 
 import { TextDocumentContentRefreshRequest, TextDocumentContentRequest, type Disposable, type DocumentUri, type RequestHandler, type TextDocumentContentParams, type TextDocumentContentResult } from 'vscode-languageserver-protocol';
 
-import type { Feature, _RemoteWorkspace } from './server';
+import type { Feature, _RemoteWorkspace } from './server.js';
 
 /**
  * Shape of the text document content feature

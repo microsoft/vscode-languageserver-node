@@ -3,18 +3,18 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { _, Features, _Connection, _LanguagesImpl } from './server';
-import { SemanticTokensBuilder } from './semanticTokens';
-import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress';
+import { _, Features, _Connection, _LanguagesImpl } from './server.js';
+import { SemanticTokensBuilder } from './semanticTokens.js';
+import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress.js';
 
 export * from 'vscode-languageserver-protocol';
 export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter };
 export { SemanticTokensBuilder };
-import { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent } from './textDocuments';
+import { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent } from './textDocuments.js';
 export { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent };
-import { NotebookDocuments } from './notebook';
+import { NotebookDocuments } from './notebook.js';
 export { NotebookDocuments };
-export * from './server';
+export * from './server.js';
 
 export namespace ProposedFeatures {
 	export const all: Features<_, _, _, _, _, _, _, _> = {

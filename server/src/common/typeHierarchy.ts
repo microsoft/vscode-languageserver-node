@@ -6,7 +6,7 @@
 
 import { TypeHierarchyItem, Disposable, TypeHierarchyPrepareParams, TypeHierarchySupertypesParams, TypeHierarchySubtypesParams, TypeHierarchyPrepareRequest, TypeHierarchySupertypesRequest, TypeHierarchySubtypesRequest } from 'vscode-languageserver-protocol';
 
-import type { Feature, _Languages, ServerRequestHandler } from './server';
+import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 
 /**
  * Shape of the type hierarchy feature

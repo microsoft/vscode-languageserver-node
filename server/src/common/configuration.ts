@@ -7,9 +7,9 @@ import {
 	ConfigurationItem, ConfigurationParams, ConfigurationRequest
 } from 'vscode-languageserver-protocol';
 
-import type { Feature, _RemoteWorkspace } from './server';
+import type { Feature, _RemoteWorkspace } from './server.js';
 
-import * as Is from './utils/is';
+import * as Is from './utils/is.js';
 
 export interface Configuration {
 	getConfiguration(): Promise<any>;

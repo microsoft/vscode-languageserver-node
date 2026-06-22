@@ -9,7 +9,7 @@ import {
 	SemanticTokensRefreshRequest, SemanticTokensEdit, Disposable
 } from 'vscode-languageserver-protocol';
 
-import type { Feature, _Languages, ServerRequestHandler } from './server';
+import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 
 /**
  * Shape of the semantic token feature

@@ -8,6 +8,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { spawnSync, fork, ChildProcess, SpawnSyncOptionsWithStringEncoding } from 'child_process';
 
+const __filename = url.fileURLToPath(import.meta.url);
+
 /**
  * @deprecated Use the `vscode-uri` npm module which provides a more
  * complete implementation of handling VS Code URIs.

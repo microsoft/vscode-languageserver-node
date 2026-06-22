@@ -10,7 +10,7 @@ import {
 	DeleteFilesParams, DidDeleteFilesNotification, WillDeleteFilesRequest, Disposable,
 } from 'vscode-languageserver-protocol';
 
-import type { Feature, _RemoteWorkspace } from './server';
+import type { Feature, _RemoteWorkspace } from './server.js';
 
 /**
  * Shape of the file operations feature

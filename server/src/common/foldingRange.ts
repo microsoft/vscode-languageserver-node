@@ -6,7 +6,7 @@
 
 import { FoldingRange, Disposable, FoldingRangeParams, FoldingRangeRefreshRequest, FoldingRangeRequest } from 'vscode-languageserver-protocol';
 
-import type { Feature, _Languages, ServerRequestHandler } from './server';
+import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 
 /**
  * Shape of the folding range feature

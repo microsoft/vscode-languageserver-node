@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { ShowDocumentParams, ShowDocumentRequest, ShowDocumentResult } from 'vscode-languageserver-protocol';
-import type { Feature, _RemoteWindow } from './server';
+import type { Feature, _RemoteWindow } from './server.js';
 
 export interface ShowDocumentFeatureShape {
 	showDocument(params: ShowDocumentParams): Promise<ShowDocumentResult>;

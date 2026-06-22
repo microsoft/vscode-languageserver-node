@@ -11,7 +11,7 @@ import {
 	InitializeParams, InitializeRequest, InitializeResult, createConnection, DidChangeConfigurationNotification,
 	DidChangeConfigurationParams, Connection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress,
 	LocationLink
-} from '../main';
+} from '../main.js';
 
 class TestStream extends Duplex {
 	_write(chunk: string, _encoding: string, done: () => void) {

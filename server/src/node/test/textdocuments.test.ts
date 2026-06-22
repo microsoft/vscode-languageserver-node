@@ -17,7 +17,7 @@ import {
 	DidOpenTextDocumentNotification,
 	DidChangeTextDocumentNotification,
 	Range,
-} from '../main';
+} from '../main.js';
 
 import { TextDocument } from 'vscode-languageserver-textdocument';
 

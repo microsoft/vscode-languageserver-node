@@ -9,8 +9,8 @@ import {
 	RequestParam
 } from 'vscode-languageserver-protocol';
 
-import { generateUuid } from './utils/uuid';
-import type { Feature, _RemoteWindow } from './server';
+import { generateUuid } from './utils/uuid.js';
+import type { Feature, _RemoteWindow } from './server.js';
 
 export interface ProgressContext {
 	sendProgress<P>(type: ProgressType<P>, token: ProgressToken, value: NoInfer<RequestParam<P>>): void;
