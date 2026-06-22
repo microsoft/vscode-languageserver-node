@@ -15,6 +15,6 @@
 		"node_modules"
 	],
 	"include": [
-		"./.tsconfigrc.js"
+		"./.tsconfigrc.mjs"
 	]
 }

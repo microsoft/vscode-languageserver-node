@@ -5,10 +5,10 @@
 
 import * as ts from 'typescript';
 
-import { Symbols } from './typescripts';
+import { Symbols } from './typescripts.js';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry, EnumerationType, MessageDirection } from './metaModel';
-import path = require('path');
+import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry, EnumerationType, MessageDirection } from './metaModel.js';
+import * as path from 'path';
 
 const LSPBaseTypes = new Set(['URI', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
 type BaseTypeInfoKind = 'string' | 'boolean' | 'URI' | 'DocumentUri' | 'integer' | 'uinteger' | 'decimal' | 'void' | 'never' | 'unknown' | 'null' | 'undefined' | 'any' | 'object';

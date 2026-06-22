@@ -4,6 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const nodeRequire = createRequire(import.meta.url);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 interface Package {
 	name: string;
@@ -76,7 +81,7 @@ const validations: Map<string, ValidationEntry> = new Map();
 
 function check(): void {
 	for (const pack of packages) {
-		const json = require(path.join(root, pack.location, 'package.json'));
+		const json = nodeRequire(path.join(root, pack.location, 'package.json'));
 		validations.set(pack.name, { package: pack, version: json.version, violations: []});
 		if (pack.dependsOn !== undefined) {
 			for (const dependency of pack.dependsOn) {

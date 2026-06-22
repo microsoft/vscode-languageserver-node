@@ -7,7 +7,7 @@ const globals = require('globals');
 /** @type {import('eslint').Linter.Config[]} */
 module.exports = [
 	{
-		ignores: ['node_modules/**', 'lib/**', '**/.tsconfigrc.js'],
+		ignores: ['node_modules/**', 'lib/**', '**/.tsconfigrc.mjs'],
 	},
 	{
 		files: ['**/*.js'],

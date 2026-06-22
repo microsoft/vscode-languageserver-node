@@ -4,22 +4,27 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as fs from 'fs';
-import path = require('path');
-import * as yargs from 'yargs';
-import { ProjectGenerator } from './generator';
-import { ProjectOptions, Projects } from './types';
+import * as path from 'path';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+import yargs from 'yargs';
+import { ProjectGenerator } from './generator.js';
+import { ProjectOptions, Projects } from './types.js';
 
-export * from './types';
+export * from './types.js';
 
-export function main(): number {
-	const args = yargs.
+const nodeRequire = createRequire(import.meta.url);
+
+export async function main(): Promise<number> {
+	const y = yargs(process.argv.slice(2));
+	const args = y.
 		parserConfiguration({ 'camel-case-expansion': false }).
 		exitProcess(false).
-		usage(`TSConfig Generator\nVersion: ${require('../package.json').version}\nUsage: tsconfig-gen [options] file`).
-		example(`tsconfig-gen .tsconfigrc.js`, `Creates tsconfig.json files based on the configuration in .tsconfigrc.js`).
-		example(`tsconfig-gen -i compile -f .tsconfigrc.js`, `Creates tsconfig.json files for the 'compile' variant based on the configuration in .tsconfigrc.js`).
+		usage(`TSConfig Generator\nVersion: ${nodeRequire('../package.json').version}\nUsage: tsconfig-gen [options] file`).
+		example(`tsconfig-gen .tsconfigrc.mjs`, `Creates tsconfig.json files based on the configuration in .tsconfigrc.mjs`).
+		example(`tsconfig-gen -i compile -f .tsconfigrc.mjs`, `Creates tsconfig.json files for the 'compile' variant based on the configuration in .tsconfigrc.mjs`).
 		version(false).
-		wrap(Math.min(100, yargs.terminalWidth())).
+		wrap(Math.min(100, y.terminalWidth())).
 		option('d', {
 			alias: 'dryRun',
 			description: 'Dry run without writing tsconfig files. Prints the new configuration files to stdout.',
@@ -51,7 +56,7 @@ export function main(): number {
 		return 0;
 	}
 	if (args.v) {
-		console.log(require('../package.json').version);
+		console.log(nodeRequire('../package.json').version);
 		return 0;
 	}
 	const test = args.d;
@@ -71,11 +76,6 @@ export function main(): number {
 		return 1;
 	}
 
-	const ext = path.extname(file);
-	if (ext.length > 0) {
-		file = file.substring(0, file.length - ext.length);
-	}
-
 	const variants: Set<string | number> | undefined =  args.t && new Set(args.t);
 	function match(variant: ProjectOptions): boolean {
 		if (variants === undefined) {
@@ -89,7 +89,8 @@ export function main(): number {
 		return false;
 	}
 
-	const projects: Projects = require(path.isAbsolute(file) ? file : path.join(process.cwd(), file));
+	const configFile = path.isAbsolute(file) ? file : path.join(process.cwd(), file);
+	const projects: Projects = (await import(pathToFileURL(configFile).href)).default;
 	for (const project of projects) {
 		for (const variant of project[1]) {
 			if (!match(variant)) {
@@ -111,6 +112,6 @@ export function main(): number {
 	return 0;
 }
 
-if (require.main === module) {
-	process.exitCode = main();
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
+	main().then((code) => { process.exitCode = code; });
 }

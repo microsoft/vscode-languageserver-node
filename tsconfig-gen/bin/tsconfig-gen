@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require('../lib/main.js').main();
+import('../lib/main.js').then(({ main }) => main()).then((code) => { process.exitCode = code; });

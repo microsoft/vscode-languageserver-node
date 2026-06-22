@@ -7,8 +7,8 @@ import * as path from 'path';
 
 import * as ts from 'typescript';
 
-import * as tss from './typescripts';
-import Visitor from './visitor';
+import * as tss from './typescripts.js';
+import Visitor from './visitor.js';
 
 function loadConfigFile(file: string): ts.ParsedCommandLine {
 	const absolute = path.resolve(file);
@@ -106,9 +106,7 @@ async function main(): Promise<number> {
 	return 0;
 }
 
-if (require.main === module) {
-	main().then(undefined, (error) => {
-		console.error(error);
-		process.exitCode = 1;
-	});
-}
+main().then(undefined, (error) => {
+	console.error(error);
+	process.exitCode = 1;
+});

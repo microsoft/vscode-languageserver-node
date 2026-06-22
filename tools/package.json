@@ -5,6 +5,7 @@
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"private": true,
+	"type": "module",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
