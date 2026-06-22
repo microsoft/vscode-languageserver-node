@@ -6,10 +6,10 @@
 import { TextDocumentIdentifier, Range, uinteger, SemanticTokensEdit, SemanticTokensLegend, SemanticTokens, SemanticTokensDelta } from 'vscode-languageserver-types';
 import { RequestHandler0, RequestHandler } from 'vscode-jsonrpc';
 
-import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, RegistrationType, CM } from './messages';
+import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, RegistrationType, CM } from './messages.js';
 import {
 	type PartialResultParams, type WorkDoneProgressParams, type WorkDoneProgressOptions, type TextDocumentRegistrationOptions, type StaticRegistrationOptions
-} from './protocol';
+} from './protocol.js';
 
 /**
  * @since 3.16.0

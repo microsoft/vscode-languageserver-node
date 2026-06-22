@@ -6,12 +6,12 @@
 import { RequestHandler0, RequestHandler, ProgressType } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from 'vscode-languageserver-types';
 
-import * as Is from './utils/is';
-import { MessageDirection, ProtocolRequestType0, ProtocolRequestType, CM } from './messages';
+import * as Is from './utils/is.js';
+import { MessageDirection, ProtocolRequestType0, ProtocolRequestType, CM } from './messages.js';
 import {
 	type PartialResultParams, type StaticRegistrationOptions, type WorkDoneProgressParams, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions,
 	type DiagnosticsCapabilities,
-} from './protocol';
+} from './protocol.js';
 
 /**
  * Client capabilities specific to diagnostic pull requests.

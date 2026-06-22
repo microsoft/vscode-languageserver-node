@@ -6,10 +6,10 @@
 import { LogTraceParams, SetTraceParams, ProgressToken, ErrorCodes } from 'vscode-jsonrpc';
 import { SemanticTokenTypes, SemanticTokenModifiers, LSPAny } from 'vscode-languageserver-types';
 
-import { MessageDirection, ProtocolNotificationType } from './messages';
-import { LSPErrorCodes } from './api';
-import { WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport } from './protocol.progress';
-import { DocumentDiagnosticReportKind } from './protocol.diagnostic';
+import { MessageDirection, ProtocolNotificationType } from './messages.js';
+import { LSPErrorCodes } from './api.js';
+import { WorkDoneProgressBegin, WorkDoneProgressEnd, WorkDoneProgressReport } from './protocol.progress.js';
+import { DocumentDiagnosticReportKind } from './protocol.diagnostic.js';
 
 // This file is used to define the $ notification partly specified in JSON-RPC
 // so that we generate proper data for them in the meta model.

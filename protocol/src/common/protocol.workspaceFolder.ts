@@ -6,7 +6,7 @@
 import { WorkspaceFolder } from 'vscode-languageserver-types';
 import { RequestHandler0, NotificationHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc';
 
-import { MessageDirection, ProtocolRequestType0, ProtocolNotificationType, CM } from './messages';
+import { MessageDirection, ProtocolRequestType0, ProtocolNotificationType, CM } from './messages.js';
 
 export interface WorkspaceFoldersInitializeParams {
 	/**

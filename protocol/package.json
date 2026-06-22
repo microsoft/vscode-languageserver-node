@@ -4,6 +4,7 @@
 	"version": "3.18.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
+	"type": "module",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
@@ -42,8 +43,8 @@
 		"test": "npm run test:node && npm run test:browser",
 		"test:node": "node ../node_modules/mocha/bin/_mocha",
 		"test:browser": "npm run webpack:test:silent && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/protocol/src/browser/test/",
-		"webpack:test": "cd ../types && npm run compile && cd ../protocol && node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
-		"webpack:test:silent": "cd ../types && npm run compile && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js",
+		"webpack:test": "cd ../types && npm run compile && cd ../protocol && node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.cjs",
+		"webpack:test:silent": "cd ../types && npm run compile && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.cjs",
 		"compile:metaModelTool": "cd ../tools && npm run compile && cd ../protocol",
 		"generate:metaModel": "node ../tools/lib/generator-main.js -p ./src/common/tsconfig.json > ./metaModel.json",
 		"generate:metaModelSchema": "ts-json-schema-generator --tsconfig ../tools/tsconfig.json --path ../tools/src/metaModel.ts > ./metaModel.schema.json",

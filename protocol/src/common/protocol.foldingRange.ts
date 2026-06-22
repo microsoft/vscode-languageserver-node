@@ -6,10 +6,10 @@
 import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 import { TextDocumentIdentifier, uinteger, FoldingRange, FoldingRangeKind } from 'vscode-languageserver-types';
 
-import { CM, MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
+import { CM, MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages.js';
 import {
 	type TextDocumentRegistrationOptions, type StaticRegistrationOptions, type PartialResultParams, type WorkDoneProgressParams, type WorkDoneProgressOptions,
-} from './protocol';
+} from './protocol.js';
 
 // ---- capabilities
 

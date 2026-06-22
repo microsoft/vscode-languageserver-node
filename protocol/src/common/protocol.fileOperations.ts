@@ -5,7 +5,7 @@
 
 import { NotificationHandler, RequestHandler } from 'vscode-jsonrpc';
 import { WorkspaceEdit } from 'vscode-languageserver-types';
-import { CM, MessageDirection, ProtocolNotificationType, ProtocolRequestType } from './messages';
+import { CM, MessageDirection, ProtocolNotificationType, ProtocolRequestType } from './messages.js';
 
 /**
  * Options for notifications/requests for user operations on files.

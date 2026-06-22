@@ -3,10 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { MessageDirection, ProtocolRequestType, CM } from './messages';
+import { MessageDirection, ProtocolRequestType, CM } from './messages.js';
 import {
 	type WorkDoneProgressOptions, type WorkDoneProgressParams, type PartialResultParams, type TextDocumentRegistrationOptions, type TextDocumentPositionParams,
-} from './protocol';
+} from './protocol.js';
 
 /**
  * Moniker uniqueness level to define scope of the moniker.

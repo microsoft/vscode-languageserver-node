@@ -3,11 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, ProtocolConnection } from '../common/api';
+import { MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, ProtocolConnection } from '../common/api.js';
 import { createMessageConnection } from 'vscode-jsonrpc/browser';
 
-export * from 'vscode-jsonrpc/browser';
-export * from '../common/api';
+export * from '../common/api.js';
+export { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from 'vscode-jsonrpc/browser';
 
 export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): ProtocolConnection {
 	return createMessageConnection(reader, writer, logger, options);

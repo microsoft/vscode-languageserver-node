@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { createProtocolConnection, BrowserMessageReader, BrowserMessageWriter } from '../main';
-import { CompletionRequest } from '../../common/api';
+import { createProtocolConnection, BrowserMessageReader, BrowserMessageWriter } from '../main.js';
+import { CompletionRequest } from '../../common/api.js';
 
 const reader: BrowserMessageReader = new BrowserMessageReader(self);
 const writer: BrowserMessageWriter = new BrowserMessageWriter(self);

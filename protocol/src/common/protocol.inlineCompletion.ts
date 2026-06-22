@@ -6,8 +6,8 @@
 import { InlineCompletionItem, InlineCompletionContext, InlineCompletionList } from 'vscode-languageserver-types';
 import { RequestHandler } from 'vscode-jsonrpc';
 
-import { CM, MessageDirection, ProtocolRequestType } from './messages';
-import { type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type StaticRegistrationOptions, type WorkDoneProgressParams, type TextDocumentPositionParams } from './protocol';
+import { CM, MessageDirection, ProtocolRequestType } from './messages.js';
+import { type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type StaticRegistrationOptions, type WorkDoneProgressParams, type TextDocumentPositionParams } from './protocol.js';
 
 // ---- capabilities
 

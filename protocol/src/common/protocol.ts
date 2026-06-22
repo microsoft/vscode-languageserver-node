@@ -5,7 +5,7 @@
 
 import { ProgressToken, RequestHandler, TraceValue } from 'vscode-jsonrpc';
 
-import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0, CM } from './messages';
+import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0, CM } from './messages.js';
 
 import {
 	Position, Range, Location, LocationLink, Diagnostic, Command, TextEdit, WorkspaceEdit, WorkspaceEditMetadata, DocumentUri,
@@ -17,93 +17,93 @@ import {
 	CodeActionTag
 } from 'vscode-languageserver-types';
 
-import * as Is from './utils/is';
+import * as Is from './utils/is.js';
 
 import {
 	ImplementationRequest, ImplementationClientCapabilities, ImplementationOptions, ImplementationRegistrationOptions,
 	ImplementationParams
-} from './protocol.implementation';
+} from './protocol.implementation.js';
 
 import {
 	TypeDefinitionRequest, TypeDefinitionClientCapabilities, TypeDefinitionOptions, TypeDefinitionRegistrationOptions,
 	TypeDefinitionParams
-} from './protocol.typeDefinition';
+} from './protocol.typeDefinition.js';
 
 import {
 	WorkspaceFoldersRequest, DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams,
 	WorkspaceFoldersChangeEvent, WorkspaceFoldersInitializeParams, WorkspaceFoldersServerCapabilities
-} from './protocol.workspaceFolder';
+} from './protocol.workspaceFolder.js';
 
 import {
 	ConfigurationRequest, ConfigurationParams, ConfigurationItem,
-} from './protocol.configuration';
+} from './protocol.configuration.js';
 
 import {
 	DocumentColorRequest, ColorPresentationRequest, DocumentColorOptions, DocumentColorParams, ColorPresentationParams,
 	DocumentColorClientCapabilities, DocumentColorRegistrationOptions,
-} from './protocol.colorProvider';
+} from './protocol.colorProvider.js';
 
 import {
 	FoldingRangeClientCapabilities, FoldingRangeOptions, FoldingRangeRequest, FoldingRangeParams, FoldingRangeRegistrationOptions, FoldingRangeRefreshRequest, FoldingRangeWorkspaceClientCapabilities
-} from './protocol.foldingRange';
+} from './protocol.foldingRange.js';
 
 import {
 	DeclarationClientCapabilities, DeclarationRequest, DeclarationOptions, DeclarationRegistrationOptions, DeclarationParams
-} from './protocol.declaration';
+} from './protocol.declaration.js';
 
 import {
 	SelectionRangeClientCapabilities, SelectionRangeOptions, SelectionRangeRequest, SelectionRangeParams, SelectionRangeRegistrationOptions
-} from './protocol.selectionRange';
+} from './protocol.selectionRange.js';
 
 import {
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd, WorkDoneProgress, WorkDoneProgressCreateParams,
 	WorkDoneProgressCreateRequest, WorkDoneProgressCancelParams, WorkDoneProgressCancelNotification
-} from './protocol.progress';
+} from './protocol.progress.js';
 
 import {
 	CallHierarchyClientCapabilities, CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest,
 	CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest, CallHierarchyPrepareParams, CallHierarchyPrepareRequest,
-} from './protocol.callHierarchy';
+} from './protocol.callHierarchy.js';
 
 import {
 	SemanticTokensPartialResult, SemanticTokensDeltaPartialResult, TokenFormat, SemanticTokensClientCapabilities, SemanticTokensOptions, SemanticTokensRegistrationOptions,
 	SemanticTokensParams, SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
 	SemanticTokensRefreshRequest, SemanticTokensWorkspaceClientCapabilities, SemanticTokensRegistrationType
-} from './protocol.semanticTokens';
+} from './protocol.semanticTokens.js';
 
 import {
 	ShowDocumentParams, ShowDocumentResult, ShowDocumentRequest, ShowDocumentClientCapabilities,
-} from './protocol.showDocument';
+} from './protocol.showDocument.js';
 
 import {
 	LinkedEditingRangeClientCapabilities, LinkedEditingRanges, LinkedEditingRangeOptions, LinkedEditingRangeParams, LinkedEditingRangeRegistrationOptions, LinkedEditingRangeRequest
-} from './protocol.linkedEditingRange';
+} from './protocol.linkedEditingRange.js';
 
 import {
 	FileOperationOptions, FileOperationClientCapabilities, FileOperationRegistrationOptions, FileOperationPatternOptions, FileOperationPatternKind,
 	DidCreateFilesNotification, CreateFilesParams, FileCreate, WillCreateFilesRequest,
 	DidRenameFilesNotification, RenameFilesParams, FileRename, WillRenameFilesRequest,
 	DidDeleteFilesNotification, DeleteFilesParams, FileDelete, WillDeleteFilesRequest,
-} from './protocol.fileOperations';
+} from './protocol.fileOperations.js';
 
 import {
 	UniquenessLevel, MonikerKind, Moniker, MonikerClientCapabilities, MonikerOptions, MonikerRegistrationOptions, MonikerParams, MonikerRequest
-} from './protocol.moniker';
+} from './protocol.moniker.js';
 
 import {
 	TypeHierarchyClientCapabilities, TypeHierarchyOptions, TypeHierarchyRegistrationOptions, TypeHierarchyPrepareParams, TypeHierarchyPrepareRequest,
 	TypeHierarchySubtypesParams, TypeHierarchySubtypesRequest, TypeHierarchySupertypesParams, TypeHierarchySupertypesRequest
-} from './protocol.typeHierarchy';
+} from './protocol.typeHierarchy.js';
 
 import {
 	InlineValueClientCapabilities, InlineValueOptions, InlineValueRegistrationOptions, InlineValueWorkspaceClientCapabilities, InlineValueParams,
 	InlineValueRequest, InlineValueRefreshRequest
-} from './protocol.inlineValue';
+} from './protocol.inlineValue.js';
 
 import {
 	InlayHintClientCapabilities, InlayHintOptions, InlayHintRegistrationOptions, InlayHintWorkspaceClientCapabilities, InlayHintParams,
 	InlayHintRequest, InlayHintResolveRequest, InlayHintRefreshRequest
-} from './protocol.inlayHint';
+} from './protocol.inlayHint.js';
 
 import {
 	DiagnosticClientCapabilities, DiagnosticOptions, DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams,
@@ -112,7 +112,7 @@ import {
 	PreviousResultId, WorkspaceDiagnosticParams, WorkspaceFullDocumentDiagnosticReport, WorkspaceUnchangedDocumentDiagnosticReport,
 	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticReport, WorkspaceDiagnosticReportPartialResult, WorkspaceDiagnosticRequest,
 	DiagnosticRefreshRequest, DiagnosticWorkspaceClientCapabilities
-} from './protocol.diagnostic';
+} from './protocol.diagnostic.js';
 
 import {
 	NotebookDocumentSyncClientCapabilities, NotebookCellKind, ExecutionSummary, NotebookCell, NotebookDocument, NotebookDocumentIdentifier,
@@ -120,16 +120,16 @@ import {
 	DidOpenNotebookDocumentParams, DidOpenNotebookDocumentNotification, NotebookCellArrayChange, NotebookDocumentChangeEvent, DidChangeNotebookDocumentParams,
 	DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentParams, DidSaveNotebookDocumentNotification, DidCloseNotebookDocumentParams,
 	DidCloseNotebookDocumentNotification, NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook
-} from './protocol.notebook';
+} from './protocol.notebook.js';
 
 import {
 	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest
-} from './protocol.inlineCompletion';
+} from './protocol.inlineCompletion.js';
 
 import {
 	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentResult,
 	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest
-} from './protocol.textDocumentContent';
+} from './protocol.textDocumentContent.js';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;

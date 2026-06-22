@@ -8,10 +8,10 @@ import type { integer } from 'vscode-languageserver-types';
 export * from 'vscode-jsonrpc';
 export * from 'vscode-languageserver-types';
 
-export * from './messages';
-export * from './protocol';
+export * from './messages.js';
+export * from './protocol.js';
 
-export { ProtocolConnection, createProtocolConnection } from './connection';
+export { ProtocolConnection, createProtocolConnection } from './connection.js';
 
 export namespace LSPErrorCodes {
 	/**

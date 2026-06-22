@@ -6,11 +6,11 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { Definition, DefinitionLink, Location, LocationLink } from 'vscode-languageserver-types';
 
-import { CM, MessageDirection, ProtocolRequestType } from './messages';
+import { CM, MessageDirection, ProtocolRequestType } from './messages.js';
 import {
 	type TextDocumentRegistrationOptions, type StaticRegistrationOptions, type TextDocumentPositionParams, type PartialResultParams, type WorkDoneProgressParams,
 	type WorkDoneProgressOptions
-} from './protocol';
+} from './protocol.js';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | Declaration | DeclarationLink | Location | undefined;

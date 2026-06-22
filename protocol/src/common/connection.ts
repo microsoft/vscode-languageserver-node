@@ -12,7 +12,7 @@ import {
 
 import {
 	ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0
-} from './messages';
+} from './messages.js';
 
 export interface ProtocolConnection {
 

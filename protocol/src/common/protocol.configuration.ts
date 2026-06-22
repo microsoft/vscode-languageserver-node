@@ -6,7 +6,7 @@
 import { RequestHandler, HandlerResult, CancellationToken } from 'vscode-jsonrpc';
 import { LSPAny, URI } from 'vscode-languageserver-types';
 
-import { CM, MessageDirection, ProtocolRequestType } from './messages';
+import { CM, MessageDirection, ProtocolRequestType } from './messages.js';
 
 //---- Get Configuration request ----
 

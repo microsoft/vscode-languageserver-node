@@ -6,8 +6,8 @@
 import type { DocumentUri } from 'vscode-languageserver-types';
 import type { RequestHandler } from 'vscode-jsonrpc';
 
-import { MessageDirection, ProtocolRequestType, CM } from './messages';
-import { type StaticRegistrationOptions } from './protocol';
+import { MessageDirection, ProtocolRequestType, CM } from './messages.js';
+import { type StaticRegistrationOptions } from './protocol.js';
 
 /**
  * Client capabilities for a text document content provider.

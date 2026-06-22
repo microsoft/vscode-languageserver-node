@@ -8,9 +8,9 @@ import {
 	VersionedTextDocumentIdentifier, LSPObject
 } from 'vscode-languageserver-types';
 
-import * as Is from './utils/is';
-import { MessageDirection, ProtocolNotificationType, RegistrationType } from './messages';
-import type { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentContentChangeEvent } from './protocol';
+import * as Is from './utils/is.js';
+import { MessageDirection, ProtocolNotificationType, RegistrationType } from './messages.js';
+import type { StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentContentChangeEvent } from './protocol.js';
 
 /**
  * Notebook specific client capabilities.

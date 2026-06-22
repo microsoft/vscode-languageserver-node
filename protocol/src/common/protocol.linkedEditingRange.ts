@@ -6,11 +6,11 @@
 import { RequestHandler } from 'vscode-jsonrpc';
 import { Range } from 'vscode-languageserver-types';
 
-import { CM, MessageDirection, ProtocolRequestType } from './messages';
+import { CM, MessageDirection, ProtocolRequestType } from './messages.js';
 import {
 	type StaticRegistrationOptions, type TextDocumentPositionParams, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions,
 	type WorkDoneProgressParams,
-} from './protocol';
+} from './protocol.js';
 
 /**
  * Client capabilities for the linked editing range request.

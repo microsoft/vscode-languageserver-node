@@ -5,8 +5,8 @@
 
 import * as assert from 'assert';
 
-import { CompletionRequest, CompletionParams, CompletionItem } from '../../common/api';
-import { BrowserMessageReader, BrowserMessageWriter, createProtocolConnection } from '../main';
+import { CompletionRequest, CompletionParams, CompletionItem } from '../../common/api.js';
+import { BrowserMessageReader, BrowserMessageWriter, createProtocolConnection } from '../main.js';
 
 suite('Browser Protocol Tests', () => {
 	const worker = new Worker('/protocol/dist/worker.js');
