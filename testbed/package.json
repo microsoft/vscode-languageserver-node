@@ -13,6 +13,17 @@
 	"enabledApiProposals": [
 	],
 	"contributes": {
+		"languages": [
+			{
+				"id": "testbed",
+				"aliases": [
+					"Testbed"
+				],
+				"extensions": [
+					".testbed"
+				]
+			}
+		],
 		"commands": [
 			{
 				"command": "testbed.openFile",
