@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import type { DocumentUri } from 'vscode-languageserver-types';
-import type { RequestHandler } from 'vscode-jsonrpc';
+import type { DocumentUri } from '@vscode/languageserver-types';
+import type { RequestHandler } from '@vscode/jsonrpc';
 
 import { MessageDirection, ProtocolRequestType, CM } from './messages.js';
 import { type StaticRegistrationOptions } from './protocol.js';

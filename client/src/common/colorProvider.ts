@@ -8,7 +8,7 @@ import { languages as Languages, Disposable, TextDocument, ProviderResult, Range
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, DocumentColorRequest, ColorPresentationRequest,
 	DocumentColorRegistrationOptions, DocumentColorOptions
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 

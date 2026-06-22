@@ -16,14 +16,14 @@ declare module 'vscode' {
 
 import { strictEqual, deepEqual, ok, deepStrictEqual } from 'assert';
 
-import * as proto from 'vscode-languageclient';
-import * as codeConverter from 'vscode-languageclient/$test/common/codeConverter';
-import * as protocolConverter from 'vscode-languageclient/$test/common/protocolConverter';
-import ProtocolCompletionItem from 'vscode-languageclient/$test/common/protocolCompletionItem';
-import ProtocolInlayHint from 'vscode-languageclient/$test/common/protocolInlayHint';
-import { DiagnosticCode, ProtocolDiagnostic } from 'vscode-languageclient/$test/common/protocolDiagnostic';
-import * as Is from 'vscode-languageclient/$test/common/utils/is';
-import * as async from 'vscode-languageclient/$test/common/utils/async';
+import * as proto from '@vscode/languageclient';
+import * as codeConverter from '@vscode/languageclient/$test/common/codeConverter';
+import * as protocolConverter from '@vscode/languageclient/$test/common/protocolConverter';
+import ProtocolCompletionItem from '@vscode/languageclient/$test/common/protocolCompletionItem';
+import ProtocolInlayHint from '@vscode/languageclient/$test/common/protocolInlayHint';
+import { DiagnosticCode, ProtocolDiagnostic } from '@vscode/languageclient/$test/common/protocolDiagnostic';
+import * as Is from '@vscode/languageclient/$test/common/utils/is';
+import * as async from '@vscode/languageclient/$test/common/utils/async';
 
 import * as vscode from 'vscode';
 

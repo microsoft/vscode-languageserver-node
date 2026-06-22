@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { TextDocumentIdentifier, Range, uinteger, SemanticTokensEdit, SemanticTokensLegend, SemanticTokens, SemanticTokensDelta } from 'vscode-languageserver-types';
-import { RequestHandler0, RequestHandler } from 'vscode-jsonrpc';
+import { TextDocumentIdentifier, Range, uinteger, SemanticTokensEdit, SemanticTokensLegend, SemanticTokens, SemanticTokensDelta } from '@vscode/languageserver-types';
+import { RequestHandler0, RequestHandler } from '@vscode/jsonrpc';
 
 import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, RegistrationType, CM } from './messages.js';
 import {

@@ -9,7 +9,7 @@ import {
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, TypeDefinitionRequest, TypeDefinitionRegistrationOptions, TypeDefinitionOptions
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 

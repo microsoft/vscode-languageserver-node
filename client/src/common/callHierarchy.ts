@@ -12,7 +12,7 @@ import {
 import { ClientCapabilities, ServerCapabilities, DocumentSelector, CallHierarchyOptions, CallHierarchyRegistrationOptions, CallHierarchyClientCapabilities,
 	CallHierarchyIncomingCallsParams, CallHierarchyIncomingCallsRequest, CallHierarchyOutgoingCallsParams, CallHierarchyOutgoingCallsRequest,
 	CallHierarchyPrepareRequest
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 

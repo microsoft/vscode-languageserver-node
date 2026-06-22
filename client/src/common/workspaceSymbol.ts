@@ -9,7 +9,7 @@ import {
 
 import {
 	ClientCapabilities, ServerCapabilities, WorkspaceSymbolRegistrationOptions, WorkspaceSymbolRequest, WorkspaceSymbolResolveRequest
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, WorkspaceFeature

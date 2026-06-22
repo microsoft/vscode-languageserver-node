@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { CancellationToken } from 'vscode';
-import { RAL, Disposable } from 'vscode-languageserver-protocol';
+import { RAL, Disposable } from '@vscode/languageserver-protocol';
 
 export type ITask<T> = () => T;
 

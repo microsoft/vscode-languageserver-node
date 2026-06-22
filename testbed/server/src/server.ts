@@ -19,11 +19,11 @@ import {
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
 	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DidChangeConfigurationNotification,
 	NotificationType
-} from 'vscode-languageserver/node';
+} from '@vscode/languageserver/node';
 
 import {
 	TextDocument
-} from 'vscode-languageserver-textdocument';
+} from '@vscode/languageserver-textdocument';
 
 const connection: ProposedFeatures.Connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);

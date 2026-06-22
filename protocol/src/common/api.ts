@@ -3,10 +3,10 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import type { integer } from 'vscode-languageserver-types';
+import type { integer } from '@vscode/languageserver-types';
 
-export * from 'vscode-jsonrpc';
-export * from 'vscode-languageserver-types';
+export * from '@vscode/jsonrpc';
+export * from '@vscode/languageserver-types';
 
 export * from './messages.js';
 export * from './protocol.js';

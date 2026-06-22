@@ -16,15 +16,15 @@ import * as Is from '../common/utils/is.js';
 import { BaseLanguageClient, LanguageClientOptions, MessageTransports, ShutdownMode } from '../common/client.js';
 
 import { terminate } from './processes.js';
-import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
+import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from '@vscode/languageserver-protocol/node';
 
 // Import SemVer functions individually to avoid circular dependencies in SemVer
 import semverParse from 'semver/functions/parse.js';
 import semverSatisfies from 'semver/functions/satisfies.js';
 
-export * from 'vscode-languageserver-protocol/node';
+export * from '@vscode/languageserver-protocol/node';
 export * from '../common/api.js';
-export { createMessageConnection, createProtocolConnection } from 'vscode-languageserver-protocol/node';
+export { createMessageConnection, createProtocolConnection } from '@vscode/languageserver-protocol/node';
 
 const REQUIRED_VSCODE_VERSION = '^1.106.0'; // do not change format, updated by `updateVSCode` script
 

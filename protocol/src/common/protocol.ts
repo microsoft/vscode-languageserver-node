@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ProgressToken, RequestHandler, TraceValue } from 'vscode-jsonrpc';
+import { ProgressToken, RequestHandler, TraceValue } from '@vscode/jsonrpc';
 
 import { MessageDirection, ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0, CM } from './messages.js';
 
@@ -15,7 +15,7 @@ import {
 	CodeAction, CodeActionKind, DocumentSymbol, CompletionItemTag, DiagnosticTag, SymbolTag, uinteger, integer,
 	InsertTextMode, LSPAny, WorkspaceSymbol, URI, WorkspaceFolder,
 	CodeActionTag
-} from 'vscode-languageserver-types';
+} from '@vscode/languageserver-types';
 
 import * as Is from './utils/is.js';
 

@@ -11,7 +11,7 @@ import { DynamicFeature, RegistrationData, FeatureClient, NextSignature, Feature
 import {
 	ClientCapabilities, InitializeParams, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
 	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, RegistrationType
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 function access<T, K extends keyof T>(target: T | undefined, key: K): T[K] | undefined {
 	if (target === undefined || target === null) {

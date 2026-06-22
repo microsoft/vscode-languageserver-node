@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler0, RequestHandler, ProgressType } from 'vscode-jsonrpc';
-import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from 'vscode-languageserver-types';
+import { RequestHandler0, RequestHandler, ProgressType } from '@vscode/jsonrpc';
+import { TextDocumentIdentifier, Diagnostic, DocumentUri, integer } from '@vscode/languageserver-types';
 
 import * as Is from './utils/is.js';
 import { MessageDirection, ProtocolRequestType0, ProtocolRequestType, CM } from './messages.js';

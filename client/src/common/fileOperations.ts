@@ -5,7 +5,7 @@
 
 import * as code from 'vscode';
 import * as minimatch from 'minimatch';
-import * as proto from 'vscode-languageserver-protocol';
+import * as proto from '@vscode/languageserver-protocol';
 
 import { DynamicFeature, RegistrationData, NextSignature, FeatureState, FeatureClient } from './features.js';
 import * as UUID from './utils/uuid.js';

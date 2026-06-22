@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { FoldingRange, Disposable, FoldingRangeParams, FoldingRangeRefreshRequest, FoldingRangeRequest } from 'vscode-languageserver-protocol';
+import { FoldingRange, Disposable, FoldingRangeParams, FoldingRangeRefreshRequest, FoldingRangeRequest } from '@vscode/languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 

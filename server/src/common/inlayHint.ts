@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { InlayHint, InlayHintParams,Disposable, RequestHandler, InlayHintRefreshRequest, InlayHintRequest, InlayHintResolveRequest } from 'vscode-languageserver-protocol';
+import { InlayHint, InlayHintParams,Disposable, RequestHandler, InlayHintRefreshRequest, InlayHintRequest, InlayHintResolveRequest } from '@vscode/languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 

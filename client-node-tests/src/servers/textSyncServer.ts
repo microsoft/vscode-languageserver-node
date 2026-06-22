@@ -6,7 +6,7 @@
 import {
 	createConnection, Connection, InitializeParams, InitializeResult,
 	TextDocumentSyncKind, RequestType0
-} from 'vscode-languageserver/node';
+} from '@vscode/languageserver/node';
 
 const connection: Connection = createConnection();
 

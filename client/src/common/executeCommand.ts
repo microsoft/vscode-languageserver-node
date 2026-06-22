@@ -9,7 +9,7 @@ import {
 
 import {
 	ClientCapabilities, ServerCapabilities, ExecuteCommandRegistrationOptions, RegistrationType, ExecuteCommandRequest, ExecuteCommandParams
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import * as UUID from './utils/uuid.js';
 

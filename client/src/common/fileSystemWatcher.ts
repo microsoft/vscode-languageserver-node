@@ -10,7 +10,7 @@ import {
 import {
 	ClientCapabilities, DidChangeWatchedFilesNotification, DidChangeWatchedFilesRegistrationOptions, DocumentSelector, FileChangeType, FileEvent, RegistrationType,
 	ServerCapabilities, WatchKind
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, DynamicFeature, ensure, RegistrationData, FeatureState

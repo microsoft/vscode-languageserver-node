@@ -10,7 +10,7 @@ import {
 
 import {
 	ClientCapabilities, DocumentSelector, MarkupKind, ServerCapabilities, SignatureHelpOptions, SignatureHelpRegistrationOptions, SignatureHelpRequest
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions

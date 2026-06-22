@@ -5,7 +5,7 @@
 
 import {
 	ConfigurationItem, ConfigurationParams, ConfigurationRequest
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import type { Feature, _RemoteWorkspace } from './server.js';
 

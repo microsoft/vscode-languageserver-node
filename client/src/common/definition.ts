@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DefinitionOptions, DefinitionRegistrationOptions, DefinitionRequest, DocumentSelector, ServerCapabilities} from 'vscode-languageserver-protocol';
+	ClientCapabilities, DefinitionOptions, DefinitionRegistrationOptions, DefinitionRequest, DocumentSelector, ServerCapabilities} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature

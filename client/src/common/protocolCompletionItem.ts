@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as code from 'vscode';
-import * as proto from 'vscode-languageserver-protocol';
+import * as proto from '@vscode/languageserver-protocol';
 
 export default class ProtocolCompletionItem extends code.CompletionItem {
 

@@ -7,7 +7,7 @@ import { _, Features, _Connection, _LanguagesImpl } from './server.js';
 import { SemanticTokensBuilder } from './semanticTokens.js';
 import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress.js';
 
-export * from 'vscode-languageserver-protocol';
+export * from '@vscode/languageserver-protocol';
 export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter };
 export { SemanticTokensBuilder };
 import { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent } from './textDocuments.js';

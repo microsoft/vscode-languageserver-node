@@ -6,7 +6,7 @@
 import {
 	URI, integer, DocumentUri, uinteger, LSPAny, TextDocumentItem, TextDocumentIdentifier,
 	VersionedTextDocumentIdentifier, LSPObject
-} from 'vscode-languageserver-types';
+} from '@vscode/languageserver-types';
 
 import * as Is from './utils/is.js';
 import { MessageDirection, ProtocolNotificationType, RegistrationType } from './messages.js';

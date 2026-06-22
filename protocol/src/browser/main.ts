@@ -4,10 +4,10 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, ProtocolConnection } from '../common/api.js';
-import { createMessageConnection } from 'vscode-jsonrpc/browser';
+import { createMessageConnection } from '@vscode/jsonrpc/browser';
 
 export * from '../common/api.js';
-export { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from 'vscode-jsonrpc/browser';
+export { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from '@vscode/jsonrpc/browser';
 
 export function createProtocolConnection(reader: MessageReader, writer: MessageWriter, logger?: Logger, options?: ConnectionStrategy | ConnectionOptions): ProtocolConnection {
 	return createMessageConnection(reader, writer, logger, options);

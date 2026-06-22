@@ -13,7 +13,7 @@ import {
 	DidOpenTextDocumentParams, DidSaveTextDocumentNotification, DidSaveTextDocumentParams, DocumentSelector, ProtocolNotificationType, RegistrationType, SaveOptions,
 	ServerCapabilities, TextDocumentChangeRegistrationOptions, TextDocumentRegistrationOptions, TextDocumentSaveRegistrationOptions, TextDocumentSyncKind, TextDocumentSyncOptions,
 	WillSaveTextDocumentNotification, WillSaveTextDocumentParams, WillSaveTextDocumentWaitUntilRequest
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, TextDocumentEventFeature, DynamicFeature, NextSignature, TextDocumentSendFeature, NotifyingFeature, ensure, RegistrationData, DynamicDocumentFeature,
@@ -21,7 +21,7 @@ import {
 } from './features.js';
 
 import * as UUID from './utils/uuid.js';
-import { TextDocument as TextDocumentImpl } from 'vscode-languageserver-textdocument';
+import { TextDocument as TextDocumentImpl } from '@vscode/languageserver-textdocument';
 
 export interface TextDocumentSynchronizationMiddleware {
 	didOpen?: NextSignature<TextDocument, Promise<void>>;

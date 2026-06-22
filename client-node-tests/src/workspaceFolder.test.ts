@@ -8,9 +8,9 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as sinon from 'sinon';
 
-import { WorkspaceFoldersFeature } from 'vscode-languageclient/$test/common/workspaceFolder';
-import { BaseLanguageClient, MessageTransports, DidChangeWorkspaceFoldersParams, Disposable } from 'vscode-languageclient';
-import * as proto from 'vscode-languageclient';
+import { WorkspaceFoldersFeature } from '@vscode/languageclient/$test/common/workspaceFolder';
+import { BaseLanguageClient, MessageTransports, DidChangeWorkspaceFoldersParams, Disposable } from '@vscode/languageclient';
+import * as proto from '@vscode/languageclient';
 
 class TestLanguageClient extends BaseLanguageClient {
 	protected createMessageTransports(): Promise<MessageTransports> {

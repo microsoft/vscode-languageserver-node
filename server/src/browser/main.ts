@@ -8,9 +8,9 @@ import {
 	createConnection as createCommonConnection, Connection, Features, _Connection, _
 } from '../common/api.js';
 
-export * from 'vscode-languageserver-protocol/browser';
+export * from '@vscode/languageserver-protocol/browser';
 export * from '../common/api.js';
-export { createMessageConnection, createProtocolConnection } from 'vscode-languageserver-protocol/browser';
+export { createMessageConnection, createProtocolConnection } from '@vscode/languageserver-protocol/browser';
 
 let _shutdownReceived: boolean = false;
 const watchDog: WatchDog = {

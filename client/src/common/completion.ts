@@ -11,7 +11,7 @@ import {
 import {
 	ClientCapabilities, CompletionItemKind, CompletionItemTag, CompletionOptions, CompletionRegistrationOptions, CompletionRequest, CompletionResolveRequest,
 	DocumentSelector, InsertTextMode, MarkupKind, ServerCapabilities
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature

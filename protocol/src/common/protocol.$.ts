@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { LogTraceParams, SetTraceParams, ProgressToken, ErrorCodes } from 'vscode-jsonrpc';
-import { SemanticTokenTypes, SemanticTokenModifiers, LSPAny } from 'vscode-languageserver-types';
+import { LogTraceParams, SetTraceParams, ProgressToken, ErrorCodes } from '@vscode/jsonrpc';
+import { SemanticTokenTypes, SemanticTokenModifiers, LSPAny } from '@vscode/languageserver-types';
 
 import { MessageDirection, ProtocolNotificationType } from './messages.js';
 import { LSPErrorCodes } from './api.js';

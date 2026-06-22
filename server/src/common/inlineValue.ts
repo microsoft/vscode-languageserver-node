@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { InlineValue, Disposable, InlineValueParams, InlineValueRefreshRequest, InlineValueRequest } from 'vscode-languageserver-protocol';
+import { InlineValue, Disposable, InlineValueParams, InlineValueRefreshRequest, InlineValueRequest } from '@vscode/languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 

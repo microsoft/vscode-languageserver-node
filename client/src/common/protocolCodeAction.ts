@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
-import { LSPAny } from 'vscode-languageserver-protocol';
+import { LSPAny } from '@vscode/languageserver-protocol';
 
 export default class ProtocolCodeAction extends vscode.CodeAction {
 

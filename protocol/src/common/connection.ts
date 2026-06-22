@@ -8,7 +8,7 @@ import {
 	NotificationHandler0, NotificationHandler, GenericNotificationHandler, ProgressType, Trace, Tracer, TraceOptions,
 	Disposable, Event, MessageReader, MessageWriter, Logger, ConnectionStrategy, ConnectionOptions, createMessageConnection,
 	RequestType0, RequestType, NotificationType0, NotificationType, RequestParam
-} from 'vscode-jsonrpc';
+} from '@vscode/jsonrpc';
 
 import {
 	ProtocolRequestType, ProtocolRequestType0, ProtocolNotificationType, ProtocolNotificationType0

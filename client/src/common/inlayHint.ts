@@ -11,7 +11,7 @@ import {
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, InlayHintRequest, InlayHintOptions, InlayHintRegistrationOptions,
 	InlayHintRefreshRequest, InlayHintParams, InlayHintResolveRequest
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 

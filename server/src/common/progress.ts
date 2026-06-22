@@ -7,7 +7,7 @@ import {
 	ClientCapabilities, CancellationToken, CancellationTokenSource, ProgressToken, ProgressType, WorkDoneProgressParams, PartialResultParams,
 	WorkDoneProgressBegin, WorkDoneProgress, WorkDoneProgressReport, WorkDoneProgressCancelNotification, WorkDoneProgressCreateRequest,
 	RequestParam
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import { generateUuid } from './utils/uuid.js';
 import type { Feature, _RemoteWindow } from './server.js';

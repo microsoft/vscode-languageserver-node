@@ -8,7 +8,7 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DocumentLinkOptions, DocumentLinkRegistrationOptions, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentSelector, ResponseError, ServerCapabilities} from 'vscode-languageserver-protocol';
+	ClientCapabilities, DocumentLinkOptions, DocumentLinkRegistrationOptions, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentSelector, ResponseError, ServerCapabilities} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature

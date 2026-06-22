@@ -9,7 +9,7 @@ import {
 	NotificationHandler, DocumentUri, URI, Disposable, DidOpenNotebookDocumentParams, DidChangeNotebookDocumentParams, DidSaveNotebookDocumentParams,
 	DidCloseNotebookDocumentParams, DidOpenNotebookDocumentNotification, DidChangeNotebookDocumentNotification, DidSaveNotebookDocumentNotification,
 	DidCloseNotebookDocumentNotification, NotebookDocument, NotebookCell, LSPObject
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import type { Feature, _Notebooks, Connection, } from './server.js';
 import { TextDocuments, TextDocumentConnection, TextDocumentsConfiguration } from './textDocuments.js';

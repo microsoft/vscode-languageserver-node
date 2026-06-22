@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { NotificationHandler, RequestHandler, ProgressType, ProgressToken } from 'vscode-jsonrpc';
-import { uinteger } from 'vscode-languageserver-types';
+import { NotificationHandler, RequestHandler, ProgressType, ProgressToken } from '@vscode/jsonrpc';
+import { uinteger } from '@vscode/languageserver-types';
 
 import { MessageDirection, ProtocolRequestType, ProtocolNotificationType, CM } from './messages.js';
 

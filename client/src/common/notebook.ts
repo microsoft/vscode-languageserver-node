@@ -5,11 +5,11 @@
 
 import * as vscode from 'vscode';
 
-import * as proto from 'vscode-languageserver-protocol';
+import * as proto from '@vscode/languageserver-protocol';
 import {
 	StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentItem, NotebookCellTextDocumentFilter, LSPAny,
 	NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import * as UUID from './utils/uuid.js';
 import * as Is from './utils/is.js';

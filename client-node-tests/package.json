@@ -31,7 +31,7 @@
 	},
 	"dependencies": {
 		"minimatch": "^10.2.5",
-		"vscode-languageserver": "10.0.0",
+		"@vscode/languageserver": "10.0.0",
 		"vscode-uri": "3.1.0"
 	},
 	"devDependencies": {

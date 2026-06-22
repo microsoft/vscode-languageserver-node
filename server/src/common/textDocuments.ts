@@ -8,7 +8,7 @@ import {
 	WillSaveTextDocumentParams, RequestHandler, TextEdit, DidSaveTextDocumentParams, DocumentUri,
 	TextDocumentContentChangeEvent, TextDocumentSaveReason, Emitter, Event, TextDocumentSyncKind,
 	CancellationToken, Disposable, LanguageKind
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 /**
  * We should use a mapped type to create this from Connection.

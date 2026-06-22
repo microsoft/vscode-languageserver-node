@@ -10,9 +10,9 @@ import {
 	Position, Range, TextDocumentIdentifier, TextDocumentItem, VersionedTextDocumentIdentifier, Command, CodeLens, CodeActionContext,
 	Diagnostic, DiagnosticSeverity, WorkspaceChange, TextDocumentEdit, CreateFile, RenameFile, DeleteFile, ChangeAnnotation,
 	AnnotatedTextEdit, TextEdit, type RelativePattern
-} from 'vscode-languageclient';
+} from '@vscode/languageclient';
 
-import { matchGlobPattern } from 'vscode-languageclient/$test/common/utils/globPattern';
+import { matchGlobPattern } from '@vscode/languageclient/$test/common/utils/globPattern';
 
 suite('Protocol Helper Tests', () => {
 	function rangeEqual(actual: Range, expected: Range) {

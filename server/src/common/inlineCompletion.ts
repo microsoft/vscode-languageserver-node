@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { InlineCompletionItem, Disposable, InlineCompletionParams, InlineCompletionList, InlineCompletionRequest } from 'vscode-languageserver-protocol';
+import { InlineCompletionItem, Disposable, InlineCompletionParams, InlineCompletionList, InlineCompletionRequest } from '@vscode/languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 

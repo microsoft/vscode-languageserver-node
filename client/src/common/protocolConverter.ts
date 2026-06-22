@@ -5,7 +5,7 @@
 /// <reference path="../../typings/vscode.proposed.codeActionAI.d.ts" preserve: true/>
 
 import * as code from 'vscode';
-import * as ls from 'vscode-languageserver-protocol';
+import * as ls from '@vscode/languageserver-protocol';
 
 import * as Is from './utils/is.js';
 import * as async from './utils/async.js';
@@ -19,7 +19,7 @@ import ProtocolCallHierarchyItem from './protocolCallHierarchyItem.js';
 import ProtocolTypeHierarchyItem from './protocolTypeHierarchyItem.js';
 import WorkspaceSymbol from './protocolWorkspaceSymbol.js';
 import ProtocolInlayHint from './protocolInlayHint.js';
-import { NotebookCellTextDocumentFilter, TextDocumentFilter } from 'vscode-languageserver-protocol';
+import { NotebookCellTextDocumentFilter, TextDocumentFilter } from '@vscode/languageserver-protocol';
 
 interface InsertReplaceRange {
 	inserting: code.Range;

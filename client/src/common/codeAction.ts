@@ -11,7 +11,7 @@ import {
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeActionRequest, CodeActionOptions, CodeActionRegistrationOptions, CodeActionParams, CodeActionResolveRequest, CodeActionKind,
 	CodeActionTag
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import * as UUID from './utils/uuid.js';
 

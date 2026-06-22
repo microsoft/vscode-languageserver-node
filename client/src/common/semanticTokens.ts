@@ -8,7 +8,7 @@ import { ClientCapabilities, ServerCapabilities, DocumentSelector, SemanticToken
 	TokenFormat, SemanticTokensOptions, SemanticTokensRegistrationOptions, SemanticTokensParams,
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest, SemanticTokensRefreshRequest,
 	SemanticTokensRegistrationType
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import { FeatureClient, TextDocumentLanguageFeature, ensure } from './features.js';
 import * as Is from './utils/is.js';

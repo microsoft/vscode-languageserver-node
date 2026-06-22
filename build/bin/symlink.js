@@ -40,8 +40,8 @@ const root = path.dirname(path.dirname(__dirname));
 	await ln.tryLinkJsonRpc(extensionFolder);
 	await ln.tryLinkTypes(extensionFolder);
 	await ln.tryLinkProtocol(extensionFolder);
-	await ln.tryLink(extensionFolder, 'vscode-languageserver', path.join('..', '..', 'server'));
-	await ln.tryLink(extensionFolder, 'vscode-languageclient', path.join('..', '..', 'client'));
+	await ln.tryLink(extensionFolder, '@vscode/languageserver', 'server');
+	await ln.tryLink(extensionFolder, '@vscode/languageclient', 'client');
 
 	// tsconfig
 	let generator = path.join(root, 'tsconfig-gen');

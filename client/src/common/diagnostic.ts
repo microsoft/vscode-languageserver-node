@@ -14,7 +14,7 @@ import {
 	DiagnosticRegistrationOptions, DiagnosticServerCancellationData, DocumentDiagnosticParams, DocumentDiagnosticRequest, DocumentDiagnosticReportKind,
 	WorkspaceDocumentDiagnosticReport, WorkspaceDiagnosticRequest, WorkspaceDiagnosticParams, DiagnosticOptions, DiagnosticRefreshRequest, DiagnosticTag,
 	NotebookDocumentSyncRegistrationType
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import { generateUuid } from './utils/uuid.js';
 import { matchGlobPattern } from './utils/globPattern.js';

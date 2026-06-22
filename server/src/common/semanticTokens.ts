@@ -7,7 +7,7 @@ import {
 	SemanticTokens, SemanticTokensPartialResult, SemanticTokensDelta, SemanticTokensDeltaPartialResult, SemanticTokensParams,
 	SemanticTokensRequest, SemanticTokensDeltaParams, SemanticTokensDeltaRequest, SemanticTokensRangeParams, SemanticTokensRangeRequest,
 	SemanticTokensRefreshRequest, SemanticTokensEdit, Disposable
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 

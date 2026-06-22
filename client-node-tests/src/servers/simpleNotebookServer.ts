@@ -7,7 +7,7 @@ import {
 	createConnection, InitializeParams, ServerCapabilities, TextDocumentSyncKind, RequestType,
 	DidOpenTextDocumentNotification, DidChangeTextDocumentNotification,
 	DidCloseTextDocumentNotification
-} from 'vscode-languageserver/node';
+} from '@vscode/languageserver/node';
 
 const connection = createConnection();
 

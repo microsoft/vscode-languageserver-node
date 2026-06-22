@@ -17,22 +17,22 @@ interface Package {
 }
 
 const textDocument: Package = {
-	name: 'vscode-languageserver-textdocument',
+	name: '@vscode/languageserver-textdocument',
 	location: './textDocument'
 };
 
 const types: Package = {
-	name: 'vscode-languageserver-types',
+	name: '@vscode/languageserver-types',
 	location: './types'
 };
 
 const jsonrpc: Package = {
-	name: 'vscode-jsonrpc',
+	name: '@vscode/jsonrpc',
 	location: './jsonrpc'
 };
 
 const protocol: Package = {
-	name: 'vscode-languageserver-protocol',
+	name: '@vscode/languageserver-protocol',
 	location: './protocol',
 	dependsOn: [
 		{ kind: 'release', package: types },
@@ -41,7 +41,7 @@ const protocol: Package = {
 };
 
 const server: Package = {
-	name: 'vscode-languageserver',
+	name: '@vscode/languageserver',
 	location: './server',
 	dependsOn: [
 		{ kind: 'release', package: protocol },
@@ -50,7 +50,7 @@ const server: Package = {
 };
 
 const client: Package = {
-	name: 'vscode-languageclient',
+	name: '@vscode/languageclient',
 	location: './client',
 	dependsOn: [
 		{ kind: 'release', package: protocol }

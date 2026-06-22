@@ -38,7 +38,7 @@ import {
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
 	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, RequestParam, HandlerResult,
 	type DidCloseTextDocumentParams, type TextDocumentContentRequest
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import * as c2p from './codeConverter.js';
 import * as p2c from './protocolConverter.js';

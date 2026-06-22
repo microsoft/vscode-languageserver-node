@@ -16,6 +16,8 @@ const mkdir = promisify(fs.mkdir);
 const exists = promisify(fs.exists);
 const unlink = promisify(fs.unlink);
 
+const root = path.dirname(path.dirname(__dirname));
+
 /**
  * @param {string} source
  * @param {string} dest
@@ -41,6 +43,10 @@ const tryHardLink = exports.tryHardLink = async function(source, dest) {
 	if (await exists(dest)) {
 		shell.rm('-rf', dest);
 	}
+	const parent = path.dirname(dest);
+	if (!await exists(parent)) {
+		await mkdir(parent, { recursive: true });
+	}
 	await hardLink(source, dest);
 };
 
@@ -60,35 +66,30 @@ exports.softLink = async function(source, dest) {
  * @param {string} name
  * @param {string} source
  */
-const tryLink = exports.tryLink = async function(module, name, source) {
-	const current = process.cwd();
-	try {
-		const nodeModules = path.join(module, 'node_modules');
-		if (!await exists(nodeModules)) {
-			await mkdir(nodeModules);
-		}
-		process.chdir(nodeModules);
-		if (await exists(name)) {
-			shell.rm('-rf' , name);
-		}
-		shell.ln('-s', source, name);
-	} finally {
-		process.chdir(current);
+const tryLink = exports.tryLink = async function(module, name, sourceFolder) {
+	const dest = path.join(module, 'node_modules', name);
+	if (await exists(dest)) {
+		shell.rm('-rf', dest);
 	}
+	const parent = path.dirname(dest);
+	if (!await exists(parent)) {
+		await mkdir(parent, { recursive: true });
+	}
+	shell.ln('-s', path.join(root, sourceFolder), dest);
 };
 
 exports.tryLinkTextDocuments = async function(module) {
-	return tryLink(module, 'vscode-languageserver-textdocument', path.join('..', '..', 'textDocument'));
+	return tryLink(module, '@vscode/languageserver-textdocument', 'textDocument');
 };
 
 exports.tryLinkTypes = async function(module) {
-	return tryLink(module, 'vscode-languageserver-types', path.join('..', '..', 'types'));
+	return tryLink(module, '@vscode/languageserver-types', 'types');
 };
 
 exports.tryLinkJsonRpc = async function(module) {
-	return tryLink(module, 'vscode-jsonrpc', path.join('..', '..', 'jsonrpc'));
+	return tryLink(module, '@vscode/jsonrpc', 'jsonrpc');
 };
 
 exports.tryLinkProtocol = async function(module) {
-	return tryLink(module, 'vscode-languageserver-protocol', path.join('..', '..', 'protocol'));
+	return tryLink(module, '@vscode/languageserver-protocol', 'protocol');
 };

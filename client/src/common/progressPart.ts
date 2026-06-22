@@ -9,7 +9,7 @@ import {
 import {
 	ProgressToken, ProgressType, NotificationHandler, ProtocolNotificationType, WorkDoneProgress, WorkDoneProgressBegin, WorkDoneProgressCancelNotification, WorkDoneProgressReport,
 	RequestParam
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import * as Is from './utils/is.js';
 

@@ -12,7 +12,7 @@ import {
 	ClientCapabilities, DocumentSelector, DocumentSymbol, DocumentSymbolOptions, DocumentSymbolRegistrationOptions, DocumentSymbolRequest, ServerCapabilities, SymbolInformation,
 	SymbolKind,
 	SymbolTag
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature

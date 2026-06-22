@@ -9,7 +9,7 @@ import {
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, RenameOptions, RenameRegistrationOptions, RenameRequest, PrepareSupportDefaultBehavior, RenameParams, ResponseError, TextDocumentPositionParams, PrepareRenameRequest, Range,
-	type WorkspaceEdit} from 'vscode-languageserver-protocol';
+	type WorkspaceEdit} from '@vscode/languageserver-protocol';
 
 import * as UUID from './utils/uuid.js';
 import * as Is from './utils/is.js';

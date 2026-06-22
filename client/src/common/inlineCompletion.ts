@@ -11,7 +11,7 @@ import {
 import {
 	ClientCapabilities, InlineCompletionOptions, InlineCompletionRegistrationOptions, InlineCompletionRequest,
 	DocumentSelector, ServerCapabilities
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature

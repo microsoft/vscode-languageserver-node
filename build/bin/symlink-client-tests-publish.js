@@ -16,5 +16,5 @@ const root = path.dirname(path.dirname(__dirname));
 
 	// Hard link the client to have a real path from the node_modules folder
 	const extensionFolder = path.join(root, 'client-node-tests');
-	await ln.tryHardLink(path.join(root, 'client'), path.join(extensionFolder, 'node_modules', 'vscode-languageclient'));
+	await ln.tryHardLink(path.join(root, 'client'), path.join(extensionFolder, 'node_modules', '@vscode', 'languageclient'));
 })();

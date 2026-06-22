@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { ShowDocumentParams, ShowDocumentRequest, ShowDocumentResult } from 'vscode-languageserver-protocol';
+import { ShowDocumentParams, ShowDocumentRequest, ShowDocumentResult } from '@vscode/languageserver-protocol';
 import type { Feature, _RemoteWindow } from './server.js';
 
 export interface ShowDocumentFeatureShape {

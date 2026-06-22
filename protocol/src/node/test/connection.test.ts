@@ -12,8 +12,8 @@ import {
 	WorkDoneProgressBegin, WorkDoneProgressReport, WorkDoneProgressEnd
 } from '../main.js';
 import { DocumentSymbolRequest, DocumentSymbolParams } from '../../common/protocol.js';
-import { ProgressType } from 'vscode-jsonrpc';
-import { SymbolInformation, SymbolKind } from 'vscode-languageserver-types';
+import { ProgressType } from '@vscode/jsonrpc';
+import { SymbolInformation, SymbolKind } from '@vscode/languageserver-types';
 
 class NullLogger implements Logger {
 	error(_message: string): void {

@@ -6,7 +6,7 @@
 import * as minimatch from 'minimatch';
 
 import { Uri } from 'vscode';
-import type { GlobPattern } from 'vscode-languageserver-protocol';
+import type { GlobPattern } from '@vscode/languageserver-protocol';
 
 export function matchGlobPattern(pattern: GlobPattern, resource: Uri): boolean {
 	let miniMatchPattern: string;

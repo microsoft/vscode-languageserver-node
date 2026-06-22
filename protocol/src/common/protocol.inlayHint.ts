@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
-import { Range, TextDocumentIdentifier, InlayHint } from 'vscode-languageserver-types';
+import { RequestHandler, RequestHandler0 } from '@vscode/jsonrpc';
+import { Range, TextDocumentIdentifier, InlayHint } from '@vscode/languageserver-types';
 import { CM, MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages.js';
 
 import { type StaticRegistrationOptions, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type WorkDoneProgressParams } from './protocol.js';

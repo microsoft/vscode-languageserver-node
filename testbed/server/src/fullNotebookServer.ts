@@ -6,12 +6,12 @@
 
 import {
 	TextDocument
-} from 'vscode-languageserver-textdocument';
+} from '@vscode/languageserver-textdocument';
 
 import {
 	CompletionItem, createConnection, Diagnostic, Hover, InitializeError, InitializeResult, MarkupKind, Range, ResponseError,
 	TextDocuments, TextDocumentSyncKind, ProposedFeatures, DiagnosticSeverity, NotebookCell, NotebookDocuments
-} from 'vscode-languageserver/node';
+} from '@vscode/languageserver/node';
 
 const patterns = [
 	/\b[A-Z]{2,}\b/g,

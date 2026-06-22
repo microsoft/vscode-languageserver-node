@@ -19,7 +19,7 @@ import {
 	Range,
 } from '../main.js';
 
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import { TextDocument } from '@vscode/languageserver-textdocument';
 
 class TestStream extends Duplex {
 	_write(chunk: string, _encoding: string, done: () => void) {

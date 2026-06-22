@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as code from 'vscode';
-import { LSPAny } from 'vscode-languageserver-protocol';
+import { LSPAny } from '@vscode/languageserver-protocol';
 
 export default class ProtocolTypeHierarchyItem extends code.TypeHierarchyItem {
 

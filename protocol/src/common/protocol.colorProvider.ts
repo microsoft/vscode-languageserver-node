@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { RequestHandler } from 'vscode-jsonrpc';
-import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from 'vscode-languageserver-types';
+import { RequestHandler } from '@vscode/jsonrpc';
+import { TextDocumentIdentifier, Range, Color, ColorInformation, ColorPresentation } from '@vscode/languageserver-types';
 
 import { CM, MessageDirection, ProtocolRequestType } from './messages.js';
 import {

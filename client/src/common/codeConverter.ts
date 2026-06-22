@@ -5,7 +5,7 @@
 /// <reference path="../../typings/vscode.proposed.codeActionAI.d.ts" preserve: true/>
 
 import * as code from 'vscode';
-import * as proto from 'vscode-languageserver-protocol';
+import * as proto from '@vscode/languageserver-protocol';
 
 import * as Is from './utils/is.js';
 import * as async from './utils/async.js';

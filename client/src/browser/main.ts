@@ -5,11 +5,11 @@
 
 import { BaseLanguageClient, LanguageClientOptions, MessageTransports } from '../common/api.js';
 
-import { BrowserMessageReader, BrowserMessageWriter } from 'vscode-languageserver-protocol/browser';
+import { BrowserMessageReader, BrowserMessageWriter } from '@vscode/languageserver-protocol/browser';
 
-export * from 'vscode-languageserver-protocol/browser';
+export * from '@vscode/languageserver-protocol/browser';
 export * from '../common/api.js';
-export { createMessageConnection, createProtocolConnection } from 'vscode-languageserver-protocol/browser';
+export { createMessageConnection, createProtocolConnection } from '@vscode/languageserver-protocol/browser';
 
 export type ServerOptions = Worker | (() => Promise<Worker | MessageTransports>);
 

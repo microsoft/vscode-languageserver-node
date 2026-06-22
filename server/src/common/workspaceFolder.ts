@@ -7,7 +7,7 @@
 import {
 	Event, Emitter, Disposable, ClientCapabilities, WorkspaceFolder, WorkspaceFoldersChangeEvent, DidChangeWorkspaceFoldersNotification,
 	WorkspaceFoldersRequest, ServerCapabilities
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import type { Feature, _RemoteWorkspace } from './server.js';
 

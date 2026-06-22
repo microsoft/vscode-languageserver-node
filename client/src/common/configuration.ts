@@ -7,7 +7,7 @@ import { workspace, Uri, Disposable, ConfigurationChangeEvent, FileSystemWatcher
 
 import {
 	ClientCapabilities, ConfigurationRequest, DidChangeConfigurationNotification, DidChangeConfigurationRegistrationOptions, RegistrationType
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import * as Is from './utils/is.js';
 import * as UUID from './utils/uuid.js';

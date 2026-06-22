@@ -1,5 +1,5 @@
 {
-	"name": "vscode-languageserver-tools",
+	"name": "@vscode/languageserver-tools",
 	"description": "Tooling for the language server protocol",
 	"version": "0.1.0",
 	"author": "Microsoft Corporation",

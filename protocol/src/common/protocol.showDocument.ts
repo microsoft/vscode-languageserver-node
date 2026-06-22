@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { CancellationToken, HandlerResult, RequestHandler } from 'vscode-jsonrpc';
-import { Range, URI } from 'vscode-languageserver-types';
+import { CancellationToken, HandlerResult, RequestHandler } from '@vscode/jsonrpc';
+import { Range, URI } from '@vscode/languageserver-types';
 import { MessageDirection, ProtocolRequestType, CM } from './messages.js';
 
 /**

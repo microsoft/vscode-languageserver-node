@@ -3,8 +3,8 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { NotificationHandler, RequestHandler } from 'vscode-jsonrpc';
-import { WorkspaceEdit } from 'vscode-languageserver-types';
+import { NotificationHandler, RequestHandler } from '@vscode/jsonrpc';
+import { WorkspaceEdit } from '@vscode/languageserver-types';
 import { CM, MessageDirection, ProtocolNotificationType, ProtocolRequestType } from './messages.js';
 
 /**

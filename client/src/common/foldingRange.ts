@@ -10,7 +10,7 @@ import {
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, FoldingRangeRequest, FoldingRangeParams,
 	FoldingRangeRegistrationOptions, FoldingRangeOptions, FoldingRangeKind, FoldingRangeRefreshRequest
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 

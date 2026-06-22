@@ -8,7 +8,7 @@ import { languages as Languages, Disposable, TextDocument, ProviderResult, Posit
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector,
 	SelectionRangeParams, SelectionRangeRequest, SelectionRangeOptions, SelectionRangeRegistrationOptions
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 

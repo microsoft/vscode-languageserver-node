@@ -259,14 +259,14 @@ Library specific changes are:
   * this resulted in a small breakage on the server side. Instead of doing `new TextDocuments` you now have to pass in a text document configuration to provide callbacks to create and update a text document. Here are examples in TypeScript and JavaScript
 
 ```ts
-import { TextDocuments } from 'vscode-languageserver';
-import { TextDocument } from 'vscode-languageserver-textdocument';
+import { TextDocuments } from '@vscode/languageserver';
+import { TextDocument } from '@vscode/languageserver-textdocument';
 const documents = new TextDocuments(TextDocument);
 ```
 
 ```js
-const server = require("vscode-languageserver");
-const textDocument = require("vscode-languageserver-textdocument");
+const server = require("@vscode/languageserver");
+const textDocument = require("@vscode/languageserver-textdocument");
 const documents = new server.TextDocuments(textDocument.TextDocument);
 ```
 
@@ -426,7 +426,7 @@ client.onReady().then(() => {
 
 ```ts
 // Old
-import { Protocol2Code, ... } from 'vscode-languageclient';
+import { Protocol2Code, ... } from '@vscode/languageclient';
 Protocol2Code.asTextEdits(edits);
 // New
 let client = new LanguageClient(...);

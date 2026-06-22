@@ -9,7 +9,7 @@ import {
 
 import {
 	ClientCapabilities, DocumentSelector, HoverOptions, HoverRegistrationOptions, HoverRequest, MarkupKind, ServerCapabilities
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature

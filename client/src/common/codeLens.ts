@@ -9,7 +9,7 @@ import {
 
 import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeLensOptions, CodeLensRegistrationOptions, CodeLensRequest, CodeLensRefreshRequest, CodeLensResolveRequest
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import * as UUID from './utils/uuid.js';
 

@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { TypeHierarchyItem, Disposable, TypeHierarchyPrepareParams, TypeHierarchySupertypesParams, TypeHierarchySubtypesParams, TypeHierarchyPrepareRequest, TypeHierarchySupertypesRequest, TypeHierarchySubtypesRequest } from 'vscode-languageserver-protocol';
+import { TypeHierarchyItem, Disposable, TypeHierarchyPrepareParams, TypeHierarchySupertypesParams, TypeHierarchySubtypesParams, TypeHierarchyPrepareRequest, TypeHierarchySupertypesRequest, TypeHierarchySubtypesRequest } from '@vscode/languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 

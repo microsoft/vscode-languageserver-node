@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import { MonikerParams, Moniker, MonikerRequest, Disposable } from 'vscode-languageserver-protocol';
+import { MonikerParams, Moniker, MonikerRequest, Disposable } from '@vscode/languageserver-protocol';
 
 import type { Feature, _Languages, ServerRequestHandler } from './server.js';
 

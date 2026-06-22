@@ -13,11 +13,11 @@ import * as fm from './files.js';
 import {
 	ConnectionStrategy, ConnectionOptions, MessageReader, MessageWriter, IPCMessageReader, IPCMessageWriter, createServerPipeTransport,
 	createServerSocketTransport, InitializeParams, createProtocolConnection, Logger, ProtocolConnection
-} from 'vscode-languageserver-protocol/node';
+} from '@vscode/languageserver-protocol/node';
 
-export * from 'vscode-languageserver-protocol/node';
+export * from '@vscode/languageserver-protocol/node';
 export * from '../common/api.js';
-export { createMessageConnection, createProtocolConnection } from 'vscode-languageserver-protocol/node';
+export { createMessageConnection, createProtocolConnection } from '@vscode/languageserver-protocol/node';
 
 export namespace Files {
 	export const uriToFilePath = fm.uriToFilePath;

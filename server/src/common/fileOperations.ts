@@ -8,7 +8,7 @@ import {
 	CreateFilesParams, DidCreateFilesNotification, WillCreateFilesRequest,
 	RenameFilesParams, DidRenameFilesNotification, WillRenameFilesRequest,
 	DeleteFilesParams, DidDeleteFilesNotification, WillDeleteFilesRequest, Disposable,
-} from 'vscode-languageserver-protocol';
+} from '@vscode/languageserver-protocol';
 
 import type { Feature, _RemoteWorkspace } from './server.js';
 
