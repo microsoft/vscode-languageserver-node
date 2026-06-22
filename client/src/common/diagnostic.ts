@@ -529,7 +529,13 @@ class DiagnosticRequestor implements Disposable {
 						return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 					}
 					return this.client.sendRequest(DocumentDiagnosticRequest.type, params, token).then(async (result) => {
-						if (result === undefined || result === null || this.isDisposed || token.isCancellationRequested) {
+						if (this.isDisposed) {
+							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
+						}
+						if (token.isCancellationRequested) {
+							throw new CancellationError()
+						}
+						if (result === undefined || result === null) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 						}
 						if (result.kind === DocumentDiagnosticReportKind.Full) {
