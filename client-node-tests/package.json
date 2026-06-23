@@ -19,13 +19,13 @@
 	"contributes": {},
 	"scripts": {
 		"clean": "rimraf lib",
-		"compile": "tsc -b ./tsconfig.json",
-		"watch": "tsc -b ./tsconfig.watch.json -w",
+		"compile": "tsgo -b ./tsconfig.json",
+		"watch": "tsgo -b ./tsconfig.watch.json -w",
 		"lint": "eslint src",
 		"test": "node ../build/bin/symlink-tests.js && node lib/runTests.js",
 		"all": "npm run clean && npm run compile && npm run lint && npm run test",
 		"symlink:publish": "node ../build/bin/symlink-client-tests-publish.js",
-		"compile:publish": "tsc -b ./tsconfig.publish.json",
+		"compile:publish": "tsgo -b ./tsconfig.publish.json",
 		"test:publish": "node lib/runTests.js",
 		"all:publish": "git clean -xfd . && npm install --no-workspaces && npm run symlink:publish && npm run compile:publish && npm run test:publish"
 	},

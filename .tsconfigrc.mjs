@@ -302,6 +302,7 @@ const client_node_tests = {
 		{
 			path: './src',
 			extends: [ node, vscodeMixin, testMixin, browser, skipLibCheckMixin ],
+			references: [ '../../protocol', '../../client', '../../server' ]
 		}
 	],
 	references: [ protocol, client, server ]

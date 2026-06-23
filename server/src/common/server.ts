@@ -905,7 +905,7 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	 */
 	onRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
 	onRequest<P, R, PR, E, RO>(type: ProtocolRequestType<P, R, PR, E, RO>, handler: NoInfer<RequestHandler<P, R, E>>): Disposable;
-	onRequest<R, PR, E, RO>(type: RequestType0<R, E>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
+	onRequest<R, E>(type: RequestType0<R, E>, handler: NoInfer<RequestHandler0<R, E>>): Disposable;
 	onRequest<P, R, E>(type: RequestType<P, R, E>, handler: NoInfer<RequestHandler<P, R, E>>): Disposable;
 
 	/**

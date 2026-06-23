@@ -45,8 +45,8 @@
 		}
 	},
 	"scripts": {
-		"compile": "tsc -b",
-		"clean": "tsc -b --clean",
-		"watch": "tsc -b -w"
+		"compile": "tsgo -b",
+		"clean": "tsgo -b --clean",
+		"watch": "tsgo -b -w"
 	}
 }

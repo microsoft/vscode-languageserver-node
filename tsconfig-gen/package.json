@@ -31,12 +31,12 @@
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
 		"prepack": "git clean -xfd . && npm install --no-workspaces && npm run all",
-		"compile": "tsc -b ./tsconfig.json",
+		"compile": "tsgo -b ./tsconfig.json",
 		"clean": "rimraf lib",
-		"watch": "tsc -b ./tsconfig.watch.json -w",
+		"watch": "tsgo -b ./tsconfig.watch.json -w",
 		"lint": "eslint src",
 		"all": "npm run compile && npm run lint",
-		"compile:publish": "tsc -b ./tsconfig.publish.json",
+		"compile:publish": "tsgo -b ./tsconfig.publish.json",
 		"all:publish": "git clean -xfd . && npm install --no-workspaces && npm run compile:publish && npm run lint"
 	}
 }

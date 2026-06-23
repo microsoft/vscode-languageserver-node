@@ -39,13 +39,13 @@
 	"scripts": {
 		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
 		"prepack": "npm run all:publish",
-		"compile": "tsc -b ./tsconfig.json",
-		"watch": "tsc -b ./tsconfig.watch.json -w",
+		"compile": "tsgo -b ./tsconfig.json",
+		"watch": "tsgo -b ./tsconfig.watch.json -w",
 		"clean": "rimraf lib",
 		"lint": "eslint src",
 		"test": "node ../node_modules/mocha/bin/_mocha",
 		"all": "npm run clean && npm run compile && npm run lint && npm test",
-		"compile:publish": "tsc -b ./tsconfig.publish.json",
+		"compile:publish": "tsgo -b ./tsconfig.publish.json",
 		"all:publish": "git clean -xfd . && npm install --no-workspaces && npm run compile:publish && npm run lint && npm test",
 		"preversion": "npm test"
 	}

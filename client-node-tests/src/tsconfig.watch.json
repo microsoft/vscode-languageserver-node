@@ -31,5 +31,16 @@
     },
     "include": [
         "."
+    ],
+    "references": [
+        {
+            "path": "../../protocol/tsconfig.watch.json"
+        },
+        {
+            "path": "../../client/tsconfig.watch.json"
+        },
+        {
+            "path": "../../server/tsconfig.watch.json"
+        }
     ]
 }

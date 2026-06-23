@@ -9,8 +9,8 @@
 		"vscode": "^1.40.0"
 	},
 	"scripts": {
-		"watch": "tsc -watch -b ./tsconfig.json",
-		"compile": "tsc -b ./tsconfig.json"
+		"watch": "tsgo --watch -b ./tsconfig.json",
+		"compile": "tsgo -b ./tsconfig.json"
 	},
 	"dependencies": {
 		"@vscode/languageclient": "10.0.0",

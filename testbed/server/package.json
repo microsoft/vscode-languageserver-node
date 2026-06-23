@@ -13,7 +13,7 @@
 		"vscode-uri": "^3.0.8"
 	},
 	"scripts": {
-		"compile": "tsc -b ./tsconfig.json",
-		"watch": "tsc --watch -b ./tsconfig.json"
+		"compile": "tsgo -b ./tsconfig.json",
+		"watch": "tsgo --watch -b ./tsconfig.json"
 	}
 }

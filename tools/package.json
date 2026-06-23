@@ -15,8 +15,8 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"scripts": {
-		"compile": "tsc -b ./tsconfig.json",
-		"watch": "tsc -b ./tsconfig-watch.json -w",
+		"compile": "tsgo -b ./tsconfig.json",
+		"watch": "tsgo -b ./tsconfig-watch.json -w",
 		"clean": "rimraf lib && rimraf dist",
 		"lint": "eslint src"
 	}
