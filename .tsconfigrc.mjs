@@ -30,8 +30,8 @@ function createPublishProjectDescription(projectDescription) {
 /** @type SharableOptions */
 const general = {
 	/**
-	 * Even under browser we compile to node and commonjs and
-	 * rely on webpack to package everything correctly.
+	 * Even for the browser we compile with node16 module resolution and
+	 * rely on a bundler (esbuild) to package everything correctly.
 	 */
 	compilerOptions: {
 		module: 'node16',

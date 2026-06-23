@@ -44,10 +44,8 @@
 		"lint": "eslint src",
 		"test": "npm run test:node && npm run test:browser",
 		"test:node": "node ../node_modules/mocha/bin/_mocha",
-		"test:browser": "npm run webpack:test:silent && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/jsonrpc/src/browser/test/",
-		"webpack": "node ../build/bin/webpack  --mode none --config ./webpack.config.cjs",
-		"webpack:test": "node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.cjs",
-		"webpack:test:silent": "node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.cjs",
+		"test:browser": "npm run esbuild:test && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/jsonrpc/src/browser/test/",
+		"esbuild:test": "node ./src/browser/test/esbuild.mjs",
 		"all": "npm run clean && npm run compile && npm run lint && npm run test",
 		"compile:publish": "tsc -b ./tsconfig.publish.json",
 		"all:publish": "git clean -xfd . && npm install --no-workspaces && npm run compile:publish && npm run lint && npm run test"
