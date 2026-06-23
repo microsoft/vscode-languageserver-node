@@ -3,7 +3,14 @@
 
 const tseslint = require('typescript-eslint');
 const stylistic = require('@stylistic/eslint-plugin');
+const importX = require('eslint-plugin-import-x');
 const globals = require('globals');
+
+// The monorepo root (this file lives there). Because npm workspaces hoist every
+// package into the root node_modules, a package could otherwise import a sibling
+// workspace package it does not declare. Linting each package's imports against
+// its own package.json (plus the root, for shared dev tooling) prevents that.
+const rootDir = __dirname;
 
 /**
  * Creates an ESLint flat config array for a TypeScript package.
@@ -34,8 +41,15 @@ function createConfig(projects, ignores, extraRules) {
 			},
 			plugins: {
 				'@stylistic': stylistic,
+				'import-x': importX,
 			},
 			rules: {
+				'import-x/no-extraneous-dependencies': ['error', {
+					packageDir: [process.cwd(), rootDir],
+					devDependencies: true,
+					peerDependencies: true,
+					optionalDependencies: true,
+				}],
 				'@stylistic/semi': 'error',
 				'@stylistic/member-delimiter-style': ['error', {
 					multiline: { delimiter: 'semi', requireLast: true },
@@ -44,7 +58,7 @@ function createConfig(projects, ignores, extraRules) {
 				}],
 				'@stylistic/indent': ['warn', 'tab', { SwitchCase: 1 }],
 				'@stylistic/no-extra-semi': 'warn',
-				'@stylistic/quotes': ['error', 'single', { allowTemplateLiterals: true }],
+				'@stylistic/quotes': ['error', 'single', { allowTemplateLiterals: 'always' }],
 				'@typescript-eslint/no-floating-promises': 'error',
 				'curly': 'warn',
 				'eqeqeq': 'error',

@@ -36,7 +36,7 @@ class MessageBuffer extends AbstractMessageBuffer {
 		if (length === undefined) {
 			return buffer instanceof Buffer ? buffer : Buffer.from(buffer);
 		} else {
-			return buffer instanceof Buffer ? buffer.slice(0, length) : Buffer.from(buffer, 0, length);
+			return buffer instanceof Buffer ? buffer.slice(0, length) : Buffer.from(buffer.buffer, buffer.byteOffset, length);
 		}
 	}
 

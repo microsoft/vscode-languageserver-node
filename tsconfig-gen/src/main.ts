@@ -113,5 +113,5 @@ export async function main(): Promise<number> {
 }
 
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
-	main().then((code) => { process.exitCode = code; });
+	void main().then((code) => { process.exitCode = code; });
 }

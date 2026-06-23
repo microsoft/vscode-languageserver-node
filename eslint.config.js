@@ -25,7 +25,7 @@ module.exports = [
 			'@stylistic/semi': 'error',
 			'@stylistic/no-extra-semi': 'warn',
 			'curly': 'warn',
-			'@stylistic/quotes': ['error', 'single', { allowTemplateLiterals: true }],
+			'@stylistic/quotes': ['error', 'single', { allowTemplateLiterals: 'always' }],
 			'eqeqeq': 'error',
 			'@stylistic/indent': ['warn', 'tab', { SwitchCase: 1 }],
 		},
