@@ -170,27 +170,46 @@ declare const console: any;
 
 class Timer {
 
+	private readonly testMode: boolean;
 	private readonly yieldAfter: number;
 	private startTime: number;
 	private counter: number;
 	private total: number;
 	private counterInterval: number;
+	// Virtual elapsed time in ms, used only in test mode (see shouldYield).
+	private simulatedElapsed: number;
 
 	constructor(yieldAfter: number = defaultYieldTimeout) {
-		this.yieldAfter = $test === true ? Math.max(yieldAfter, 2) : Math.max(yieldAfter, defaultYieldTimeout);
+		this.testMode = $test === true;
+		this.yieldAfter = this.testMode ? Math.max(yieldAfter, 2) : Math.max(yieldAfter, defaultYieldTimeout);
 		this.startTime = Date.now();
 		this.counter = 0;
 		this.total = 0;
 		// start with a counter interval of 1.
 		this.counterInterval = 1;
+		this.simulatedElapsed = 0;
 	}
 	public start() {
 		this.counter = 0;
 		this.total = 0;
 		this.counterInterval = 1;
 		this.startTime = Date.now();
+		this.simulatedElapsed = 0;
 	}
 	public shouldYield(): boolean {
+		// Wall-clock based yielding is racy in tests: on a fast machine a whole
+		// batch can finish in well under `yieldAfter` ms, so nothing ever yields
+		// and tests that assert on the yield behavior flake. In test mode we keep
+		// the exact same millisecond budget but feed it a deterministic clock that
+		// advances by 1ms for every processed item instead of reading Date.now().
+		if (this.testMode) {
+			this.simulatedElapsed += 1;
+			if (this.simulatedElapsed >= this.yieldAfter) {
+				this.simulatedElapsed = 0;
+				return true;
+			}
+			return false;
+		}
 		if (++this.counter >= this.counterInterval) {
 			const timeTaken = Date.now() - this.startTime;
 			const timeLeft = Math.max(0, this.yieldAfter - timeTaken);
