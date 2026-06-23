@@ -12,15 +12,14 @@ const ln = require('./linking');
 const root = path.dirname(path.dirname(__dirname));
 
 (async function main() {
-	console.log('Symlinking node modules for test setup');
+	console.log('Hard linking the language client into the test extension');
 
-	// test-extension
+	// The client uses a VS Code proposed API (codeActionAI). VS Code grants proposed
+	// API access based on the real path that owns the code. npm workspaces only expose
+	// the client as a symlink whose real path resolves back out to <root>/client
+	// (outside this extension), so the proposal would be rejected. Hard linking a real
+	// copy of the client into the extension's node_modules gives it a real path inside
+	// the extension. All other workspace packages are resolved via the root node_modules.
 	const extensionFolder = path.join(root, 'client-node-tests');
-	await ln.tryLinkJsonRpc(extensionFolder);
-	await ln.tryLinkTypes(extensionFolder);
-	await ln.tryLinkProtocol(extensionFolder);
-	await ln.tryLink(extensionFolder, '@vscode/languageserver', 'server');
-
-	// Hard link the client to have a real path from the node_modules folder
 	await ln.tryHardLink(path.join(root, 'client'), path.join(extensionFolder, 'node_modules', '@vscode', 'languageclient'));
 })();
