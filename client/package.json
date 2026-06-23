@@ -58,7 +58,7 @@
 		"clean": "rimraf lib",
 		"all": "npm run clean && npm run compile && npm run lint && npm test",
 		"compile:publish": "tsc -b ./tsconfig.publish.json",
-		"all:publish": "git clean -xfd . && npm install && npm run updateVSCodeVersion && npm run compile:publish && npm run lint && cd ../client-node-tests && npm run all:publish && cd ..",
+		"all:publish": "git clean -xfd . && npm install --no-workspaces && npm run updateVSCodeVersion && npm run compile:publish && npm run lint && cd ../client-node-tests && npm run all:publish && cd ..",
 		"preversion": "npm test",
 		"updateVSCodeVersion": "node ./bin/updateVSCode.cjs",
 		"update:vscode-version": "node ./bin/updateVSCode.cjs"

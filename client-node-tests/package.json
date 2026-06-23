@@ -27,11 +27,13 @@
 		"symlink:publish": "node ../build/bin/symlink-client-tests-publish.js",
 		"compile:publish": "tsc -b ./tsconfig.publish.json",
 		"test:publish": "node lib/runTests.js",
-		"all:publish": "git clean -xfd . && npm install && npm run symlink:publish && npm run compile:publish && npm run test:publish"
+		"all:publish": "git clean -xfd . && npm install --no-workspaces && npm run symlink:publish && npm run compile:publish && npm run test:publish"
 	},
 	"dependencies": {
 		"minimatch": "^10.2.5",
+		"@vscode/languageclient": "10.0.0",
 		"@vscode/languageserver": "10.0.0",
+		"@vscode/languageserver-protocol": "3.18.0",
 		"vscode-uri": "3.1.0"
 	},
 	"devDependencies": {

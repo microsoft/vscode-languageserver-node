@@ -12,6 +12,20 @@
 	"bugs": {
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
+	"workspaces": [
+		"jsonrpc",
+		"types",
+		"textDocument",
+		"protocol",
+		"server",
+		"client",
+		"client-node-tests",
+		"tools",
+		"tsconfig-gen",
+		"testbed",
+		"testbed/client",
+		"testbed/server"
+	],
 	"devDependencies": {
 		"@types/assert": "^1.5.11",
 		"@types/mocha": "^10.0.10",
@@ -35,12 +49,10 @@
 		"node-polyfill-webpack-plugin": "^4.1.0"
 	},
 	"scripts": {
-		"postinstall": "node ./build/bin/all.js install && cd testbed && npm install && cd .. && npm run symlink:testbed && npx playwright install",
+		"postinstall": "npx playwright install",
 		"test": "node ./build/bin/all.js run test",
 		"clean": "node ./build/bin/all.js run clean",
-		"symlink": "node ./build/bin/symlink.js",
 		"symlink:tests": "node ./build/bin/symlink-tests.js",
-		"symlink:testbed": "node ./build/bin/symlink-testbed.js",
 		"compile": "tsc -b tsconfig.json",
 		"compile:types": "tsc -b ./types/tsconfig.json",
 		"compile:textDocument": "tsc -b ./textDocument/tsconfig.json",
@@ -55,8 +67,8 @@
 		"watch:testbed": "tsc -b ./testbed/tsconfig.json -w",
 		"watch:tsconfig-gen": "tsc -b ./tsconfig-gen/tsconfig.json -w",
 		"lint": "node ./build/bin/all.js run lint",
-		"all": "npm run symlink && npm run compile && npm run test",
-		"rebuildAll": "npm run clean && npm run symlink && npm run compile && npm run test",
+		"all": "npm run compile && npm run test",
+		"rebuildAll": "npm run clean && npm run compile && npm run test",
 		"audit:all": "node ./build/bin/all.js audit",
 		"audit:all:fix": "node ./build/bin/all.js audit fix",
 		"generate:metaModel": "cd protocol && npm run generate:metaModel && cd ..",

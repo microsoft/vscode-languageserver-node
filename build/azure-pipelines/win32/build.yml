@@ -9,10 +9,6 @@ steps:
   displayName: 'Install Dependencies'
 
 - script: |
-    npm run symlink
-  displayName: 'Symlink Dependencies'
-
-- script: |
     npm run compile
   displayName: 'Compile'
 

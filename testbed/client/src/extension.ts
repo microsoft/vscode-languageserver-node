@@ -5,8 +5,11 @@
 'use strict';
 
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { commands, ExtensionContext, workspace, window, Uri } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind, NotificationType } from '@vscode/languageclient/node';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let client: LanguageClient;
 

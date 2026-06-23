@@ -29,7 +29,7 @@
 		"test": "node ../node_modules/mocha/bin/_mocha",
 		"all": "npm run clean && npm run compile && npm run lint && npm run test",
 		"compile:publish": "tsc -b ./tsconfig.publish.json",
-		"all:publish": "git clean -xfd . && npm install && npm run compile:publish && npm run lint && npm run test",
+		"all:publish": "git clean -xfd . && npm install --no-workspaces && npm run compile:publish && npm run lint && npm run test",
 		"preversion": "npm test"
 	}
 }

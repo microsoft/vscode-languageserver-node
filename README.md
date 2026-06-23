@@ -31,7 +31,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 ## Contributing
 
-After cloning the repository, run `npm install` to install dependencies and `npm run symlink` to point packages in this repository to each other.
+After cloning the repository, run `npm install` to install dependencies. This repository uses npm workspaces, so a single install also links the packages in this repository to each other.
 
 ## History
 
