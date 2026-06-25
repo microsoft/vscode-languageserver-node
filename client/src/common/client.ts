@@ -346,6 +346,16 @@ InlineCompletionMiddleware & TextDocumentContentMiddleware & GeneralMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
+	/**
+	 * The name of the diagnostic collection that is created by the client.
+	 * If omitted the name of the client is used.
+	 *
+	 * **Note:** the name is only used if the server uses the old
+	 * `textDocument/publishDiagnostics` notification. If the server uses the
+	 * new `textDocument/diagnostic` request the name of the collection is
+	 * defined by the server using the `identifier` property of the
+	 * `DiagnosticOptions` during registration.
+	 */
 	diagnosticCollectionName?: string;
 	outputChannel?: LogOutputChannel;
 	outputChannelName?: string;
