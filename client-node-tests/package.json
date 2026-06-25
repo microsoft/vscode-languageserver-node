@@ -31,9 +31,9 @@
 	},
 	"dependencies": {
 		"minimatch": "^10.2.5",
-		"@vscode/languageclient": "10.0.0",
-		"@vscode/languageserver": "10.0.0",
-		"@vscode/languageserver-protocol": "3.18.0",
+		"@vscode/languageclient": "10.0.1",
+		"@vscode/languageserver": "10.0.1",
+		"@vscode/languageserver-protocol": "3.18.1",
 		"vscode-uri": "3.1.0"
 	},
 	"devDependencies": {

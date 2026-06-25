@@ -13,8 +13,8 @@
 		"compile": "tsgo -b ./tsconfig.json"
 	},
 	"dependencies": {
-		"@vscode/languageclient": "10.0.0",
-		"@vscode/languageserver-protocol": "3.18.0"
+		"@vscode/languageclient": "10.0.1",
+		"@vscode/languageserver-protocol": "3.18.1"
 	},
 	"devDependencies": {}
 }

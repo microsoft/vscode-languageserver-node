@@ -35,6 +35,10 @@ After cloning the repository, run `npm install` to install dependencies. This re
 
 ## History
 
+## 3.18.1 Protocol, 9.0.0 JSON-RPC, 10.0.1 Client and 10.0.1 Server.
+
+- [textDocumentContent capability/feature is still behind a proposed gate even though in 3.18 it's not flagged as proposed anymore](https://github.com/microsoft/vscode-languageserver-node/issues/1795)
+
 ## 3.18.0 Protocol, 9.0.0 JSON-RPC, 10.0.0 Client and 10.0.0 Server.
 
 ### Protocol - new requests / notifications
