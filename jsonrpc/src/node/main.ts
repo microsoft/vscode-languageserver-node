@@ -170,7 +170,7 @@ export class StreamMessageWriter extends WriteableStreamMessageWriter {
 const XDG_RUNTIME_DIR = process.env['XDG_RUNTIME_DIR'];
 const safeIpcPathLengths: Map<NodeJS.Platform, number> = new Map([
 	['linux', 107],
-	['darwin', 103]
+	['darwin', 102]
 ]);
 
 export function generateRandomPipeName(): string {
