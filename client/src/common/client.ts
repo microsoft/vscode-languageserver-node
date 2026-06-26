@@ -1710,6 +1710,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					const params = this.code2ProtocolConverter.asChangeTextDocumentParams(document);
 					// We await the send and not the delivery since it is more or less the same for
 					// notifications.
+					this._didChangeTextDocumentFeature!.aboutToSendNotification(document, DidChangeTextDocumentNotification.type, params);
 					await connection.sendNotification(DidChangeTextDocumentNotification.type, params);
 					this._didChangeTextDocumentFeature!.notificationSent(document, DidChangeTextDocumentNotification.type, params);
 				}

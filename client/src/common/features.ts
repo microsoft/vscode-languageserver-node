@@ -260,14 +260,27 @@ interface CreateParamsSignature<E, P> {
 	(data: E): RequestParam<P>;
 }
 
-export interface NotificationSendEvent<P extends { textDocument: TextDocumentIdentifier }> {
+interface NotificationEvent<P extends { textDocument: TextDocumentIdentifier }> {
 	textDocument: TextDocument;
 	type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>;
 	params: RequestParam<P>;
 }
 
+export interface AboutToSendNotificationEvent<P extends { textDocument: TextDocumentIdentifier }> extends NotificationEvent<P> {
+}
+
+export interface NotificationSentEvent<P extends { textDocument: TextDocumentIdentifier }> extends NotificationEvent<P> {
+}
+
+/**
+ * @deprecated Use `NotificationSentEvent` instead.
+ */
+export interface NotificationSendEvent<P extends { textDocument: TextDocumentIdentifier }> extends NotificationSentEvent<P> {
+}
+
 export interface NotifyingFeature<P extends { textDocument: TextDocumentIdentifier }> {
-	onNotificationSent: VEvent<NotificationSendEvent<P>>;
+	onAboutToSendNotification: VEvent<AboutToSendNotificationEvent<P>>;
+	onNotificationSent: VEvent<NotificationSentEvent<P>>;
 }
 
 /**
@@ -340,7 +353,8 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 
 	private _listener: Disposable | undefined;
 	protected readonly _selectors: Map<string, VDocumentSelector>;
-	private _onNotificationSent: EventEmitter<NotificationSendEvent<P>>;
+	private _onAboutToSendNotification: EventEmitter<AboutToSendNotificationEvent<P>>;
+	private _onNotificationSent: EventEmitter<NotificationSentEvent<P>>;
 
 	public static textDocumentFilter(selectors: IterableIterator<VDocumentSelector>, textDocument: TextDocument): boolean {
 		for (const selector of selectors) {
@@ -365,7 +379,8 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 		this._selectorFilter = selectorFilter;
 
 		this._selectors = new Map<string, VDocumentSelector>();
-		this._onNotificationSent = new EventEmitter<NotificationSendEvent<P>>();
+		this._onAboutToSendNotification = new EventEmitter<AboutToSendNotificationEvent<P>>();
+		this._onNotificationSent = new EventEmitter<NotificationSentEvent<P>>();
 	}
 
 	protected getStateInfo(): [IterableIterator<VDocumentSelector>, boolean] {
@@ -392,9 +407,11 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 
 	protected async callback(data: E): Promise<void> {
 		const doSend = async (data: E): Promise<void> => {
+			const textDocument = this.getTextDocument(data);
 			const params = this._createParams(data);
+			this.aboutToSendNotification(textDocument, this._type, params);
 			await this._client.sendNotification(this._type, params);
-			this.notificationSent(this.getTextDocument(data), this._type, params);
+			this.notificationSent(textDocument, this._type, params);
 		};
 		if (this.matches(data)) {
 			const middleware = this._middleware();
@@ -409,7 +426,15 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 		return !this._selectorFilter || this._selectorFilter(this._selectors.values(), data);
 	}
 
-	public get onNotificationSent(): VEvent<NotificationSendEvent<P>> {
+	public get onAboutToSendNotification(): VEvent<AboutToSendNotificationEvent<P>> {
+		return this._onAboutToSendNotification.event;
+	}
+
+	protected aboutToSendNotification(textDocument: TextDocument, type: ProtocolNotificationType<P, TextDocumentRegistrationOptions>, params: RequestParam<P>): void {
+		this._onAboutToSendNotification.fire({ textDocument, type, params });
+	}
+
+	public get onNotificationSent(): VEvent<NotificationSentEvent<P>> {
 		return this._onNotificationSent.event;
 	}
 
@@ -430,7 +455,7 @@ export abstract class TextDocumentEventFeature<P extends { textDocument: TextDoc
 	public clear(): void {
 		this._selectors.clear();
 		this._onNotificationSent.dispose();
-		this._onNotificationSent = new EventEmitter<NotificationSendEvent<P>>();
+		this._onNotificationSent = new EventEmitter<NotificationSentEvent<P>>();
 		if (this._listener) {
 			this._listener.dispose();
 			this._listener = undefined;

@@ -533,7 +533,7 @@ class DiagnosticRequestor implements Disposable {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 						}
 						if (token.isCancellationRequested) {
-							throw new CancellationError()
+							throw new CancellationError();
 						}
 						if (result === undefined || result === null) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
@@ -1025,9 +1025,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}));
 		}
 
-		// When the document closes clear things up
+		// When the document closes clear things up. We do that right before the
+		// close notification is sent to the server so that it is not taken
+		// from the pull queue in case it is still there.
 		const closeFeature = client.getFeature(DidCloseTextDocumentNotification.method);
-		disposables.push(closeFeature.onNotificationSent((event) => {
+		disposables.push(closeFeature.onAboutToSendNotification((event) => {
 			this.cleanUpDocument(event.textDocument);
 		}));
 		disposables.push(notebookFeature.onCloseNotificationSent((event) => {
