@@ -223,7 +223,7 @@ export default class Visitor {
 
 	public getMetaModel(): MetaModel {
 		return {
-			metaData: { version: '3.17.0' },
+			metaData: { version: '3.18.0' },
 			requests: this.requests,
 			notifications: this.notifications,
 			structures: this.structures,
