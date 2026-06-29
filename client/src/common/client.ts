@@ -396,7 +396,7 @@ export type LanguageClientOptions = {
 		 */
 		delayOpenNotifications?: boolean;
 	};
-} & $NotebookDocumentOptions & $DiagnosticPullOptions & $ConfigurationOptions;
+} & $NotebookDocumentOptions & Omit<$DiagnosticPullOptions, 'diagnosticCollectionName'> & $ConfigurationOptions;
 
 // type TestOptions = {
 // 	$testMode?: boolean;
@@ -432,7 +432,7 @@ type ResolvedClientOptions = {
 	textSynchronization: {
 		delayOpenNotifications: boolean;
 	};
-} & Required<$NotebookDocumentOptions> & Required<$DiagnosticPullOptions>;
+} & Required<$NotebookDocumentOptions> & Required<Omit<$DiagnosticPullOptions, 'diagnosticCollectionName'>>;
 namespace ResolvedClientOptions {
 	export function sanitizeIsTrusted(isTrusted?: boolean | { readonly enabledCommands: readonly string[] }): boolean | { readonly enabledCommands: readonly string[] } {
 		if (isTrusted === undefined || isTrusted === null) {

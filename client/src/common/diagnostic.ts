@@ -166,6 +166,7 @@ export type DiagnosticPullOptions = {
 };
 
 export type $DiagnosticPullOptions = {
+	diagnosticCollectionName?: string;
 	diagnosticPullOptions?: DiagnosticPullOptions;
 };
 
@@ -297,7 +298,7 @@ class DiagnosticRequestor implements Disposable {
 
 	public readonly onDidChangeDiagnosticsEmitter: EventEmitter<void>;
 	public readonly provider: vsdiag.DiagnosticProvider;
-	private readonly diagnostics: DiagnosticCollection;
+	private readonly diagnostics: DiagnosticCollection | undefined;
 	private readonly openRequests: Map<string, RequestState>;
 	private readonly documentStates: DocumentPullStateTracker;
 
@@ -314,11 +315,58 @@ class DiagnosticRequestor implements Disposable {
 		this.onDidChangeDiagnosticsEmitter = new EventEmitter<void>();
 		this.provider = this.createProvider();
 
-		this.diagnostics = Languages.createDiagnosticCollection(options.identifier);
+		this.diagnostics = this.createDiagnosticCollection();
 		this.openRequests = new Map();
 		this.documentStates = new DocumentPullStateTracker();
 		this.workspaceErrorCounter = 0;
 	}
+
+	private createDiagnosticCollection(): DiagnosticCollection | undefined {
+		// We have no name. So create a unique diagnostic collection.
+		if (this.options.identifier === undefined) {
+			return Languages.createDiagnosticCollection();
+		}
+		const clientOptions = this.client.clientOptions;
+		// The name is different than the one used for push. So create a unique
+		// diagnostic collection.
+		if (this.options.identifier !== clientOptions.diagnosticCollectionName) {
+			return Languages.createDiagnosticCollection(this.options.identifier);
+		}
+		// The name is the same. return undefined since we do want to reuse the
+		// same collection as the push model.
+		return undefined;
+	}
+
+	private deleteDiagnostics(document: TextDocument | Uri): void {
+		const uri = document instanceof Uri ? document : document.uri;
+		if (this.diagnostics !== undefined) {
+			this.diagnostics.delete(uri);
+		} else {
+			const diagnostics = this.client.diagnostics;
+			if (diagnostics !== undefined) {
+				diagnostics.delete(uri);
+			}
+		}
+	}
+
+	private setDiagnostics(document: TextDocument | Uri, diagnostics: VDiagnostic[]): void {
+		const uri = document instanceof Uri ? document : document.uri;
+		if (this.diagnostics !== undefined) {
+			this.diagnostics.set(uri, diagnostics);
+		} else {
+			const clientDiagnostics = this.client.diagnostics;
+			if (clientDiagnostics !== undefined) {
+				clientDiagnostics.set(uri, diagnostics);
+			}
+		}
+	}
+
+	private disposeDiagnostics(): void {
+		if (this.diagnostics !== undefined) {
+			this.diagnostics.dispose();
+		}
+	}
+
 
 	public knows(kind: PullState, document: TextDocument | Uri): boolean {
 		const uri = document instanceof Uri ? document : document.uri;
@@ -392,7 +440,7 @@ class DiagnosticRequestor implements Disposable {
 			if (afterState === undefined) {
 				// This shouldn't happen. Log it
 				this.client.error(`Lost request state in diagnostic pull model. Clearing diagnostics for ${key}`);
-				this.diagnostics.delete(uri);
+				this.deleteDiagnostics(uri);
 				return;
 			}
 			this.openRequests.delete(key);
@@ -406,7 +454,7 @@ class DiagnosticRequestor implements Disposable {
 			// report is only undefined if the request has thrown.
 			if (report !== undefined) {
 				if (report.kind === vsdiag.DocumentDiagnosticReportKind.full) {
-					this.diagnostics.set(uri, report.items);
+					this.setDiagnostics(uri, report.items);
 				}
 				documentState.pulledVersion = version;
 				documentState.resultId = report.resultId;
@@ -457,7 +505,7 @@ class DiagnosticRequestor implements Disposable {
 				}
 				this.openRequests.set(key, { state: RequestStateKind.outDated, document: document });
 			}
-			this.diagnostics.delete(uri);
+			this.deleteDiagnostics(uri);
 			this.forget(PullState.document, document);
 		}
 	}
@@ -507,7 +555,7 @@ class DiagnosticRequestor implements Disposable {
 					// Favour document pull result over workspace results. So skip if it is tracked
 					// as a document result.
 					if (!this.documentStates.tracks(PullState.document, item.uri)) {
-						this.diagnostics.set(item.uri, item.items);
+						this.setDiagnostics(item.uri, item.items);
 					}
 				}
 				this.documentStates.update(PullState.workspace, item.uri, item.version ?? undefined, item.resultId);
@@ -650,7 +698,7 @@ class DiagnosticRequestor implements Disposable {
 		}
 
 		// cleanup old diagnostics
-		this.diagnostics.dispose();
+		this.disposeDiagnostics();
 	}
 }
 

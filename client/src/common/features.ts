@@ -10,7 +10,7 @@ import {
 	DocumentRangeFormattingEditProvider, OnTypeFormattingEditProvider, RenameProvider, DocumentSymbolProvider, DocumentLinkProvider, DocumentColorProvider,
 	DeclarationProvider, ImplementationProvider, SelectionRangeProvider, TypeDefinitionProvider, CallHierarchyProvider,
 	LinkedEditingRangeProvider, TypeHierarchyProvider, FileCreateEvent, FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent,
-	FileWillDeleteEvent, CancellationError, InlineCompletionItemProvider, type Uri
+	FileWillDeleteEvent, CancellationError, InlineCompletionItemProvider, type Uri, type DiagnosticCollection
 } from 'vscode';
 
 import {
@@ -697,6 +697,7 @@ export interface FeatureClient<M, CO = object> {
 	clientOptions: CO;
 	middleware: M;
 
+	diagnostics: DiagnosticCollection | undefined;
 	visibleDocuments: VisibleDocuments;
 
 	start(): Promise<void>;
