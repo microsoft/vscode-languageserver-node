@@ -668,7 +668,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _traceLogLevel: LogLevel;
 	private _capabilities!: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
-	private _diagnostics: DiagnosticCollection | undefined;
+	// undefined: allow lazy creation of the diagnostic collection.
+	// null: the diagnostic collection has been disposed and should not be
+	// recreated.
+	private _diagnostics: DiagnosticCollection | undefined | null;
 	private _syncedDocuments: Map<string, TextDocument>;
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
@@ -767,6 +770,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._traceOutputChannel !== undefined) {
 			this._traceLogLevel = this._traceOutputChannel.logLevel;
 		}
+		// Allow lazy creation of the diagnostic collection.
 		this._diagnostics = undefined;
 
 		this._inFlightOpenNotifications = new Set();
@@ -858,6 +862,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public get diagnostics(): DiagnosticCollection | undefined {
+		if (this._diagnostics === null) {
+			return undefined;
+		}
+		if (this._diagnostics === undefined) {
+			this._diagnostics = Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName ?? this._id);
+		}
 		return this._diagnostics;
 	}
 
@@ -1294,10 +1304,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		const [promise, resolve, reject] = this.createOnStartPromise();
 		this._onStart = promise;
 
-		// If we restart then the diagnostics collection is reused.
-		if (this._diagnostics === undefined) {
-			this._diagnostics = Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName ?? this._id);
-		}
+		// A previous shutdown disposed the diagnostic collection and set it to
+		// `null` to prevent recreation. On (re)start we re-enable lazy creation.
+		this._diagnostics = undefined;
 
 		// When we start make all buffer handlers pending so that they
 		// get added.
@@ -1658,9 +1667,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
 			feature.clear();
 		}
-		if ((mode === ShutdownMode.Stop || mode === ShutdownMode.Restart) && this._diagnostics !== undefined) {
-			this._diagnostics.dispose();
-			this._diagnostics = undefined;
+		if ((mode === ShutdownMode.Stop || mode === ShutdownMode.Restart)) {
+			if (this._diagnostics === undefined) {
+				this._diagnostics = null;
+			}
+			if (this._diagnostics !== null) {
+				this._diagnostics.dispose();
+				this._diagnostics = null;
+			}
 		}
 
 		if (this._idleInterval !== undefined) {
@@ -1736,7 +1750,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
 	private _diagnosticQueueState: { state: 'idle' } | { state: 'busy'; document: string; tokenSource: CancellationTokenSource } = { state: 'idle' };
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
-		if (!this._diagnostics) {
+		if (this._diagnostics === null) {
 			return;
 		}
 		const key = params.uri;
@@ -1784,10 +1798,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private setDiagnostics(uri: Uri, diagnostics: VDiagnostic[] | undefined) {
-		if (!this._diagnostics) {
+		if (this._diagnostics === null) {
 			return;
 		}
-		this._diagnostics.set(uri, diagnostics);
+		const diagnosticsCollection = this.diagnostics;
+		if (diagnosticsCollection !== undefined) {
+			diagnosticsCollection.set(uri, diagnostics);
+		}
 	}
 
 	protected getLocale(): string {
