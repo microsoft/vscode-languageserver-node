@@ -1861,8 +1861,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 		}
 		this._connection = undefined;
+		// `Stopping` counts as handled. The application asked for the close via `stop()`,
+		// and `closed()` was skipped above so the handler had no chance to set `handled`.
+		const handled = this.$state === ClientState.Stopping || handlerResult.handled === true;
 		if (handlerResult.action === CloseAction.DoNotRestart) {
-			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, handlerResult.handled === true ? false : 'force');
+			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, handled ? false : 'force');
 			this.cleanUp(ShutdownMode.Stop);
 			if (this.$state === ClientState.Starting) {
 				this.$state = ClientState.StartFailed;
