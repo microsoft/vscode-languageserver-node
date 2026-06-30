@@ -29,7 +29,6 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
-import * as UUID from './utils/uuid';
 import { WorkDoneProgressReporter, ResultProgressReporter, WindowProgress, ProgressFeature, attachWorkDone, attachPartialResult} from './progress';
 import { Configuration, ConfigurationFeature } from './configuration';
 import { WorkspaceFolders, WorkspaceFoldersFeature } from './workspaceFolder';
@@ -375,7 +374,7 @@ class BulkRegistrationImpl {
 		if (this._registered.has(method)) {
 			throw new Error(`${method} is already added to this registration`);
 		}
-		const id = UUID.generateUuid();
+		const id = crypto.randomUUID();
 		this._registrations.push({
 			id: id,
 			method: method,
@@ -576,7 +575,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 
 	private registerSingle1(unregistration: BulkUnregistrationImpl, type: string | MethodType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
-		const id = UUID.generateUuid();
+		const id = crypto.randomUUID();
 		const params: RegistrationParams = {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
 		};
@@ -594,7 +593,7 @@ class RemoteClientImpl implements RemoteClient, Remote {
 
 	private registerSingle2(type: string | MethodType, registerOptions: any): Promise<Disposable> {
 		const method = Is.string(type) ? type : type.method;
-		const id = UUID.generateUuid();
+		const id = crypto.randomUUID();
 		const params: RegistrationParams = {
 			registrations: [{ id, method, registerOptions: registerOptions || {} }]
 		};

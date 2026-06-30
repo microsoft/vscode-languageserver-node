@@ -45,7 +45,6 @@ import * as p2c from './protocolConverter';
 
 import * as Is from './utils/is';
 import { Delayer, Semaphore } from './utils/async';
-import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
@@ -1460,7 +1459,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 		this.fillInitializeParams(initParams);
 		if (this._clientOptions.progressOnInitialization) {
-			const token: ProgressToken = UUID.generateUuid();
+			const token: ProgressToken = crypto.randomUUID();
 			const part: ProgressPart = new ProgressPart(connection, token);
 			initParams.workDoneToken = token;
 			try {
@@ -1949,7 +1948,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (!watchers) {
 			return;
 		}
-		(this._dynamicFeatures.get(DidChangeWatchedFilesNotification.type.method)! as FileSystemWatcherFeature).registerRaw(UUID.generateUuid(), watchers);
+		(this._dynamicFeatures.get(DidChangeWatchedFilesNotification.type.method)! as FileSystemWatcherFeature).registerRaw(crypto.randomUUID(), watchers);
 	}
 
 	private readonly _features: (StaticFeature | DynamicFeature<any>)[] = [];

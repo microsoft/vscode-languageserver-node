@@ -3,8 +3,6 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as UUID from './utils/uuid';
-
 import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
 import { DynamicFeature, RegistrationData, FeatureClient, NextSignature, FeatureState } from './features';
@@ -95,7 +93,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 		if (typeof value === 'string') {
 			id = value;
 		} else if (value === true) {
-			id = UUID.generateUuid();
+			id = crypto.randomUUID();
 		}
 		if (id) {
 			this.register({ id: id, registerOptions: undefined });

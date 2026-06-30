@@ -20,7 +20,6 @@ import {
 	NotificationSentEvent, AboutToSendNotificationEvent
 } from './features';
 
-import * as UUID from './utils/uuid';
 import { TextDocument as TextDocumentImpl } from 'vscode-languageserver-textdocument';
 
 export interface TextDocumentSynchronizationMiddleware {
@@ -100,7 +99,7 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.openClose) {
-			this.register({ id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
+			this.register({ id: crypto.randomUUID(), registerOptions: { documentSelector: documentSelector } });
 		}
 	}
 
@@ -234,7 +233,7 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 	public initialize(capabilities: ServerCapabilities, documentSelector: DocumentSelector): void {
 		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.openClose) {
-			this.register({ id: UUID.generateUuid(), registerOptions: { documentSelector: documentSelector } });
+			this.register({ id: crypto.randomUUID(), registerOptions: { documentSelector: documentSelector } });
 		}
 	}
 
@@ -332,7 +331,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.change !== undefined && textDocumentSyncOptions.change !== TextDocumentSyncKind.None) {
 			this.register({
-				id: UUID.generateUuid(),
+				id: crypto.randomUUID(),
 				registerOptions: Object.assign({}, { documentSelector: documentSelector }, { syncKind: textDocumentSyncOptions.change })
 			});
 		}
@@ -514,7 +513,7 @@ export class WillSaveFeature extends TextDocumentEventFeature<WillSaveTextDocume
 		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSave) {
 			this.register({
-				id: UUID.generateUuid(),
+				id: crypto.randomUUID(),
 				registerOptions: { documentSelector: documentSelector }
 			});
 		}
@@ -552,7 +551,7 @@ export class WillSaveWaitUntilFeature extends DynamicDocumentFeature<TextDocumen
 		const textDocumentSyncOptions = (capabilities as ResolvedTextDocumentSyncCapabilities).resolvedTextDocumentSync;
 		if (documentSelector && textDocumentSyncOptions && textDocumentSyncOptions.willSaveWaitUntil) {
 			this.register({
-				id: UUID.generateUuid(),
+				id: crypto.randomUUID(),
 				registerOptions: { documentSelector: documentSelector }
 			});
 		}
@@ -636,7 +635,7 @@ export class DidSaveTextDocumentFeature extends TextDocumentEventFeature<DidSave
 				? { includeText: false }
 				: { includeText: !!textDocumentSyncOptions.save.includeText };
 			this.register({
-				id: UUID.generateUuid(),
+				id: crypto.randomUUID(),
 				registerOptions: Object.assign({}, { documentSelector: documentSelector }, saveOptions)
 			});
 		}
