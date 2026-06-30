@@ -20,7 +20,7 @@ import { generateUuid } from './utils/uuid';
 import { matchGlobPattern } from './utils/globPattern';
 
 import {
-	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError, type VisibleDocuments
+	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError, DiagnosticCollectionSource, type DiagnosticCollectionProvider, type VisibleDocuments
 } from './features';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -167,6 +167,14 @@ export type DiagnosticPullOptions = {
 
 export type $DiagnosticPullOptions = {
 	diagnosticPullOptions?: DiagnosticPullOptions;
+
+	/**
+	 * The provider used to create and dispose the diagnostic collections for the
+	 * push (`textDocument/publishDiagnostics`) and the pull (`textDocument/diagnostic`)
+	 * model. If omitted a default provider is used that doesn't share a diagnostic
+	 * collection between the two models.
+	 */
+	diagnosticCollectionProvider?: DiagnosticCollectionProvider;
 };
 
 
@@ -314,10 +322,18 @@ class DiagnosticRequestor implements Disposable {
 		this.onDidChangeDiagnosticsEmitter = new EventEmitter<void>();
 		this.provider = this.createProvider();
 
-		this.diagnostics = Languages.createDiagnosticCollection(options.identifier);
+		this.diagnostics = this.createDiagnosticCollection();
 		this.openRequests = new Map();
 		this.documentStates = new DocumentPullStateTracker();
 		this.workspaceErrorCounter = 0;
+	}
+
+	private createDiagnosticCollection(): DiagnosticCollection {
+		if (this.client.clientOptions.diagnosticCollectionProvider === undefined) {
+			return Languages.createDiagnosticCollection(this.options.identifier);
+		} else {
+			return this.client.clientOptions.diagnosticCollectionProvider.create(this.options.identifier, DiagnosticCollectionSource.pull);
+		}
 	}
 
 	public knows(kind: PullState, document: TextDocument | Uri): boolean {
@@ -650,7 +666,11 @@ class DiagnosticRequestor implements Disposable {
 		}
 
 		// cleanup old diagnostics
-		this.diagnostics.dispose();
+		if (this.client.clientOptions.diagnosticCollectionProvider !== undefined) {
+			this.client.clientOptions.diagnosticCollectionProvider.dispose(this.diagnostics, DiagnosticCollectionSource.pull);
+		} else {
+			this.diagnostics.dispose();
+		}
 	}
 }
 
