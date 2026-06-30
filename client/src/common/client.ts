@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import {
-	workspace as Workspace, window as Window, languages as Languages, LogLevel, version as VSCodeVersion, TextDocument, Disposable,
+	workspace as Workspace, window as Window, LogLevel, version as VSCodeVersion, TextDocument, Disposable,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, CancellationToken, WorkspaceEdit as VWorkspaceEdit,
 	MessageItem, WorkspaceFolder as VWorkspaceFolder, env as Env, TextDocumentShowOptions, CancellationError, CancellationTokenSource, FileCreateEvent,
 	FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider,
@@ -49,7 +49,7 @@ import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
-	TextDocumentProviderFeature, WorkspaceProviderFeature, type VisibleDocuments
+	TextDocumentProviderFeature, WorkspaceProviderFeature, DefaultDiagnosticCollectionProvider, DiagnosticCollectionSource, type VisibleDocuments
 } from './features';
 
 import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions, DiagnosticFeatureShape } from './diagnostic';
@@ -396,7 +396,7 @@ export type LanguageClientOptions = {
 		 */
 		delayOpenNotifications?: boolean;
 	};
-} & $NotebookDocumentOptions & Omit<$DiagnosticPullOptions, 'diagnosticCollectionName'> & $ConfigurationOptions;
+} & $NotebookDocumentOptions & $DiagnosticPullOptions & $ConfigurationOptions;
 
 // type TestOptions = {
 // 	$testMode?: boolean;
@@ -432,7 +432,7 @@ type ResolvedClientOptions = {
 	textSynchronization: {
 		delayOpenNotifications: boolean;
 	};
-} & Required<$NotebookDocumentOptions> & Required<Omit<$DiagnosticPullOptions, 'diagnosticCollectionName'>>;
+} & Required<$NotebookDocumentOptions> & Required<$DiagnosticPullOptions>;
 namespace ResolvedClientOptions {
 	export function sanitizeIsTrusted(isTrusted?: boolean | { readonly enabledCommands: readonly string[] }): boolean | { readonly enabledCommands: readonly string[] } {
 		if (isTrusted === undefined || isTrusted === null) {
@@ -735,6 +735,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			// 	interval: clientOptions.suspend?.interval ? Math.max(clientOptions.suspend.interval, defaultInterval) : defaultInterval
 			// },
 			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
+			diagnosticCollectionProvider: clientOptions.diagnosticCollectionProvider ?? new DefaultDiagnosticCollectionProvider(),
 			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { },
 			textSynchronization: this.createTextSynchronizationOptions(clientOptions.textSynchronization)
 		};
@@ -866,7 +867,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			return undefined;
 		}
 		if (this._diagnostics === undefined) {
-			this._diagnostics = Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName ?? this._id);
+			this._diagnostics = this._clientOptions.diagnosticCollectionProvider.create(this._clientOptions.diagnosticCollectionName ?? this._id, DiagnosticCollectionSource.push);
 		}
 		return this._diagnostics;
 	}
@@ -1672,7 +1673,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				this._diagnostics = null;
 			}
 			if (this._diagnostics !== null) {
-				this._diagnostics.dispose();
+				this._clientOptions.diagnosticCollectionProvider.dispose(this._diagnostics, DiagnosticCollectionSource.push);
 				this._diagnostics = null;
 			}
 		}

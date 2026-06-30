@@ -689,6 +689,55 @@ import type { DiagnosticFeatureShape, DiagnosticProviderShape } from './diagnost
 import type { NotebookDocumentProviderShape } from './notebook';
 import { FoldingRangeProviderShape } from './foldingRange';
 
+export enum DiagnosticCollectionSource {
+	push = 'push',
+	pull = 'pull'
+}
+
+/**
+ * A provider that creates and disposes the diagnostic collections used by the
+ * push (`textDocument/publishDiagnostics`) and the pull (`textDocument/diagnostic`)
+ * model. The same provider instance is shared between the client and the
+ * diagnostic pull implementation so that an implementation can decide whether the
+ * two models share the same underlying collection.
+ */
+export interface DiagnosticCollectionProvider {
+	/**
+	 * Creates or returns a diagnostic collection for the given name and source.
+	 *
+	 * @param name the name of the diagnostic collection or `undefined` if no name
+	 * is available.
+	 * @param source whether the collection is requested by the `push` or the
+	 * `pull` model.
+	 */
+	create(name: string | undefined, source: DiagnosticCollectionSource): DiagnosticCollection;
+
+	/**
+	 * Disposes the given diagnostic collection on behalf of the given source.
+	 *
+	 * @param collection the collection to dispose.
+	 * @param source whether the `push` or the `pull` model releases the collection.
+	 */
+	dispose(collection: DiagnosticCollection, source: DiagnosticCollectionSource): void;
+}
+
+/**
+ * The default {@link DiagnosticCollectionProvider}. It never shares a diagnostic
+ * collection between the push and the pull model. Every call to {@link create}
+ * returns a new collection and {@link dispose} disposes it directly.
+ */
+export class DefaultDiagnosticCollectionProvider implements DiagnosticCollectionProvider {
+	public create(name: string | undefined, _source: DiagnosticCollectionSource): DiagnosticCollection {
+		return name !== undefined
+			? Languages.createDiagnosticCollection(name)
+			: Languages.createDiagnosticCollection();
+	}
+
+	public dispose(collection: DiagnosticCollection, _source: DiagnosticCollectionSource): void {
+		collection.dispose();
+	}
+}
+
 export interface FeatureClient<M, CO = object> {
 
 	protocol2CodeConverter: p2c.Converter;
@@ -697,7 +746,6 @@ export interface FeatureClient<M, CO = object> {
 	clientOptions: CO;
 	middleware: M;
 
-	diagnostics: DiagnosticCollection | undefined;
 	visibleDocuments: VisibleDocuments;
 
 	start(): Promise<void>;
