@@ -3,59 +3,57 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as ts from 'typescript-7/unstable/sync';
 import {
-	__String,
-	SourceFile,
-	SyntaxKind,
-	Node,
-	NodeArray,
-	ModuleDeclaration,
-	TypeAliasDeclaration,
-	TypeNode,
-	Identifier,
-	TypeReferenceNode,
-	IntersectionTypeNode,
-	TypeLiteralNode,
-	VariableDeclaration,
-	JSDocTag,
-	JSDocComment,
-	isTypeAliasDeclaration,
-	isVariableStatement,
-	isVariableDeclaration,
-	isIdentifier,
-	isTypeReferenceNode,
-	isArrayTypeNode,
-	isUnionTypeNode,
-	isIntersectionTypeNode,
-	isTypeLiteralNode,
-	isTupleTypeNode,
-	isTypeQueryNode,
-	isQualifiedName,
-	isParenthesizedTypeNode,
-	isLiteralTypeNode,
-	isIndexSignatureDeclaration,
-	isPropertySignatureDeclaration,
-	isInterfaceDeclaration,
-	isModuleDeclaration,
-	isModuleBlock,
-	isEnumMember,
-	isNewExpression,
-	isCallExpression,
-	isPropertyAccessExpression,
-	isStringLiteral,
-	isNumericLiteral,
-	isNoSubstitutionTemplateLiteral,
-	isPrefixUnaryExpression,
-	isJSDoc,
-	isJSDocText,
-	isJSDocUnknownTag,
-	getLeadingCommentRanges,
+    __String,
+    getJSDocTags,
+    getLeadingCommentRanges,
+    getTextOfJSDocComment,
+    Identifier,
+    IntersectionTypeNode,
+    isArrayTypeNode,
+    isCallExpression,
+    isEnumMember,
+    isIdentifier,
+    isIndexSignatureDeclaration,
+    isInterfaceDeclaration,
+    isIntersectionTypeNode,
+    isJSDocUnknownTag,
+    isLiteralTypeNode,
+    isModuleBlock,
+    isModuleDeclaration,
+    isNewExpression,
+    isNoSubstitutionTemplateLiteral,
+    isNumericLiteral,
+    isParenthesizedTypeNode,
+    isPrefixUnaryExpression,
+    isPropertyAccessExpression,
+    isPropertySignatureDeclaration,
+    isQualifiedName,
+    isStringLiteral,
+    isTupleTypeNode,
+    isTypeAliasDeclaration,
+    isTypeLiteralNode,
+    isTypeQueryNode,
+    isTypeReferenceNode,
+    isUnionTypeNode,
+    isVariableDeclaration,
+    isVariableStatement,
+    JSDocTag,
+    ModuleDeclaration,
+    Node,
+    SourceFile,
+    SyntaxKind,
+    TypeAliasDeclaration,
+    TypeLiteralNode,
+    TypeNode,
+    TypeReferenceNode,
+    VariableDeclaration
 } from 'typescript-7/unstable/ast';
+import * as ts from 'typescript-7/unstable/sync';
 
 import { Symbols } from './typescripts';
 
-import { Type as JsonType, Request as JsonRequest, Notification as JsonNotification, Structure, Property, StructureLiteral, BaseTypes, TypeAlias, MetaModel, Enumeration, EnumerationEntry, EnumerationType, MessageDirection } from './metaModel';
+import { BaseTypes, Enumeration, EnumerationEntry, EnumerationType, Notification as JsonNotification, Request as JsonRequest, Type as JsonType, MessageDirection, MetaModel, Property, Structure, StructureLiteral, TypeAlias } from './metaModel';
 import path = require('path');
 
 const LSPBaseTypes = new Set(['URI', 'DocumentUri', 'integer', 'uinteger', 'decimal']);
@@ -1255,7 +1253,7 @@ export default class Visitor {
 	private fillDocProperties(node: Node, value: JsonRequest | JsonNotification | Property | Structure | StructureLiteral | EnumerationEntry | Enumeration | TypeAlias | LiteralInfo): void {
 		const filePath = node.getSourceFile().fileName;
 		const fileName = path.basename(filePath);
-		const tags = this.getJSDocTags(node);
+		const tags = getJSDocTags(node);
 		const { since, sinceTags, deprecated } = this.getTags(tags);
 		const proposed = (fileName.startsWith('proposed.') || tags.some((tag) => { return isJSDocUnknownTag(tag) && tag.tagName.text === 'proposed';})) ? true : undefined;
 		value.documentation = this.getDocumentation(node);
@@ -1263,21 +1261,6 @@ export default class Visitor {
 		value.sinceTags = sinceTags;
 		value.deprecated = deprecated;
 		value.proposed = proposed;
-	}
-
-	private getJSDocTags(node: Node): ReadonlyArray<JSDocTag> {
-		const result: JSDocTag[] = [];
-		const jsDocs = node.jsDoc;
-		if (jsDocs !== undefined) {
-			for (const jsDoc of jsDocs) {
-				if (isJSDoc(jsDoc) && jsDoc.tags !== undefined) {
-					for (const tag of jsDoc.tags) {
-						result.push(tag);
-					}
-				}
-			}
-		}
-		return result;
 	}
 
 	private getDocumentation(node: Node): string | undefined {
@@ -1319,7 +1302,7 @@ export default class Visitor {
 	private getTags(tags: ReadonlyArray<JSDocTag>): { since?: string; sinceTags?: string[]; deprecated?: string } {
 		const result: { since?: string; sinceTags?: string[];  deprecated?: string } = {};
 		for (const tag of tags) {
-			const comment = this.getJSDocCommentText(tag.comment);
+			const comment = getTextOfJSDocComment(tag.comment);
 			if (tag.tagName.text === 'since' && comment !== undefined) {
 				const value = comment.replace(/\r?\n/g, '\n');
 				result.since = value;
@@ -1336,20 +1319,6 @@ export default class Visitor {
 			delete result.sinceTags;
 		}
 		return result;
-	}
-
-	private getJSDocCommentText(comment: NodeArray<JSDocComment> | undefined): string | undefined {
-		if (comment === undefined) {
-			return undefined;
-		}
-		const parts: string[] = [];
-		for (const part of comment) {
-			if (!isJSDocText(part)) {
-				return undefined;
-			}
-			parts.push(part.text);
-		}
-		return parts.join('');
 	}
 }
 
