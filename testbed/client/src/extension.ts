@@ -24,6 +24,7 @@ export async function activate(context: ExtensionContext) {
 		documentSelector: [
 			{ language: 'bat' },
 			{ language: 'bat', notebook: '*' },
+			{ language: 'testbed' },
 			{ scheme: 'file', pattern: '**/.vscode/test.txt' }
 		],
 		synchronize: {
@@ -53,7 +54,8 @@ export async function activate(context: ExtensionContext) {
 			onFocus: true,
 			match: (selector, resource) => {
 				const fsPath = resource.fsPath;
-				return path.extname(fsPath) === '.bat';
+				const ext = path.extname(fsPath);
+				return ext === '.bat' || ext === '.testbed';
 			}
 		},
 		textSynchronization: {

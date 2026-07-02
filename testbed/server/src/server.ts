@@ -18,7 +18,7 @@ import {
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
 	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DidChangeConfigurationNotification,
-	NotificationType
+	NotificationType, ErrorCodes
 } from 'vscode-languageserver/node';
 
 import {
@@ -229,8 +229,16 @@ documents.onDidChangeContent((_event) => {
 	// void connection.sendDiagnostics({ uri: document.uri, diagnostics: validate(document) });
 });
 
+documents.onDidOpen((event) => {
+	connection.console.info(`Document opened: ${event.document.uri} ${event.document.version}`);
+});
+
 documents.onDidSave((event) => {
 	connection.console.info(`Document got saved: ${event.document.uri} ${event.document.version}`);
+});
+
+documents.onDidClose((event) => {
+	connection.console.info(`Document closed: ${event.document.uri}`);
 });
 
 connection.onDidChangeWatchedFiles((params) => {
@@ -335,6 +343,18 @@ let versionCounter: number = 1;
 connection.languages.diagnostics.on(async (param) => {
 	const uri = URI.parse(param.textDocument.uri);
 	const document = documents.get(param.textDocument.uri);
+	connection.console.info(`Diagnostic pull request for ${param.textDocument.uri} (open: ${document !== undefined})`);
+	// Reproduces microsoft/vscode-languageserver-node#1797 / #1771: after saving an
+	// "unsaved but named" buffer, the client closes the `untitled:` document and then
+	// still issues a `textDocument/diagnostic` request for that same, now closed,
+	// `untitled:` document. A real language server (e.g. tsserver) has no project for
+	// such a URI anymore and fails the request. We mimic that behavior here so the
+	// problematic flow surfaces as an error instead of being silently swallowed.
+	if (document === undefined && uri.scheme !== 'file') {
+		const message = `no project found for URI ${param.textDocument.uri}`;
+		connection.console.error(`error handling method 'textDocument/diagnostic': ${message}`);
+		throw new ResponseError(ErrorCodes.InvalidParams, message);
+	}
 	const content = document !== undefined
 		? document.getText()
 		: uri.scheme === 'file'
