@@ -119,7 +119,7 @@ export class Symbols {
 			if (declaration.kind !== SyntaxKind.ClassDeclaration) {
 				continue;
 			}
-			const classDeclaration = declaration.resolve(this.project)! as ClassDeclaration;
+			const classDeclaration = declaration.resolve() as ClassDeclaration;
 			const heritageClauses = classDeclaration.heritageClauses;
 			if (heritageClauses) {
 				for (const heritageClause of heritageClauses) {
@@ -171,7 +171,7 @@ export class Symbols {
 	private inferLocationNode(symbol: ts.Symbol): Node | undefined {
 		const declarations = symbol.declarations;
 		if (declarations !== undefined && declarations.length > 0) {
-			return declarations[0].resolve(this.project);
+			return declarations[0].resolve();
 		}
 		if (Symbols.isPrototype(symbol)) {
 			const parent = Symbols.getParent(symbol);

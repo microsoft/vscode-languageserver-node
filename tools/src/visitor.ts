@@ -559,7 +559,7 @@ export default class Visitor {
 		if (initializerSymbol === undefined || initializerSymbol.valueDeclaration === undefined) {
 			return undefined;
 		}
-		const valueDeclaration = initializerSymbol.valueDeclaration.resolve(this.project);
+		const valueDeclaration = initializerSymbol.valueDeclaration.resolve();
 		if (valueDeclaration === undefined || !isVariableDeclaration(valueDeclaration)) {
 			return undefined;
 		}
@@ -584,7 +584,7 @@ export default class Visitor {
 		if (initializerSymbol === undefined || initializerSymbol.valueDeclaration === undefined) {
 			throw new Error(errorMessage);
 		}
-		const valueDeclaration = initializerSymbol.valueDeclaration.resolve(this.project);
+		const valueDeclaration = initializerSymbol.valueDeclaration.resolve();
 		if (valueDeclaration === undefined || !isEnumMember(valueDeclaration)) {
 			throw new Error(errorMessage);
 		}
@@ -750,7 +750,7 @@ export default class Visitor {
 			const type = this.typeChecker.getTypeAtLocation(typeNode);
 			const info = type !== undefined ? this.typeChecker.getIndexInfosOfType(type).find(info => (info.keyType.flags & ts.TypeFlags.String) !== 0) : undefined;
 			if (info !== undefined) {
-				const declaration = info.declaration?.resolve(this.project);
+				const declaration = info.declaration?.resolve();
 				if (declaration === undefined || !isIndexSignatureDeclaration(declaration) || declaration.parameters.length < 1) {
 					return undefined;
 				}
@@ -1157,7 +1157,7 @@ export default class Visitor {
 
 	private getFirstDeclaration(symbol: ts.Symbol): Node | undefined {
 		const declarations = symbol.declarations;
-		return declarations !== undefined && declarations.length > 0 ? declarations[0].resolve(this.project) : undefined;
+		return declarations !== undefined && declarations.length > 0 ? declarations[0].resolve() : undefined;
 	}
 
 	private getDeclaration(symbol: ts.Symbol, kind: SyntaxKind): Node | undefined {
@@ -1167,7 +1167,7 @@ export default class Visitor {
 		}
 		for (const declaration of declarations) {
 			if (declaration.kind === kind) {
-				return declaration.resolve(this.project);
+				return declaration.resolve();
 			}
 		}
 		return undefined;
