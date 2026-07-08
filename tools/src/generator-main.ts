@@ -21,7 +21,7 @@ async function main(): Promise<number> {
 		}
 	});
 
-	const api = new API({});
+	const api = new API();
 	const projectPath = path.resolve(args.values.project ?? '.');
 	let snapshot: Snapshot;
 	try {

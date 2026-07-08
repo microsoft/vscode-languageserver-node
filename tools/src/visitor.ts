@@ -486,10 +486,8 @@ export default class Visitor {
 			}
 			this.symbolQueue.set(name, aliased ?? symbol);
 		} else {
-			// !!! getAliasedSymbol is guaranteed to resolve when isAliasSymbol is true
-			const left = Symbols.isAliasSymbol(symbol) ? this.typeChecker.getAliasedSymbol(symbol)! : symbol;
-			// !!! getAliasedSymbol is guaranteed to resolve when isAliasSymbol is true
-			const right = Symbols.isAliasSymbol(existing) ? this.typeChecker.getAliasedSymbol(existing)! : existing;
+			const left = Symbols.isAliasSymbol(symbol) ? this.typeChecker.getAliasedSymbol(symbol) : symbol;
+			const right = Symbols.isAliasSymbol(existing) ? this.typeChecker.getAliasedSymbol(existing) : existing;
 			if (this.symbols.createKey(left) !== this.symbols.createKey(right)) {
 				throw new Error(`The type ${name} has two different declarations`);
 			}
@@ -930,7 +928,6 @@ export default class Visitor {
 			if (isTypeLiteralNode(declaration.type)) {
 				// We have a single type literal node. So treat it as a structure
 				const result: Structure = { name: name, properties: [] };
-				// !!! type and symbol are assumed present for a type literal node
 				this.fillProperties(result, this.typeChecker.getTypeAtLocation(declaration.type)!.getSymbol()!);
 				this.fillDocProperties(declaration, result);
 				return result;
@@ -959,7 +956,6 @@ export default class Visitor {
 						result.mixins = mixins;
 					}
 					if (split.literal !== undefined) {
-						// !!! type and symbol are assumed present for a type literal node
 						this.fillProperties(result, this.typeChecker.getTypeAtLocation(split.literal)!.getSymbol()!);
 					}
 					this.fillDocProperties(declaration, result);
