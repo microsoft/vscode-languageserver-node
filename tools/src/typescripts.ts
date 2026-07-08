@@ -158,13 +158,13 @@ export class Symbols {
 
 	public getTypeOfSymbol(symbol: ts.Symbol): ts.Type {
 		if (Symbols.isTypeAlias(symbol) || Symbols.isInterface(symbol)) {
-			return this.typeChecker.getDeclaredTypeOfSymbol(symbol)!;
+			return this.typeChecker.getDeclaredTypeOfSymbol(symbol);
 		}
 		const location = this.inferLocationNode(symbol);
 		if (location !== undefined) {
-			return this.typeChecker.getTypeOfSymbolAtLocation(symbol, location)!;
+			return this.typeChecker.getTypeOfSymbolAtLocation(symbol, location);
 		} else {
-			return this.typeChecker.getDeclaredTypeOfSymbol(symbol)!;
+			return this.typeChecker.getDeclaredTypeOfSymbol(symbol);
 		}
 	}
 
