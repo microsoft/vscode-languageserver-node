@@ -211,7 +211,7 @@ export interface CreateFilesParams {
 export interface FileCreate {
 
 	/**
-	 * A file:// URI for the location of the file/folder being created.
+	 * A URI for the location of the file/folder being created.
 	 */
 	uri: DocumentUri;
 }
@@ -239,12 +239,12 @@ export interface RenameFilesParams {
 export interface FileRename {
 
 	/**
-	 * A file:// URI for the original location of the file/folder being renamed.
+	 * A URI for the original location of the file/folder being renamed.
 	 */
 	oldUri: DocumentUri;
 
 	/**
-	 * A file:// URI for the new location of the file/folder being renamed.
+	 * A URI for the new location of the file/folder being renamed.
 	 */
 	newUri: DocumentUri;
 }
@@ -271,7 +271,7 @@ export interface DeleteFilesParams {
 export interface FileDelete {
 
 	/**
-	 * A file:// URI for the location of the file/folder being deleted.
+	 * A URI for the location of the file/folder being deleted.
 	 */
 	uri: DocumentUri;
 }
