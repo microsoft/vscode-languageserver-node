@@ -7142,7 +7142,7 @@
 						"kind": "base",
 						"name": "DocumentUri"
 					},
-					"documentation": "A file:// URI for the location of the file/folder being created."
+					"documentation": "A URI for the location of the file/folder being created."
 				}
 			],
 			"documentation": "Represents information on a file/folder create.\n\n@since 3.16.0",
@@ -7376,7 +7376,7 @@
 						"kind": "base",
 						"name": "DocumentUri"
 					},
-					"documentation": "A file:// URI for the original location of the file/folder being renamed."
+					"documentation": "A URI for the original location of the file/folder being renamed."
 				},
 				{
 					"name": "newUri",
@@ -7384,7 +7384,7 @@
 						"kind": "base",
 						"name": "DocumentUri"
 					},
-					"documentation": "A file:// URI for the new location of the file/folder being renamed."
+					"documentation": "A URI for the new location of the file/folder being renamed."
 				}
 			],
 			"documentation": "Represents information on a file/folder rename.\n\n@since 3.16.0",
@@ -7399,7 +7399,7 @@
 						"kind": "base",
 						"name": "DocumentUri"
 					},
-					"documentation": "A file:// URI for the location of the file/folder being deleted."
+					"documentation": "A URI for the location of the file/folder being deleted."
 				}
 			],
 			"documentation": "Represents information on a file/folder delete.\n\n@since 3.16.0",
