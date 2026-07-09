@@ -5,108 +5,43 @@
 
 import * as path from 'path';
 
-import * as ts from 'typescript';
+import { API, Snapshot } from '@typescript/native/unstable/sync';
 
-import * as tss from './typescripts.js';
 import Visitor from './visitor.js';
-
-function loadConfigFile(file: string): ts.ParsedCommandLine {
-	const absolute = path.resolve(file);
-
-	const readResult = ts.readConfigFile(absolute, ts.sys.readFile);
-	if (readResult.error) {
-		throw new Error(ts.formatDiagnostics([readResult.error], ts.createCompilerHost({})));
-	}
-	const config = readResult.config;
-	if (config.compilerOptions !== undefined) {
-		config.compilerOptions = Object.assign(config.compilerOptions, tss.CompileOptions.getDefaultOptions(file));
-	}
-	const result = ts.parseJsonConfigFileContent(config, ts.sys, path.dirname(absolute));
-	if (result.errors.length > 0) {
-		throw new Error(ts.formatDiagnostics(result.errors, ts.createCompilerHost({})));
-	}
-	return result;
-}
+import { parseArgs } from 'util';
 
 async function main(): Promise<number> {
-
-	let config: ts.ParsedCommandLine = 	ts.parseCommandLine(ts.sys.args);
-	const configFilePath: string | undefined = tss.CompileOptions.getConfigFilePath(config.options);
-	if (configFilePath && config.options.project) {
-		config = loadConfigFile(configFilePath);
-	}
-
-	const scriptSnapshots: Map<string, ts.IScriptSnapshot> = new Map();
-	const host: ts.LanguageServiceHost = {
-		getScriptFileNames: () => {
-			return config.fileNames;
-		},
-		getCompilationSettings: () => {
-			return config.options;
-		},
-		getProjectReferences: () => {
-			return config.projectReferences;
-		},
-		getScriptVersion: (_fileName: string): string => {
-			// The files are immutable.
-			return '0';
-		},
-		// The project is immutable
-		getProjectVersion: () => '0',
-		getScriptSnapshot: (fileName: string): ts.IScriptSnapshot | undefined => {
-			let result: ts.IScriptSnapshot | undefined = scriptSnapshots.get(fileName);
-			if (result === undefined) {
-				const content: string | undefined = ts.sys.readFile(fileName);
-				if (content === undefined) {
-					return undefined;
-				}
-				result = ts.ScriptSnapshot.fromString(content);
-				scriptSnapshots.set(fileName, result);
+	const args = parseArgs({
+		args: process.argv.slice(2),
+		options: {
+			project: {
+				type: 'string',
+				short: 'p'
 			}
-			return result;
-		},
-		getCurrentDirectory: () => {
-			if (configFilePath !== undefined) {
-				return path.dirname(configFilePath);
-			} else {
-				return process.cwd();
-			}
-		},
-		getDefaultLibFileName: (options) => {
-			// We need to return the path since the language service needs
-			// to know the full path and not only the name which is return
-			// from ts.getDefaultLibFileName
-			return ts.getDefaultLibFilePath(options);
-		},
-		directoryExists: ts.sys.directoryExists,
-		getDirectories: ts.sys.getDirectories,
-		fileExists: ts.sys.fileExists,
-		readFile: ts.sys.readFile,
-		readDirectory: ts.sys.readDirectory,
-		// this is necessary to make source references work.
-		realpath: ts.sys.realpath
-	};
-
-	tss.LanguageServiceHost.useSourceOfProjectReferenceRedirect(host, () => {
-		return !config.options.disableSourceOfProjectReferenceRedirect;
+		}
 	});
 
-	const languageService = ts.createLanguageService(host);
-	const program = languageService.getProgram();
-	if (program === undefined) {
-		console.error('Couldn\'t create language service with underlying program.');
+	const api = new API();
+	const projectPath = path.resolve(args.values.project ?? '.');
+	let snapshot: Snapshot;
+	try {
+		snapshot = api.updateSnapshot({ openProject: projectPath });
+	} catch (error) {
+		console.error('Couldn\'t load project with underlying program.');
 		process.exitCode = -1;
 		return -1;
 	}
-	const visitor = new Visitor(program);
+
+	const visitor = new Visitor(snapshot.getProjects()[0]);
 	await visitor.visitProgram();
 	await visitor.endVisitProgram();
 
 	console.log(JSON.stringify(visitor.getMetaModel(), undefined, '\t'));
 	return 0;
 }
-
-main().then(undefined, (error) => {
+main().then((code) => {
+	process.exitCode = code;
+}, (error) => {
 	console.error(error);
 	process.exitCode = 1;
 });

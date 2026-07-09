@@ -22,8 +22,7 @@
 	"js/ts.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": false,
 	"js/ts.format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces": false,
 	"js/ts.format.placeOpenBraceOnNewLineForFunctions": false,
-	"js/ts.format.placeOpenBraceOnNewLineForControlBlocks": false,
-	"js/ts.validate.enabled": false,
+	"js/ts.format.placeOpenBraceOnNewLineForControlBlocks": false
 
 	"typescript.tsserver.trace": "off",
 	"typescript.tsserver.experimental.useVsCodeWatcher": true,

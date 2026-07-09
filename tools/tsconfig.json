@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
-        "module": "node16",
-        "moduleResolution": "node16",
+        "module": "node20",
         "rootDir": "./src",
         "types": [
             "node"
