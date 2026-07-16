@@ -83,7 +83,7 @@ export interface ColorPresentationParams extends WorkDoneProgressParams, Partial
 export namespace ColorPresentationRequest {
 	export const method: 'textDocument/colorPresentation' = 'textDocument/colorPresentation';
 	export const messageDirection: MessageDirection = MessageDirection.clientToServer;
-	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void, WorkDoneProgressOptions & TextDocumentRegistrationOptions>(method);
+	export const type = new ProtocolRequestType<ColorPresentationParams, ColorPresentation[], ColorPresentation[], void, DocumentColorRegistrationOptions>(method);
 	export type HandlerSignature = RequestHandler<ColorPresentationParams, ColorPresentation[], void>;
 	export const capabilities = CM.create('textDocument.colorProvider', 'colorProvider');
 }
