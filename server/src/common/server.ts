@@ -25,7 +25,7 @@ import {
 	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
-	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, WorkspaceSymbol, WorkspaceSymbolResolveRequest
+	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, WorkspaceSymbol, WorkspaceSymbolResolveRequest, DocumentRangesFormattingParams, DocumentRangesFormattingRequest
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
@@ -1283,6 +1283,13 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	onDocumentRangeFormatting(handler: ServerRequestHandler<DocumentRangeFormattingParams, TextEdit[] | undefined | null, never, void>): Disposable;
 
 	/**
+	 * Installs a handler for the document ranges formatting request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onDocumentRangesFormatting(handler: ServerRequestHandler<DocumentRangesFormattingParams, TextEdit[] | undefined | null, never, void>): Disposable;
+
+	/**
 	 * Installs a handler for the document on type formatting request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1611,6 +1618,9 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
 		}),
 		onDocumentRangeFormatting: (handler) => connection.onRequest(DocumentRangeFormattingRequest.type, (params, cancel) => {
+			return handler(params, cancel, attachWorkDone(connection, params), undefined);
+		}),
+		onDocumentRangesFormatting: (handler) => connection.onRequest(DocumentRangesFormattingRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
 		}),
 		onDocumentOnTypeFormatting: (handler) => connection.onRequest(DocumentOnTypeFormattingRequest.type, (params, cancel) => {
