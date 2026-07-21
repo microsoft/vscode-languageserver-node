@@ -25,6 +25,18 @@
 			{
 				"command": "testbed.refreshContent",
 				"title": "Refresh dynamic content"
+			},
+			{
+				"command": "testbed.readCurrentFile",
+				"title": "Read Current File"
+			},
+			{
+				"command": "testbed.readCurrentDirectory",
+				"title": "Read Current Directory"
+			},
+			{
+				"command": "testbed.statCurrentFile",
+				"title": "Stat Current File"
 			}
 		],
 		"configuration": {
