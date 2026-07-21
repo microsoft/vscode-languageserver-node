@@ -131,6 +131,11 @@ import {
 	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest
 } from './protocol.textDocumentContent';
 
+import {
+	FileStat, StatParams, StatRequest, DirectoryEntry, FileType, ReadDirectoryParams, ReadDirectoryRequest, ReadFileParams, ReadFileRequest, ReadFileResult,
+	FileSystemClientCapabilities
+} from './protocol.fileSystem';
+
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
 let __noDynamicImport: LocationLink | undefined;
 
@@ -674,6 +679,13 @@ export interface WorkspaceClientCapabilities {
 	 * @since 3.18.0
 	 */
 	textDocumentContent?: TextDocumentContentClientCapabilities;
+
+	/**
+	 * Client capabilities specific to file system requests.
+	 *
+	 * @since 3.19.0
+	 */
+	fileSystem?: FileSystemClientCapabilities;
 }
 
 /**
@@ -4379,7 +4391,9 @@ export {
 	InlineCompletionClientCapabilities, InlineCompletionOptions, InlineCompletionParams, InlineCompletionRegistrationOptions, InlineCompletionRequest,
 	// Text Document Content
 	TextDocumentContentClientCapabilities, TextDocumentContentOptions, TextDocumentContentRegistrationOptions, TextDocumentContentParams, TextDocumentContentResult,
-	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest
+	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest,
+	// File System
+	FileStat, StatParams, StatRequest, DirectoryEntry, FileType, ReadDirectoryParams, ReadDirectoryRequest, ReadFileParams, ReadFileRequest, ReadFileResult,
 };
 
 // To be backwards compatible

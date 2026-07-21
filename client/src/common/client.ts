@@ -95,6 +95,7 @@ import { InlineCompletionItemFeature, InlineCompletionMiddleware } from './inlin
 import { TextDocumentContentFeature, type TextDocumentContentMiddleware, type TextDocumentContentProviderShape } from './textDocumentContent';
 import { FileSystemWatcherFeature } from './fileSystemWatcher';
 import { ProgressFeature } from './progress';
+import { FileSystemFeature, FileSystemMiddleware } from './fileSystem';
 
 /**
  * Controls when the output channel is revealed.
@@ -291,7 +292,7 @@ type _WorkspaceMiddleware = {
 	handleApplyEdit?: (this: void, params: ApplyWorkspaceEditParams, next: ApplyWorkspaceEditRequest.HandlerSignature) => HandlerResult<ApplyWorkspaceEditResult, void>;
 };
 
-export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware;
+export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware & FileSystemMiddleware;
 
 interface _WindowMiddleware {
 	showDocument?: ShowDocumentRequest.MiddlewareSignature;
@@ -342,7 +343,7 @@ DocumentHighlightMiddleware & DocumentSymbolMiddleware & WorkspaceSymbolMiddlewa
 ColorProviderMiddleware & CodeActionMiddleware & CodeLensMiddleware & FormattingMiddleware & RenameMiddleware & DocumentLinkMiddleware & ExecuteCommandMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
 LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware &
-InlineCompletionMiddleware & TextDocumentContentMiddleware & GeneralMiddleware;
+InlineCompletionMiddleware & TextDocumentContentMiddleware & FileSystemMiddleware & GeneralMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
@@ -2085,6 +2086,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new NotebookDocumentSyncFeature(this));
 		this.registerFeature(new InlineCompletionItemFeature(this));
 		this.registerFeature(new TextDocumentContentFeature(this));
+		this.registerFeature(new FileSystemFeature(this));
 	}
 
 	public registerProposedFeatures() {

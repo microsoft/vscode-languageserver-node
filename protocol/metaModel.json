@@ -1150,6 +1150,84 @@
 			"since": "3.18.0"
 		},
 		{
+			"method": "workspace/stat",
+			"typeName": "StatRequest",
+			"result": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "FileStat"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
+				]
+			},
+			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.fileOperations.fileStat",
+			"params": {
+				"kind": "reference",
+				"name": "StatParams"
+			},
+			"documentation": "The stat request is sent from the server to the client to get metadata about a file.\n\nThe request can return a `FileStat` which will be used to determine the type of the file,\nits size, and the creation and modification time. Returns `null` if the file does not exist.\n\n@since 3.19.0",
+			"since": "3.19.0"
+		},
+		{
+			"method": "workspace/readDirectory",
+			"typeName": "ReadDirectoryRequest",
+			"result": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "array",
+						"element": {
+							"kind": "reference",
+							"name": "DirectoryEntry"
+						}
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
+				]
+			},
+			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.fileOperations.readDirectory",
+			"params": {
+				"kind": "reference",
+				"name": "ReadDirectoryParams"
+			},
+			"documentation": "The read directory request is sent from the server to the client to get the entries of a directory.\n\nThe request can return a `DirectoryEntry[]` which contains the directory entries.\nReturns `null` if the directory does not exist or the client cannot read it.\n\n@since 3.19.0",
+			"since": "3.19.0"
+		},
+		{
+			"method": "workspace/readFile",
+			"typeName": "ReadFileRequest",
+			"result": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "ReadFileResult"
+					},
+					{
+						"kind": "base",
+						"name": "null"
+					}
+				]
+			},
+			"messageDirection": "serverToClient",
+			"clientCapability": "workspace.fileOperations.readFile",
+			"params": {
+				"kind": "reference",
+				"name": "ReadFileParams"
+			},
+			"documentation": "The read file request is sent from the server to the client to get the content of a file.\n\nThe request can return a `ReadFileResult` which contains the content of the file.\nReturns `null` if the file does not exist or the client cannot read it.\n\n@since 3.19.0",
+			"since": "3.19.0"
+		},
+		{
 			"method": "client/registerCapability",
 			"typeName": "RegistrationRequest",
 			"result": {
@@ -4516,6 +4594,153 @@
 			],
 			"documentation": "Parameters for the `workspace/textDocumentContent/refresh` request.\n\n@since 3.18.0",
 			"since": "3.18.0"
+		},
+		{
+			"name": "StatParams",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "A URI for the location of the file/folder."
+				}
+			],
+			"documentation": "The parameters sent in a request to get metadata about a file.\n\n@since 3.19.0",
+			"since": "3.19.0"
+		},
+		{
+			"name": "FileStat",
+			"properties": [
+				{
+					"name": "type",
+					"type": {
+						"kind": "reference",
+						"name": "FileType"
+					},
+					"documentation": "The type of the file, e.g. is a regular file or a directory."
+				},
+				{
+					"name": "isSymlink",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"documentation": "Whether the file is a symbolic link."
+				},
+				{
+					"name": "ctime",
+					"type": {
+						"kind": "base",
+						"name": "integer"
+					},
+					"documentation": "The creation timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC."
+				},
+				{
+					"name": "mtime",
+					"type": {
+						"kind": "base",
+						"name": "integer"
+					},
+					"documentation": "The modification timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC."
+				},
+				{
+					"name": "size",
+					"type": {
+						"kind": "base",
+						"name": "integer"
+					},
+					"documentation": "The size in bytes."
+				}
+			],
+			"documentation": "Represents metadata about a file.\n\n@since 3.19.0",
+			"since": "3.19.0"
+		},
+		{
+			"name": "ReadDirectoryParams",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "A URI for the location of the folder."
+				}
+			],
+			"documentation": "The parameters sent in a request to read the contents of a directory.\n\n@since 3.19.0",
+			"since": "3.19.0"
+		},
+		{
+			"name": "DirectoryEntry",
+			"properties": [
+				{
+					"name": "name",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The name of the entry."
+				},
+				{
+					"name": "type",
+					"type": {
+						"kind": "reference",
+						"name": "FileType"
+					},
+					"documentation": "The type of the entry."
+				},
+				{
+					"name": "isSymlink",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"documentation": "Whether the entry is a symbolic link."
+				}
+			],
+			"documentation": "A directory entry represents a file or a folder in a directory.\n\n@since 3.19.0",
+			"since": "3.19.0"
+		},
+		{
+			"name": "ReadFileParams",
+			"properties": [
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "A URI for the location of the file."
+				},
+				{
+					"name": "encoding",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The encoding of the file content. If not specified, the content is assumed to be UTF-8."
+				}
+			],
+			"documentation": "The parameters sent in a request to read the contents of a file.\n\n@since 3.19.0",
+			"since": "3.19.0"
+		},
+		{
+			"name": "ReadFileResult",
+			"properties": [
+				{
+					"name": "text",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "The content of the file as a unicode string.\nIt will be read using the encoding specified in the request.\nAny invalid byte sequences will be replaced with the unicode replacement character `U+FFFD`."
+				}
+			],
+			"documentation": "The result of a read file request.\n\n@since 3.19.0",
+			"since": "3.19.0"
 		},
 		{
 			"name": "RegistrationParams",
@@ -11237,6 +11462,16 @@
 					"optional": true,
 					"documentation": "Capabilities specific to the `workspace/textDocumentContent` request.\n\n@since 3.18.0",
 					"since": "3.18.0"
+				},
+				{
+					"name": "fileSystem",
+					"type": {
+						"kind": "reference",
+						"name": "FileSystemClientCapabilities"
+					},
+					"optional": true,
+					"documentation": "Client capabilities specific to file system requests.\n\n@since 3.19.0",
+					"since": "3.19.0"
 				}
 			],
 			"documentation": "Workspace specific client capabilities."
@@ -12300,6 +12535,40 @@
 			],
 			"documentation": "Client capabilities for a text document content provider.\n\n@since 3.18.0",
 			"since": "3.18.0"
+		},
+		{
+			"name": "FileSystemClientCapabilities",
+			"properties": [
+				{
+					"name": "stat",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports the `workspace/stat` request."
+				},
+				{
+					"name": "readDirectory",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports the `workspace/readDirectory` request."
+				},
+				{
+					"name": "readFile",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports the `workspace/readFile` request."
+				}
+			],
+			"documentation": "Client capabilities specific to file system requests.\n\n@since 3.19.0",
+			"since": "3.19.0"
 		},
 		{
 			"name": "TextDocumentSyncClientCapabilities",
@@ -14631,6 +14900,32 @@
 			],
 			"documentation": "Inlay hint kinds.\n\n@since 3.17.0",
 			"since": "3.17.0"
+		},
+		{
+			"name": "FileType",
+			"type": {
+				"kind": "base",
+				"name": "string"
+			},
+			"values": [
+				{
+					"name": "unknown",
+					"value": "unknown",
+					"documentation": "The file type is unknown."
+				},
+				{
+					"name": "file",
+					"value": "file",
+					"documentation": "A regular file."
+				},
+				{
+					"name": "directory",
+					"value": "directory",
+					"documentation": "A directory."
+				}
+			],
+			"documentation": "The file type of a file system entry.\n\n@since 3.19.0",
+			"since": "3.19.0"
 		},
 		{
 			"name": "MessageType",
