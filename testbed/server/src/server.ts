@@ -18,7 +18,7 @@ import {
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
 	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DidChangeConfigurationNotification,
-	NotificationType
+	NotificationType, FileType
 } from 'vscode-languageserver/node';
 
 import {
@@ -717,6 +717,42 @@ connection.onNotification(refreshNotification, async (uri) => {
 	await connection.workspace.textDocumentContent.refresh(uri);
 });
 
+const readFileRequest = new NotificationType<string>('testbed/readFile');
+connection.onNotification(readFileRequest, async (uri) => {
+	const fileName = uri.split('/').pop();
+	const fileContent = await connection.workspace.fs.readFile(uri);
+	if (fileContent === null) {
+		connection.window.showInformationMessage(`Read file '${fileName}' failed`);
+	} else {
+		connection.window.showInformationMessage(`Read file '${fileName}' with content length ${fileContent.text.length}`);
+	}
+});
+
+const readDirectoryRequest = new NotificationType<string>('testbed/readDirectory');
+connection.onNotification(readDirectoryRequest, async (uri) => {
+	const dirName = uri.split('/').pop();
+	const directoryContent = await connection.workspace.fs.readDirectory(uri);
+	if (directoryContent === null) {
+		connection.window.showInformationMessage(`Read directory '${dirName}' failed`);
+	} else {
+		connection.window.showInformationMessage(`Read directory '${dirName}' with ${directoryContent.length} entries`);
+	}
+});
+
+const statRequest = new NotificationType<string>('testbed/stat');
+connection.onNotification(statRequest, async (uri) => {
+	const fileName = uri.split('/').pop();
+	const fileStat = await connection.workspace.fs.stat(uri);
+	if (fileStat === null) {
+		connection.window.showInformationMessage(`File stat ${fileName} failed`);
+	} else {
+		let type = fileStat.type;
+		if (fileStat.isSymlink) {
+			type += ' (symlink)';
+		}
+		connection.window.showInformationMessage(`File stat '${fileName}' with type '${type}' and size ${fileStat.size}`);
+	}
+});
 
 const notebooks = new NotebookDocuments(TextDocument);
 notebooks.onDidOpen(() => {
