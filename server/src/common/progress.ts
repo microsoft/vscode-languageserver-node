@@ -143,6 +143,13 @@ class NullProgressServerReporter extends NullProgressReporter implements WorkDon
 	}
 }
 
+/**
+ * Tests whether the given work done progress reporter discards progress.
+ */
+export function isNullProgressReporter(reporter: WorkDoneProgressReporter): boolean {
+	return reporter instanceof NullProgressReporter;
+}
+
 export function attachWorkDone(connection: ProgressContext, params: WorkDoneProgressParams | undefined): WorkDoneProgressReporter {
 	if (params === undefined || params.workDoneToken === undefined) {
 		return new NullProgressReporter();

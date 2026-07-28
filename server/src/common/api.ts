@@ -5,10 +5,11 @@
 
 import { _, Features, _Connection, _LanguagesImpl } from './server';
 import { SemanticTokensBuilder } from './semanticTokens';
-import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress';
+import { isNullProgressReporter, type WorkDoneProgressReporter, type WorkDoneProgressServerReporter, type ResultProgressReporter } from './progress';
 
 export * from 'vscode-languageserver-protocol';
 export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter };
+export { isNullProgressReporter };
 export { SemanticTokensBuilder };
 import { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent } from './textDocuments';
 export { TextDocuments, TextDocumentsConfiguration, TextDocumentChangeEvent, TextDocumentWillSaveEvent };
