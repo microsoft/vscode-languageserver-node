@@ -18,7 +18,7 @@ import {
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
 	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DidChangeConfigurationNotification,
-	NotificationType, FileType
+	NotificationType, FileFlags
 } from 'vscode-languageserver/node';
 
 import {
@@ -747,7 +747,7 @@ connection.onNotification(statRequest, async (uri) => {
 		connection.window.showInformationMessage(`File stat ${fileName} failed`);
 	} else {
 		let type = fileStat.type;
-		if (fileStat.isSymlink) {
+		if (fileStat.flags & FileFlags.symbolicLink) {
 			type += ' (symlink)';
 		}
 		connection.window.showInformationMessage(`File stat '${fileName}' with type '${type}' and size ${fileStat.size}`);

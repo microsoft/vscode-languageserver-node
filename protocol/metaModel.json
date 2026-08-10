@@ -4622,12 +4622,12 @@
 					"documentation": "The type of the file, e.g. is a regular file or a directory."
 				},
 				{
-					"name": "isSymlink",
+					"name": "flags",
 					"type": {
-						"kind": "base",
-						"name": "boolean"
+						"kind": "reference",
+						"name": "FileFlags"
 					},
-					"documentation": "Whether the file is a symbolic link."
+					"documentation": "Additional flags about the file."
 				},
 				{
 					"name": "ctime",
@@ -4692,12 +4692,12 @@
 					"documentation": "The type of the entry."
 				},
 				{
-					"name": "isSymlink",
+					"name": "flags",
 					"type": {
-						"kind": "base",
-						"name": "boolean"
+						"kind": "reference",
+						"name": "FileFlags"
 					},
-					"documentation": "Whether the entry is a symbolic link."
+					"documentation": "Additional flags about the entry."
 				}
 			],
 			"documentation": "A directory entry represents a file or a folder in a directory.\n\n@since 3.19.0",
@@ -14926,6 +14926,22 @@
 			],
 			"documentation": "The file type of a file system entry.\n\n@since 3.19.0",
 			"since": "3.19.0"
+		},
+		{
+			"name": "FileFlags",
+			"type": {
+				"kind": "base",
+				"name": "uinteger"
+			},
+			"values": [
+				{
+					"name": "symbolicLink",
+					"value": 1,
+					"documentation": "The file is a symbolic link."
+				}
+			],
+			"supportsCustomValues": true,
+			"documentation": "Additional flags about a file system entry.\nImplemented as a bitmask so that multiple flags can be combined."
 		},
 		{
 			"name": "MessageType",
