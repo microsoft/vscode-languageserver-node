@@ -982,7 +982,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 
 	function asFileType(value: code.FileType): {
 		type: proto.FileType;
-		isSymlink: boolean;
+		flags: proto.FileFlags;
 	} {
 		let type: proto.FileType = proto.FileType.unknown;
 		if (value & code.FileType.Directory) {
@@ -990,28 +990,31 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		} else if (value & code.FileType.File) {
 			type = proto.FileType.file;
 		}
-		const isSymlink = (value & code.FileType.SymbolicLink) !== 0;
+		let flags: proto.FileFlags = 0;
+		if (value & code.FileType.SymbolicLink) {
+			flags |= proto.FileFlags.symbolicLink;
+		}
 		return {
 			type,
-			isSymlink
+			flags
 		};
 	}
 
 	function asDirectoryEntry(item: [string, code.FileType]): proto.DirectoryEntry {
-		const { type, isSymlink } = asFileType(item[1]);
+		const { type, flags } = asFileType(item[1]);
 		const result: proto.DirectoryEntry = {
 			name: item[0],
 			type,
-			isSymlink
+			flags
 		};
 		return result;
 	}
 
 	function asFileStat(item: code.FileStat): proto.FileStat {
-		const { type, isSymlink } = asFileType(item.type);
+		const { type, flags } = asFileType(item.type);
 		const result: proto.FileStat = {
 			type,
-			isSymlink,
+			flags,
 			ctime: item.ctime,
 			mtime: item.mtime,
 			size: item.size

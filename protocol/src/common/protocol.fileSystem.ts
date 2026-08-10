@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { RequestHandler } from 'vscode-jsonrpc';
-import { type DocumentUri } from 'vscode-languageserver-types';
+import { uinteger, type DocumentUri } from 'vscode-languageserver-types';
 import { CM, MessageDirection, ProtocolRequestType } from './messages';
 
 /**
@@ -41,9 +41,9 @@ export interface FileStat {
 	 */
 	type: FileType;
 	/**
-	 * Whether the file is a symbolic link.
+	 * Additional flags about the file.
 	 */
-	isSymlink: boolean;
+	flags: FileFlags;
 	/**
 	 * The creation timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
 	 */
@@ -92,6 +92,18 @@ export namespace FileType {
 export type FileType = 'unknown' | 'file' | 'directory';
 
 /**
+ * Additional flags about a file system entry.
+ * Implemented as a bitmask so that multiple flags can be combined.
+ */
+export namespace FileFlags {
+	/**
+	 * The file is a symbolic link.
+	 */
+	export const symbolicLink = 1;
+}
+export type FileFlags = uinteger;
+
+/**
  * The parameters sent in a request to read the contents of a directory.
  *
  * @since 3.19.0
@@ -118,9 +130,9 @@ export interface DirectoryEntry {
 	 */
 	type: FileType;
 	/**
-	 * Whether the entry is a symbolic link.
+	 * Additional flags about the entry.
 	 */
-	isSymlink: boolean;
+	flags: FileFlags;
 }
 
 /**
