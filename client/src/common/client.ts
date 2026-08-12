@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import {
-	workspace as Workspace, window as Window, languages as Languages, LogLevel, version as VSCodeVersion, TextDocument, Disposable,
+	workspace as Workspace, window as Window, LogLevel, version as VSCodeVersion, TextDocument, Disposable,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, CancellationToken, WorkspaceEdit as VWorkspaceEdit,
 	MessageItem, WorkspaceFolder as VWorkspaceFolder, env as Env, TextDocumentShowOptions, CancellationError, CancellationTokenSource, FileCreateEvent,
 	FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider,
@@ -49,7 +49,7 @@ import * as UUID from './utils/uuid.js';
 import { ProgressPart } from './progressPart.js';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
-	TextDocumentProviderFeature, WorkspaceProviderFeature, type VisibleDocuments
+	TextDocumentProviderFeature, WorkspaceProviderFeature, DefaultDiagnosticCollectionProvider, DiagnosticCollectionSource, type VisibleDocuments
 } from './features.js';
 
 import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions, DiagnosticFeatureShape } from './diagnostic.js';
@@ -346,6 +346,16 @@ InlineCompletionMiddleware & TextDocumentContentMiddleware & GeneralMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
+	/**
+	 * The name of the diagnostic collection that is created by the client.
+	 * If omitted the name of the client is used.
+	 *
+	 * **Note:** the name is only used if the server uses the old
+	 * `textDocument/publishDiagnostics` notification. If the server uses the
+	 * new `textDocument/diagnostic` request the name of the collection is
+	 * defined by the server using the `identifier` property of the
+	 * `DiagnosticOptions` during registration.
+	 */
 	diagnosticCollectionName?: string;
 	outputChannel?: LogOutputChannel;
 	outputChannelName?: string;
@@ -658,7 +668,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _traceLogLevel: LogLevel;
 	private _capabilities!: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
-	private _diagnostics: DiagnosticCollection | undefined;
+	// undefined: allow lazy creation of the diagnostic collection.
+	// null: the diagnostic collection has been disposed and should not be
+	// recreated.
+	private _diagnostics: DiagnosticCollection | undefined | null;
 	private _syncedDocuments: Map<string, TextDocument>;
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
@@ -722,6 +735,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			// 	interval: clientOptions.suspend?.interval ? Math.max(clientOptions.suspend.interval, defaultInterval) : defaultInterval
 			// },
 			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
+			diagnosticCollectionProvider: clientOptions.diagnosticCollectionProvider ?? new DefaultDiagnosticCollectionProvider(),
 			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { },
 			textSynchronization: this.createTextSynchronizationOptions(clientOptions.textSynchronization)
 		};
@@ -757,6 +771,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._traceOutputChannel !== undefined) {
 			this._traceLogLevel = this._traceOutputChannel.logLevel;
 		}
+		// Allow lazy creation of the diagnostic collection.
 		this._diagnostics = undefined;
 
 		this._inFlightOpenNotifications = new Set();
@@ -848,6 +863,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public get diagnostics(): DiagnosticCollection | undefined {
+		if (this._diagnostics === null) {
+			return undefined;
+		}
+		if (this._diagnostics === undefined) {
+			this._diagnostics = this._clientOptions.diagnosticCollectionProvider.create(this._clientOptions.diagnosticCollectionName ?? this._id, DiagnosticCollectionSource.push);
+		}
 		return this._diagnostics;
 	}
 
@@ -1284,10 +1305,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		const [promise, resolve, reject] = this.createOnStartPromise();
 		this._onStart = promise;
 
-		// If we restart then the diagnostics collection is reused.
-		if (this._diagnostics === undefined) {
-			this._diagnostics = Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName ?? this._id);
-		}
+		// A previous shutdown disposed the diagnostic collection and set it to
+		// `null` to prevent recreation. On (re)start we re-enable lazy creation.
+		this._diagnostics = undefined;
 
 		// When we start make all buffer handlers pending so that they
 		// get added.
@@ -1648,9 +1668,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
 			feature.clear();
 		}
-		if ((mode === ShutdownMode.Stop || mode === ShutdownMode.Restart) && this._diagnostics !== undefined) {
-			this._diagnostics.dispose();
-			this._diagnostics = undefined;
+		if ((mode === ShutdownMode.Stop || mode === ShutdownMode.Restart)) {
+			if (this._diagnostics === undefined) {
+				this._diagnostics = null;
+			}
+			if (this._diagnostics !== null) {
+				this._clientOptions.diagnosticCollectionProvider.dispose(this._diagnostics, DiagnosticCollectionSource.push);
+				this._diagnostics = null;
+			}
 		}
 
 		if (this._idleInterval !== undefined) {
@@ -1700,6 +1725,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					const params = this.code2ProtocolConverter.asChangeTextDocumentParams(document);
 					// We await the send and not the delivery since it is more or less the same for
 					// notifications.
+					this._didChangeTextDocumentFeature!.aboutToSendNotification(document, DidChangeTextDocumentNotification.type, params);
 					await connection.sendNotification(DidChangeTextDocumentNotification.type, params);
 					this._didChangeTextDocumentFeature!.notificationSent(document, DidChangeTextDocumentNotification.type, params);
 				}
@@ -1725,7 +1751,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
 	private _diagnosticQueueState: { state: 'idle' } | { state: 'busy'; document: string; tokenSource: CancellationTokenSource } = { state: 'idle' };
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
-		if (!this._diagnostics) {
+		if (this._diagnostics === null) {
 			return;
 		}
 		const key = params.uri;
@@ -1773,10 +1799,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private setDiagnostics(uri: Uri, diagnostics: VDiagnostic[] | undefined) {
-		if (!this._diagnostics) {
+		if (this._diagnostics === null) {
 			return;
 		}
-		this._diagnostics.set(uri, diagnostics);
+		const diagnosticsCollection = this.diagnostics;
+		if (diagnosticsCollection !== undefined) {
+			diagnosticsCollection.set(uri, diagnostics);
+		}
 	}
 
 	protected getLocale(): string {

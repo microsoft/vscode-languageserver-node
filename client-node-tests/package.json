@@ -31,9 +31,7 @@
 	},
 	"dependencies": {
 		"minimatch": "^10.2.5",
-		"@vscode/languageclient": "10.0.1",
-		"@vscode/languageserver": "10.0.1",
-		"@vscode/languageserver-protocol": "3.18.1",
+		"@vscode/languageserver": "10.1.0",
 		"vscode-uri": "3.1.0"
 	},
 	"devDependencies": {
@@ -41,7 +39,7 @@
 		"@types/minimatch": "^6.0.0",
 		"@types/sinon": "^21.0.1",
 		"@types/vscode": "1.106.0",
-		"@vscode/test-electron": "^3.0.0",
+		"@vscode/test-electron": "^3.1.0",
 		"find-process": "^2.1.1",
 		"glob": "^13.0.6",
 		"sinon": "^22.0.0"

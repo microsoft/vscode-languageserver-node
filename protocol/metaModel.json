@@ -210,17 +210,8 @@
 				}
 			},
 			"registrationOptions": {
-				"kind": "and",
-				"items": [
-					{
-						"kind": "reference",
-						"name": "WorkDoneProgressOptions"
-					},
-					{
-						"kind": "reference",
-						"name": "TextDocumentRegistrationOptions"
-					}
-				]
+				"kind": "reference",
+				"name": "DocumentColorRegistrationOptions"
 			},
 			"documentation": "A request to list all presentation for a color. The request's\nparameter is of type {@link ColorPresentationParams} the\nresponse is of type {@link ColorPresentation ColorPresentation[]} or a Thenable\nthat resolves to such."
 		},
@@ -2711,42 +2702,6 @@
 			]
 		},
 		{
-			"name": "WorkDoneProgressOptions",
-			"properties": [
-				{
-					"name": "workDoneProgress",
-					"type": {
-						"kind": "base",
-						"name": "boolean"
-					},
-					"optional": true
-				}
-			]
-		},
-		{
-			"name": "TextDocumentRegistrationOptions",
-			"properties": [
-				{
-					"name": "documentSelector",
-					"type": {
-						"kind": "or",
-						"items": [
-							{
-								"kind": "reference",
-								"name": "DocumentSelector"
-							},
-							{
-								"kind": "base",
-								"name": "null"
-							}
-						]
-					},
-					"documentation": "A document selector to identify the scope of the registration. If set to null\nthe document selector provided on the client side will be used."
-				}
-			],
-			"documentation": "General text document registration options."
-		},
-		{
 			"name": "FoldingRangeParams",
 			"properties": [
 				{
@@ -4792,6 +4747,29 @@
 			"documentation": "The parameters sent in an open text document notification"
 		},
 		{
+			"name": "TextDocumentRegistrationOptions",
+			"properties": [
+				{
+					"name": "documentSelector",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "reference",
+								"name": "DocumentSelector"
+							},
+							{
+								"kind": "base",
+								"name": "null"
+							}
+						]
+					},
+					"documentation": "A document selector to identify the scope of the registration. If set to null\nthe document selector provided on the client side will be used."
+				}
+			],
+			"documentation": "General text document registration options."
+		},
+		{
 			"name": "DidChangeTextDocumentParams",
 			"properties": [
 				{
@@ -5923,8 +5901,8 @@
 						}
 					},
 					"optional": true,
-					"documentation": "Tags for this code action.\n\n@since 3.18.0 - proposed",
-					"since": "3.18.0 - proposed"
+					"documentation": "Tags for this code action.\n\n@since 3.18.0",
+					"since": "3.18.0"
 				}
 			],
 			"documentation": "A code action represents a change that can be performed in code, e.g. to fix a problem or\nto refactor code.\n\nA CodeAction must set either `edit` and/or a `command`. If both are supplied, the `edit` is applied first, then the `command` is executed."
@@ -7140,9 +7118,9 @@
 					"name": "uri",
 					"type": {
 						"kind": "base",
-						"name": "string"
+						"name": "DocumentUri"
 					},
-					"documentation": "A file:// URI for the location of the file/folder being created."
+					"documentation": "A URI for the location of the file/folder being created."
 				}
 			],
 			"documentation": "Represents information on a file/folder create.\n\n@since 3.16.0",
@@ -7374,17 +7352,17 @@
 					"name": "oldUri",
 					"type": {
 						"kind": "base",
-						"name": "string"
+						"name": "DocumentUri"
 					},
-					"documentation": "A file:// URI for the original location of the file/folder being renamed."
+					"documentation": "A URI for the original location of the file/folder being renamed."
 				},
 				{
 					"name": "newUri",
 					"type": {
 						"kind": "base",
-						"name": "string"
+						"name": "DocumentUri"
 					},
-					"documentation": "A file:// URI for the new location of the file/folder being renamed."
+					"documentation": "A URI for the new location of the file/folder being renamed."
 				}
 			],
 			"documentation": "Represents information on a file/folder rename.\n\n@since 3.16.0",
@@ -7397,9 +7375,9 @@
 					"name": "uri",
 					"type": {
 						"kind": "base",
-						"name": "string"
+						"name": "DocumentUri"
 					},
-					"documentation": "A file:// URI for the location of the file/folder being deleted."
+					"documentation": "A URI for the location of the file/folder being deleted."
 				}
 			],
 			"documentation": "Represents information on a file/folder delete.\n\n@since 3.16.0",
@@ -9998,6 +9976,19 @@
 			"since": "3.18.0"
 		},
 		{
+			"name": "WorkDoneProgressOptions",
+			"properties": [
+				{
+					"name": "workDoneProgress",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true
+				}
+			]
+		},
+		{
 			"name": "SemanticTokensLegend",
 			"properties": [
 				{
@@ -10977,39 +10968,6 @@
 			"since": "3.18.0"
 		},
 		{
-			"name": "NotebookCellTextDocumentFilter",
-			"properties": [
-				{
-					"name": "notebook",
-					"type": {
-						"kind": "or",
-						"items": [
-							{
-								"kind": "base",
-								"name": "string"
-							},
-							{
-								"kind": "reference",
-								"name": "NotebookDocumentFilter"
-							}
-						]
-					},
-					"documentation": "A filter that matches against the notebook\ncontaining the notebook cell. If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
-				},
-				{
-					"name": "language",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "A language id like `python`.\n\nWill be matched against the language id of the\nnotebook cell document. '*' matches every language."
-				}
-			],
-			"documentation": "A notebook cell text document filter denotes a cell text\ndocument by different properties.\n\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
 			"name": "FileOperationPatternOptions",
 			"properties": [
 				{
@@ -11788,6 +11746,39 @@
 			"since": "3.16.0"
 		},
 		{
+			"name": "NotebookCellTextDocumentFilter",
+			"properties": [
+				{
+					"name": "notebook",
+					"type": {
+						"kind": "or",
+						"items": [
+							{
+								"kind": "base",
+								"name": "string"
+							},
+							{
+								"kind": "reference",
+								"name": "NotebookDocumentFilter"
+							}
+						]
+					},
+					"documentation": "A filter that matches against the notebook\ncontaining the notebook cell. If a string\nvalue is provided it matches against the\nnotebook type. '*' matches every notebook."
+				},
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A language id like `python`.\n\nWill be matched against the language id of the\nnotebook cell document. '*' matches every language."
+				}
+			],
+			"documentation": "A notebook cell text document filter denotes a cell text\ndocument by different properties.\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
 			"name": "RelativePattern",
 			"properties": [
 				{
@@ -11818,108 +11809,6 @@
 			],
 			"documentation": "A relative pattern is a helper to construct glob patterns that are matched\nrelatively to a base URI. The common value for a `baseUri` is a workspace\nfolder root, but it can be another absolute URI as well.\n\n@since 3.17.0",
 			"since": "3.17.0"
-		},
-		{
-			"name": "TextDocumentFilterLanguage",
-			"properties": [
-				{
-					"name": "language",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "A language id, like `typescript`."
-				},
-				{
-					"name": "scheme",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-				},
-				{
-					"name": "pattern",
-					"type": {
-						"kind": "reference",
-						"name": "GlobPattern"
-					},
-					"optional": true,
-					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.\n\n@since 3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`.",
-					"since": "3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`."
-				}
-			],
-			"documentation": "A document filter where `language` is required field.\n\n@since 3.18.0",
-			"since": "3.18.0"
-		},
-		{
-			"name": "TextDocumentFilterScheme",
-			"properties": [
-				{
-					"name": "language",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "A language id, like `typescript`."
-				},
-				{
-					"name": "scheme",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-				},
-				{
-					"name": "pattern",
-					"type": {
-						"kind": "reference",
-						"name": "GlobPattern"
-					},
-					"optional": true,
-					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.\n\n@since 3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`.",
-					"since": "3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`."
-				}
-			],
-			"documentation": "A document filter where `scheme` is required field.\n\n@since 3.18.0",
-			"since": "3.18.0"
-		},
-		{
-			"name": "TextDocumentFilterPattern",
-			"properties": [
-				{
-					"name": "language",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "A language id, like `typescript`."
-				},
-				{
-					"name": "scheme",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
-				},
-				{
-					"name": "pattern",
-					"type": {
-						"kind": "reference",
-						"name": "GlobPattern"
-					},
-					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.\n\n@since 3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`.",
-					"since": "3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`."
-				}
-			],
-			"documentation": "A document filter where `pattern` is required field.\n\n@since 3.18.0",
-			"since": "3.18.0"
 		},
 		{
 			"name": "NotebookDocumentFilterNotebookType",
@@ -12862,8 +12751,8 @@
 						"name": "CodeActionTagOptions"
 					},
 					"optional": true,
-					"documentation": "Client supports the tag property on a code action. Clients\nsupporting tags have to handle unknown tags gracefully.\n\n@since 3.18.0 - proposed",
-					"since": "3.18.0 - proposed"
+					"documentation": "Client supports the tag property on a code action. Clients\nsupporting tags have to handle unknown tags gracefully.\n\n@since 3.18.0",
+					"since": "3.18.0"
 				}
 			],
 			"documentation": "The Client Capabilities of a {@link CodeActionRequest}."
@@ -13519,6 +13408,108 @@
 			"since": "3.16.0"
 		},
 		{
+			"name": "TextDocumentFilterLanguage",
+			"properties": [
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A language id, like `typescript`."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "reference",
+						"name": "GlobPattern"
+					},
+					"optional": true,
+					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.\n\n@since 3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`.",
+					"since": "3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`."
+				}
+			],
+			"documentation": "A document filter where `language` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "TextDocumentFilterScheme",
+			"properties": [
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A language id, like `typescript`."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "reference",
+						"name": "GlobPattern"
+					},
+					"optional": true,
+					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.\n\n@since 3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`.",
+					"since": "3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`."
+				}
+			],
+			"documentation": "A document filter where `scheme` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
+			"name": "TextDocumentFilterPattern",
+			"properties": [
+				{
+					"name": "language",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A language id, like `typescript`."
+				},
+				{
+					"name": "scheme",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`."
+				},
+				{
+					"name": "pattern",
+					"type": {
+						"kind": "reference",
+						"name": "GlobPattern"
+					},
+					"documentation": "A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.\n\n@since 3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`.",
+					"since": "3.18.0 - support for relative patterns. Whether clients support\nrelative patterns depends on the client capability\n`textDocuments.filters.relativePatternSupport`."
+				}
+			],
+			"documentation": "A document filter where `pattern` is required field.\n\n@since 3.18.0",
+			"since": "3.18.0"
+		},
+		{
 			"name": "ChangeAnnotationsSupportOptions",
 			"properties": [
 				{
@@ -13839,8 +13830,8 @@
 					"documentation": "The tags supported by the client."
 				}
 			],
-			"documentation": "@since 3.18.0 - proposed",
-			"since": "3.18.0 - proposed"
+			"documentation": "@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "ClientCodeLensResolveOptions",
@@ -15001,8 +14992,8 @@
 					"documentation": "Marks the code action as LLM-generated."
 				}
 			],
-			"documentation": "Code action tags are extra annotations that tweak the behavior of a code action.\n\n@since 3.18.0 - proposed",
-			"since": "3.18.0 - proposed"
+			"documentation": "Code action tags are extra annotations that tweak the behavior of a code action.\n\n@since 3.18.0",
+			"since": "3.18.0"
 		},
 		{
 			"name": "TraceValue",
@@ -15869,18 +15860,6 @@
 			}
 		},
 		{
-			"name": "DocumentSelector",
-			"type": {
-				"kind": "array",
-				"element": {
-					"kind": "reference",
-					"name": "DocumentFilter"
-				}
-			},
-			"documentation": "A document selector is the combination of one or many document filters.\n\n@sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;\n\nThe use of a string as a document filter is deprecated @since 3.16.0.",
-			"since": "3.16.0."
-		},
-		{
 			"name": "ProgressToken",
 			"type": {
 				"kind": "or",
@@ -15923,6 +15902,18 @@
 			"since": "3.17.0"
 		},
 		{
+			"name": "DocumentSelector",
+			"type": {
+				"kind": "array",
+				"element": {
+					"kind": "reference",
+					"name": "DocumentFilter"
+				}
+			},
+			"documentation": "A document selector is the combination of one or many document filters.\n\n@sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;\n\nThe use of a string as a document filter is deprecated @since 3.16.0.",
+			"since": "3.16.0."
+		},
+		{
 			"name": "TextDocumentContentChangeEvent",
 			"type": {
 				"kind": "or",
@@ -15958,6 +15949,22 @@
 			"deprecated": "use MarkupContent instead."
 		},
 		{
+			"name": "LSPObject",
+			"type": {
+				"kind": "map",
+				"key": {
+					"kind": "base",
+					"name": "string"
+				},
+				"value": {
+					"kind": "reference",
+					"name": "LSPAny"
+				}
+			},
+			"documentation": "LSP object definition.\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
 			"name": "DocumentFilter",
 			"type": {
 				"kind": "or",
@@ -15976,22 +15983,6 @@
 			"since": "3.17.0 - support for NotebookCellTextDocumentFilter."
 		},
 		{
-			"name": "LSPObject",
-			"type": {
-				"kind": "map",
-				"key": {
-					"kind": "base",
-					"name": "string"
-				},
-				"value": {
-					"kind": "reference",
-					"name": "LSPAny"
-				}
-			},
-			"documentation": "LSP object definition.\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
 			"name": "GlobPattern",
 			"type": {
 				"kind": "or",
@@ -16007,28 +15998,6 @@
 				]
 			},
 			"documentation": "The glob pattern. Either a string pattern or a relative pattern.\n\n@since 3.17.0",
-			"since": "3.17.0"
-		},
-		{
-			"name": "TextDocumentFilter",
-			"type": {
-				"kind": "or",
-				"items": [
-					{
-						"kind": "reference",
-						"name": "TextDocumentFilterLanguage"
-					},
-					{
-						"kind": "reference",
-						"name": "TextDocumentFilterScheme"
-					},
-					{
-						"kind": "reference",
-						"name": "TextDocumentFilterPattern"
-					}
-				]
-			},
-			"documentation": "A document filter denotes a document by different properties like\nthe {@link TextDocument.languageId language}, the {@link Uri.scheme scheme} of\nits resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.\n\nGlob patterns can have the following syntax:\n- `*` to match zero or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`\n@sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{
@@ -16051,6 +16020,28 @@
 				]
 			},
 			"documentation": "A notebook document filter denotes a notebook document by\ndifferent properties. The properties will be match\nagainst the notebook's URI (same as with documents)\n\n@since 3.17.0",
+			"since": "3.17.0"
+		},
+		{
+			"name": "TextDocumentFilter",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "TextDocumentFilterLanguage"
+					},
+					{
+						"kind": "reference",
+						"name": "TextDocumentFilterScheme"
+					},
+					{
+						"kind": "reference",
+						"name": "TextDocumentFilterPattern"
+					}
+				]
+			},
+			"documentation": "A document filter denotes a document by different properties like\nthe {@link TextDocument.languageId language}, the {@link Uri.scheme scheme} of\nits resource, or a glob-pattern that is applied to the {@link TextDocument.fileName path}.\n\nGlob patterns can have the following syntax:\n- `*` to match zero or more characters in a path segment\n- `?` to match on one character in a path segment\n- `**` to match any number of path segments, including none\n- `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)\n- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)\n- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)\n\n@sample A language filter that applies to typescript files on disk: `{ language: 'typescript', scheme: 'file' }`\n@sample A language filter that applies to all package.json paths: `{ language: 'json', pattern: '**package.json' }`\n\n@since 3.17.0",
 			"since": "3.17.0"
 		},
 		{

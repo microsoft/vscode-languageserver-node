@@ -32,12 +32,13 @@
 		"@types/mocha": "^10.0.10",
 		"@types/node": "22.13.14",
 		"assert": "^2.1.0",
-		"esbuild": "^0.28.1",
-		"eslint": "^10.4.0",
+		"esbuild": "^0.28.2",
+		"eslint": "^10.8.1",
 		"eslint-plugin-import-x": "^4.17.0",
 		"globals": "^17.6.0",
+		"typescript-eslint": "^8.60.0",
 		"http-server": "^14.1.1",
-		"mocha": "^11.7.6",
+		"mocha": "^11.8.0",
 		"playwright": "^1.60.0",
 		"rimraf": "^6.1.3",
 		"shelljs": "^0.10.0",
@@ -45,8 +46,7 @@
 		"source-map-support": "^0.5.21",
 		"ts-json-schema-generator": "^2.9.0",
 		"@typescript/native": "npm:typescript@^7.0.2",
-		"typescript": "npm:@typescript/typescript6@^6.0.3",
-		"typescript-eslint": "^8.60.0"
+		"typescript": "npm:@typescript/typescript6@^6.0.3"
 	},
 	"scripts": {
 		"postinstall": "npx playwright install",
@@ -76,5 +76,9 @@
 		"validate:version": "node ./tools/lib/validate-main.js",
 		"update:lock": "git clean -xfd . && npm install && cd ./client && npm run updateVSCodeVersion && cd ..",
 		"tsconfig-gen": "cd tsconfig-gen && npm run compile && cd .. && node ./tsconfig-gen/lib/main.js -f .tsconfigrc.mjs"
+	},
+	"allowScripts": {
+		"esbuild@0.28.2": true,
+		"unrs-resolver@1.12.2": true
 	}
 }

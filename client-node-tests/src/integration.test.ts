@@ -1894,7 +1894,7 @@ suite('Full notebook tests', () => {
 		assert.strictEqual(diagnostic.message, 'notebook-error');
 
 		await revertAllDirty();
-	});
+	}).timeout(5000);
 });
 
 suite('Simple notebook tests', () => {

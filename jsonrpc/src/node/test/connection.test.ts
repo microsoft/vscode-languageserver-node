@@ -5,6 +5,7 @@
 
 import * as assert from 'assert';
 
+import { execFileSync } from 'child_process';
 import { Duplex  } from 'stream';
 import { inherits } from 'util';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -52,6 +53,32 @@ suite('Connection', () => {
 			done();
 		});
 		stream.write('Hello World');
+	});
+
+	test('Darwin pipe names fit OpenJDK Unix domain socket limit', () => {
+		const portableTmp = '/'.padEnd(65, 'a');
+		const main = new URL('../main.js', import.meta.url).href;
+		const script = `
+			(async () => {
+				process.env.XDG_RUNTIME_DIR = ${JSON.stringify(portableTmp)};
+				const connection = await import(${JSON.stringify(main)});
+				const fs = require('fs');
+				fs.realpathSync = () => process.env.XDG_RUNTIME_DIR;
+				require('module').syncBuiltinESMExports();
+				Object.defineProperty(process, 'platform', { value: 'darwin' });
+				const pipeName = connection.generateRandomPipeName();
+				if (Buffer.byteLength(pipeName) > 102) {
+					throw new Error(
+						\`Expected pipe name '\${pipeName}' to fit in 102 bytes\`
+					);
+				}
+			})().catch((error) => {
+				console.error(error);
+				process.exitCode = 1;
+			});
+		`;
+
+		execFileSync(process.execPath, ['-e', script], { stdio: 'pipe' });
 	});
 
 	test('Test Duplex Stream Connection', (done) => {

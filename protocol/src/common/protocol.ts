@@ -3357,13 +3357,13 @@ export interface CodeActionClientCapabilities {
 	 * Client supports the tag property on a code action. Clients
 	 * supporting tags have to handle unknown tags gracefully.
 	 *
-	 * @since 3.18.0 - proposed
+	 * @since 3.18.0
 	 */
 	tagSupport?: CodeActionTagOptions;
 }
 
 /**
- * @since 3.18.0 - proposed
+ * @since 3.18.0
  */
 export type CodeActionTagOptions = {
 	/**
