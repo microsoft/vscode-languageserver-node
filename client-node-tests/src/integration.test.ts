@@ -1479,9 +1479,9 @@ suite('Client integration', () => {
 			firstPullFinished = resolve;
 		});
 		let expectedEditPull: number | undefined;
-		let editPullStarted!: () => void;
+		let editPullFinished!: () => void;
 		const editPull = new Promise<void>((resolve) => {
-			editPullStarted = resolve;
+			editPullFinished = resolve;
 		});
 		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = async (document, previousResultId, token, next) => {
 			const currentPull = ++pullCount;
@@ -1495,7 +1495,7 @@ suite('Client integration', () => {
 			}
 			if (currentPull === expectedEditPull) {
 				expectedEditPull = undefined;
-				editPullStarted();
+				editPullFinished();
 			}
 			return result;
 		};
