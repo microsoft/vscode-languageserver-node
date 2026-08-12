@@ -1478,7 +1478,7 @@ suite('Client integration', () => {
 		const firstPullDone = new Promise<void>((resolve) => {
 			firstPullFinished = resolve;
 		});
-		let expectEditPull = false;
+		let expectedEditPull: number | undefined;
 		let editPullStarted!: () => void;
 		const editPull = new Promise<void>((resolve) => {
 			editPullStarted = resolve;
@@ -1493,8 +1493,8 @@ suite('Client integration', () => {
 			if (currentPull === 1) {
 				firstPullFinished();
 			}
-			if (expectEditPull) {
-				expectEditPull = false;
+			if (currentPull === expectedEditPull) {
+				expectedEditPull = undefined;
 				editPullStarted();
 			}
 			return result;
@@ -1507,7 +1507,7 @@ suite('Client integration', () => {
 		await firstPullDone;
 		await waitForNextTurn();
 
-		expectEditPull = true;
+		expectedEditPull = pullCount + 1;
 		const edit = new vscode.WorkspaceEdit();
 		edit.insert(document.uri, new vscode.Position(0, 0), ' ');
 		await vscode.workspace.applyEdit(edit);

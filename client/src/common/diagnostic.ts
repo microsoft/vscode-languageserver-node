@@ -307,7 +307,7 @@ class DiagnosticRequestor implements Disposable {
 	public readonly provider: vsdiag.DiagnosticProvider;
 	private readonly diagnostics: DiagnosticCollection;
 	private readonly openRequests: Map<string, RequestState>;
-	private readonly pendingDocumentForgets: Map<string, object>;
+	private readonly pendingDocumentForgets: Map<string, symbol>;
 	private readonly documentStates: DocumentPullStateTracker;
 
 	private workspaceErrorCounter: number;
@@ -460,7 +460,7 @@ class DiagnosticRequestor implements Disposable {
 			if (request !== undefined) {
 				this.openRequests.set(key, { state: RequestStateKind.reschedule, document: document });
 			} else {
-				const pendingForget = {};
+				const pendingForget = Symbol();
 				this.pendingDocumentForgets.set(key, pendingForget);
 				this.pull(document, () => {
 					if (this.pendingDocumentForgets.get(key) === pendingForget) {
