@@ -1451,13 +1451,14 @@ suite('Client integration', () => {
 
 	test('Document diagnostic pull after quick reopen', async () => {
 		await vscode.window.showTextDocument(document);
-		let initialPullFinished!: () => void;
+		let initialPullFinished: (() => void) | undefined;
 		const initialPull = new Promise<void>((resolve) => {
 			initialPullFinished = resolve;
 		});
 		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = async (document, previousResultId, token, next) => {
 			const result = await next(document, previousResultId, token);
-			initialPullFinished();
+			initialPullFinished?.();
+			initialPullFinished = undefined;
 			return result;
 		};
 		document = await vscode.languages.setTextDocumentLanguage(document, 'plaintext');
