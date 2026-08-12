@@ -89,6 +89,10 @@ function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport):
 	assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
 }
 
+function waitForNextTurn(): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 function processExists(pid: number): boolean {
 	try {
 		process.kill(pid, 0);
@@ -1458,7 +1462,7 @@ suite('Client integration', () => {
 		};
 		document = await vscode.languages.setTextDocumentLanguage(document, 'plaintext');
 		await initialPull;
-		await new Promise((resolve) => setTimeout(resolve, 0));
+		await waitForNextTurn();
 
 		let pullCount = 0;
 		let releasePull!: () => void;
@@ -1489,6 +1493,7 @@ suite('Client integration', () => {
 				firstPullFinished();
 			}
 			if (expectEditPull) {
+				expectEditPull = false;
 				editPullStarted();
 			}
 			return result;
@@ -1499,7 +1504,7 @@ suite('Client integration', () => {
 		document = await changeLanguage;
 		releasePull();
 		await firstPullDone;
-		await new Promise((resolve) => setTimeout(resolve, 0));
+		await waitForNextTurn();
 
 		expectEditPull = true;
 		const edit = new vscode.WorkspaceEdit();
