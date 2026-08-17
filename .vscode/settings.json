@@ -12,7 +12,8 @@
 	"task.allowAutomaticTasks": "on",
 
 	"js/ts.tsc.autoDetect": "off",
-	"js/ts.tsdk.path": "./node_modules/typescript/lib",
+	"js/ts.experimental.useTsgo": true,
+	"js/ts.tsdk.path": "./node_modules/@typescript/native",
 	"js/ts.format.insertSpaceAfterCommaDelimiter": true,
 	"js/ts.format.insertSpaceAfterSemicolonInForStatements": true,
 	"js/ts.format.insertSpaceBeforeAndAfterBinaryOperators": true,
@@ -102,5 +103,5 @@
 		"whitespaces",
 		"XCOPY"
 	],
-	"githubPullRequests.createDefaultBaseBranch": "repositoryDefault",
+	"githubPullRequests.createDefaultBaseBranch": "repositoryDefault"
 }

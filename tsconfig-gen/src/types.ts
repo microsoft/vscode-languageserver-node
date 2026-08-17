@@ -3,7 +3,20 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { CompilerOptions as TCompilerOptions, ImportsNotUsedAsValues, JsxEmit, ModuleKind, ModuleResolutionKind, ModuleDetectionKind, NewLineKind, ScriptTarget } from 'typescript';
+import { CompilerOptions as TCompilerOptions } from '@typescript/native/unstable/sync';
+
+type RCompilerOptions = Required<TCompilerOptions>;
+type ScriptTarget = RCompilerOptions['target'];
+type ModuleKind = RCompilerOptions['module'];
+type JsxEmit = RCompilerOptions['jsx'];
+type ModuleResolutionKind = RCompilerOptions['moduleResolution'];
+type ModuleDetectionKind = RCompilerOptions['moduleDetection'];
+type NewLineKind = RCompilerOptions['newLine'];
+export const enum ImportsNotUsedAsValues {
+	Remove,
+	Preserve,
+	Error,
+}
 
 type ConvertCompilerOptionsValue<T> =
 	T extends ImportsNotUsedAsValues | JsxEmit | ModuleKind | ModuleResolutionKind | ModuleDetectionKind | NewLineKind | ScriptTarget
@@ -30,18 +43,19 @@ export namespace CompilerOptions {
 			return opt1;
 		}
 		const result: CompilerOptions = Object.assign({}, opt1);
-		for (const prop of Object.keys(opt2)) {
-			const cv = result[prop];
+		const writableResult = result as Record<keyof CompilerOptions, CompilerOptions[keyof CompilerOptions]>;
+		for (const prop of Object.keys(opt2) as (keyof CompilerOptions)[]) {
+			const cv = writableResult[prop];
 			const nv = opt2[prop];
 			if (cv === undefined) {
-				result[prop] = nv;
+				writableResult[prop] = nv;
 			} else if (nv === undefined) {
 				// Keep cv;
 			} else if (cv !== undefined && nv !== undefined) {
 				if (Array.isArray(cv) && Array.isArray(nv)) {
-					result[prop] = Arrays.assign(cv as [], nv as []);
+					writableResult[prop] = Arrays.assign(cv as [], nv as []);
 				} else {
-					result[prop] = nv;
+					writableResult[prop] = nv;
 				}
 			}
 		}
