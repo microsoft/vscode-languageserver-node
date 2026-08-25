@@ -151,7 +151,7 @@ export type ServerOptions = Executable | { run: Executable; debug: Executable } 
 export class LanguageClient extends BaseLanguageClient {
 
 	private readonly _serverOptions: ServerOptions;
-	private readonly _stdioOptions: StdioOptions | undefined;
+	private readonly _stdioOptions: Required<StdioOptions>;
 	private readonly _forceDebug: boolean;
 	private _serverProcess: ChildProcess | undefined;
 	private _isDetached: boolean | undefined;
@@ -181,7 +181,24 @@ export class LanguageClient extends BaseLanguageClient {
 		if (forceDebug === undefined) { forceDebug = false; }
 		super(id, name, clientOptions);
 		this._serverOptions = serverOptions;
-		this._stdioOptions = clientOptions.stdioOptions;
+		this._stdioOptions = {
+			stdout: clientOptions.stdioOptions?.stdout ?? ((input, outputChannel) => {
+				readline.createInterface({
+					input: input,
+					crlfDelay: Infinity,
+					terminal: false,
+					historySize: 0,
+				}).on('line', data => outputChannel.info(data));
+			}),
+			stderr: clientOptions.stdioOptions?.stderr ?? ((input, outputChannel) => {
+				readline.createInterface({
+					input: input,
+					crlfDelay: Infinity,
+					terminal: false,
+					historySize: 0,
+				}).on('line', data => outputChannel.error(data));
+			})
+		};
 		this._forceDebug = forceDebug;
 		this._isInDebugMode = forceDebug;
 		try {
@@ -309,26 +326,8 @@ export class LanguageClient extends BaseLanguageClient {
 			}
 		}
 
-		function pipeStdoutToLogOutputChannel(input: stream.Readable, outputChannel: LogOutputChannel) {
-			readline.createInterface({
-				input: input,
-				crlfDelay: Infinity,
-				terminal: false,
-				historySize: 0,
-			}).on('line', data => outputChannel.info(data));
-		}
-
-		function pipeStderrToLogOutputChannel(input: stream.Readable, outputChannel: LogOutputChannel) {
-			readline.createInterface({
-				input: input,
-				crlfDelay: Infinity,
-				terminal: false,
-				historySize: 0,
-			}).on('line', data => outputChannel.error(data));
-		}
-
-		const pipeStdout = this._stdioOptions?.stdout ?? pipeStdoutToLogOutputChannel;
-		const pipeStderr = this._stdioOptions?.stderr ?? pipeStderrToLogOutputChannel;
+		const pipeStdout = this._stdioOptions.stdout;
+		const pipeStderr = this._stdioOptions.stderr;
 		const server = this._serverOptions;
 		// We got a function.
 		if (Is.func(server)) {
