@@ -204,6 +204,38 @@ suite ('Client Features', () => {
 	});
 });
 
+suite('Server output', () => {
+
+	test('Custom stdio handlers', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		let stdoutCalled = false;
+		let stderrCalled = false;
+		const clientOptions: lsclient.LanguageClientOptions = {
+			stdioOptions: {
+				stdout: (input, outputChannel) => {
+					assert.ok(input.readable);
+					assert.strictEqual(outputChannel, client.outputChannel);
+					stdoutCalled = true;
+				},
+				stderr: (input, outputChannel) => {
+					assert.ok(input.readable);
+					assert.strictEqual(outputChannel, client.outputChannel);
+					stderrCalled = true;
+				}
+			}
+		};
+		const client = new lsclient.LanguageClient('test output', 'Test Output Language Server', serverOptions, clientOptions);
+
+		await client.start();
+		assert.strictEqual(stdoutCalled, true);
+		assert.strictEqual(stderrCalled, true);
+		await client.stop();
+	});
+});
+
 suite('Client integration', () => {
 
 	let client!: lsclient.LanguageClient;
