@@ -213,21 +213,23 @@ suite('Server output', () => {
 		};
 		let stdoutCalled = false;
 		let stderrCalled = false;
+		const expected: { outputChannel?: vscode.LogOutputChannel } = {};
 		const clientOptions: lsclient.LanguageClientOptions = {
 			stdioOptions: {
 				stdout: (input, outputChannel) => {
-					assert.ok(input.readable);
-					assert.strictEqual(outputChannel, client.outputChannel);
+					assert.strictEqual(typeof input.on, 'function');
+					assert.strictEqual(outputChannel, expected.outputChannel);
 					stdoutCalled = true;
 				},
 				stderr: (input, outputChannel) => {
-					assert.ok(input.readable);
-					assert.strictEqual(outputChannel, client.outputChannel);
+					assert.strictEqual(typeof input.on, 'function');
+					assert.strictEqual(outputChannel, expected.outputChannel);
 					stderrCalled = true;
 				}
 			}
 		};
 		const client = new lsclient.LanguageClient('test output', 'Test Output Language Server', serverOptions, clientOptions);
+		expected.outputChannel = client.outputChannel;
 
 		await client.start();
 		assert.strictEqual(stdoutCalled, true);
