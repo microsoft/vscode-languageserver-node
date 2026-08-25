@@ -127,14 +127,12 @@ namespace ChildProcessInfo {
 
 export interface StdioOptions {
 	/**
-	 * Handles the language server's stdout stream. By default, each line is
-	 * forwarded to the client's output channel using `info`.
+	 * Handles the language server's stdout stream.
 	 */
 	stdout?: (input: stream.Readable, outputChannel: LogOutputChannel) => void;
 
 	/**
-	 * Handles the language server's stderr stream. By default, each line is
-	 * forwarded to the client's output channel using `error`.
+	 * Handles the language server's stderr stream.
 	 */
 	stderr?: (input: stream.Readable, outputChannel: LogOutputChannel) => void;
 }
@@ -142,6 +140,8 @@ export interface StdioOptions {
 export type LanguageClientOptions = BaseLanguageClientOptions & {
 	/**
 	 * Configures how the language server's stdout and stderr streams are handled.
+	 * When omitted, stdout and stderr are forwarded line by line to the client's
+	 * output channel using `info` and `error`, respectively.
 	 */
 	stdioOptions?: Required<StdioOptions>;
 };
