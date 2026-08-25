@@ -127,12 +127,14 @@ namespace ChildProcessInfo {
 
 export interface StdioOptions {
 	/**
-	 * Handles the language server's stdout stream.
+	 * Handles the language server's stdout stream. Must be provided when
+	 * configuring `stdioOptions`.
 	 */
 	stdout?: (input: stream.Readable, outputChannel: LogOutputChannel) => void;
 
 	/**
-	 * Handles the language server's stderr stream.
+	 * Handles the language server's stderr stream. Must be provided when
+	 * configuring `stdioOptions`.
 	 */
 	stderr?: (input: stream.Readable, outputChannel: LogOutputChannel) => void;
 }
