@@ -143,7 +143,7 @@ export type LanguageClientOptions = BaseLanguageClientOptions & {
 	/**
 	 * Configures how the language server's stdout and stderr streams are handled.
 	 */
-	stdioOptions?: StdioOptions;
+	stdioOptions?: Required<StdioOptions>;
 };
 
 export type ServerOptions = Executable | { run: Executable; debug: Executable } | { run: NodeModule; debug: NodeModule } | NodeModule | (() => Promise<ChildProcess | StreamInfo | MessageTransports | ChildProcessInfo>);
@@ -181,23 +181,23 @@ export class LanguageClient extends BaseLanguageClient {
 		if (forceDebug === undefined) { forceDebug = false; }
 		super(id, name, clientOptions);
 		this._serverOptions = serverOptions;
-		this._stdioOptions = {
-			stdout: clientOptions.stdioOptions?.stdout ?? ((input, outputChannel) => {
+		this._stdioOptions = clientOptions.stdioOptions ?? {
+			stdout: (input, outputChannel) => {
 				readline.createInterface({
 					input: input,
 					crlfDelay: Infinity,
 					terminal: false,
 					historySize: 0,
 				}).on('line', data => outputChannel.info(data));
-			}),
-			stderr: clientOptions.stdioOptions?.stderr ?? ((input, outputChannel) => {
+			},
+			stderr: (input, outputChannel) => {
 				readline.createInterface({
 					input: input,
 					crlfDelay: Infinity,
 					terminal: false,
 					historySize: 0,
 				}).on('line', data => outputChannel.error(data));
-			})
+			}
 		};
 		this._forceDebug = forceDebug;
 		this._isInDebugMode = forceDebug;
