@@ -133,7 +133,7 @@ import {
 
 import {
 	FileStat, StatParams, StatRequest, DirectoryEntry, FileType, ReadDirectoryParams, ReadDirectoryRequest, ReadFileParams, ReadFileRequest, ReadFileResult,
-	FileSystemClientCapabilities, FileFlags
+	FileSystemClientCapabilities, FileFlags, ReadFileParamKind, TextReadFileParams, BinaryReadFileParams,
 } from './protocol.fileSystem';
 
 // @ts-ignore: to avoid inlining LocationLink as dynamic import
@@ -4394,6 +4394,7 @@ export {
 	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest,
 	// File System
 	FileStat, StatParams, StatRequest, DirectoryEntry, FileType, FileFlags, ReadDirectoryParams, ReadDirectoryRequest, ReadFileParams, ReadFileRequest, ReadFileResult,
+	ReadFileParamKind, TextReadFileParams, BinaryReadFileParams,
 };
 
 // To be backwards compatible

@@ -136,11 +136,16 @@ export interface DirectoryEntry {
 }
 
 /**
- * The parameters sent in a request to read the contents of a file.
+ * The parameters sent in a request to read the text contents of a file.
+ * File will be read using the encoding specified in the request.
  *
  * @since 3.19.0
  */
-export interface ReadFileParams {
+export interface TextReadFileParams {
+	/**
+	 * Indicator that the file content should be read as a text file.
+	 */
+	kind: 'text';
 	/**
 	 * A URI for the location of the file.
 	 */
@@ -152,6 +157,32 @@ export interface ReadFileParams {
 }
 
 /**
+ * The parameters sent in a request to read the binary contents of a file.
+ * File content will be returned as a base64 encoded string.
+ *
+ * @since 3.19.0
+ */
+export interface BinaryReadFileParams {
+	/**
+	 * Indicator that the file content should be read as a binary file.
+	 */
+	kind: 'binary';
+	/**
+	 * A URI for the location of the file.
+	 */
+	uri: DocumentUri;
+}
+
+/**
+ * The parameters sent in a request to read the contents of a file.
+ *
+ * @since 3.19.0
+ */
+export type ReadFileParams = TextReadFileParams | BinaryReadFileParams;
+export type ReadFileParamKind = ReadFileParams['kind'];
+
+
+/**
  * The result of a read file request.
  *
  * @since 3.19.0
@@ -159,10 +190,13 @@ export interface ReadFileParams {
 export interface ReadFileResult {
 	/**
 	 * The content of the file as a unicode string.
-	 * It will be read using the encoding specified in the request.
+	 *
+	 * If the content is requested as text, it will be read using the encoding specified in the request.
 	 * Any invalid byte sequences will be replaced with the unicode replacement character `U+FFFD`.
+	 *
+	 * If the content is requested as binary, it will be returned as a base64 encoded string.
 	 */
-	text: string;
+	content: string;
 }
 
 /**

@@ -720,11 +720,13 @@ connection.onNotification(refreshNotification, async (uri) => {
 const readFileRequest = new NotificationType<string>('testbed/readFile');
 connection.onNotification(readFileRequest, async (uri) => {
 	const fileName = uri.split('/').pop();
-	const fileContent = await connection.workspace.fs.readFile(uri);
-	if (fileContent === null) {
+	const textContent = await connection.workspace.fs.readFile('text', uri);
+	const binaryContent = await connection.workspace.fs.readFile('binary', uri);
+	if (textContent === null || binaryContent === null) {
 		connection.window.showInformationMessage(`Read file '${fileName}' failed`);
 	} else {
-		connection.window.showInformationMessage(`Read file '${fileName}' with content length ${fileContent.text.length}`);
+		const base64Content = binaryContent.content.length > 100 ? binaryContent.content.substring(0, 97) + '...' : binaryContent.content;
+		connection.window.showInformationMessage(`Read file '${fileName}' with content length ${textContent.content.length} and base64 content ${base64Content}`);
 	}
 });
 

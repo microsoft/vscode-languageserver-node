@@ -4704,39 +4704,15 @@
 			"since": "3.19.0"
 		},
 		{
-			"name": "ReadFileParams",
-			"properties": [
-				{
-					"name": "uri",
-					"type": {
-						"kind": "base",
-						"name": "DocumentUri"
-					},
-					"documentation": "A URI for the location of the file."
-				},
-				{
-					"name": "encoding",
-					"type": {
-						"kind": "base",
-						"name": "string"
-					},
-					"optional": true,
-					"documentation": "The encoding of the file content. If not specified, the content is assumed to be UTF-8."
-				}
-			],
-			"documentation": "The parameters sent in a request to read the contents of a file.\n\n@since 3.19.0",
-			"since": "3.19.0"
-		},
-		{
 			"name": "ReadFileResult",
 			"properties": [
 				{
-					"name": "text",
+					"name": "content",
 					"type": {
 						"kind": "base",
 						"name": "string"
 					},
-					"documentation": "The content of the file as a unicode string.\nIt will be read using the encoding specified in the request.\nAny invalid byte sequences will be replaced with the unicode replacement character `U+FFFD`."
+					"documentation": "The content of the file as a unicode string.\n\nIf the content is requested as text, it will be read using the encoding specified in the request.\nAny invalid byte sequences will be replaced with the unicode replacement character `U+FFFD`.\n\nIf the content is requested as binary, it will be returned as a base64 encoded string."
 				}
 			],
 			"documentation": "The result of a read file request.\n\n@since 3.19.0",
@@ -8272,6 +8248,61 @@
 			],
 			"documentation": "Text document content provider options.\n\n@since 3.18.0",
 			"since": "3.18.0"
+		},
+		{
+			"name": "TextReadFileParams",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "stringLiteral",
+						"value": "text"
+					},
+					"documentation": "Indicator that the file content should be read as a text file."
+				},
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "A URI for the location of the file."
+				},
+				{
+					"name": "encoding",
+					"type": {
+						"kind": "base",
+						"name": "string"
+					},
+					"optional": true,
+					"documentation": "The encoding of the file content. If not specified, the content is assumed to be UTF-8."
+				}
+			],
+			"documentation": "The parameters sent in a request to read the text contents of a file.\nFile will be read using the encoding specified in the request.\n\n@since 3.19.0",
+			"since": "3.19.0"
+		},
+		{
+			"name": "BinaryReadFileParams",
+			"properties": [
+				{
+					"name": "kind",
+					"type": {
+						"kind": "stringLiteral",
+						"value": "binary"
+					},
+					"documentation": "Indicator that the file content should be read as a binary file."
+				},
+				{
+					"name": "uri",
+					"type": {
+						"kind": "base",
+						"name": "DocumentUri"
+					},
+					"documentation": "A URI for the location of the file."
+				}
+			],
+			"documentation": "The parameters sent in a request to read the binary contents of a file.\nFile content will be returned as a base64 encoded string.\n\n@since 3.19.0",
+			"since": "3.19.0"
 		},
 		{
 			"name": "Registration",
@@ -16149,6 +16180,22 @@
 			},
 			"documentation": "The document diagnostic report used when reporting partial result.\n\nWhen using partial results, the first literal sent needs to be a\nDocumentDiagnosticReport providing the diagnostics on the document\nfollowed by n DocumentDiagnosticReportPartialResult literals providing\nthe diagnostics for related documents.\n\n```\nDocumentDiagnosticReport\nDocumentDiagnosticReportPartialResult\nDocumentDiagnosticReportPartialResult\n...\n```\n\n@since 3.18.1",
 			"since": "3.18.1"
+		},
+		{
+			"name": "ReadFileParams",
+			"type": {
+				"kind": "or",
+				"items": [
+					{
+						"kind": "reference",
+						"name": "TextReadFileParams"
+					},
+					{
+						"kind": "reference",
+						"name": "BinaryReadFileParams"
+					}
+				]
+			}
 		},
 		{
 			"name": "PrepareRenameResult",

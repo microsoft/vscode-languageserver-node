@@ -6,13 +6,14 @@
 import * as vscode from 'vscode';
 
 import {
-	ClientCapabilities, StatRequest, ReadFileRequest, ReadDirectoryRequest
+	ClientCapabilities, StatRequest, ReadFileRequest, ReadDirectoryRequest,
+	ReadFileParamKind
 } from 'vscode-languageserver-protocol';
 
 import { StaticFeature, FeatureClient, FeatureState } from './features';
 
 export interface FileSystemReadFileSignature {
-	(this: void, uri: vscode.Uri, encoding?: string): Promise<string | null>;
+	(this: void, kind: ReadFileParamKind, uri: vscode.Uri, encoding?: string): Promise<string | null>;
 }
 
 export interface FileSystemStatSignature {
@@ -31,7 +32,7 @@ export interface FileSystemReadDirectorySignature {
 export interface FileSystemMiddleware {
 	fs?: {
 		stat?: (this: void, uri: vscode.Uri, next: FileSystemStatSignature) => vscode.ProviderResult<vscode.FileStat | null>;
-		readFile?: (this: void, uri: vscode.Uri, encoding: string | undefined, next: FileSystemReadFileSignature) => vscode.ProviderResult<string | null>;
+		readFile?: (this: void, kind: ReadFileParamKind, uri: vscode.Uri, encoding: string | undefined, next: FileSystemReadFileSignature) => vscode.ProviderResult<string | null>;
 		readDirectory?: (this: void, uri: vscode.Uri, next: FileSystemReadDirectorySignature) => vscode.ProviderResult<[string, vscode.FileType][] | null>;
 	};
 }
@@ -92,24 +93,31 @@ export class FileSystemFeature implements StaticFeature {
 				: null;
 		});
 		client.onRequest(ReadFileRequest.type, async (params) => {
+			const encoding = params.kind === 'text' ? params.encoding : undefined;
 			const paramsUri = this._client.protocol2CodeConverter.asUri(params.uri);
-			const fileRead: FileSystemReadFileSignature = async (uri, encoding) => {
+			const fileRead: FileSystemReadFileSignature = async (kind, uri, encoding) => {
 				try {
 					const bytes = await vscode.workspace.fs.readFile(uri);
-					const decoder = new TextDecoder(encoding || 'utf-8');
-					return decoder.decode(bytes);
+					if (kind === 'binary') {
+						return toBase64(bytes);
+					} else if (kind === 'text') {
+						const decoder = new TextDecoder(encoding || 'utf-8');
+						return decoder.decode(bytes);
+					} else {
+						return null;
+					}
 				} catch {
 					return null;
 				}
 			};
 			const middleware = client.middleware.workspace;
 			const result = await (middleware?.fs?.readFile
-				? middleware.fs.readFile(paramsUri, params.encoding, fileRead)
-				: fileRead(paramsUri, params.encoding));
+				? middleware.fs.readFile(params.kind, paramsUri, encoding, fileRead)
+				: fileRead(params.kind, paramsUri, encoding));
 			if (result === undefined || result === null) {
 				return null;
 			}
-			return { text: result };
+			return { content: result };
 		});
 		client.onRequest(ReadDirectoryRequest.type, async (params) => {
 			const paramsUri = this._client.protocol2CodeConverter.asUri(params.uri);
@@ -135,4 +143,34 @@ export class FileSystemFeature implements StaticFeature {
 
 	public clear(): void {
 	}
+}
+
+declare const Buffer: undefined | {
+	from(bytes: Uint8Array): { toString(encoding: 'base64'): string };
+};
+
+const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+function toBase64(bytes: Uint8Array): string {
+	// First, try to use the new toBase64() method on Uint8Array if available.
+	if (typeof (bytes as any).toBase64 === 'function') {
+		return (bytes as any).toBase64();
+	}
+	// Then, try to use the node.js buffer implementation if available.
+	if (typeof Buffer !== 'undefined') {
+		return Buffer.from(bytes).toString('base64');
+	}
+	// Fallback to a manual implementation, which is slower but works in all environments.
+	// File might be quite large, use an array to avoid concat overhead
+	const chars = new Array<string>(Math.ceil(bytes.length / 3) * 4);
+	let j = 0;
+	for (let i = 0; i < bytes.length; i += 3) {
+		const b0 = bytes[i];
+		const b1 = i + 1 < bytes.length ? bytes[i + 1] : 0;
+		const b2 = i + 2 < bytes.length ? bytes[i + 2] : 0;
+		chars[j++] = base64Chars[b0 >> 2];
+		chars[j++] = base64Chars[((b0 & 0x03) << 4) | (b1 >> 4)];
+		chars[j++] = i + 1 < bytes.length ? base64Chars[((b1 & 0x0f) << 2) | (b2 >> 6)] : '=';
+		chars[j++] = i + 2 < bytes.length ? base64Chars[b2 & 0x3f] : '=';
+	}
+	return chars.join('');
 }
