@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { DirectoryEntry, FileStat, StatRequest, ReadDirectoryRequest, ReadFileRequest, ReadFileResult, type DocumentUri } from 'vscode-languageserver-protocol';
+import { DirectoryEntry, FileStat, StatRequest, ReadDirectoryRequest, ReadFileRequest, ReadFileResult, TextReadFileParams, BinaryReadFileParams, ReadFileParamKind, DocumentUri } from 'vscode-languageserver-protocol';
 
 import type { Feature, _RemoteWorkspace } from './server';
 
@@ -26,12 +26,18 @@ export interface FileSystemFeatureShape {
 		 */
 		stat(uri: DocumentUri): Promise<FileStat | null>;
 		/**
-		 * Reads the contents of a file.
+		 * Reads the contents of a file as binary. Content is returned as a base64 encoded string.
+		 *
+		 * @param uri The URI of the file to read.
+		 */
+		readFile(kind: BinaryReadFileParams['kind'], uri: DocumentUri): Promise<ReadFileResult | null>;
+		/**
+		 * Reads the contents of a file as text.
 		 *
 		 * @param uri The URI of the file to read.
 		 * @param encoding The encoding to use when reading the file. Uses UTF-8 if not specified.
 		 */
-		readFile(uri: DocumentUri, encoding?: string): Promise<ReadFileResult | null>;
+		readFile(kind: TextReadFileParams['kind'], uri: DocumentUri, encoding?: string): Promise<ReadFileResult | null>;
 		/**
 		 * Reads the contents of a directory.
 		 *
@@ -48,8 +54,8 @@ export const FileSystemFeature: Feature<_RemoteWorkspace, FileSystemFeatureShape
 				stat: (uri: DocumentUri): Promise<FileStat | null> => {
 					return this.connection.sendRequest(StatRequest.type, { uri });
 				},
-				readFile: (uri: DocumentUri, encoding?: string): Promise<ReadFileResult | null> => {
-					return this.connection.sendRequest(ReadFileRequest.type, { uri, encoding });
+				readFile: (kind: ReadFileParamKind, uri: DocumentUri, encoding?: string): Promise<ReadFileResult | null> => {
+					return this.connection.sendRequest(ReadFileRequest.type, { kind, uri, encoding });
 				},
 				readDirectory: (uri: DocumentUri): Promise<DirectoryEntry[] | null> => {
 					return this.connection.sendRequest(ReadDirectoryRequest.type, { uri });
