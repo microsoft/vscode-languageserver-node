@@ -242,6 +242,23 @@ suite('Server output', () => {
 	});
 });
 
+suite('Socket transport', () => {
+
+	test('Uses an OS-assigned port when transport.port is 0', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: { kind: lsclient.TransportKind.socket, port: 0 },
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('socket zero', 'Socket Transport (port=0)', serverOptions, clientOptions);
+		await client.start();
+		// If the client had passed --socket=0 to the server (the pre-fix bug), the server
+		// would either fail to connect or listen on a different random port, and start()
+		// would time out. Reaching this line proves the actual bound port was handed over.
+		await client.stop();
+	});
+});
+
 suite('Client integration', () => {
 
 	let client!: lsclient.LanguageClient;
