@@ -331,4 +331,8 @@ function patchConsole(logger: Logger): undefined {
 	console.warn = function warn(...args) {
 		logger.warn(serialize(args));
 	};
+
+	console.info = function info(...args) {
+		logger.info(serialize(args));
+	};
 }

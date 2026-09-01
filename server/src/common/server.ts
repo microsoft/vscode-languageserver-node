@@ -12,8 +12,8 @@ import {
 	PublishDiagnosticsParams, HoverParams, Hover, CompletionParams, CompletionItem, CompletionList, SignatureHelpParams, SignatureHelp, DeclarationParams,
 	Declaration, DeclarationLink, Location, DefinitionParams, Definition, DefinitionLink, TypeDefinitionParams, ImplementationParams, ReferenceParams,
 	DocumentHighlightParams, DocumentHighlight, DocumentSymbolParams, SymbolInformation, DocumentSymbol, WorkspaceSymbolParams, CodeActionParams, Command,
-	CodeAction, CodeLensParams, CodeLens, DocumentFormattingParams, DocumentRangeFormattingParams, DocumentOnTypeFormattingParams, RenameParams, WorkspaceEdit,
-	PrepareRenameParams, Range, DocumentLinkParams, DocumentLink, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, FoldingRangeParams,
+	CodeAction, CodeLensParams, CodeLens, DocumentFormattingParams, DocumentRangeFormattingParams, DocumentRangesFormattingParams, DocumentOnTypeFormattingParams, RenameParams,
+	WorkspaceEdit, PrepareRenameParams, Range, DocumentLinkParams, DocumentLink, DocumentColorParams, ColorInformation, ColorPresentationParams, ColorPresentation, FoldingRangeParams,
 	FoldingRange, SelectionRangeParams, SelectionRange, ExecuteCommandParams, MessageActionItem, ClientCapabilities, ServerCapabilities, Logger, ProtocolConnection,
 	MessageType, LogMessageNotification, ShowMessageRequestParams, ShowMessageRequest, TextDocumentSyncKind,
 	RegistrationRequest, UnregistrationRequest, UnregistrationParams, MessageSignature, Registration, RegistrationParams, Unregistration,
@@ -22,7 +22,7 @@ import {
 	DidChangeWatchedFilesNotification, DidOpenTextDocumentNotification, DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, WillSaveTextDocumentNotification,
 	WillSaveTextDocumentWaitUntilRequest, DidSaveTextDocumentNotification, PublishDiagnosticsNotification, HoverRequest, CompletionRequest, CompletionResolveRequest,
 	SignatureHelpRequest, DeclarationRequest, DefinitionRequest, TypeDefinitionRequest, ImplementationRequest, ReferencesRequest, DocumentHighlightRequest,
-	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest,
+	DocumentSymbolRequest, WorkspaceSymbolRequest, CodeActionRequest, CodeLensRequest, CodeLensResolveRequest, DocumentFormattingRequest, DocumentRangeFormattingRequest, DocumentRangesFormattingRequest,
 	DocumentOnTypeFormattingRequest, RenameRequest, PrepareRenameRequest, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentColorRequest, ColorPresentationRequest,
 	FoldingRangeRequest, SelectionRangeRequest, ExecuteCommandRequest, InitializeRequest, ResponseError, RegistrationType, RequestType0, RequestType,
 	NotificationType0, NotificationType, CodeActionResolveRequest, RAL, WorkspaceSymbol, WorkspaceSymbolResolveRequest
@@ -1283,6 +1283,13 @@ export interface _Connection<PConsole = _, PTracer = _, PTelemetry = _, PClient 
 	onDocumentRangeFormatting(handler: ServerRequestHandler<DocumentRangeFormattingParams, TextEdit[] | undefined | null, never, void>): Disposable;
 
 	/**
+	 * Installs a handler for the document ranges formatting request.
+	 *
+	 * @param handler The corresponding handler.
+	 */
+	onDocumentRangesFormatting(handler: ServerRequestHandler<DocumentRangesFormattingParams, TextEdit[] | undefined | null, never, void>): Disposable;
+
+	/**
 	 * Installs a handler for the document on type formatting request.
 	 *
 	 * @param handler The corresponding handler.
@@ -1611,6 +1618,9 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
 		}),
 		onDocumentRangeFormatting: (handler) => connection.onRequest(DocumentRangeFormattingRequest.type, (params, cancel) => {
+			return handler(params, cancel, attachWorkDone(connection, params), undefined);
+		}),
+		onDocumentRangesFormatting: (handler) => connection.onRequest(DocumentRangesFormattingRequest.type, (params, cancel) => {
 			return handler(params, cancel, attachWorkDone(connection, params), undefined);
 		}),
 		onDocumentOnTypeFormatting: (handler) => connection.onRequest(DocumentOnTypeFormattingRequest.type, (params, cancel) => {

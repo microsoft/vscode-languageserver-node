@@ -92,6 +92,10 @@ function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport):
 	assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
 }
 
+function waitForNextTurn(): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 function processExists(pid: number): boolean {
 	try {
 		process.kill(pid, 0);
@@ -207,6 +211,40 @@ suite ('Client Features', () => {
 	});
 });
 
+suite('Server output', () => {
+
+	test('Custom stdio handlers', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		let stdoutCalled = false;
+		let stderrCalled = false;
+		const expected: { outputChannel?: vscode.LogOutputChannel } = {};
+		const clientOptions: lsclient.LanguageClientOptions = {
+			stdioOptions: {
+				stdout: (input, outputChannel) => {
+					assert.strictEqual(typeof input.on, 'function');
+					assert.strictEqual(outputChannel, expected.outputChannel);
+					stdoutCalled = true;
+				},
+				stderr: (input, outputChannel) => {
+					assert.strictEqual(typeof input.on, 'function');
+					assert.strictEqual(outputChannel, expected.outputChannel);
+					stderrCalled = true;
+				}
+			}
+		};
+		const client = new lsclient.LanguageClient('test output', 'Test Output Language Server', serverOptions, clientOptions);
+		expected.outputChannel = client.outputChannel;
+
+		await client.start();
+		assert.strictEqual(stdoutCalled, true);
+		assert.strictEqual(stderrCalled, true);
+		await client.stop();
+	});
+});
+
 suite('Client integration', () => {
 
 	let client!: lsclient.LanguageClient;
@@ -250,12 +288,13 @@ suite('Client integration', () => {
 			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
 			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
 		};
-		const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }];
+		const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }, { scheme: 'lsptests', language: 'plaintext' }];
 
 		middleware = {};
 		const clientOptions: lsclient.LanguageClientOptions = {
 			documentSelector, synchronize: {}, initializationOptions: {}, middleware,
 			workspaceFolder: { index: 0, name: 'test_folder', uri: vscode.Uri.parse(`${fsProvider.scheme}:///`) },
+			diagnosticPullOptions: { onChange: true }
 		};
 
 		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
@@ -1446,6 +1485,73 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 		assert.strictEqual(reporterCalled, true);
 	});
+
+	test('Document diagnostic pull after quick reopen', async () => {
+		await vscode.window.showTextDocument(document);
+		let initialPullFinished: (() => void) | undefined;
+		const initialPull = new Promise<void>((resolve) => {
+			initialPullFinished = resolve;
+		});
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = async (document, previousResultId, token, next) => {
+			const result = await next(document, previousResultId, token);
+			initialPullFinished?.();
+			initialPullFinished = undefined;
+			return result;
+		};
+		document = await vscode.languages.setTextDocumentLanguage(document, 'plaintext');
+		await initialPull;
+		await waitForNextTurn();
+
+		let pullCount = 0;
+		let releasePull!: () => void;
+		const holdPull = new Promise<void>((resolve) => {
+			releasePull = resolve;
+		});
+		let firstPullStarted!: () => void;
+		const firstPull = new Promise<void>((resolve) => {
+			firstPullStarted = resolve;
+		});
+		let firstPullFinished!: () => void;
+		const firstPullDone = new Promise<void>((resolve) => {
+			firstPullFinished = resolve;
+		});
+		let expectedEditPull: number | undefined;
+		let editPullFinished!: () => void;
+		const editPull = new Promise<void>((resolve) => {
+			editPullFinished = resolve;
+		});
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = async (document, previousResultId, token, next) => {
+			const currentPull = ++pullCount;
+			if (currentPull === 1) {
+				firstPullStarted();
+				await holdPull;
+			}
+			const result = await next(document, previousResultId, token);
+			if (currentPull === 1) {
+				firstPullFinished();
+			}
+			if (currentPull === expectedEditPull) {
+				expectedEditPull = undefined;
+				editPullFinished();
+			}
+			return result;
+		};
+
+		const changeLanguage = vscode.languages.setTextDocumentLanguage(document, 'bat');
+		await firstPull;
+		document = await changeLanguage;
+		releasePull();
+		await firstPullDone;
+		await waitForNextTurn();
+
+		expectedEditPull = pullCount + 1;
+		const edit = new vscode.WorkspaceEdit();
+		edit.insert(document.uri, new vscode.Position(0, 0), ' ');
+		await vscode.workspace.applyEdit(edit);
+		await editPull;
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = undefined;
+		await revertAllDirty();
+	}).timeout(5000);
 
 	test('Type Hierarchy', async () => {
 		const provider = client.getFeature(lsclient.TypeHierarchyPrepareRequest.method).getProvider(document);
