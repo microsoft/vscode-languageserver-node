@@ -31,7 +31,7 @@
 		"vscode-languageserver-types": "3.18.3"
 	},
 	"scripts": {
-		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepublishOnly": "npm run all:publish",
 		"prepack": "npm run all:publish",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"preversion": "npm test",

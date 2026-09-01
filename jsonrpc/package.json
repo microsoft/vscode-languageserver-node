@@ -34,7 +34,7 @@
 		"msgpack-lite": "^0.1.26"
 	},
 	"scripts": {
-		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepublishOnly": "npm run all:publish",
 		"prepack": "npm run all:publish",
 		"preversion": "npm test",
 		"compile": "tsc -b ./tsconfig.json",

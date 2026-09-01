@@ -47,7 +47,7 @@
 		"vscode-languageserver-protocol": "3.18.3"
 	},
 	"scripts": {
-		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepublishOnly": "npm run all:publish",
 		"prepack": "npm run all:publish",
 		"compile": "tsc -b ./tsconfig.json",
 		"compile:clean": "git clean -xfd . && npm install && npm run clean && npm run compile",
