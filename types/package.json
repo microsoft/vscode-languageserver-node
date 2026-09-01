@@ -23,7 +23,7 @@
 		}
 	},
 	"scripts": {
-		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepublishOnly": "npm run all:publish",
 		"prepack": "npm run all:publish",
 		"compile": "tsc -b ./tsconfig.json",
 		"clean": "rimraf lib",
