@@ -7,7 +7,7 @@ import { InlineCompletionItem, InlineCompletionContext, InlineCompletionList } f
 import { RequestHandler } from 'vscode-jsonrpc';
 
 import { CM, MessageDirection, ProtocolRequestType } from './messages';
-import { type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type StaticRegistrationOptions, type WorkDoneProgressParams, type TextDocumentPositionParams } from './protocol';
+import { type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type StaticRegistrationOptions, type WorkDoneProgressParams, type TextDocumentPositionParams, type PartialResultParams } from './protocol';
 
 // ---- capabilities
 
@@ -42,7 +42,7 @@ export type InlineCompletionRegistrationOptions = InlineCompletionOptions & Text
  *
  * @since 3.18.0
  */
-export type InlineCompletionParams = WorkDoneProgressParams & TextDocumentPositionParams & {
+export type InlineCompletionParams = WorkDoneProgressParams & TextDocumentPositionParams & PartialResultParams & {
 	/**
 	 * Additional information about the context in which inline completions were
 	 * requested.
