@@ -13,8 +13,8 @@
 		"compile": "tsc -b ./tsconfig.json"
 	},
 	"dependencies": {
-		"@vscode/languageclient": "10.1.0",
-		"@vscode/languageserver-protocol": "3.18.2"
+		"@vscode/languageclient": "10.1.1",
+		"@vscode/languageserver-protocol": "3.18.3"
 	},
 	"devDependencies": {}
 }

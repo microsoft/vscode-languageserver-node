@@ -32,7 +32,9 @@
 	"dependencies": {
 		"minimatch": "^10.2.5",
 		"@vscode/languageserver": "10.1.1",
-		"vscode-uri": "3.1.0"
+		"@vscode/languageclient": "10.1.1",
+		"@vscode/languageserver-protocol": "3.18.3",
+		"vscode-uri": "3.2.0"
 	},
 	"devDependencies": {
 		"@types/glob": "^9.0.0",

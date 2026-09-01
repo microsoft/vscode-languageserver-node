@@ -31,10 +31,10 @@
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
 	},
 	"devDependencies": {
-		"vscode-languageserver-textdocument": "1.0.14"
+		"@vscode/languageserver-textdocument": "1.0.14"
 	},
 	"dependencies": {
-		"vscode-languageserver-protocol": "3.18.3"
+		"@vscode/languageserver-protocol": "3.18.3"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run all:publish",
