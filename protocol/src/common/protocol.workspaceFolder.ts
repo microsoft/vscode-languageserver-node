@@ -21,6 +21,21 @@ export interface WorkspaceFoldersInitializeParams {
 	workspaceFolders?: WorkspaceFolder[] | null;
 }
 
+export interface WorkspaceFoldersClientCapabilities {
+	/**
+	* The client has support for workspace folder change notifications.
+	*
+	* @since 3.18.0
+	*/
+	changeNotifications?: {
+		/**
+		 * Whether the client supports dynamic registration for the
+		 * `workspace/didChangeWorkspaceFolders` notification.
+		 */
+		dynamicRegistration?: boolean;
+	};
+}
+
 export interface WorkspaceFoldersServerCapabilities {
 
 	/**
@@ -62,7 +77,7 @@ export namespace DidChangeWorkspaceFoldersNotification {
 	export const type = new ProtocolNotificationType<DidChangeWorkspaceFoldersParams, void>(method);
 	export type HandlerSignature = NotificationHandler<DidChangeWorkspaceFoldersParams>;
 	export type MiddlewareSignature = (params: DidChangeWorkspaceFoldersParams, next: HandlerSignature) => void;
-	export const capabilities = CM.create(undefined, 'workspace.workspaceFolders.changeNotifications');
+	export const capabilities = CM.create('workspace.workspaceFolders.changeNotifications', 'workspace.workspaceFolders.changeNotifications');
 }
 
 /**
