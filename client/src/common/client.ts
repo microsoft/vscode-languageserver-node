@@ -858,6 +858,26 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this._outputChannel;
 	}
 
+	protected isOutputChannelVisible(): boolean {
+		if (this._outputChannel === undefined) {
+			return false;
+		}
+		const outputChannelName = this._outputChannel.name.toLowerCase();
+		return Window.visibleTextEditors.some(editor => {
+			if (editor.document.uri.scheme !== 'output') {
+				return false;
+			}
+			const outputResource = `${editor.document.uri.toString(true)}\n${editor.document.fileName}`.toLowerCase();
+			return outputResource.includes(outputChannelName);
+		});
+	}
+
+	protected restoreOutputChannelVisibility(wasVisible: boolean): void {
+		if (wasVisible) {
+			this.outputChannel.show(true);
+		}
+	}
+
 	public get traceOutputChannel(): LogOutputChannel {
 		return this._traceOutputChannel ? this._traceOutputChannel : this.outputChannel;
 	}

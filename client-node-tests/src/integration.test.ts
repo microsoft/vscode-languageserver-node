@@ -242,6 +242,52 @@ suite('Server output', () => {
 	});
 });
 
+suite('Client restart', () => {
+
+	test('Preserves output channel visibility after restart', async () => {
+		const client = new RestartTestLanguageClient(true);
+
+		await client.restart();
+
+		assert.deepStrictEqual(client.events, ['isOutputChannelVisible', 'stop', 'start', 'restoreOutputChannelVisibility:true']);
+	});
+
+	test('Does not restore hidden output channel after restart', async () => {
+		const client = new RestartTestLanguageClient(false);
+
+		await client.restart();
+
+		assert.deepStrictEqual(client.events, ['isOutputChannelVisible', 'stop', 'start', 'restoreOutputChannelVisibility:false']);
+	});
+});
+
+class RestartTestLanguageClient extends lsclient.LanguageClient {
+
+	public readonly events: string[] = [];
+
+	public constructor(private readonly outputChannelVisible: boolean) {
+		super('test restart', { module: 'unused', transport: lsclient.TransportKind.ipc }, {});
+	}
+
+	public override async start(): Promise<void> {
+		this.events.push('start');
+	}
+
+	public override stop(): Promise<void> {
+		this.events.push('stop');
+		return Promise.resolve();
+	}
+
+	protected override isOutputChannelVisible(): boolean {
+		this.events.push('isOutputChannelVisible');
+		return this.outputChannelVisible;
+	}
+
+	protected override restoreOutputChannelVisibility(wasVisible: boolean): void {
+		this.events.push(`restoreOutputChannelVisibility:${wasVisible}`);
+	}
+}
+
 suite('Client integration', () => {
 
 	let client!: lsclient.LanguageClient;
