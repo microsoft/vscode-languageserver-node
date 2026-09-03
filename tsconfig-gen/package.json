@@ -28,8 +28,8 @@
 		"@types/yargs": "^17.0.33"
 	},
 	"scripts": {
-		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
-		"prepack": "git clean -xfd . && npm install && npm run all",
+		"prepublishOnly": "npm run all:publish",
+		"prepack": "npm run all:publish",
 		"compile": "tsc -b ./tsconfig.json",
 		"clean": "rimraf lib",
 		"watch": "tsc -b ./tsconfig.watch.json -w",

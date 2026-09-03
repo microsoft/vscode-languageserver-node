@@ -7,7 +7,7 @@ import { RequestHandler, RequestHandler0 } from 'vscode-jsonrpc';
 import { Range, TextDocumentIdentifier, InlayHint } from 'vscode-languageserver-types';
 import { CM, MessageDirection, ProtocolRequestType, ProtocolRequestType0 } from './messages';
 
-import { type StaticRegistrationOptions, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type WorkDoneProgressParams } from './protocol';
+import { type PartialResultParams, type StaticRegistrationOptions, type TextDocumentRegistrationOptions, type WorkDoneProgressOptions, type WorkDoneProgressParams } from './protocol';
 
 /**
  * @since 3.18.0
@@ -81,7 +81,7 @@ export type InlayHintRegistrationOptions = InlayHintOptions & TextDocumentRegist
  *
  * @since 3.17.0
  */
-export type InlayHintParams = WorkDoneProgressParams & {
+export type InlayHintParams = WorkDoneProgressParams & PartialResultParams & {
 	/**
 	 * The text document.
 	 */
