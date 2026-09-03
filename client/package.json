@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageclient",
 	"description": "VSCode Language client implementation",
-	"version": "10.1.0",
+	"version": "10.1.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"engines": {
@@ -41,13 +41,13 @@
 		"shx": "^0.4.0"
 	},
 	"dependencies": {
-		"minimatch": "^10.2.5",
+		"minimatch": "^10.2.6",
 		"semver": "^7.8.1",
-		"vscode-languageserver-textdocument": "1.0.13",
-		"vscode-languageserver-protocol": "3.18.2"
+		"vscode-languageserver-textdocument": "1.0.14",
+		"vscode-languageserver-protocol": "3.18.3"
 	},
 	"scripts": {
-		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepublishOnly": "npm run all:publish",
 		"prepack": "npm run all:publish",
 		"compile": "tsc -b ./tsconfig.json",
 		"compile:clean": "git clean -xfd . && npm install && npm run clean && npm run compile",

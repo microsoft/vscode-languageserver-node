@@ -3977,6 +3977,10 @@
 				{
 					"kind": "reference",
 					"name": "WorkDoneProgressParams"
+				},
+				{
+					"kind": "reference",
+					"name": "PartialResultParams"
 				}
 			],
 			"documentation": "A parameter literal used in inline value requests.\n\n@since 3.17.0",
@@ -4028,6 +4032,10 @@
 				{
 					"kind": "reference",
 					"name": "WorkDoneProgressParams"
+				},
+				{
+					"kind": "reference",
+					"name": "PartialResultParams"
 				}
 			],
 			"documentation": "A parameter literal used in inlay hint requests.\n\n@since 3.17.0",
@@ -4436,6 +4444,10 @@
 				{
 					"kind": "reference",
 					"name": "WorkDoneProgressParams"
+				},
+				{
+					"kind": "reference",
+					"name": "PartialResultParams"
 				}
 			],
 			"documentation": "A parameter literal used in inline completion requests.\n\n@since 3.18.0",

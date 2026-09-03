@@ -307,6 +307,7 @@ class DiagnosticRequestor implements Disposable {
 	public readonly provider: vsdiag.DiagnosticProvider;
 	private readonly diagnostics: DiagnosticCollection;
 	private readonly openRequests: Map<string, RequestState>;
+	private readonly pendingDocumentForgets: Map<string, symbol>;
 	private readonly documentStates: DocumentPullStateTracker;
 
 	private workspaceErrorCounter: number;
@@ -324,6 +325,7 @@ class DiagnosticRequestor implements Disposable {
 
 		this.diagnostics = this.createDiagnosticCollection();
 		this.openRequests = new Map();
+		this.pendingDocumentForgets = new Map();
 		this.documentStates = new DocumentPullStateTracker();
 		this.workspaceErrorCounter = 0;
 	}
@@ -359,6 +361,10 @@ class DiagnosticRequestor implements Disposable {
 
 	private forget(kind: PullState, document: TextDocument | Uri): void {
 		this.documentStates.unTrack(kind, document);
+	}
+
+	public cancelPendingForget(document: TextDocument | Uri): void {
+		this.pendingDocumentForgets.delete(DocumentOrUri.asKey(document));
 	}
 
 	public pull(document: TextDocument | Uri, cb?: () => void): void {
@@ -454,8 +460,13 @@ class DiagnosticRequestor implements Disposable {
 			if (request !== undefined) {
 				this.openRequests.set(key, { state: RequestStateKind.reschedule, document: document });
 			} else {
+				const pendingForget = Symbol();
+				this.pendingDocumentForgets.set(key, pendingForget);
 				this.pull(document, () => {
-					this.forget(PullState.document, document);
+					if (this.pendingDocumentForgets.get(key) === pendingForget) {
+						this.pendingDocumentForgets.delete(key);
+						this.forget(PullState.document, document);
+					}
 				});
 			}
 
@@ -916,11 +927,12 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.textDocument;
-			// We already know about this document. This can happen via a tab open.
-			if (this.diagnosticRequestor.knowsSameVersion(PullState.document, textDocument)) {
-				return;
-			}
 			if (matches(textDocument)) {
+				this.diagnosticRequestor.cancelPendingForget(textDocument);
+				// We already know about this document. This can happen via a tab open.
+				if (this.diagnosticRequestor.knowsSameVersion(PullState.document, textDocument)) {
+					return;
+				}
 				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
 			}
 		}));
@@ -929,6 +941,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			// Send a pull for all opened cells in the notebook.
 			for (const cell of event.getCells()) {
 				if (matchesCell(cell)) {
+					this.diagnosticRequestor.cancelPendingForget(cell.document);
 					this.diagnosticRequestor.pull(cell.document, () => { addToBackgroundIfNeeded(cell.document); });
 				}
 			}

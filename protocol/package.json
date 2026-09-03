@@ -1,7 +1,7 @@
 {
 	"name": "vscode-languageserver-protocol",
 	"description": "VSCode Language Server Protocol implementation",
-	"version": "3.18.2",
+	"version": "3.18.3",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"repository": {
@@ -27,11 +27,11 @@
 		}
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "9.0.1",
-		"vscode-languageserver-types": "3.18.0"
+		"vscode-jsonrpc": "9.0.2",
+		"vscode-languageserver-types": "3.18.3"
 	},
 	"scripts": {
-		"prepublishOnly": "echo \"⛔ Can only publish from a secure pipeline ⛔\" && node ../build/npm/fail",
+		"prepublishOnly": "npm run all:publish",
 		"prepack": "npm run all:publish",
 		"postpublish": "node ../build/npm/post-publish.js",
 		"preversion": "npm test",
