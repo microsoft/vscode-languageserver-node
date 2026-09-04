@@ -17,8 +17,6 @@ import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
-import * as UUID from './utils/uuid';
-
 export interface ProvideInlineCompletionItemsSignature {
 	(this: void, document: TextDocument, position: VPosition, context: VInlineCompletionContext, token: CancellationToken): ProviderResult<VInlineCompletionItem[] | VInlineCompletionList>;
 }
@@ -49,7 +47,7 @@ export class InlineCompletionItemFeature extends TextDocumentLanguageFeature<boo
 		}
 
 		this.register({
-			id: UUID.generateUuid(),
+			id: crypto.randomUUID(),
 			registerOptions: options
 		});
 	}
