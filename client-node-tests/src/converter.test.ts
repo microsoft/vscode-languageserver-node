@@ -1766,4 +1766,32 @@ suite('Code Converter', () => {
 		rangeEqual(result.selectedCompletionInfo.range, item.selectedCompletionInfo!.range);
 		strictEqual(result.selectedCompletionInfo.text, item.selectedCompletionInfo!.text);
 	});
+
+	test('DirectoryEntry', () => {
+		const entries: [string, vscode.FileType][] = [
+			['file.txt', vscode.FileType.File],
+			['dir', vscode.FileType.Directory],
+			['link', vscode.FileType.SymbolicLink | vscode.FileType.File],
+			['dirLink', vscode.FileType.SymbolicLink | vscode.FileType.Directory],
+			['danglingLink', vscode.FileType.SymbolicLink],
+			['unknown', vscode.FileType.Unknown]
+		];
+
+		deepStrictEqual(entries.map(c2p.asDirectoryEntry), [
+			{ name: 'file.txt', type: proto.FileType.file, flags: 0 },
+			{ name: 'dir', type: proto.FileType.directory, flags: 0 },
+			{ name: 'link', type: proto.FileType.file, flags: proto.FileFlags.symbolicLink },
+			{ name: 'dirLink', type: proto.FileType.directory, flags: proto.FileFlags.symbolicLink },
+			{ name: 'danglingLink', type: proto.FileType.unknown, flags: proto.FileFlags.symbolicLink },
+			{ name: 'unknown', type: proto.FileType.unknown, flags: 0 }
+		]);
+	});
+
+	test('FileStat', () => {
+		const result = c2p.asFileStat({ type: vscode.FileType.SymbolicLink | vscode.FileType.File, ctime: 1, mtime: 2, size: 3 });
+		deepStrictEqual(result, { type: proto.FileType.file, flags: proto.FileFlags.symbolicLink, ctime: 1, mtime: 2, size: 3 });
+
+		const dir = c2p.asFileStat({ type: vscode.FileType.Directory, ctime: 4, mtime: 5, size: 6 });
+		deepStrictEqual(dir, { type: proto.FileType.directory, flags: 0, ctime: 4, mtime: 5, size: 6 });
+	});
 });

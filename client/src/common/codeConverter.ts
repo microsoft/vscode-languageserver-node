@@ -145,6 +145,9 @@ export interface Converter {
 
 	asInlineCompletionParams(document: code.TextDocument, position: code.Position, context: code.InlineCompletionContext): proto.InlineCompletionParams;
 	asInlineCompletionContext(context: code.InlineCompletionContext): proto.InlineCompletionContext;
+
+	asDirectoryEntry(item: [string, code.FileType]): proto.DirectoryEntry;
+	asFileStat(item: code.FileStat): proto.FileStat;
 }
 
 export interface URIConverter {
@@ -977,6 +980,48 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		return result;
 	}
 
+	function asFileType(value: code.FileType): {
+		type: proto.FileType;
+		flags: proto.FileFlags;
+	} {
+		let type: proto.FileType = proto.FileType.unknown;
+		if (value & code.FileType.Directory) {
+			type = proto.FileType.directory;
+		} else if (value & code.FileType.File) {
+			type = proto.FileType.file;
+		}
+		let flags: proto.FileFlags = 0;
+		if (value & code.FileType.SymbolicLink) {
+			flags |= proto.FileFlags.symbolicLink;
+		}
+		return {
+			type,
+			flags
+		};
+	}
+
+	function asDirectoryEntry(item: [string, code.FileType]): proto.DirectoryEntry {
+		const { type, flags } = asFileType(item[1]);
+		const result: proto.DirectoryEntry = {
+			name: item[0],
+			type,
+			flags
+		};
+		return result;
+	}
+
+	function asFileStat(item: code.FileStat): proto.FileStat {
+		const { type, flags } = asFileType(item.type);
+		const result: proto.FileStat = {
+			type,
+			flags,
+			ctime: item.ctime,
+			mtime: item.mtime,
+			size: item.size
+		};
+		return result;
+	}
+
 	return {
 		asUri,
 		asTextDocumentIdentifier,
@@ -1031,6 +1076,8 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 		asInlayHint,
 		asWorkspaceSymbol,
 		asInlineCompletionParams,
-		asInlineCompletionContext
+		asInlineCompletionContext,
+		asDirectoryEntry,
+		asFileStat,
 	};
 }
