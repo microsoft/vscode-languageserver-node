@@ -1836,7 +1836,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 
 		const transports = await this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8');
-		this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this._clientOptions.connectionOptions);
+		this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, () => this.outputChannel, this._clientOptions.connectionOptions);
 		return this._connection;
 	}
 
@@ -2480,6 +2480,23 @@ class ConsoleLogger implements Logger {
 	}
 }
 
+class OutputChannelLogger implements Logger {
+	constructor(private readonly getOutputChannel: () => LogOutputChannel) {
+	}
+	public error(message: string): void {
+		this.getOutputChannel().error(message);
+	}
+	public warn(message: string): void {
+		this.getOutputChannel().warn(message);
+	}
+	public info(message: string): void {
+		this.getOutputChannel().info(message);
+	}
+	public log(message: string): void {
+		this.getOutputChannel().info(message);
+	}
+}
+
 interface ConnectionErrorHandler {
 	(error: Error, message: Message | undefined, count: number | undefined): void;
 }
@@ -2488,8 +2505,8 @@ interface ConnectionCloseHandler {
 	(): void;
 }
 
-function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
-	const logger = new ConsoleLogger();
+function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, getOutputChannel: (() => LogOutputChannel) | undefined, options?: ConnectionOptions): Connection {
+	const logger: Logger = getOutputChannel !== undefined ? new OutputChannelLogger(getOutputChannel) : new ConsoleLogger();
 	const connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
