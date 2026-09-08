@@ -11,7 +11,7 @@ import { Duplex  } from 'stream';
 import { inherits } from 'util';
 import { AsyncLocalStorage } from 'async_hooks';
 
-import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../main';
+import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes, Trace, Tracer } from '../main';
 
 import * as hostConnection from '../main';
 import { getCustomCancellationStrategy } from './customCancellationStrategy';
@@ -258,6 +258,31 @@ suite('Connection', () => {
 		client.sendRequest(type, 'foo').then((_result) => {
 		}, (error: ResponseError<any>) => {
 			assert.strictEqual(error.code, ErrorCodes.MethodNotFound);
+			done();
+		});
+	});
+
+	test('Trace includes error code and message when sending an error response', (done) => {
+		const type = new RequestType<string, string, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, () => {
+			throw new ResponseError(ErrorCodes.InvalidParams, 'Boom');
+		});
+		const logs: string[] = [];
+		const tracer: Tracer = { log: (message: string) => logs.push(message) };
+		void server.trace(Trace.Verbose, tracer);
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		client.sendRequest(type, 'foo').then((_result) => {
+		}, (_error: ResponseError<any>) => {
+			const sendingResponseLog = logs.find(message => message.includes('Sending response'));
+			assert.ok(sendingResponseLog !== undefined, 'Expected a "Sending response" trace message');
+			assert.ok(sendingResponseLog!.includes(`Boom (${ErrorCodes.InvalidParams})`), `Expected trace message to include the error message and code, got: ${sendingResponseLog}`);
 			done();
 		});
 	});
