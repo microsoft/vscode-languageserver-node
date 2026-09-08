@@ -1166,13 +1166,14 @@
 				]
 			},
 			"messageDirection": "serverToClient",
-			"clientCapability": "workspace.fileOperations.fileStat",
+			"clientCapability": "workspace.fileSystem.stat",
 			"params": {
 				"kind": "reference",
 				"name": "StatParams"
 			},
-			"documentation": "The stat request is sent from the server to the client to get metadata about a file.\n\nThe request can return a `FileStat` which will be used to determine the type of the file,\nits size, and the creation and modification time. Returns `null` if the file does not exist.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "The stat request is sent from the server to the client to get metadata about a file.\n\nThe request can return a `FileStat` which will be used to determine the type of the file,\nits size, and the creation and modification time. Returns `null` if the file does not exist.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"method": "workspace/readDirectory",
@@ -1194,13 +1195,14 @@
 				]
 			},
 			"messageDirection": "serverToClient",
-			"clientCapability": "workspace.fileOperations.readDirectory",
+			"clientCapability": "workspace.fileSystem.readDirectory",
 			"params": {
 				"kind": "reference",
 				"name": "ReadDirectoryParams"
 			},
-			"documentation": "The read directory request is sent from the server to the client to get the entries of a directory.\n\nThe request can return a `DirectoryEntry[]` which contains the directory entries.\nReturns `null` if the directory does not exist or the client cannot read it.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "The read directory request is sent from the server to the client to get the entries of a directory.\n\nThe request can return a `DirectoryEntry[]` which contains the directory entries.\nReturns `null` if the directory does not exist or the client cannot read it.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"method": "workspace/readFile",
@@ -1219,13 +1221,14 @@
 				]
 			},
 			"messageDirection": "serverToClient",
-			"clientCapability": "workspace.fileOperations.readFile",
+			"clientCapability": "workspace.fileSystem.readFile",
 			"params": {
 				"kind": "reference",
 				"name": "ReadFileParams"
 			},
-			"documentation": "The read file request is sent from the server to the client to get the content of a file.\n\nThe request can return a `ReadFileResult` which contains the content of the file.\nReturns `null` if the file does not exist or the client cannot read it.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "The read file request is sent from the server to the client to get the content of a file.\n\nThe request can return a `ReadFileResult` which contains the content of the file.\nReturns `null` if the file does not exist or the client cannot read it.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"method": "client/registerCapability",
@@ -4619,8 +4622,9 @@
 					"documentation": "A URI for the location of the file/folder."
 				}
 			],
-			"documentation": "The parameters sent in a request to get metadata about a file.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "The parameters sent in a request to get metadata about a file.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "FileStat",
@@ -4645,7 +4649,7 @@
 					"name": "ctime",
 					"type": {
 						"kind": "base",
-						"name": "integer"
+						"name": "decimal"
 					},
 					"documentation": "The creation timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC."
 				},
@@ -4653,7 +4657,7 @@
 					"name": "mtime",
 					"type": {
 						"kind": "base",
-						"name": "integer"
+						"name": "decimal"
 					},
 					"documentation": "The modification timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC."
 				},
@@ -4661,13 +4665,14 @@
 					"name": "size",
 					"type": {
 						"kind": "base",
-						"name": "integer"
+						"name": "decimal"
 					},
 					"documentation": "The size in bytes."
 				}
 			],
-			"documentation": "Represents metadata about a file.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "Represents metadata about a file.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "ReadDirectoryParams",
@@ -4681,8 +4686,9 @@
 					"documentation": "A URI for the location of the folder."
 				}
 			],
-			"documentation": "The parameters sent in a request to read the contents of a directory.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "The parameters sent in a request to read the contents of a directory.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "DirectoryEntry",
@@ -4712,8 +4718,9 @@
 					"documentation": "Additional flags about the entry."
 				}
 			],
-			"documentation": "A directory entry represents a file or a folder in a directory.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "A directory entry represents a file or a folder in a directory.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "ReadFileResult",
@@ -4727,8 +4734,9 @@
 					"documentation": "The content of the file as a unicode string.\n\nIf the content is requested as text, it will be read using the encoding specified in the request.\nAny invalid byte sequences will be replaced with the unicode replacement character `U+FFFD`.\n\nIf the content is requested as binary, it will be returned as a base64 encoded string."
 				}
 			],
-			"documentation": "The result of a read file request.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "The result of a read file request.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "RegistrationParams",
@@ -8290,8 +8298,9 @@
 					"documentation": "The encoding of the file content. If not specified, the content is assumed to be UTF-8."
 				}
 			],
-			"documentation": "The parameters sent in a request to read the text contents of a file.\nFile will be read using the encoding specified in the request.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "The parameters sent in a request to read the text contents of a file.\nFile will be read using the encoding specified in the request.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "BinaryReadFileParams",
@@ -8313,8 +8322,9 @@
 					"documentation": "A URI for the location of the file."
 				}
 			],
-			"documentation": "The parameters sent in a request to read the binary contents of a file.\nFile content will be returned as a base64 encoded string.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "The parameters sent in a request to read the binary contents of a file.\nFile content will be returned as a base64 encoded string.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "Registration",
@@ -11513,8 +11523,9 @@
 						"name": "FileSystemClientCapabilities"
 					},
 					"optional": true,
-					"documentation": "Client capabilities specific to file system requests.\n\n@since 3.19.0",
-					"since": "3.19.0"
+					"documentation": "Client capabilities specific to file system requests.\n\n@since 3.19.0\n@proposed",
+					"since": "3.19.0",
+					"proposed": true
 				}
 			],
 			"documentation": "Workspace specific client capabilities."
@@ -12610,8 +12621,9 @@
 					"documentation": "Whether the client supports the `workspace/readFile` request."
 				}
 			],
-			"documentation": "Client capabilities specific to file system requests.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "Client capabilities specific to file system requests.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "TextDocumentSyncClientCapabilities",
@@ -14967,8 +14979,9 @@
 					"documentation": "A directory."
 				}
 			],
-			"documentation": "The file type of a file system entry.\n\n@since 3.19.0",
-			"since": "3.19.0"
+			"documentation": "The file type of a file system entry.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "FileFlags",
@@ -14984,7 +14997,9 @@
 				}
 			],
 			"supportsCustomValues": true,
-			"documentation": "Additional flags about a file system entry.\nImplemented as a bitmask so that multiple flags can be combined."
+			"documentation": "Additional flags about a file system entry.\nImplemented as a bitmask so that multiple flags can be combined.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "MessageType",
@@ -16207,7 +16222,10 @@
 						"name": "BinaryReadFileParams"
 					}
 				]
-			}
+			},
+			"documentation": "The parameters sent in a request to read the contents of a file.\n\n@since 3.19.0\n@proposed",
+			"since": "3.19.0",
+			"proposed": true
 		},
 		{
 			"name": "PrepareRenameResult",

@@ -684,6 +684,7 @@ export interface WorkspaceClientCapabilities {
 	 * Client capabilities specific to file system requests.
 	 *
 	 * @since 3.19.0
+	 * @proposed
 	 */
 	fileSystem?: FileSystemClientCapabilities;
 }
@@ -4394,7 +4395,7 @@ export {
 	TextDocumentContentRequest, TextDocumentContentRefreshParams, TextDocumentContentRefreshRequest,
 	// File System
 	FileStat, StatParams, StatRequest, DirectoryEntry, FileType, FileFlags, ReadDirectoryParams, ReadDirectoryRequest, ReadFileParams, ReadFileRequest, ReadFileResult,
-	ReadFileParamKind, TextReadFileParams, BinaryReadFileParams,
+	FileSystemClientCapabilities, ReadFileParamKind, TextReadFileParams, BinaryReadFileParams,
 };
 
 // To be backwards compatible

@@ -343,7 +343,7 @@ DocumentHighlightMiddleware & DocumentSymbolMiddleware & WorkspaceSymbolMiddlewa
 ColorProviderMiddleware & CodeActionMiddleware & CodeLensMiddleware & FormattingMiddleware & RenameMiddleware & DocumentLinkMiddleware & ExecuteCommandMiddleware &
 FoldingRangeProviderMiddleware & DeclarationMiddleware & SelectionRangeProviderMiddleware & CallHierarchyMiddleware & SemanticTokensMiddleware &
 LinkedEditingRangeMiddleware & TypeHierarchyMiddleware & InlineValueMiddleware & InlayHintsMiddleware & NotebookDocumentMiddleware & DiagnosticProviderMiddleware &
-InlineCompletionMiddleware & TextDocumentContentMiddleware & FileSystemMiddleware & GeneralMiddleware;
+InlineCompletionMiddleware & TextDocumentContentMiddleware & GeneralMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];

@@ -4,13 +4,14 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { RequestHandler } from 'vscode-jsonrpc';
-import { uinteger, type DocumentUri } from 'vscode-languageserver-types';
+import { decimal, uinteger, type DocumentUri } from 'vscode-languageserver-types';
 import { CM, MessageDirection, ProtocolRequestType } from './messages';
 
 /**
  * Client capabilities specific to file system requests.
  *
  * @since 3.19.0
+ * @proposed
  */
 export interface FileSystemClientCapabilities {
 
@@ -34,6 +35,7 @@ export interface FileSystemClientCapabilities {
  * Represents metadata about a file.
  *
  * @since 3.19.0
+ * @proposed
  */
 export interface FileStat {
 	/**
@@ -47,21 +49,22 @@ export interface FileStat {
 	/**
 	 * The creation timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
 	 */
-	ctime: number;
+	ctime: decimal;
 	/**
 	 * The modification timestamp in milliseconds elapsed since January 1, 1970 00:00:00 UTC.
 	 */
-	mtime: number;
+	mtime: decimal;
 	/**
 	 * The size in bytes.
 	 */
-	size: number;
+	size: decimal;
 }
 
 /**
  * The parameters sent in a request to get metadata about a file.
  *
  * @since 3.19.0
+ * @proposed
  */
 export interface StatParams {
 	/**
@@ -74,6 +77,7 @@ export interface StatParams {
  * The file type of a file system entry.
  *
  * @since 3.19.0
+ * @proposed
  */
 export namespace FileType {
 	/**
@@ -94,6 +98,9 @@ export type FileType = 'unknown' | 'file' | 'directory';
 /**
  * Additional flags about a file system entry.
  * Implemented as a bitmask so that multiple flags can be combined.
+ *
+ * @since 3.19.0
+ * @proposed
  */
 export namespace FileFlags {
 	/**
@@ -107,6 +114,7 @@ export type FileFlags = uinteger;
  * The parameters sent in a request to read the contents of a directory.
  *
  * @since 3.19.0
+ * @proposed
  */
 export interface ReadDirectoryParams {
 	/**
@@ -119,6 +127,7 @@ export interface ReadDirectoryParams {
  * A directory entry represents a file or a folder in a directory.
  *
  * @since 3.19.0
+ * @proposed
  */
 export interface DirectoryEntry {
 	/**
@@ -140,6 +149,7 @@ export interface DirectoryEntry {
  * File will be read using the encoding specified in the request.
  *
  * @since 3.19.0
+ * @proposed
  */
 export interface TextReadFileParams {
 	/**
@@ -161,6 +171,7 @@ export interface TextReadFileParams {
  * File content will be returned as a base64 encoded string.
  *
  * @since 3.19.0
+ * @proposed
  */
 export interface BinaryReadFileParams {
 	/**
@@ -177,6 +188,7 @@ export interface BinaryReadFileParams {
  * The parameters sent in a request to read the contents of a file.
  *
  * @since 3.19.0
+ * @proposed
  */
 export type ReadFileParams = TextReadFileParams | BinaryReadFileParams;
 export type ReadFileParamKind = ReadFileParams['kind'];
@@ -186,6 +198,7 @@ export type ReadFileParamKind = ReadFileParams['kind'];
  * The result of a read file request.
  *
  * @since 3.19.0
+ * @proposed
  */
 export interface ReadFileResult {
 	/**
@@ -206,13 +219,14 @@ export interface ReadFileResult {
  * its size, and the creation and modification time. Returns `null` if the file does not exist.
  *
  * @since 3.19.0
+ * @proposed
  */
 export namespace StatRequest {
 	export const method: 'workspace/stat' = 'workspace/stat';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<StatParams, FileStat | null, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<StatParams, FileStat | null, void>;
-	export const capabilities = CM.create('workspace.fileOperations.fileStat', undefined);
+	export const capabilities = CM.create('workspace.fileSystem.stat', undefined);
 }
 
 /**
@@ -222,13 +236,14 @@ export namespace StatRequest {
  * Returns `null` if the directory does not exist or the client cannot read it.
  *
  * @since 3.19.0
+ * @proposed
  */
 export namespace ReadDirectoryRequest {
 	export const method: 'workspace/readDirectory' = 'workspace/readDirectory';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ReadDirectoryParams, DirectoryEntry[] | null, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<ReadDirectoryParams, DirectoryEntry[] | null, void>;
-	export const capabilities = CM.create('workspace.fileOperations.readDirectory', undefined);
+	export const capabilities = CM.create('workspace.fileSystem.readDirectory', undefined);
 }
 
 /**
@@ -238,11 +253,12 @@ export namespace ReadDirectoryRequest {
  * Returns `null` if the file does not exist or the client cannot read it.
  *
  * @since 3.19.0
+ * @proposed
  */
 export namespace ReadFileRequest {
 	export const method: 'workspace/readFile' = 'workspace/readFile';
 	export const messageDirection: MessageDirection = MessageDirection.serverToClient;
 	export const type = new ProtocolRequestType<ReadFileParams, ReadFileResult | null, never, void, void>(method);
 	export type HandlerSignature = RequestHandler<ReadFileParams, ReadFileResult | null, void>;
-	export const capabilities = CM.create('workspace.fileOperations.readFile', undefined);
+	export const capabilities = CM.create('workspace.fileSystem.readFile', undefined);
 }
