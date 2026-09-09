@@ -219,6 +219,77 @@ suite('Connection', () => {
 		});
 	});
 
+	test('Request write failure does not cause an unhandled rejection', () => {
+		const main = path.join(__dirname, '..', 'main.js');
+		const script = `
+			const assert = require('assert');
+			const { once } = require('events');
+			const { PassThrough } = require('stream');
+			const rpc = require(${JSON.stringify(main)});
+
+			async function run() {
+				const input = new PassThrough();
+				const output = new PassThrough();
+				const closed = once(output, 'close');
+				output.destroy();
+				await closed;
+
+				const cleaned = [];
+				let cancellations = 0;
+				const loggedErrors = [];
+				const connection = rpc.createMessageConnection(input, output, {
+					...rpc.NullLogger,
+					error: message => loggedErrors.push(message)
+				}, {
+					cancellationStrategy: {
+						receiver: rpc.CancellationStrategy.Message.receiver,
+						sender: {
+							sendCancellation: async () => { cancellations++; },
+							cleanup: id => cleaned.push(id)
+						}
+					}
+				});
+				const errors = [];
+				connection.onError(([error]) => errors.push(error));
+				const source = new rpc.CancellationTokenSource();
+				connection.listen();
+				try {
+					await assert.rejects(connection.sendRequest('test/writeFailure', source.token), error => {
+						assert.ok(error instanceof rpc.ResponseError);
+						assert.strictEqual(error.code, rpc.ErrorCodes.MessageWriteError);
+						assert.ok(errors.some(cause => cause.code === 'ERR_STREAM_DESTROYED' && cause.message === error.message));
+						return true;
+					});
+					assert.strictEqual(connection.hasPendingResponse(), false);
+					assert.deepStrictEqual(cleaned, [0]);
+					assert.deepStrictEqual(loggedErrors, ['Sending request failed.']);
+					source.cancel();
+					assert.strictEqual(cancellations, 0);
+				} finally {
+					connection.dispose();
+					source.dispose();
+					input.destroy();
+					output.destroy();
+				}
+				assert.deepStrictEqual(cleaned, [0]);
+				process.stdout.write('done');
+			}
+
+			run().catch(error => {
+				console.error(error);
+				process.exitCode = 1;
+			});
+		`;
+
+		// Isolate strict rejection handling from Mocha and let the child exit naturally.
+		const result = execFileSync(process.execPath, ['--unhandled-rejections=strict', '-e', script], {
+			encoding: 'utf8',
+			timeout: 10000,
+			stdio: 'pipe'
+		});
+		assert.strictEqual(result, 'done');
+	});
+
 	test('Handle Multiple Requests', (done) => {
 		const type = new RequestType<string, string, void>('test/handleSingleRequest');
 		const duplexStream1 = new TestDuplex('ds1');
