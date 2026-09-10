@@ -397,8 +397,6 @@ export class LanguageClient extends BaseLanguageClient {
 					} else if (transport === TransportKind.pipe) {
 						pipeName = generateRandomPipeName();
 						args.push(`--pipe=${pipeName}`);
-					} else if (Transport.isSocket(transport)) {
-						args.push(`--socket=${transport.port}`);
 					}
 					args.push(`--clientProcessId=${process.pid.toString()}`);
 					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
@@ -429,6 +427,7 @@ export class LanguageClient extends BaseLanguageClient {
 						});
 					} else if (Transport.isSocket(transport)) {
 						return createClientSocketTransport(transport.port).then((transport) => {
+							args.push(`--socket=${transport.port()}`);
 							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
@@ -452,8 +451,6 @@ export class LanguageClient extends BaseLanguageClient {
 						} else if (transport === TransportKind.pipe) {
 							pipeName = generateRandomPipeName();
 							args.push(`--pipe=${pipeName}`);
-						} else if (Transport.isSocket(transport)) {
-							args.push(`--socket=${transport.port}`);
 						}
 						args.push(`--clientProcessId=${process.pid.toString()}`);
 						const options: cp.ForkOptions = node.options ? { ...node.options } : Object.create(null);
@@ -485,6 +482,7 @@ export class LanguageClient extends BaseLanguageClient {
 							}, reject);
 						} else if (Transport.isSocket(transport)) {
 							createClientSocketTransport(transport.port).then((transport) => {
+								args.push(`--socket=${transport.port()}`);
 								const sp = cp.fork(node.module, args || [], options);
 								assertStdio(sp);
 								this._serverProcess = sp;
@@ -507,8 +505,6 @@ export class LanguageClient extends BaseLanguageClient {
 				} else if (transport === TransportKind.pipe) {
 					pipeName = generateRandomPipeName();
 					args.push(`--pipe=${pipeName}`);
-				} else if (Transport.isSocket(transport)) {
-					args.push(`--socket=${transport.port}`);
 				} else if (transport === TransportKind.ipc) {
 					throw new Error(`Transport kind ipc is not support for command executable`);
 				}
@@ -539,6 +535,7 @@ export class LanguageClient extends BaseLanguageClient {
 					});
 				} else if (Transport.isSocket(transport)) {
 					return createClientSocketTransport(transport.port).then((transport) => {
+						args.push(`--socket=${transport.port()}`);
 						const serverProcess = cp.spawn(command.command, args, options);
 						if (!serverProcess || !serverProcess.pid) {
 							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);

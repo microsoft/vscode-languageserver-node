@@ -76,6 +76,34 @@ suite('Connection', () => {
 		execFileSync(process.execPath, ['-e', script], { stdio: 'pipe' });
 	});
 
+	test('createClientSocketTransport resolves with the requested port when non-zero', async () => {
+		const net = await import('net');
+		const probe = net.createServer();
+		await new Promise<void>((resolve, reject) => {
+			probe.on('error', reject);
+			probe.listen(0, '127.0.0.1', () => resolve());
+		});
+		const requested = (probe.address() as import('net').AddressInfo).port;
+		await new Promise<void>(resolve => probe.close(() => resolve()));
+
+		const transport = await hostConnection.createClientSocketTransport(requested);
+		const reported = transport.port();
+		const client = net.connect(reported, '127.0.0.1');
+		await transport.onConnected();
+		client.destroy();
+		assert.strictEqual(reported, requested);
+	});
+
+	test('createClientSocketTransport exposes the actual bound port when port=0', async () => {
+		const net = await import('net');
+		const transport = await hostConnection.createClientSocketTransport(0);
+		const bound = transport.port();
+		const client = net.connect(bound, '127.0.0.1');
+		await transport.onConnected();
+		client.destroy();
+		assert.ok(bound > 0, `expected a positive bound port, got ${bound}`);
+	});
+
 	test('Test Duplex Stream Connection', (done) => {
 		const type = new RequestType<string, string, void>('test/handleSingleRequest');
 		const duplexStream1 = new TestDuplex('ds1');
