@@ -862,14 +862,17 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._outputChannel === undefined) {
 			return false;
 		}
-		const outputChannelName = this._outputChannel.name.toLowerCase();
-		return Window.visibleTextEditors.some(editor => {
+		const outputChannelResource = getOutputChannelResourceName(this._outputChannel.name);
+		return this.getVisibleTextEditors().some(editor => {
 			if (editor.document.uri.scheme !== 'output') {
 				return false;
 			}
-			const outputResource = `${editor.document.uri.toString(true)}\n${editor.document.fileName}`.toLowerCase();
-			return outputResource.includes(outputChannelName);
+			return matchesOutputChannelResource(editor.document.uri.toString(true), outputChannelResource) || matchesOutputChannelResource(editor.document.fileName, outputChannelResource);
 		});
+	}
+
+	protected getVisibleTextEditors(): readonly TextEditor[] {
+		return Window.visibleTextEditors;
 	}
 
 	protected restoreOutputChannelVisibility(wasVisible: boolean): void {
@@ -2566,6 +2569,15 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 	};
 
 	return result;
+}
+
+function getOutputChannelResourceName(name: string): string {
+	return `${name.replace(/[\\/:\*\?"<>\|]/g, '')}.log`.toLowerCase();
+}
+
+function matchesOutputChannelResource(resource: string, outputChannelResource: string): boolean {
+	const normalizedResource = resource.replace(/\\/g, '/').toLowerCase();
+	return normalizedResource === outputChannelResource || normalizedResource.endsWith(`/${outputChannelResource}`) || normalizedResource.endsWith(`.${outputChannelResource}`);
 }
 
 // Exporting proposed protocol.
