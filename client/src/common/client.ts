@@ -858,6 +858,29 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		return this._outputChannel;
 	}
 
+	protected isOutputChannelVisible(): boolean {
+		if (this._outputChannel === undefined) {
+			return false;
+		}
+		const outputChannelResource = getOutputChannelResourceName(this._outputChannel.name);
+		return this.getVisibleTextEditors().some(editor => {
+			if (editor.document.uri.scheme !== 'output') {
+				return false;
+			}
+			return matchesOutputChannelResource(editor.document.uri.toString(true), outputChannelResource) || matchesOutputChannelResource(editor.document.fileName, outputChannelResource);
+		});
+	}
+
+	protected getVisibleTextEditors(): readonly TextEditor[] {
+		return Window.visibleTextEditors;
+	}
+
+	protected restoreOutputChannelVisibility(wasVisible: boolean): void {
+		if (wasVisible) {
+			this.outputChannel.show(true);
+		}
+	}
+
 	public get traceOutputChannel(): LogOutputChannel {
 		return this._traceOutputChannel ? this._traceOutputChannel : this.outputChannel;
 	}
@@ -2546,6 +2569,15 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 	};
 
 	return result;
+}
+
+function getOutputChannelResourceName(name: string): string {
+	return `${name.replace(/[\\/:\*\?"<>\|]/g, '')}.log`.toLowerCase();
+}
+
+function matchesOutputChannelResource(resource: string, outputChannelResource: string): boolean {
+	const normalizedResource = resource.replace(/\\/g, '/').toLowerCase();
+	return normalizedResource === outputChannelResource || normalizedResource.endsWith(`/${outputChannelResource}`) || normalizedResource.endsWith(`.${outputChannelResource}`);
 }
 
 // Exporting proposed protocol.

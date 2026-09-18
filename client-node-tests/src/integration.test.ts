@@ -242,6 +242,113 @@ suite('Server output', () => {
 	});
 });
 
+suite('Client restart', () => {
+
+	test('Preserves output channel visibility after restart', async () => {
+		const client = new RestartTestLanguageClient('Restart', [
+			createOutputTextEditor('output:ms-vscode.test-extension.Restart.log', 'Restart.log')
+		]);
+
+		await client.restart();
+
+		assert.deepStrictEqual(client.events, ['getVisibleTextEditors', 'stop', 'start', 'restoreOutputChannelVisibility:true']);
+	});
+
+	test('Does not restore hidden output channel after restart', async () => {
+		const client = new RestartTestLanguageClient('Restart', [
+			createOutputTextEditor('output:ms-vscode.restart.Other.log', 'Other.log')
+		]);
+
+		await client.restart();
+
+		assert.deepStrictEqual(client.events, ['getVisibleTextEditors', 'stop', 'start', 'restoreOutputChannelVisibility:false']);
+	});
+
+	test('Detects visible output channel by normalized log channel id suffix', () => {
+		const client = new RestartTestLanguageClient('ESLint', [
+			createOutputTextEditor('output:ms-vscode.test-extension.ESLint.log', 'ESLint.log')
+		]);
+
+		assert.strictEqual(client.isTestOutputChannelVisible(), true);
+	});
+
+	test('Does not match another visible output channel by substring', () => {
+		const client = new RestartTestLanguageClient('ESLint', [
+			createOutputTextEditor('output:ms-vscode.eslint-extension.Other.log', 'Other.log')
+		]);
+
+		assert.strictEqual(client.isTestOutputChannelVisible(), false);
+	});
+
+	test('Detects output channels with VS Code sanitized log file names', () => {
+		const client = new RestartTestLanguageClient('C/C++', [
+			createOutputTextEditor('output:ms-vscode.test-extension.CC++.log', 'CC++.log')
+		]);
+
+		assert.strictEqual(client.isTestOutputChannelVisible(), true);
+	});
+});
+
+class RestartTestLanguageClient extends lsclient.LanguageClient {
+
+	public readonly events: string[] = [];
+
+	public constructor(outputChannelName: string, private readonly visibleTextEditors: readonly vscode.TextEditor[]) {
+		super('test restart', { module: 'unused', transport: lsclient.TransportKind.ipc }, { outputChannel: createLogOutputChannel(outputChannelName) });
+	}
+
+	public isTestOutputChannelVisible(): boolean {
+		return this.isOutputChannelVisible();
+	}
+
+	public override async start(): Promise<void> {
+		this.events.push('start');
+	}
+
+	public override stop(): Promise<void> {
+		this.events.push('stop');
+		return Promise.resolve();
+	}
+
+	protected override getVisibleTextEditors(): readonly vscode.TextEditor[] {
+		this.events.push('getVisibleTextEditors');
+		return this.visibleTextEditors;
+	}
+
+	protected override restoreOutputChannelVisibility(wasVisible: boolean): void {
+		this.events.push(`restoreOutputChannelVisibility:${wasVisible}`);
+	}
+}
+
+function createOutputTextEditor(uri: string, fileName: string): vscode.TextEditor {
+	return {
+		document: {
+			uri: vscode.Uri.parse(uri),
+			fileName
+		}
+	} as vscode.TextEditor;
+}
+
+function createLogOutputChannel(name: string): vscode.LogOutputChannel {
+	return {
+		name,
+		append: () => undefined,
+		appendLine: () => undefined,
+		replace: () => undefined,
+		clear: () => undefined,
+		show: () => undefined,
+		hide: () => undefined,
+		dispose: () => undefined,
+		logLevel: vscode.LogLevel.Info,
+		onDidChangeLogLevel: () => ({ dispose: () => undefined }),
+		trace: () => undefined,
+		debug: () => undefined,
+		info: () => undefined,
+		warn: () => undefined,
+		error: () => undefined
+	} as vscode.LogOutputChannel;
+}
+
 suite('Socket transport', () => {
 
 	test('Uses an OS-assigned port when transport.port is 0', async () => {
