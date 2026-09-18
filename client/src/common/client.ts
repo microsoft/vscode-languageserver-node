@@ -2481,23 +2481,25 @@ class ConsoleLogger implements Logger {
 }
 
 interface ChannelProvider {
-	outputChannel: LogOutputChannel;
+	error(message: string, data?: any, showNotification?: boolean | 'force'): void;
+	warn(message: string, data?: any, showNotification?: boolean): void;
+	info(message: string, data?: any, showNotification?: boolean): void;
 }
 
 class OutputChannelLogger implements Logger {
 	constructor(private readonly channelProvider: ChannelProvider) {
 	}
 	public error(message: string): void {
-		this.channelProvider.outputChannel.error(message);
+		this.channelProvider.error(message, undefined, false);
 	}
 	public warn(message: string): void {
-		this.channelProvider.outputChannel.warn(message);
+		this.channelProvider.warn(message, undefined, false);
 	}
 	public info(message: string): void {
-		this.channelProvider.outputChannel.info(message);
+		this.channelProvider.info(message, undefined, false);
 	}
 	public log(message: string): void {
-		this.channelProvider.outputChannel.info(message);
+		this.channelProvider.info(message, undefined, false);
 	}
 }
 
