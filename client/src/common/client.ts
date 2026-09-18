@@ -1836,7 +1836,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 
 		const transports = await this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8');
-		this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, () => this.outputChannel, this._clientOptions.connectionOptions);
+		this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this, this._clientOptions.connectionOptions);
 		return this._connection;
 	}
 
@@ -2480,20 +2480,24 @@ class ConsoleLogger implements Logger {
 	}
 }
 
+interface ChannelProvider {
+	outputChannel: LogOutputChannel;
+}
+
 class OutputChannelLogger implements Logger {
-	constructor(private readonly getOutputChannel: () => LogOutputChannel) {
+	constructor(private readonly channelProvider: ChannelProvider) {
 	}
 	public error(message: string): void {
-		this.getOutputChannel().error(message);
+		this.channelProvider.outputChannel.error(message);
 	}
 	public warn(message: string): void {
-		this.getOutputChannel().warn(message);
+		this.channelProvider.outputChannel.warn(message);
 	}
 	public info(message: string): void {
-		this.getOutputChannel().info(message);
+		this.channelProvider.outputChannel.info(message);
 	}
 	public log(message: string): void {
-		this.getOutputChannel().info(message);
+		this.channelProvider.outputChannel.info(message);
 	}
 }
 
@@ -2505,8 +2509,8 @@ interface ConnectionCloseHandler {
 	(): void;
 }
 
-function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, getOutputChannel: (() => LogOutputChannel) | undefined, options?: ConnectionOptions): Connection {
-	const logger: Logger = getOutputChannel !== undefined ? new OutputChannelLogger(getOutputChannel) : new ConsoleLogger();
+function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, channelProvider: ChannelProvider | undefined, options?: ConnectionOptions): Connection {
+	const logger: Logger = channelProvider !== undefined ? new OutputChannelLogger(channelProvider) : new ConsoleLogger();
 	const connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
