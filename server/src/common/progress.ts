@@ -27,6 +27,15 @@ export interface WorkDoneProgressReporter {
 	done(): void;
 }
 
+export namespace WorkDoneProgressReporter {
+	/**
+	 * Tests whether the given work done progress reporter discards progress.
+	 */
+	export function isNullInstance(reporter: WorkDoneProgressReporter): boolean {
+		return reporter instanceof NullProgressReporter;
+	}
+}
+
 export interface WorkDoneProgressServerReporter extends WorkDoneProgressReporter {
 	readonly token: CancellationToken;
 }
