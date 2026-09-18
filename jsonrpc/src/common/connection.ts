@@ -1094,7 +1094,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				}
 			}
 			const error = message.error ? ` Request failed: ${message.error.message} (${message.error.code}).` : '';
-			tracer.log(`Sending response '${method} - (${message.id})'. Processing request took ${Date.now() - startTime}ms${error}`, data);
+			tracer.log(`Sending response '${method} - (${message.id})'. Processing request took ${Date.now() - startTime}ms.${error}`, data);
 		} else {
 			logLSPMessage('send-response', message);
 		}
