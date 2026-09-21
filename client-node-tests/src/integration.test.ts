@@ -271,6 +271,27 @@ suite('Server output', () => {
 
 		await client.stop();
 	});
+
+	test('JSON-RPC diagnostics after stop() do not recreate the output channel', async () => {
+		const serverModule = path.join(__dirname, './servers/customServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			module: serverModule,
+			transport: lsclient.TransportKind.ipc,
+		};
+		const client = new lsclient.LanguageClient('test diagnostics after stop', 'Test Diagnostics After Stop Language Server', serverOptions, {});
+		await client.start();
+		// client.start() already creates the output channel as a side effect of
+		// wiring up the trace log level listener, independent of any diagnostic.
+		assert.notStrictEqual((client as any)._outputChannel, undefined);
+		await client.stop();
+		assert.strictEqual((client as any)._outputChannel, undefined, 'stop() must dispose and clear the output channel');
+
+		// Simulate a diagnostic that is logged after the client considers itself
+		// stopped. shouldLogToOutputChannel() must suppress it so a disposed
+		// channel is not recreated for a client that is no longer running.
+		client.error('late diagnostic', undefined, false);
+		assert.strictEqual((client as any)._outputChannel, undefined, 'a diagnostic logged after stop() must not recreate the output channel');
+	});
 });
 
 suite('Socket transport', () => {
