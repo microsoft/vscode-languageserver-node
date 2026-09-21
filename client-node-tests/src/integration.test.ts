@@ -6,6 +6,7 @@
 
 import * as assert from 'assert';
 import * as path from 'path';
+import * as sinon from 'sinon';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import * as proto from 'vscode-languageserver-protocol';
@@ -238,6 +239,36 @@ suite('Server output', () => {
 		await client.start();
 		assert.strictEqual(stdoutCalled, true);
 		assert.strictEqual(stderrCalled, true);
+		await client.stop();
+	});
+
+	test('JSON-RPC diagnostics are routed to the output channel', async () => {
+		const serverModule = path.join(__dirname, './servers/customServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			module: serverModule,
+			transport: lsclient.TransportKind.ipc,
+		};
+		const client = new lsclient.LanguageClient('test diagnostics', 'Test Diagnostics Language Server', serverOptions, {});
+		assert.strictEqual((client as any)._outputChannel, undefined, 'no output channel should exist before the client is used');
+
+		const errorLog = sinon.spy(client, 'error');
+		await client.start();
+
+		// A throwing notification handler makes the jsonrpc connection catch the
+		// error and log a diagnostic through the shared logger.
+		client.onNotification('notification', () => {
+			throw new Error('boom');
+		});
+		await client.sendRequest('triggerNotification');
+
+		// The diagnostic must go through the client's guarded error() method (which
+		// respects shouldLogToOutputChannel()) rather than straight to the output
+		// channel or console, so a diagnostic that arrives after shutdown can't
+		// recreate a disposed channel.
+		assert.ok(errorLog.calledOnce, 'expected exactly one diagnostic to be logged');
+		assert.ok(/boom/.test(errorLog.firstCall.args[0]), 'expected the handler failure diagnostic');
+		assert.strictEqual(errorLog.firstCall.args[2], false, 'protocol diagnostics must not force a notification popup');
+
 		await client.stop();
 	});
 });
