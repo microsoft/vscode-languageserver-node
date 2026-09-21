@@ -5,7 +5,7 @@
 
 import { _, Features, _Connection, _LanguagesImpl } from './server';
 import { SemanticTokensBuilder } from './semanticTokens';
-import type { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter } from './progress';
+import { WorkDoneProgressReporter, type WorkDoneProgressServerReporter, type ResultProgressReporter } from './progress';
 
 export * from 'vscode-languageserver-protocol';
 export { WorkDoneProgressReporter, WorkDoneProgressServerReporter, ResultProgressReporter };

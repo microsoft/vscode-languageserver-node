@@ -264,6 +264,12 @@ export class SemanticTokensBuilder {
 	public previousResult(id: string) {
 		if (this.id === id) {
 			this._prevData = this.getFinalDataDelta();
+		} else {
+			// No data for the result the client is asking to diff against, so
+			// edits cannot be expressed relative to it. Dropping the previous
+			// data makes buildEdits() fall back to a full result, and keeps
+			// canBuildEdits() truthful.
+			this._prevData = undefined;
 		}
 		this.initialize();
 	}
