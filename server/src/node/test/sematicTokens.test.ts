@@ -5,7 +5,7 @@
 
 import * as assert from 'assert';
 
-import { SemanticTokensDiff } from '../../common/semanticTokens.js';
+import { SemanticTokensBuilder, SemanticTokensDiff } from '../../common/semanticTokens.js';
 
 suite('Semantic token tests', () => {
 	test('Issue 758', () => {
@@ -47,5 +47,27 @@ suite('Semantic token tests', () => {
 		assert.deepEqual(edit.start, 25);
 		assert.deepEqual(edit.deleteCount, 10);
 		assert.ok(edit.data === undefined || edit.data.length === 0);
+	});
+
+	test('An unknown previousResultId falls back to a full result', () => {
+		const builder = new SemanticTokensBuilder();
+
+		builder.push(0, 0, 5, 1, 0);
+		const first = builder.build();
+
+		builder.previousResult(first.resultId!);
+		builder.push(0, 0, 5, 2, 0);
+		assert.strictEqual(builder.canBuildEdits(), true);
+		builder.buildEdits();
+
+		// The client asks to diff against a result this builder never issued, so
+		// there is no baseline the edits could be expressed against.
+		builder.previousResult('a-result-id-this-builder-never-produced');
+		builder.push(0, 0, 5, 3, 0);
+
+		assert.strictEqual(builder.canBuildEdits(), false);
+		const result = builder.buildEdits();
+		assert.ok('data' in result, 'expected a full result, not edits');
+		assert.deepEqual((result as { data: number[] }).data, [0, 0, 5, 3, 0]);
 	});
 });

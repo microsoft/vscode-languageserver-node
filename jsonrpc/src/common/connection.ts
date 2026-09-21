@@ -1464,7 +1464,6 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					responsePromises.delete(id);
 					responsePromise.reject(new ResponseError<void>(ErrorCodes.MessageWriteError, error.message ? error.message : 'Unknown reason'));
 					logger.error(`Sending request failed.`);
-					throw error;
 				}
 			});
 		},

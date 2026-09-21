@@ -5,17 +5,18 @@
 
 import * as assert from 'assert';
 
-import { execFileSync } from 'child_process';
-import { Duplex  } from 'stream';
-import { inherits } from 'util';
-import { AsyncLocalStorage } from 'async_hooks';
+import { execFileSync } from 'node:child_process';
+import { Duplex  } from 'node:stream';
+import { inherits } from 'node:util';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { MessageChannel } from 'node:worker_threads';
+import { fileURLToPath } from 'node:url';
 
 import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../main.js';
 
 import * as hostConnection from '../main.js';
 import { getCustomCancellationStrategy } from './customCancellationStrategy.js';
 import { ParameterStructures } from '../../common/messages.js';
-import { MessageChannel } from 'worker_threads';
 
 interface TestDuplex extends Duplex {
 }
@@ -79,6 +80,34 @@ suite('Connection', () => {
 		`;
 
 		execFileSync(process.execPath, ['-e', script], { stdio: 'pipe' });
+	});
+
+	test('createClientSocketTransport resolves with the requested port when non-zero', async () => {
+		const net = await import('net');
+		const probe = net.createServer();
+		await new Promise<void>((resolve, reject) => {
+			probe.on('error', reject);
+			probe.listen(0, '127.0.0.1', () => resolve());
+		});
+		const requested = (probe.address() as import('net').AddressInfo).port;
+		await new Promise<void>(resolve => probe.close(() => resolve()));
+
+		const transport = await hostConnection.createClientSocketTransport(requested);
+		const reported = transport.port();
+		const client = net.connect(reported, '127.0.0.1');
+		await transport.onConnected();
+		client.destroy();
+		assert.strictEqual(reported, requested);
+	});
+
+	test('createClientSocketTransport exposes the actual bound port when port=0', async () => {
+		const net = await import('net');
+		const transport = await hostConnection.createClientSocketTransport(0);
+		const bound = transport.port();
+		const client = net.connect(bound, '127.0.0.1');
+		await transport.onConnected();
+		client.destroy();
+		assert.ok(bound > 0, `expected a positive bound port, got ${bound}`);
 	});
 
 	test('Test Duplex Stream Connection', (done) => {
@@ -194,6 +223,77 @@ suite('Connection', () => {
 			assert.strictEqual(result, 'foo');
 			done();
 		});
+	});
+
+	test('Request write failure does not cause an unhandled rejection', () => {
+		const main = fileURLToPath(new URL('../main.js', import.meta.url));
+		const script = `
+			const assert = require('assert');
+			const { once } = require('events');
+			const { PassThrough } = require('stream');
+			const rpc = require(${JSON.stringify(main)});
+
+			async function run() {
+				const input = new PassThrough();
+				const output = new PassThrough();
+				const closed = once(output, 'close');
+				output.destroy();
+				await closed;
+
+				const cleaned = [];
+				let cancellations = 0;
+				const loggedErrors = [];
+				const connection = rpc.createMessageConnection(input, output, {
+					...rpc.NullLogger,
+					error: message => loggedErrors.push(message)
+				}, {
+					cancellationStrategy: {
+						receiver: rpc.CancellationStrategy.Message.receiver,
+						sender: {
+							sendCancellation: async () => { cancellations++; },
+							cleanup: id => cleaned.push(id)
+						}
+					}
+				});
+				const errors = [];
+				connection.onError(([error]) => errors.push(error));
+				const source = new rpc.CancellationTokenSource();
+				connection.listen();
+				try {
+					await assert.rejects(connection.sendRequest('test/writeFailure', source.token), error => {
+						assert.ok(error instanceof rpc.ResponseError);
+						assert.strictEqual(error.code, rpc.ErrorCodes.MessageWriteError);
+						assert.ok(errors.some(cause => cause.code === 'ERR_STREAM_DESTROYED' && cause.message === error.message));
+						return true;
+					});
+					assert.strictEqual(connection.hasPendingResponse(), false);
+					assert.deepStrictEqual(cleaned, [0]);
+					assert.deepStrictEqual(loggedErrors, ['Sending request failed.']);
+					source.cancel();
+					assert.strictEqual(cancellations, 0);
+				} finally {
+					connection.dispose();
+					source.dispose();
+					input.destroy();
+					output.destroy();
+				}
+				assert.deepStrictEqual(cleaned, [0]);
+				process.stdout.write('done');
+			}
+
+			run().catch(error => {
+				console.error(error);
+				process.exitCode = 1;
+			});
+		`;
+
+		// Isolate strict rejection handling from Mocha and let the child exit naturally.
+		const result = execFileSync(process.execPath, ['--unhandled-rejections=strict', '-e', script], {
+			encoding: 'utf8',
+			timeout: 10000,
+			stdio: 'pipe'
+		});
+		assert.strictEqual(result, 'done');
 	});
 
 	test('Handle Multiple Requests', (done) => {
