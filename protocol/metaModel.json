@@ -9064,8 +9064,12 @@
 							}
 						]
 					},
-					"documentation": "The diagnostic's message. It usually appears in the user interface.\n\n@since 3.18.0 - support for MarkupContent. This is guarded by the client\ncapability `textDocument.diagnostic.markupMessageSupport`.",
-					"since": "3.18.0 - support for MarkupContent. This is guarded by the client\ncapability `textDocument.diagnostic.markupMessageSupport`."
+					"documentation": "The diagnostic's message. It usually appears in the user interface.\n\n@since 3.18.0 - support for MarkupContent in pull diagnostics.\nThis is guarded by the client capability\n`textDocument.diagnostic.markupMessageSupport`.\n@since 3.19.0 - support for MarkupContent in push diagnostics.\nThis is guarded by the client capability\n`textDocument.publishDiagnostics.markupMessageSupport`.",
+					"since": "3.19.0 - support for MarkupContent in push diagnostics.\nThis is guarded by the client capability\n`textDocument.publishDiagnostics.markupMessageSupport`.",
+					"sinceTags": [
+						"3.18.0 - support for MarkupContent in pull diagnostics.\nThis is guarded by the client capability\n`textDocument.diagnostic.markupMessageSupport`.",
+						"3.19.0 - support for MarkupContent in push diagnostics.\nThis is guarded by the client capability\n`textDocument.publishDiagnostics.markupMessageSupport`."
+					]
 				},
 				{
 					"name": "tags",
