@@ -721,8 +721,12 @@ export interface Diagnostic {
 	/**
 	 * The diagnostic's message. It usually appears in the user interface.
 	 *
-	 * @since 3.18.0 - support for MarkupContent. This is guarded by the client
-	 * capability `textDocument.diagnostic.markupMessageSupport`.
+	 * @since 3.18.0 - support for MarkupContent in pull diagnostics.
+	 * This is guarded by the client capability
+	 * `textDocument.diagnostic.markupMessageSupport`.
+	 * @since 3.19.0 - support for MarkupContent in push diagnostics.
+	 * This is guarded by the client capability
+	 * `textDocument.publishDiagnostics.markupMessageSupport`.
 	 */
 	message: string | MarkupContent;
 

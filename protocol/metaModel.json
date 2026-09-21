@@ -13010,6 +13010,17 @@
 					"optional": true,
 					"documentation": "Whether the client interprets the version property of the\n`textDocument/publishDiagnostics` notification's parameter.\n\n@since 3.15.0",
 					"since": "3.15.0"
+				},
+				{
+					"name": "markupMessageSupport",
+					"type": {
+						"kind": "base",
+						"name": "boolean"
+					},
+					"optional": true,
+					"documentation": "Whether the client supports `MarkupContent`\nin push based diagnostic messages.\n\n@since 3.19.0\n@proposed",
+					"since": "3.19.0",
+					"proposed": true
 				}
 			],
 			"extends": [
@@ -13248,7 +13259,7 @@
 						"name": "boolean"
 					},
 					"optional": true,
-					"documentation": "Whether the client supports `MarkupContent` in diagnostic messages.\n\n@since 3.18.0",
+					"documentation": "Whether the client supports `MarkupContent`\nin pull-based diagnostic messages.\n\n@since 3.18.0",
 					"since": "3.18.0"
 				}
 			],
