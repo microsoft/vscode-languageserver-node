@@ -2426,7 +2426,7 @@ export interface PublishDiagnosticsClientCapabilities extends DiagnosticsCapabil
 
 	/**
 	 * Whether the client supports `MarkupContent`
-	 * in push based diagnostic messages.
+	 * in push diagnostic messages.
 	 *
 	 * @since 3.19.0
 	 * @proposed
