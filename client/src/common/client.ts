@@ -2586,7 +2586,7 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 function getOutputChannelResourceName(id: string, name: string): string {
 	const resourceId = sanitizeOutputChannelResourceSegment(id);
 	const resourceName = sanitizeOutputChannelResourceSegment(name);
-	return `${resourceId}.${resourceName}.log`.toLowerCase();
+	return `${resourceId}.${resourceName}.log`;
 }
 
 function sanitizeOutputChannelResourceSegment(value: string): string {
@@ -2594,7 +2594,7 @@ function sanitizeOutputChannelResourceSegment(value: string): string {
 }
 
 function matchesOutputChannelResource(resource: string, outputChannelResource: string): boolean {
-	const normalizedResource = resource.replace(/\\/g, '/').toLowerCase();
+	const normalizedResource = resource.replace(/\\/g, '/');
 	return normalizedResource === outputChannelResource || normalizedResource.endsWith(`/${outputChannelResource}`) || normalizedResource.endsWith(`:${outputChannelResource}`);
 }
 

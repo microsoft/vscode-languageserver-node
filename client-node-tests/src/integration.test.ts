@@ -288,6 +288,14 @@ suite('Client restart', () => {
 		assert.strictEqual(client.isTestOutputChannelVisible(), false);
 	});
 
+	test('Does not match output channel names with different casing', () => {
+		const client = new RestartTestLanguageClient('Server', [
+			createOutputTextEditor('output:ms-vscode.test-extension.server.log', 'ms-vscode.test-extension.server.log')
+		], 'ms-vscode.test-extension');
+
+		assert.strictEqual(client.isTestOutputChannelVisible(), false);
+	});
+
 	test('Detects visible output channel by file name', () => {
 		const client = new RestartTestLanguageClient('ESLint', [
 			createOutputTextEditor('output:unknown', 'dbaeumer.vscode-eslint.ESLint.log')
