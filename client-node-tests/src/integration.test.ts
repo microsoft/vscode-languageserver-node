@@ -246,8 +246,8 @@ suite('Client restart', () => {
 
 	test('Preserves output channel visibility after restart', async () => {
 		const client = new RestartTestLanguageClient('Restart', [
-			createOutputTextEditor('output:ms-vscode.test-extension.Restart.log', 'Restart.log')
-		]);
+			createOutputTextEditor('output:ms-vscode.test-extension.Restart.log', 'ms-vscode.test-extension.Restart.log')
+		], 'ms-vscode.test-extension');
 
 		await client.restart();
 
@@ -256,34 +256,58 @@ suite('Client restart', () => {
 
 	test('Does not restore hidden output channel after restart', async () => {
 		const client = new RestartTestLanguageClient('Restart', [
-			createOutputTextEditor('output:ms-vscode.restart.Other.log', 'Other.log')
-		]);
+			createOutputTextEditor('output:ms-vscode.test-extension.Other.log', 'ms-vscode.test-extension.Other.log')
+		], 'ms-vscode.test-extension');
 
 		await client.restart();
 
 		assert.deepStrictEqual(client.events, ['getVisibleTextEditors', 'stop', 'start', 'restoreOutputChannelVisibility:false']);
 	});
 
-	test('Detects visible output channel by normalized log channel id suffix', () => {
+	test('Detects visible output channel by normalized log channel id', () => {
 		const client = new RestartTestLanguageClient('ESLint', [
-			createOutputTextEditor('output:ms-vscode.test-extension.ESLint.log', 'ESLint.log')
-		]);
+			createOutputTextEditor('output:dbaeumer.vscode-eslint.ESLint.log', 'dbaeumer.vscode-eslint.ESLint.log')
+		], 'dbaeumer.vscode-eslint');
+
+		assert.strictEqual(client.isTestOutputChannelVisible(), true);
+	});
+
+	test('Uses language client id as the default output channel id', () => {
+		const client = new RestartTestLanguageClient('Restart', [
+			createOutputTextEditor('output:test-restart.Restart.log', 'test-restart.Restart.log')
+		], undefined);
+
+		assert.strictEqual(client.isTestOutputChannelVisible(), true);
+	});
+
+	test('Does not match the same output channel name from another extension', () => {
+		const client = new RestartTestLanguageClient('ESLint', [
+			createOutputTextEditor('output:publisher.other-extension.ESLint.log', 'publisher.other-extension.ESLint.log')
+		], 'dbaeumer.vscode-eslint');
+
+		assert.strictEqual(client.isTestOutputChannelVisible(), false);
+	});
+
+	test('Detects visible output channel by file name', () => {
+		const client = new RestartTestLanguageClient('ESLint', [
+			createOutputTextEditor('output:unknown', 'dbaeumer.vscode-eslint.ESLint.log')
+		], 'dbaeumer.vscode-eslint');
 
 		assert.strictEqual(client.isTestOutputChannelVisible(), true);
 	});
 
 	test('Does not match another visible output channel by substring', () => {
 		const client = new RestartTestLanguageClient('ESLint', [
-			createOutputTextEditor('output:ms-vscode.eslint-extension.Other.log', 'Other.log')
-		]);
+			createOutputTextEditor('output:publisher.eslint-extension.Other.log', 'publisher.eslint-extension.Other.log')
+		], 'dbaeumer.vscode-eslint');
 
 		assert.strictEqual(client.isTestOutputChannelVisible(), false);
 	});
 
 	test('Detects output channels with VS Code sanitized log file names', () => {
 		const client = new RestartTestLanguageClient('C/C++', [
-			createOutputTextEditor('output:ms-vscode.test-extension.CC++.log', 'CC++.log')
-		]);
+			createOutputTextEditor('output:ms-vscode.cpptools.CC++.log', 'ms-vscode.cpptools.CC++.log')
+		], 'ms-vscode.cpptools');
 
 		assert.strictEqual(client.isTestOutputChannelVisible(), true);
 	});
@@ -293,8 +317,12 @@ class RestartTestLanguageClient extends lsclient.LanguageClient {
 
 	public readonly events: string[] = [];
 
-	public constructor(outputChannelName: string, private readonly visibleTextEditors: readonly vscode.TextEditor[]) {
-		super('test restart', { module: 'unused', transport: lsclient.TransportKind.ipc }, { outputChannel: createLogOutputChannel(outputChannelName) });
+	public constructor(outputChannelName: string, private readonly visibleTextEditors: readonly vscode.TextEditor[], outputChannelId: string | undefined) {
+		const clientOptions: lsclient.LanguageClientOptions = { outputChannel: createLogOutputChannel(outputChannelName) };
+		if (outputChannelId !== undefined) {
+			clientOptions.outputChannelId = outputChannelId;
+		}
+		super('test-restart', 'Test Restart Language Server', { module: 'unused', transport: lsclient.TransportKind.ipc }, clientOptions);
 	}
 
 	public isTestOutputChannelVisible(): boolean {

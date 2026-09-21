@@ -359,6 +359,16 @@ export type LanguageClientOptions = {
 	diagnosticCollectionName?: string;
 	outputChannel?: LogOutputChannel;
 	outputChannelName?: string;
+	/**
+	 * The identifier VS Code uses as the prefix for this client's log output channel resource.
+	 *
+	 * For example, if an extension with id `publisher.extension` creates a log output channel
+	 * named `Language`, VS Code represents the visible output document as
+	 * `publisher.extension.Language.log`. Supplying the extension id here lets the client
+	 * distinguish this channel from another extension's channel with the same name when preserving
+	 * output channel visibility across restarts. If omitted, the language client id is used.
+	 */
+	outputChannelId?: string;
 	traceOutputChannel?: LogOutputChannel;
 	revealOutputChannelOn?: RevealOutputChannelOn;
 	/**
@@ -407,6 +417,7 @@ type ResolvedClientOptions = {
 	synchronize: SynchronizeOptions;
 	diagnosticCollectionName?: string;
 	outputChannelName: string;
+	outputChannelId: string;
 	revealOutputChannelOn: RevealOutputChannelOn;
 	stdioEncoding: string;
 	initializationOptions?: any | (() => any);
@@ -718,6 +729,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			synchronize: clientOptions.synchronize ?? {},
 			diagnosticCollectionName: clientOptions.diagnosticCollectionName,
 			outputChannelName: clientOptions.outputChannelName ?? this._name,
+			outputChannelId: clientOptions.outputChannelId ?? this._id,
 			revealOutputChannelOn: clientOptions.revealOutputChannelOn ?? RevealOutputChannelOn.Error,
 			stdioEncoding: clientOptions.stdioEncoding ?? 'utf8',
 			initializationOptions: clientOptions.initializationOptions,
@@ -862,7 +874,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._outputChannel === undefined) {
 			return false;
 		}
-		const outputChannelResource = getOutputChannelResourceName(this._outputChannel.name);
+		const outputChannelResource = getOutputChannelResourceName(this._clientOptions.outputChannelId, this._outputChannel.name);
 		return this.getVisibleTextEditors().some(editor => {
 			if (editor.document.uri.scheme !== 'output') {
 				return false;
@@ -2571,13 +2583,19 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 	return result;
 }
 
-function getOutputChannelResourceName(name: string): string {
-	return `${name.replace(/[\\/:\*\?"<>\|]/g, '')}.log`.toLowerCase();
+function getOutputChannelResourceName(id: string, name: string): string {
+	const resourceId = sanitizeOutputChannelResourceSegment(id);
+	const resourceName = sanitizeOutputChannelResourceSegment(name);
+	return `${resourceId}.${resourceName}.log`.toLowerCase();
+}
+
+function sanitizeOutputChannelResourceSegment(value: string): string {
+	return value.replace(/[\\/:\*\?"<>\|]/g, '');
 }
 
 function matchesOutputChannelResource(resource: string, outputChannelResource: string): boolean {
 	const normalizedResource = resource.replace(/\\/g, '/').toLowerCase();
-	return normalizedResource === outputChannelResource || normalizedResource.endsWith(`/${outputChannelResource}`) || normalizedResource.endsWith(`.${outputChannelResource}`);
+	return normalizedResource === outputChannelResource || normalizedResource.endsWith(`/${outputChannelResource}`) || normalizedResource.endsWith(`:${outputChannelResource}`);
 }
 
 // Exporting proposed protocol.
