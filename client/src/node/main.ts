@@ -16,7 +16,7 @@ import * as Is from '../common/utils/is';
 import { BaseLanguageClient, LanguageClientOptions as BaseLanguageClientOptions, MessageTransports, ShutdownMode } from '../common/client';
 
 import { terminate } from './processes';
-import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
+import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams, MessageReader, MessageWriter} from 'vscode-languageserver-protocol/node';
 
 // Import SemVer functions individually to avoid circular dependencies in SemVer
 import semverParse = require('semver/functions/parse');
@@ -419,9 +419,7 @@ export class LanguageClient extends BaseLanguageClient {
 							this._serverProcess = process;
 							pipeStderr(process.stderr, this.outputChannel);
 							pipeStdout(process.stdout, this.outputChannel);
-							return transport.onConnected().then((protocol) => {
-								return { reader: protocol[0], writer: protocol[1] };
-							});
+							return waitForConnection(process, transport.onConnected());
 						});
 					} else if (Transport.isSocket(transport)) {
 						return createClientSocketTransport(transport.port).then((transport) => {
@@ -433,9 +431,7 @@ export class LanguageClient extends BaseLanguageClient {
 							this._serverProcess = process;
 							pipeStderr(process.stderr, this.outputChannel);
 							pipeStdout(process.stdout, this.outputChannel);
-							return transport.onConnected().then((protocol) => {
-								return { reader: protocol[0], writer: protocol[1] };
-							});
+							return waitForConnection(process, transport.onConnected());
 						});
 					}
 				} else {
@@ -474,9 +470,7 @@ export class LanguageClient extends BaseLanguageClient {
 								this._serverProcess = sp;
 								pipeStderr(sp.stderr, this.outputChannel);
 								pipeStdout(sp.stdout, this.outputChannel);
-								transport.onConnected().then((protocol) => {
-									resolve({ reader: protocol[0], writer: protocol[1] });
-								}, reject);
+								waitForConnection(sp, transport.onConnected()).then(resolve, reject);
 							}, reject);
 						} else if (Transport.isSocket(transport)) {
 							createClientSocketTransport(transport.port).then((transport) => {
@@ -486,9 +480,7 @@ export class LanguageClient extends BaseLanguageClient {
 								this._serverProcess = sp;
 								pipeStderr(sp.stderr, this.outputChannel);
 								pipeStdout(sp.stdout, this.outputChannel);
-								transport.onConnected().then((protocol) => {
-									resolve({ reader: protocol[0], writer: protocol[1] });
-								}, reject);
+								waitForConnection(sp, transport.onConnected()).then(resolve, reject);
 							}, reject);
 						}
 					});
@@ -527,9 +519,7 @@ export class LanguageClient extends BaseLanguageClient {
 						this._isDetached = !!options.detached;
 						pipeStderr(serverProcess.stderr, this.outputChannel);
 						pipeStdout(serverProcess.stdout, this.outputChannel);
-						return transport.onConnected().then((protocol) => {
-							return { reader: protocol[0], writer: protocol[1] };
-						});
+						return waitForConnection(serverProcess, transport.onConnected());
 					});
 				} else if (Transport.isSocket(transport)) {
 					return createClientSocketTransport(transport.port).then((transport) => {
@@ -542,9 +532,7 @@ export class LanguageClient extends BaseLanguageClient {
 						this._isDetached = !!options.detached;
 						pipeStderr(serverProcess.stderr, this.outputChannel);
 						pipeStdout(serverProcess.stdout, this.outputChannel);
-						return transport.onConnected().then((protocol) => {
-							return { reader: protocol[0], writer: protocol[1] };
-						});
+						return waitForConnection(serverProcess, transport.onConnected());
 					});
 				}
 			}
@@ -646,6 +634,15 @@ export class SettingMonitor {
 			void this._client.stop().catch((error) => this._client.error('Stop failed after configuration change', error, 'force'));
 		}
 	}
+}
+
+function waitForConnection(childProcess: ChildProcess, connected: Promise<[MessageReader, MessageWriter]>): Promise<MessageTransports> {
+	return new Promise<MessageTransports>((resolve, reject) => {
+		childProcess.once('exit', (code, signal) => {
+			reject(new Error(`Server process exited before the connection could be established (code: ${code}, signal: ${signal}).`));
+		});
+		connected.then((protocol) => resolve({ reader: protocol[0], writer: protocol[1] }), reject);
+	});
 }
 
 function handleChildProcessStartError(process: ChildProcess, message: string) {
