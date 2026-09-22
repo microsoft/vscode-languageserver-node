@@ -104,6 +104,40 @@ suite('Connection', () => {
 		assert.ok(bound > 0, `expected a positive bound port, got ${bound}`);
 	});
 
+	test('createClientSocketTransport dispose closes the listening socket before a client connects', async () => {
+		const net = await import('net');
+		const transport = await hostConnection.createClientSocketTransport(0);
+		const bound = transport.port();
+
+		transport.dispose();
+
+		await new Promise<void>((resolve, reject) => {
+			const client = net.connect(bound, '127.0.0.1');
+			client.on('connect', () => {
+				client.destroy();
+				reject(new Error('expected the connection to be refused after dispose'));
+			});
+			client.on('error', () => resolve());
+		});
+	});
+
+	test('createClientPipeTransport dispose closes the listening pipe before a client connects', async () => {
+		const net = await import('net');
+		const pipeName = hostConnection.generateRandomPipeName();
+		const transport = await hostConnection.createClientPipeTransport(pipeName);
+
+		transport.dispose();
+
+		await new Promise<void>((resolve, reject) => {
+			const client = net.createConnection(pipeName);
+			client.on('connect', () => {
+				client.destroy();
+				reject(new Error('expected the connection to be refused after dispose'));
+			});
+			client.on('error', () => resolve());
+		});
+	});
+
 	test('Test Duplex Stream Connection', (done) => {
 		const type = new RequestType<string, string, void>('test/handleSingleRequest');
 		const duplexStream1 = new TestDuplex('ds1');

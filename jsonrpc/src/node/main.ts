@@ -195,6 +195,13 @@ export function generateRandomPipeName(): string {
 
 export interface PipeTransport {
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
+	/**
+	 * Closes the underlying server if a client hasn't connected yet. Callers
+	 * should invoke this if they abandon the transport before `onConnected`
+	 * resolves (for example because the server process failed to start) to
+	 * avoid leaking the listening pipe.
+	 */
+	dispose(): void;
 }
 
 export function createClientPipeTransport(pipeName: string, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<PipeTransport> {
@@ -214,7 +221,8 @@ export function createClientPipeTransport(pipeName: string, encoding: RAL.Messag
 		server.listen(pipeName, () => {
 			server.removeListener('error', reject);
 			resolve({
-				onConnected: () => { return connected; }
+				onConnected: () => { return connected; },
+				dispose: () => { server.close(); }
 			});
 		});
 	});
@@ -231,6 +239,13 @@ export function createServerPipeTransport(pipeName: string, encoding: RAL.Messag
 export interface SocketTransport {
 	port(): number;
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
+	/**
+	 * Closes the underlying server if a client hasn't connected yet. Callers
+	 * should invoke this if they abandon the transport before `onConnected`
+	 * resolves (for example because the server process failed to start) to
+	 * avoid leaking the listening socket.
+	 */
+	dispose(): void;
 }
 
 export function createClientSocketTransport(port: number, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<SocketTransport> {
@@ -257,7 +272,8 @@ export function createClientSocketTransport(port: number, encoding: RAL.MessageB
 			const boundPort = address.port;
 			resolve({
 				port: () => boundPort,
-				onConnected: () => { return connected; }
+				onConnected: () => { return connected; },
+				dispose: () => { server.close(); }
 			});
 		});
 	});
