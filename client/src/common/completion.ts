@@ -17,8 +17,6 @@ import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
-import * as UUID from './utils/uuid';
-
 const SupportedCompletionItemKinds: CompletionItemKind[] = [
 	CompletionItemKind.Text,
 	CompletionItemKind.Method,
@@ -104,7 +102,7 @@ export class CompletionItemFeature extends TextDocumentLanguageFeature<Completio
 		}
 
 		this.register({
-			id: UUID.generateUuid(),
+			id: crypto.randomUUID(),
 			registerOptions: options
 		});
 	}

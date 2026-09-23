@@ -13,8 +13,6 @@ import {
 	CodeActionTag
 } from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
-
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideCodeActionsSignature {
@@ -74,7 +72,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: CodeActionRegistrationOptions): [Disposable, CodeActionProvider] {
