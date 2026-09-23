@@ -744,11 +744,17 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				logger.error(`Processing message queue failed: ${error.toString()}`);
 			} finally {
 				if (result instanceof Promise) {
+					// Both settlements must release the parallelism slot. Written as
+					// .then(...).catch(...) the rejection path skipped the decrement, so
+					// one failed dispatch left `inFlight` permanently elevated and
+					// triggerMessageQueue() bailed out forever after.
 					result.then(() => {
 						inFlight--;
 						triggerMessageQueue();
-					}).catch((error) => {
+					}, (error) => {
+						inFlight--;
 						logger.error(`Processing message queue failed: ${error.toString()}`);
+						triggerMessageQueue();
 					});
 				} else {
 					inFlight--;
