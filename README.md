@@ -35,6 +35,11 @@ After cloning the repository, run `npm install` to install dependencies and `npm
 
 ## History
 
+## 3.18.4 Protocol, 9.0.3 JSON-RPC, 10.1.2 Client and 10.1.2 Server.
+
+[Bug fixes and small improvements](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aclosed%20milestone%3A%223.18.4%22)
+
+
 ## 3.18.3 Protocol, 9.0.1 JSON-RPC, 10.1.1 Client and 10.1.1 Server.
 
 [Bug fixes and small improvements](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aclosed%20milestone%3A%223.18.3%22)
