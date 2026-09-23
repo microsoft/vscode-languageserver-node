@@ -201,7 +201,7 @@ export interface PipeTransport {
 	 * resolves (for example because the server process failed to start) to
 	 * avoid leaking the listening pipe.
 	 */
-	dispose(): void;
+	close(): void;
 }
 
 export function createClientPipeTransport(pipeName: string, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<PipeTransport> {
@@ -222,7 +222,7 @@ export function createClientPipeTransport(pipeName: string, encoding: RAL.Messag
 			server.removeListener('error', reject);
 			resolve({
 				onConnected: () => { return connected; },
-				dispose: () => { server.close(); }
+				close: () => { server.close(); }
 			});
 		});
 	});
@@ -245,7 +245,7 @@ export interface SocketTransport {
 	 * resolves (for example because the server process failed to start) to
 	 * avoid leaking the listening socket.
 	 */
-	dispose(): void;
+	close(): void;
 }
 
 export function createClientSocketTransport(port: number, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<SocketTransport> {
@@ -273,7 +273,7 @@ export function createClientSocketTransport(port: number, encoding: RAL.MessageB
 			resolve({
 				port: () => boundPort,
 				onConnected: () => { return connected; },
-				dispose: () => { server.close(); }
+				close: () => { server.close(); }
 			});
 		});
 	});
