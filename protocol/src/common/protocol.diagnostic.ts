@@ -36,7 +36,6 @@ export type DiagnosticClientCapabilities = DiagnosticsCapabilities & {
 	 * in pull diagnostic messages.
 	 *
 	 * @since 3.18.0
-	 * @proposed
 	 */
 	markupMessageSupport?: boolean;
 };
