@@ -84,7 +84,6 @@ extends:
         tag: ${{ parameters.quality }}
         preReleaseTag: next
         publishPackage: ${{ parameters.publishTsconfigGen }}
-        publishPackageToAzureArtifacts: true
         workingDirectory: $(Build.SourcesDirectory)/tsconfig-gen
 
       - name: textDocument
@@ -111,7 +110,6 @@ extends:
         tag: ${{ parameters.quality }}
         preReleaseTag: next
         publishPackage: ${{ parameters.publishTextDocument }}
-        publishPackageToAzureArtifacts: true
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
@@ -138,7 +136,6 @@ extends:
         tag: ${{ parameters.quality }}
         preReleaseTag: next
         publishPackage: ${{ parameters.publishTypes }}
-        publishPackageToAzureArtifacts: true
         workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
@@ -165,7 +162,6 @@ extends:
         tag: ${{ parameters.quality }}
         preReleaseTag: next
         publishPackage: ${{ parameters.publishJsonrpc }}
-        publishPackageToAzureArtifacts: true
         workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       - name: protocol
@@ -192,7 +188,6 @@ extends:
         tag: ${{ parameters.quality }}
         preReleaseTag: next
         publishPackage: ${{ parameters.publishProtocol }}
-        publishPackageToAzureArtifacts: true
         workingDirectory: $(Build.SourcesDirectory)/protocol
 
       - name: server
@@ -219,7 +214,6 @@ extends:
         tag: ${{ parameters.quality }}
         preReleaseTag: next
         publishPackage: ${{ parameters.publishServer }}
-        publishPackageToAzureArtifacts: true
         workingDirectory: $(Build.SourcesDirectory)/server
 
       - name: client
@@ -246,5 +240,4 @@ extends:
         tag: ${{ parameters.quality }}
         preReleaseTag: next
         publishPackage: ${{ parameters.publishClient }}
-        publishPackageToAzureArtifacts: true
         workingDirectory: $(Build.SourcesDirectory)/client
