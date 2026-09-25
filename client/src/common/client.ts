@@ -2120,6 +2120,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		diagnostics.tagSupport = { valueSet: [ DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated ] };
 		diagnostics.codeDescriptionSupport = true;
 		diagnostics.dataSupport = true;
+		// VS Code has no support for markup content in diagnostic messages.
+		diagnostics.markupMessageSupport = false;
 
 		const textDocumentFilter = ensure(ensure(result, 'textDocument')!, 'filters')!;
 		textDocumentFilter.relativePatternSupport = true;
