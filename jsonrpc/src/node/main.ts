@@ -196,12 +196,10 @@ export function generateRandomPipeName(): string {
 export interface PipeTransport {
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
 	/**
-	 * Closes the underlying server if a client hasn't connected yet. Callers
-	 * should invoke this if they abandon the transport before `onConnected`
-	 * resolves (for example because the server process failed to start) to
-	 * avoid leaking the listening pipe.
+	 * Stops listening for a connection. Use this to release the pipe if the
+	 * other side never connects (e.g. the server process exited early).
 	 */
-	close(): void;
+	dispose(): void;
 }
 
 export function createClientPipeTransport(pipeName: string, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<PipeTransport> {
@@ -222,7 +220,11 @@ export function createClientPipeTransport(pipeName: string, encoding: RAL.Messag
 			server.removeListener('error', reject);
 			resolve({
 				onConnected: () => { return connected; },
-				close: () => { server.close(); }
+				dispose: () => {
+					if (server.listening) {
+						server.close();
+					}
+				}
 			});
 		});
 	});
@@ -240,12 +242,10 @@ export interface SocketTransport {
 	port(): number;
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
 	/**
-	 * Closes the underlying server if a client hasn't connected yet. Callers
-	 * should invoke this if they abandon the transport before `onConnected`
-	 * resolves (for example because the server process failed to start) to
-	 * avoid leaking the listening socket.
+	 * Stops listening for a connection. Use this to release the port if the
+	 * other side never connects (e.g. the server process exited early).
 	 */
-	close(): void;
+	dispose(): void;
 }
 
 export function createClientSocketTransport(port: number, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<SocketTransport> {
@@ -273,7 +273,11 @@ export function createClientSocketTransport(port: number, encoding: RAL.MessageB
 			resolve({
 				port: () => boundPort,
 				onConnected: () => { return connected; },
-				close: () => { server.close(); }
+				dispose: () => {
+					if (server.listening) {
+						server.close();
+					}
+				}
 			});
 		});
 	});

@@ -104,38 +104,30 @@ suite('Connection', () => {
 		assert.ok(bound > 0, `expected a positive bound port, got ${bound}`);
 	});
 
-	test('createClientSocketTransport close closes the listening socket before a client connects', async () => {
+	test('createClientSocketTransport releases the port on dispose', async () => {
 		const net = await import('net');
 		const transport = await hostConnection.createClientSocketTransport(0);
 		const bound = transport.port();
-
-		transport.close();
-
+		transport.dispose();
+		const probe = net.createServer();
 		await new Promise<void>((resolve, reject) => {
-			const client = net.connect(bound, '127.0.0.1');
-			client.on('connect', () => {
-				client.destroy();
-				reject(new Error('expected the connection to be refused after close'));
-			});
-			client.on('error', () => resolve());
+			probe.on('error', reject);
+			probe.listen(bound, '127.0.0.1', () => resolve());
 		});
+		await new Promise<void>(resolve => probe.close(() => resolve()));
 	});
 
-	test('createClientPipeTransport close closes the listening pipe before a client connects', async () => {
+	test('createClientPipeTransport releases the pipe on dispose', async () => {
 		const net = await import('net');
 		const pipeName = hostConnection.generateRandomPipeName();
 		const transport = await hostConnection.createClientPipeTransport(pipeName);
-
-		transport.close();
-
+		transport.dispose();
+		const probe = net.createServer();
 		await new Promise<void>((resolve, reject) => {
-			const client = net.createConnection(pipeName);
-			client.on('connect', () => {
-				client.destroy();
-				reject(new Error('expected the connection to be refused after close'));
-			});
-			client.on('error', () => resolve());
+			probe.on('error', reject);
+			probe.listen(pipeName, () => resolve());
 		});
+		await new Promise<void>(resolve => probe.close(() => resolve()));
 	});
 
 	test('Test Duplex Stream Connection', (done) => {
