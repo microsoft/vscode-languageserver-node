@@ -104,6 +104,32 @@ suite('Connection', () => {
 		assert.ok(bound > 0, `expected a positive bound port, got ${bound}`);
 	});
 
+	test('createClientSocketTransport releases the port on dispose', async () => {
+		const net = await import('net');
+		const transport = await hostConnection.createClientSocketTransport(0);
+		const bound = transport.port();
+		transport.dispose();
+		const probe = net.createServer();
+		await new Promise<void>((resolve, reject) => {
+			probe.on('error', reject);
+			probe.listen(bound, '127.0.0.1', () => resolve());
+		});
+		await new Promise<void>(resolve => probe.close(() => resolve()));
+	});
+
+	test('createClientPipeTransport releases the pipe on dispose', async () => {
+		const net = await import('net');
+		const pipeName = hostConnection.generateRandomPipeName();
+		const transport = await hostConnection.createClientPipeTransport(pipeName);
+		transport.dispose();
+		const probe = net.createServer();
+		await new Promise<void>((resolve, reject) => {
+			probe.on('error', reject);
+			probe.listen(pipeName, () => resolve());
+		});
+		await new Promise<void>(resolve => probe.close(() => resolve()));
+	});
+
 	test('Test Duplex Stream Connection', (done) => {
 		const type = new RequestType<string, string, void>('test/handleSingleRequest');
 		const duplexStream1 = new TestDuplex('ds1');

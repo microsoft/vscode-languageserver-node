@@ -16,7 +16,7 @@ import * as Is from '../common/utils/is';
 import { BaseLanguageClient, LanguageClientOptions as BaseLanguageClientOptions, MessageTransports, ShutdownMode } from '../common/client';
 
 import { terminate } from './processes';
-import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams} from 'vscode-languageserver-protocol/node';
+import { StreamMessageReader, StreamMessageWriter, IPCMessageReader, IPCMessageWriter, createClientPipeTransport, generateRandomPipeName, createClientSocketTransport, InitializeParams, MessageReader, MessageWriter} from 'vscode-languageserver-protocol/node';
 
 // Import SemVer functions individually to avoid circular dependencies in SemVer
 import semverParse = require('semver/functions/parse');
@@ -414,28 +414,26 @@ export class LanguageClient extends BaseLanguageClient {
 						return createClientPipeTransport(pipeName!).then((transport) => {
 							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
+								transport.dispose();
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
 							pipeStderr(process.stderr, this.outputChannel);
 							pipeStdout(process.stdout, this.outputChannel);
-							return transport.onConnected().then((protocol) => {
-								return { reader: protocol[0], writer: protocol[1] };
-							});
+							return waitForConnection(process, transport);
 						});
 					} else if (Transport.isSocket(transport)) {
 						return createClientSocketTransport(transport.port).then((transport) => {
 							args.push(`--socket=${transport.port()}`);
 							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
+								transport.dispose();
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
 							pipeStderr(process.stderr, this.outputChannel);
 							pipeStdout(process.stdout, this.outputChannel);
-							return transport.onConnected().then((protocol) => {
-								return { reader: protocol[0], writer: protocol[1] };
-							});
+							return waitForConnection(process, transport);
 						});
 					}
 				} else {
@@ -474,9 +472,7 @@ export class LanguageClient extends BaseLanguageClient {
 								this._serverProcess = sp;
 								pipeStderr(sp.stderr, this.outputChannel);
 								pipeStdout(sp.stdout, this.outputChannel);
-								transport.onConnected().then((protocol) => {
-									resolve({ reader: protocol[0], writer: protocol[1] });
-								}, reject);
+								waitForConnection(sp, transport).then(resolve, reject);
 							}, reject);
 						} else if (Transport.isSocket(transport)) {
 							createClientSocketTransport(transport.port).then((transport) => {
@@ -486,9 +482,7 @@ export class LanguageClient extends BaseLanguageClient {
 								this._serverProcess = sp;
 								pipeStderr(sp.stderr, this.outputChannel);
 								pipeStdout(sp.stdout, this.outputChannel);
-								transport.onConnected().then((protocol) => {
-									resolve({ reader: protocol[0], writer: protocol[1] });
-								}, reject);
+								waitForConnection(sp, transport).then(resolve, reject);
 							}, reject);
 						}
 					});
@@ -521,30 +515,28 @@ export class LanguageClient extends BaseLanguageClient {
 					return createClientPipeTransport(pipeName!).then((transport) => {
 						const serverProcess = cp.spawn(command.command, args, options);
 						if (!serverProcess || !serverProcess.pid) {
+							transport.dispose();
 							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
 						this._isDetached = !!options.detached;
 						pipeStderr(serverProcess.stderr, this.outputChannel);
 						pipeStdout(serverProcess.stdout, this.outputChannel);
-						return transport.onConnected().then((protocol) => {
-							return { reader: protocol[0], writer: protocol[1] };
-						});
+						return waitForConnection(serverProcess, transport);
 					});
 				} else if (Transport.isSocket(transport)) {
 					return createClientSocketTransport(transport.port).then((transport) => {
 						args.push(`--socket=${transport.port()}`);
 						const serverProcess = cp.spawn(command.command, args, options);
 						if (!serverProcess || !serverProcess.pid) {
+							transport.dispose();
 							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
 						this._isDetached = !!options.detached;
 						pipeStderr(serverProcess.stderr, this.outputChannel);
 						pipeStdout(serverProcess.stdout, this.outputChannel);
-						return transport.onConnected().then((protocol) => {
-							return { reader: protocol[0], writer: protocol[1] };
-						});
+						return waitForConnection(serverProcess, transport);
 					});
 				}
 			}
@@ -646,6 +638,17 @@ export class SettingMonitor {
 			void this._client.stop().catch((error) => this._client.error('Stop failed after configuration change', error, 'force'));
 		}
 	}
+}
+
+function waitForConnection(childProcess: ChildProcess, transport: { onConnected(): Promise<[MessageReader, MessageWriter]>; dispose(): void }): Promise<MessageTransports> {
+	return new Promise<MessageTransports>((resolve, reject) => {
+		childProcess.once('exit', (code, signal) => {
+			// The server never connected, so stop listening to release the pipe / port.
+			transport.dispose();
+			reject(new Error(`Server process exited before the connection could be established (code: ${code}, signal: ${signal}).`));
+		});
+		transport.onConnected().then((protocol) => resolve({ reader: protocol[0], writer: protocol[1] }), reject);
+	});
 }
 
 function handleChildProcessStartError(process: ChildProcess, message: string) {
