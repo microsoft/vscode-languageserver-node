@@ -195,6 +195,11 @@ export function generateRandomPipeName(): string {
 
 export interface PipeTransport {
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
+	/**
+	 * Stops listening for a connection. Use this to release the pipe if the
+	 * other side never connects (e.g. the server process exited early).
+	 */
+	dispose(): void;
 }
 
 export function createClientPipeTransport(pipeName: string, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<PipeTransport> {
@@ -214,7 +219,12 @@ export function createClientPipeTransport(pipeName: string, encoding: RAL.Messag
 		server.listen(pipeName, () => {
 			server.removeListener('error', reject);
 			resolve({
-				onConnected: () => { return connected; }
+				onConnected: () => { return connected; },
+				dispose: () => {
+					if (server.listening) {
+						server.close();
+					}
+				}
 			});
 		});
 	});
@@ -231,6 +241,11 @@ export function createServerPipeTransport(pipeName: string, encoding: RAL.Messag
 export interface SocketTransport {
 	port(): number;
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
+	/**
+	 * Stops listening for a connection. Use this to release the port if the
+	 * other side never connects (e.g. the server process exited early).
+	 */
+	dispose(): void;
 }
 
 export function createClientSocketTransport(port: number, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<SocketTransport> {
@@ -257,7 +272,12 @@ export function createClientSocketTransport(port: number, encoding: RAL.MessageB
 			const boundPort = address.port;
 			resolve({
 				port: () => boundPort,
-				onConnected: () => { return connected; }
+				onConnected: () => { return connected; },
+				dispose: () => {
+					if (server.listening) {
+						server.close();
+					}
+				}
 			});
 		});
 	});
