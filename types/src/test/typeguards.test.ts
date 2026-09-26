@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { Range, Position, Hover, MarkedString, TextEdit } from '../main';
+import { Range, Position, Hover, MarkedString, TextEdit, ColorPresentation } from '../main';
 
 suite('Type guards', () => {
 	suite('Position.is', () => {
@@ -188,6 +188,12 @@ suite('Type guards', () => {
 		test('undefined', () => {
 			const edit = undefined;
 			assert.strictEqual(TextEdit.is(edit), false);
+		});
+	});
+	suite('ColorPresentation.is', () => {
+		test('with textEdit', () => {
+			const presentation = ColorPresentation.create('red', TextEdit.insert(Position.create(0, 0), 'red'));
+			assert.strictEqual(ColorPresentation.is(presentation), true);
 		});
 	});
 });
