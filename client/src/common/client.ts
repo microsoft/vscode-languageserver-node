@@ -1423,7 +1423,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.error(`${this._name} client: couldn't create connection to server.`, error, 'force');
 			reject(error);
 		}
-		return this._onStart;
+		return promise;
 	}
 
 	private createOnStartPromise(): [ Promise<void>, () => void, (error:any) => void] {
