@@ -874,17 +874,29 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._outputChannel === undefined) {
 			return false;
 		}
+
+		function sanitizeOutputChannelResourceSegment(value: string): string {
+			return value.replace(/[\\/:\*\?"<>\|]/g, '');
+		}
+
+		function getOutputChannelResourceName(id: string, name: string): string {
+			const resourceId = sanitizeOutputChannelResourceSegment(id);
+			const resourceName = sanitizeOutputChannelResourceSegment(name);
+			return `${resourceId}.${resourceName}.log`;
+		}
+
+		function matchesOutputChannelResource(resource: string, outputChannelResource: string): boolean {
+			const normalizedResource = resource.replace(/\\/g, '/');
+			return normalizedResource === outputChannelResource || normalizedResource.endsWith(`/${outputChannelResource}`) || normalizedResource.endsWith(`:${outputChannelResource}`);
+		}
+
 		const outputChannelResource = getOutputChannelResourceName(this._clientOptions.outputChannelId, this._outputChannel.name);
-		return this.getVisibleTextEditors().some(editor => {
+		return Window.visibleTextEditors.some(editor => {
 			if (editor.document.uri.scheme !== 'output') {
 				return false;
 			}
 			return matchesOutputChannelResource(editor.document.uri.toString(true), outputChannelResource) || matchesOutputChannelResource(editor.document.fileName, outputChannelResource);
 		});
-	}
-
-	protected getVisibleTextEditors(): readonly TextEditor[] {
-		return Window.visibleTextEditors;
 	}
 
 	protected restoreOutputChannelVisibility(wasVisible: boolean): void {
@@ -2604,21 +2616,6 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 	};
 
 	return result;
-}
-
-function getOutputChannelResourceName(id: string, name: string): string {
-	const resourceId = sanitizeOutputChannelResourceSegment(id);
-	const resourceName = sanitizeOutputChannelResourceSegment(name);
-	return `${resourceId}.${resourceName}.log`;
-}
-
-function sanitizeOutputChannelResourceSegment(value: string): string {
-	return value.replace(/[\\/:\*\?"<>\|]/g, '');
-}
-
-function matchesOutputChannelResource(resource: string, outputChannelResource: string): boolean {
-	const normalizedResource = resource.replace(/\\/g, '/');
-	return normalizedResource === outputChannelResource || normalizedResource.endsWith(`/${outputChannelResource}`) || normalizedResource.endsWith(`:${outputChannelResource}`);
 }
 
 // Exporting proposed protocol.
