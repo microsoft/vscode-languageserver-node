@@ -416,6 +416,7 @@ export class LanguageClient extends BaseLanguageClient {
 						return createClientPipeTransport(pipeName!).then((transport) => {
 							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
+								transport.close();
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
@@ -430,6 +431,7 @@ export class LanguageClient extends BaseLanguageClient {
 							args.push(`--socket=${transport.port()}`);
 							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
+								transport.close();
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
@@ -523,6 +525,7 @@ export class LanguageClient extends BaseLanguageClient {
 					return createClientPipeTransport(pipeName!).then((transport) => {
 						const serverProcess = cp.spawn(command.command, args, options);
 						if (!serverProcess || !serverProcess.pid) {
+							transport.close();
 							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
@@ -538,6 +541,7 @@ export class LanguageClient extends BaseLanguageClient {
 						args.push(`--socket=${transport.port()}`);
 						const serverProcess = cp.spawn(command.command, args, options);
 						if (!serverProcess || !serverProcess.pid) {
+							transport.close();
 							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
