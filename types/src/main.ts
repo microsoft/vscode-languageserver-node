@@ -449,7 +449,7 @@ export namespace ColorPresentation {
 	export function is(value: any): value is ColorPresentation {
 		const candidate = value as ColorPresentation;
 		return Is.objectLiteral(candidate) && Is.string(candidate.label)
-			&& (Is.undefined(candidate.textEdit) || TextEdit.is(candidate))
+			&& (Is.undefined(candidate.textEdit) || TextEdit.is(candidate.textEdit))
 			&& (Is.undefined(candidate.additionalTextEdits) || Is.typedArray(candidate.additionalTextEdits, TextEdit.is));
 	}
 }

@@ -2457,7 +2457,7 @@ suite('delayOpenNotifications', () => {
 		middleware = {};
 	});
 
-	async function startClient(delayOpen: boolean): Promise<void> {
+	async function startClient(delayOpen: boolean, documentSelector: lsclient.DocumentSelector = [{ language: 'plaintext' }]): Promise<void> {
 		const serverModule = path.join(__dirname, './servers/textSyncServer.js');
 		const serverOptions: lsclient.ServerOptions = {
 			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
@@ -2465,7 +2465,7 @@ suite('delayOpenNotifications', () => {
 		};
 
 		const clientOptions: lsclient.LanguageClientOptions = {
-			documentSelector: [{ language: 'plaintext' }],
+			documentSelector,
 			synchronize: {},
 			initializationOptions: {},
 			middleware,
@@ -2596,5 +2596,29 @@ suite('delayOpenNotifications', () => {
 		assert.equal(textDoc.offsetAt(positionOfLine3word), offsetOfLine3word);
 		assert.ok(textDoc.validatePosition(positionOfLine3word).isEqual(positionOfLine3word));
 		assert.ok(textDoc.validateRange(rangeOfLine3word!).isEqual(rangeOfLine3word!));
+	});
+
+	test('hidden documents are opened at startup when delayOpenNotifications=false', async () => {
+		const scheme = 'delayed-open-test';
+		const contentProvider = vscode.workspace.registerTextDocumentContentProvider(scheme, {
+			provideTextDocumentContent: () => 'hidden document'
+		});
+		try {
+			const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(`${scheme}:///hidden.txt`));
+			assert.strictEqual(vscode.window.visibleTextEditors.some((editor) => editor.document === document), false);
+
+			let didOpen = false;
+			middleware.didOpen = (openedDocument, next) => {
+				if (openedDocument === document) {
+					didOpen = true;
+				}
+				return next(openedDocument);
+			};
+
+			await startClient(false, [{ scheme }]);
+			assert.strictEqual(didOpen, true);
+		} finally {
+			contentProvider.dispose();
+		}
 	});
 });
