@@ -14,7 +14,7 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
-    npm install
+    npm ci
     npm run symlink
   displayName: 'Install Dependencies'
 

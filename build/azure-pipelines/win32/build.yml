@@ -5,7 +5,7 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
-    npm install
+    npm ci
   displayName: 'Install Dependencies'
 
 - script: |
