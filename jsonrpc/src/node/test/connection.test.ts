@@ -859,4 +859,50 @@ suite('Connection', () => {
 		]);
 		assert.strictEqual(answered, 'handled');
 	});
+
+	test('Parallelism - a rejected dispatch is logged and releases its slot', async () => {
+		const requestOne = new hostConnection.RequestType0<void, void>('test/parallelism_reject_logged');
+		const requestTwo = new hostConnection.RequestType0<string, void>('test/parallelism_after_reject_logged');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const errors: string[] = [];
+		const logger: hostConnection.Logger = {
+			...hostConnection.NullLogger,
+			error: (message: string) => errors.push(message)
+		};
+
+		// Force the promise the message queue awaits to reject directly, without
+		// relying on a serialization failure to produce the rejection.
+		const messageStrategy: hostConnection.MessageStrategy = {
+			handleMessage: (message, next) => {
+				const result = next(message);
+				if (hostConnection.Message.isRequest(message) && message.method === requestOne.method) {
+					return Promise.reject(new Error('forced rejection'));
+				}
+				return result;
+			}
+		};
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, logger, { maxParallelism: 1, messageStrategy });
+		server.onRequest(requestOne, () => { });
+		server.onRequest(requestTwo, () => 'handled');
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, { maxParallelism: 1 });
+		client.listen();
+
+		await client.sendRequest(requestOne);
+		await new Promise(resolve => setTimeout(resolve, 100));
+
+		assert.strictEqual(errors.length, 1);
+		assert.ok(errors[0].includes('forced rejection'));
+
+		// The queue must still be pumping, so an ordinary request is answered.
+		const answered = await Promise.race([
+			client.sendRequest(requestTwo),
+			new Promise<string>(resolve => setTimeout(() => resolve('timed out'), 1000))
+		]);
+		assert.strictEqual(answered, 'handled');
+	});
 });

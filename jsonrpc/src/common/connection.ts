@@ -749,11 +749,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					// one failed dispatch left `inFlight` permanently elevated and
 					// triggerMessageQueue() bailed out forever after.
 					result.then(() => {
-						inFlight--;
-						triggerMessageQueue();
-					}, (error) => {
-						inFlight--;
+					}).catch((error) => {
 						logger.error(`Processing message queue failed: ${error.toString()}`);
+					}).finally(() => {
+						inFlight--;
 						triggerMessageQueue();
 					});
 				} else {
