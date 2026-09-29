@@ -121,7 +121,7 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			}
 			if (Languages.match(documentSelector, textDocument) > 0 && !this._client.hasDedicatedTextSynchronizationFeature(textDocument)) {
 				const visibleDocuments = this._client.visibleDocuments;
-				if (visibleDocuments.isVisible(textDocument)) {
+				if (!this._delayOpen || visibleDocuments.isVisible(textDocument)) {
 					const middleware = this._client.middleware;
 					const didOpen = (textDocument: TextDocument): Promise<void> => {
 						return this._client.sendNotification(this._type, this._createParams(textDocument));
