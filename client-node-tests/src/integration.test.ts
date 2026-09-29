@@ -2179,6 +2179,38 @@ class CrashClient extends lsclient.LanguageClient {
 }
 
 suite('Server tests', () => {
+	test('Concurrent starts reject when the server closes during initialization', async () => {
+		const outputChannel = vscode.window.createOutputChannel('Initialization failure', { log: true });
+		const client = new lsclient.LanguageClient('initialization-failure', 'Initialization failure', {
+			module: path.join(__dirname, './servers/crashOnInitializeServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		}, {
+			outputChannel,
+			initializationFailedHandler: () => false,
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed: () => ({ action: lsclient.CloseAction.DoNotRestart, handled: true }),
+			}
+		});
+		// The initialization error path also calls stop(), which independently
+		// rejects for a non-running client. Isolate the promises returned by start().
+		const stop = sinon.stub(client, 'stop').resolves();
+		try {
+			// Observing both calls also handles the shared startup rejection, even
+			// if one caller incorrectly loses that promise when the connection closes.
+			const results = await Promise.allSettled([client.start(), client.start()]);
+			assert.strictEqual(results[0].status, 'rejected');
+			assert.strictEqual(results[1].status, 'rejected');
+			assert.strictEqual(results[0].reason, results[1].reason);
+			assert.match(String(results[0].reason), /Pending response rejected since connection got disposed/);
+		} finally {
+			await client.dispose();
+			stop.restore();
+			client.diagnostics?.dispose();
+			outputChannel.dispose();
+		}
+	}).timeout(5000);
+
 	test('Stop fails if server crashes after shutdown request', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
