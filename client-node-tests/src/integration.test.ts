@@ -12,6 +12,7 @@ import * as lsclient from 'vscode-languageclient/node';
 import * as proto from 'vscode-languageserver-protocol';
 import { MemoryFileSystemProvider } from './memoryFileSystemProvider';
 import { vsdiag, DiagnosticProviderMiddleware } from 'vscode-languageclient';
+import { DidOpenTextDocumentFeature } from 'vscode-languageclient/$test/common/textSynchronization';
 
 namespace GotNotifiedRequest {
 	export const method: 'testing/gotNotified' = 'testing/gotNotified';
@@ -2485,11 +2486,11 @@ suite('delayOpenNotifications', () => {
 	let client: lsclient.LanguageClient;
 	let middleware: lsclient.Middleware = {};
 
-	suiteSetup(() => {
+	setup(() => {
 		middleware = {};
 	});
 
-	async function startClient(delayOpen: boolean, documentSelector: lsclient.DocumentSelector = [{ language: 'plaintext' }]): Promise<void> {
+	async function startClient(delayOpen: boolean, documentSelector: lsclient.DocumentSelector = [{ language: 'plaintext' }], syncKind: lsclient.TextDocumentSyncKind = lsclient.TextDocumentSyncKind.Incremental): Promise<void> {
 		const serverModule = path.join(__dirname, './servers/textSyncServer.js');
 		const serverOptions: lsclient.ServerOptions = {
 			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
@@ -2499,7 +2500,7 @@ suite('delayOpenNotifications', () => {
 		const clientOptions: lsclient.LanguageClientOptions = {
 			documentSelector,
 			synchronize: {},
-			initializationOptions: {},
+			initializationOptions: { syncKind },
 			middleware,
 			textSynchronization: {
 				delayOpenNotifications: delayOpen
@@ -2528,6 +2529,25 @@ suite('delayOpenNotifications', () => {
 
 	function sendDidClose(document: vscode.TextDocument) {
 		return client.getFeature(lsclient.DidCloseTextDocumentNotification.method).getProvider(document)!.send(document);
+	}
+
+	function createBarrier(): { promise: Promise<void>; resolve: () => void } {
+		let resolve: () => void = () => {};
+		const promise = new Promise<void>((complete) => { resolve = complete; });
+		return { promise, resolve };
+	}
+
+	function holdOpen(uri: vscode.Uri): { opening: Promise<void>; release: () => void } {
+		const opening = createBarrier();
+		const barrier = createBarrier();
+		middleware.didOpen = async (document, next) => {
+			if (document.uri.toString() === uri.toString()) {
+				opening.resolve();
+				await barrier.promise;
+			}
+			return next(document);
+		};
+		return { opening: opening.promise, release: barrier.resolve };
 	}
 
 	teardown(async () =>  client.stop());
@@ -2653,4 +2673,250 @@ suite('delayOpenNotifications', () => {
 			contentProvider.dispose();
 		}
 	});
+
+	test('requests wait for an in-flight delayed open', async () => {
+		await startClient(true);
+		const document = { ...fakeDocument, uri: vscode.Uri.parse('untitled:concurrent-open.txt') };
+		const held = holdOpen(document.uri);
+		await sendDidOpen(document);
+		const firstRequest = client.sendRequest(GetNotificationsRequest.type);
+		await held.opening;
+		const secondRequest = client.sendRequest(GetNotificationsRequest.type);
+		try {
+			await waitForNextTurn();
+		} finally {
+			held.release();
+		}
+		for (const notifications of await Promise.all([firstRequest, secondRequest])) {
+			assert.strictEqual(notifications.some((notification) => notification.method === lsclient.DidOpenTextDocumentNotification.method
+				&& notification.params.textDocument.uri === document.uri.toString()), true);
+		}
+	});
+
+	for (const visibleAtStartup of [true, false]) {
+		test(`requests wait for visible opens (visible at startup: ${visibleAtStartup})`, async () => {
+			const scheme = `delayed-visible-${visibleAtStartup}`;
+			const contentProvider = vscode.workspace.registerTextDocumentContentProvider(scheme, {
+				provideTextDocumentContent: () => 'original'
+			});
+			const hiddenUri = vscode.Uri.parse(`${scheme}:///hidden.txt`);
+			const visibleUri = vscode.Uri.parse(`${scheme}:///visible.txt`);
+			const held = holdOpen(hiddenUri);
+			try {
+				await vscode.workspace.openTextDocument(hiddenUri);
+				const visible = await vscode.workspace.openTextDocument(visibleUri);
+				if (visibleAtStartup) {
+					await vscode.window.showTextDocument(visible);
+				}
+				await startClient(true, [{ scheme }]);
+				if (!visibleAtStartup) {
+					await vscode.window.showTextDocument(visible);
+				}
+				await held.opening;
+				const openFeature = client.getFeature(lsclient.DidOpenTextDocumentNotification.method);
+				assert.strictEqual(Array.from(openFeature.openDocuments).some((document) => document.uri.toString() === visibleUri.toString()), false);
+				openFeature.register({ id: 'repeated-open-registration', registerOptions: { documentSelector: [{ scheme }] } });
+				const request = client.sendRequest(GetNotificationsRequest.type);
+				await waitForNextTurn();
+				held.release();
+				const notifications = await request;
+				for (const uri of [hiddenUri, visibleUri]) {
+					assert.strictEqual(notifications.filter((notification) => notification.method === lsclient.DidOpenTextDocumentNotification.method
+						&& notification.params.textDocument.uri === uri.toString()).length, 1);
+				}
+			} finally {
+				held.release();
+				await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+				contentProvider.dispose();
+			}
+		});
+	}
+
+	for (const closeInFlight of [true, false]) {
+		test(`close during a drain (open in flight: ${closeInFlight})`, async () => {
+			await startClient(true);
+			const openingDocument = { ...fakeDocument, uri: vscode.Uri.parse('untitled:opening.txt') };
+			const pendingDocument = { ...fakeDocument, uri: vscode.Uri.parse('untitled:pending.txt') };
+			const held = holdOpen(openingDocument.uri);
+			await sendDidOpen(openingDocument);
+			await sendDidOpen(pendingDocument);
+			const request = client.sendRequest(GetNotificationsRequest.type);
+			await held.opening;
+			const closingDocument = closeInFlight ? openingDocument : pendingDocument;
+			const close = sendDidClose(closingDocument);
+			try {
+				await waitForNextTurn();
+			} finally {
+				held.release();
+			}
+			await Promise.all([request, close]);
+			const notifications = (await client.sendRequest(GetNotificationsRequest.type))
+				.filter((notification) => notification.params.textDocument.uri === closingDocument.uri.toString());
+			assert.deepStrictEqual(notifications.map((notification) => notification.method), closeInFlight
+				? [lsclient.DidOpenTextDocumentNotification.method, lsclient.DidCloseTextDocumentNotification.method]
+				: []);
+		});
+	}
+
+	for (const syncKind of [lsclient.TextDocumentSyncKind.Incremental, lsclient.TextDocumentSyncKind.Full] as const) {
+		test(`changes wait for delayed opens (sync kind: ${syncKind})`, async () => {
+			await startClient(true, undefined, syncKind);
+			const document = { ...fakeDocument, uri: vscode.Uri.parse('untitled:changed.txt'), version: 1, getText: () => 'original' };
+			const held = holdOpen(document.uri);
+			await sendDidOpen(document);
+			document.version = 2;
+			document.getText = () => 'updated';
+			const change = sendDidChange({
+				document,
+				reason: undefined,
+				contentChanges: [{ range: new vscode.Range(0, 0, 0, 8), rangeOffset: 0, rangeLength: 8, text: 'updated' }]
+			});
+			await held.opening;
+			const request = client.sendRequest(GetNotificationsRequest.type);
+			try {
+				await waitForNextTurn();
+			} finally {
+				held.release();
+			}
+			await change;
+			const notifications = (await request).filter((notification) => notification.params.textDocument.uri === document.uri.toString());
+			assert.deepStrictEqual(notifications.map((notification) => notification.method), [
+				lsclient.DidOpenTextDocumentNotification.method,
+				lsclient.DidChangeTextDocumentNotification.method
+			]);
+			assert.strictEqual(notifications[0].params.textDocument.version, 1);
+			assert.strictEqual(notifications[0].params.textDocument.text, 'original');
+			assert.strictEqual(notifications[1].params.textDocument.version, 2);
+		});
+	}
+
+	test('full synchronization flushes documents queued after the open barrier', async () => {
+		await startClient(true, undefined, lsclient.TextDocumentSyncKind.Full);
+		const document = { ...fakeDocument, uri: vscode.Uri.parse('untitled:queued-before-full-sync.txt') };
+		const openFeature = client.getFeature(lsclient.DidOpenTextDocumentNotification.method) as DidOpenTextDocumentFeature;
+		const flush = openFeature.sendPendingOpenNotifications.bind(openFeature);
+		const stub = sinon.stub(openFeature, 'sendPendingOpenNotifications');
+		let queued = false;
+		stub.callsFake(async (closingDocument) => {
+			const result = await flush(closingDocument);
+			if (!queued) {
+				queued = true;
+				await sendDidOpen(document);
+				await sendDidChange({
+					document,
+					reason: undefined,
+					contentChanges: [{ range: new vscode.Range(0, 0, 0, 0), rangeOffset: 0, rangeLength: 0, text: 'updated' }]
+				});
+			}
+			return result;
+		});
+		try {
+			const notifications = (await client.sendRequest(GetNotificationsRequest.type))
+				.filter((notification) => notification.params.textDocument.uri === document.uri.toString());
+			assert.deepStrictEqual(notifications.map((notification) => notification.method), [
+				lsclient.DidOpenTextDocumentNotification.method,
+				lsclient.DidChangeTextDocumentNotification.method
+			]);
+		} finally {
+			stub.restore();
+		}
+	});
+
+	test('notification middleware participates in the open barrier', async () => {
+		await startClient(true);
+		const document = { ...fakeDocument, uri: vscode.Uri.parse('untitled:notification-middleware.txt') };
+		const opening = createBarrier();
+		const barrier = createBarrier();
+		middleware.sendNotification = async (type, next, params) => {
+			if ((typeof type === 'string' ? type : type.method) === lsclient.DidOpenTextDocumentNotification.method) {
+				opening.resolve();
+				await barrier.promise;
+			}
+			return next(type, params);
+		};
+		await sendDidOpen(document);
+		const firstRequest = client.sendRequest(GetNotificationsRequest.type);
+		await opening.promise;
+		const secondRequest = client.sendRequest(GetNotificationsRequest.type);
+		try {
+			await waitForNextTurn();
+		} finally {
+			barrier.resolve();
+		}
+		for (const notifications of await Promise.all([firstRequest, secondRequest])) {
+			assert.strictEqual(notifications.some((notification) => notification.method === lsclient.DidOpenTextDocumentNotification.method
+				&& notification.params.textDocument.uri === document.uri.toString()), true);
+		}
+	});
+
+	test('failed opens reject waiting requests and reset on restart', async () => {
+		await startClient(true);
+		const document = { ...fakeDocument, uri: vscode.Uri.parse('untitled:failed-open.txt') };
+		const failure = new Error('Opening failed');
+		const opening = createBarrier();
+		const barrier = createBarrier();
+		middleware.didOpen = async (openedDocument, next) => {
+			if (openedDocument.uri.toString() === document.uri.toString()) {
+				opening.resolve();
+				await barrier.promise;
+				throw failure;
+			}
+			return next(openedDocument);
+		};
+		await sendDidOpen(document);
+		const firstRequest = assert.rejects(client.sendRequest(GetNotificationsRequest.type), (error) => error === failure);
+		await opening.promise;
+		const secondRequest = assert.rejects(client.sendRequest(GetNotificationsRequest.type), (error) => error === failure);
+		try {
+			await waitForNextTurn();
+		} finally {
+			barrier.resolve();
+		}
+		await Promise.all([firstRequest, secondRequest]);
+		assert.strictEqual(Array.from(client.getFeature(lsclient.DidOpenTextDocumentNotification.method).openDocuments)
+			.some((openedDocument) => openedDocument.uri.toString() === document.uri.toString()), false);
+		await client.stop();
+		middleware.didOpen = undefined;
+		await client.start();
+		await sendDidOpen(document);
+		const notifications = await client.sendRequest(GetNotificationsRequest.type);
+		assert.strictEqual(notifications.some((notification) => notification.params.textDocument.uri === document.uri.toString()), true);
+	});
+
+	for (const syncKind of [lsclient.TextDocumentSyncKind.Incremental, lsclient.TextDocumentSyncKind.Full] as const) {
+		test(`a restart invalidates an in-flight open without blocking new opens (sync kind: ${syncKind})`, async () => {
+			await startClient(true, undefined, syncKind);
+			const document = { ...fakeDocument, uri: vscode.Uri.parse('untitled:restart-open.txt'), version: 1 };
+			const held = holdOpen(document.uri);
+			await sendDidOpen(document);
+			if (syncKind === lsclient.TextDocumentSyncKind.Full) {
+				await sendDidChange({
+					document,
+					reason: undefined,
+					contentChanges: [{ range: new vscode.Range(0, 0, 0, 0), rangeOffset: 0, rangeLength: 0, text: 'updated' }]
+				});
+				await held.opening;
+			}
+			const oldRequest = assert.rejects(client.sendRequest(GetNotificationsRequest.type), /Document synchronization was cleared/);
+			await held.opening;
+			await waitForNextTurn();
+			try {
+				await client.stop();
+				middleware.didOpen = undefined;
+				await client.start();
+				document.version = 2;
+				await sendDidOpen(document);
+				const notifications = (await client.sendRequest(GetNotificationsRequest.type))
+					.filter((notification) => notification.params.textDocument.uri === document.uri.toString());
+				assert.strictEqual(notifications.length, 1);
+				assert.strictEqual(notifications[0].params.textDocument.version, 2);
+			} finally {
+				held.release();
+			}
+			await oldRequest;
+			const notifications = (await client.sendRequest(GetNotificationsRequest.type))
+				.filter((notification) => notification.params.textDocument.uri === document.uri.toString());
+			assert.strictEqual(notifications.length, 1);
+		});
+	}
 });

@@ -676,7 +676,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
 	private readonly _inFlightOpenNotifications: Set<string>;
-	private readonly _pendingChangeSemaphore: Semaphore<void>;
+	private _pendingChangeSemaphore: Semaphore<void>;
 	private readonly _pendingChangeDelayer: Delayer<void>;
 	private _didOpenTextDocumentFeature: DidOpenTextDocumentFeature | undefined;
 
@@ -1018,7 +1018,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public sendNotification<P>(type: NotificationType<P>, params?: NoInfer<RequestParam<P>>): Promise<void>;
 	public sendNotification(method: string): Promise<void>;
 	public sendNotification(method: string, params: any): Promise<void>;
-	public async sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
+	public sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
+		return this.doSendNotification(type, params);
+	}
+
+	private async doSendNotification<P>(type: string | MessageSignature, params?: P, synchronize: boolean = true, isCurrent?: () => boolean): Promise<void> {
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
@@ -1035,19 +1039,24 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
-
-		// Send any depending open notifications
-		const didDropOpenNotification = await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
-		if (didDropOpenNotification) {
-			// Don't forward this close notification if we dropped the
-			// corresponding open notification.
-			return;
+		if (isCurrent?.() === false) {
+			throw new ResponseError(ErrorCodes.ConnectionInactive, 'Document synchronization was cleared.');
 		}
 
-		// If any document is synced in full mode make sure we flush any pending
-		// full document syncs.
-		if (needsPendingFullTextDocumentSync) {
-			await this.sendPendingFullTextDocumentChanges(connection);
+		if (synchronize) {
+			// Send any depending open notifications
+			const didDropOpenNotification = await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
+			if (didDropOpenNotification) {
+				// Don't forward this close notification if we dropped the
+				// corresponding open notification.
+				return;
+			}
+
+			// If any document is synced in full mode make sure we flush any pending
+			// full document syncs.
+			if (needsPendingFullTextDocumentSync) {
+				await this.sendPendingFullTextDocumentChanges(connection);
+			}
 		}
 		// We need to remove the pending open notification before we actually
 		// send the notification over the connection. Otherwise there could be
@@ -1655,6 +1664,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// purge outstanding file events.
 		this._fileEvents = [];
 		this._fileEventDelayer.cancel();
+		this._pendingChangeDelayer.cancel();
+		this._pendingChangeSemaphore = new Semaphore<void>(1);
+		this._inFlightOpenNotifications.clear();
 
 		const disposables = this._listeners.splice(0, this._listeners.length);
 		for (const disposable of disposables) {
@@ -1716,6 +1728,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 	private async sendPendingFullTextDocumentChanges(connection: Connection): Promise<void> {
 		return this._pendingChangeSemaphore.lock(async () => {
+			if (connection !== this.activeConnection()) {
+				return;
+			}
+			await this._didOpenTextDocumentFeature?.sendPendingOpenNotifications();
+			if (connection !== this.activeConnection()) {
+				return;
+			}
 			try {
 				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(this._inFlightOpenNotifications);
 				if (changes.length === 0) {
@@ -2028,7 +2047,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	protected registerBuiltinFeatures() {
 		const pendingFullTextDocumentChanges: Map<string, TextDocument> = new Map();
 		this.registerFeature(new ConfigurationFeature(this));
-		this._didOpenTextDocumentFeature = new DidOpenTextDocumentFeature(this, this._syncedDocuments);
+		this._didOpenTextDocumentFeature = new DidOpenTextDocumentFeature(this, this._syncedDocuments,
+			(params, isCurrent) => this.doSendNotification(DidOpenTextDocumentNotification.type, params, false, isCurrent));
 		this.registerFeature(this._didOpenTextDocumentFeature);
 		this._didChangeTextDocumentFeature = new DidChangeTextDocumentFeature(this, pendingFullTextDocumentChanges);
 		this._didChangeTextDocumentFeature.onPendingChangeAdded(() => {

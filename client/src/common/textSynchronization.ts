@@ -21,6 +21,7 @@ import {
 } from './features';
 
 import * as UUID from './utils/uuid';
+import { Semaphore } from './utils/async';
 import { TextDocument as TextDocumentImpl } from 'vscode-languageserver-textdocument';
 
 export interface TextDocumentSynchronizationMiddleware {
@@ -52,8 +53,16 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 	private readonly _pendingOpenNotifications: Map<string, TextDocument>;
 	private readonly _delayOpen: boolean;
 	private _pendingOpenListeners: Disposable[] | undefined;
+	private _openSemaphore: Semaphore<boolean>;
+	private readonly _openingDocuments: Set<string>;
+	private readonly _droppedOpenNotifications: Set<string>;
+	private _openGeneration: number;
+	private _openError: { error: unknown } | undefined;
+	private readonly _sendOpenNotification: (params: DidOpenTextDocumentParams, isCurrent: () => boolean) => Promise<void>;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware, $ConfigurationOptions>, syncedDocuments: Map<string, TextDocument>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware, $ConfigurationOptions>, syncedDocuments: Map<string, TextDocument>,
+		sendOpenNotification: (params: DidOpenTextDocumentParams, isCurrent: () => boolean) => Promise<void>
+	) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
 			() => client.middleware.didOpen,
@@ -64,28 +73,43 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 		this._syncedDocuments = syncedDocuments;
 		this._pendingOpenNotifications = new Map<string, TextDocument>();
 		this._delayOpen = client.clientOptions.textSynchronization?.delayOpenNotifications ?? false;
+		this._openSemaphore = new Semaphore<boolean>(1);
+		this._openingDocuments = new Set<string>();
+		this._droppedOpenNotifications = new Set<string>();
+		this._openGeneration = 0;
+		this._openError = undefined;
+		this._sendOpenNotification = sendOpenNotification;
 	}
 
 	protected async callback(document: TextDocument): Promise<void> {
 		if (!this._delayOpen) {
 			return super.callback(document);
-		} else {
-			if (!this.matches(document)) {
-				return;
-			}
-			const visibleDocuments = this._client.visibleDocuments;
-			if (visibleDocuments.isVisible(document)) {
-				return super.callback(document);
-			} else {
-				// Snapshot the text document so that when we send the delayed
-				// notification it is based on the content/version at the time
-				// it would've been sent, and not the updated version.
-				//
-				// See https://github.com/microsoft/vscode-languageserver-node/issues/1695
+		}
+		if (!this.matches(document)) {
+			return;
+		}
+		this.queueOpenNotification(document);
+		if (this._client.visibleDocuments.isVisible(document)) {
+			await this.sendPendingOpenNotifications();
+		}
+	}
 
-				const snapshot = new TextDocumentSnapshot(document);
-				this._pendingOpenNotifications.set(snapshot.uri.toString(), snapshot);
-			}
+	private queueOpenNotification(document: TextDocument): void {
+		const uri = document.uri.toString();
+		this._droppedOpenNotifications.delete(uri);
+		if (!this._pendingOpenNotifications.has(uri)) {
+			// Snapshot the text document so that when we send the delayed
+			// notification it is based on the content/version at the time
+			// it would've been sent, and not the updated version.
+			//
+			// See https://github.com/microsoft/vscode-languageserver-node/issues/1695
+			this._pendingOpenNotifications.set(uri, new TextDocumentSnapshot(document));
+		}
+	}
+
+	private dropOpenNotification(uri: string): void {
+		if (this._pendingOpenNotifications.delete(uri)) {
+			this._droppedOpenNotifications.add(uri);
 		}
 	}
 
@@ -114,14 +138,17 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			return;
 		}
 		const documentSelector = this._client.protocol2CodeConverter.asDocumentSelector(data.registerOptions.documentSelector);
+		let sendPending = false;
 		Workspace.textDocuments.forEach((textDocument) => {
 			const uri: string = textDocument.uri.toString();
-			if (this._syncedDocuments.has(uri)) {
+			if (this._syncedDocuments.has(uri) || this._pendingOpenNotifications.has(uri) || this._openingDocuments.has(uri)) {
 				return;
 			}
 			if (Languages.match(documentSelector, textDocument) > 0 && !this._client.hasDedicatedTextSynchronizationFeature(textDocument)) {
-				const visibleDocuments = this._client.visibleDocuments;
-				if (!this._delayOpen || visibleDocuments.isVisible(textDocument)) {
+				if (this._delayOpen) {
+					this.queueOpenNotification(textDocument);
+					sendPending = sendPending || this._client.visibleDocuments.isVisible(textDocument);
+				} else {
 					const middleware = this._client.middleware;
 					const didOpen = (textDocument: TextDocument): Promise<void> => {
 						return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -130,32 +157,34 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 						this._client.error(`Sending document notification ${this._type.method} failed`, error);
 					});
 					this._syncedDocuments.set(uri, textDocument);
-				} else {
-					this._pendingOpenNotifications.set(uri, textDocument);
 				}
 			}
 		});
+		if (sendPending) {
+			this.sendPendingOpenNotifications().catch((error) => {
+				this._client.error(`Sending document notification ${this._type.method} failed`, error);
+			});
+		}
 		if (this._delayOpen && this._pendingOpenListeners === undefined) {
 			this._pendingOpenListeners = [];
 			const visibleDocuments = this._client.visibleDocuments;
 			this._pendingOpenListeners.push(visibleDocuments.onClose((closed) => {
 				for (const uri of closed) {
-					this._pendingOpenNotifications.delete(uri.toString());
+					this.dropOpenNotification(uri.toString());
 				}
 			}));
 			this._pendingOpenListeners.push(visibleDocuments.onOpen((opened) => {
 				for (const uri of opened) {
-					const document = this._pendingOpenNotifications.get(uri.toString());
-					if (document !== undefined) {
-						super.callback(document).catch(((error) => {
+					if (this._pendingOpenNotifications.has(uri.toString())) {
+						this.sendPendingOpenNotifications().catch((error) => {
 							this._client.error(`Sending document notification ${this._type.method} failed`, error);
-						}));
-						this._pendingOpenNotifications.delete(uri.toString());
+						});
+						break;
 					}
 				}
 			}));
 			this._pendingOpenListeners.push(workspace.onDidCloseTextDocument((document) => {
-				this._pendingOpenNotifications.delete(document.uri.toString());
+				this.dropOpenNotification(document.uri.toString());
 			}));
 		}
 	}
@@ -168,18 +197,66 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 	 * @returns Whether a pending open notification was dropped because it was
 	 *          for the closing document.
 	 */
-	public async sendPendingOpenNotifications(closingDocument?: string): Promise<boolean> {
-		const notifications = Array.from(this._pendingOpenNotifications.values());
-		this._pendingOpenNotifications.clear();
-		let didDropOpenNotification = false;
-		for (const notification of notifications) {
-			if (closingDocument !== undefined && notification.uri.toString() === closingDocument) {
-				didDropOpenNotification = true;
-				continue;
-			}
-			await super.callback(notification);
+	public sendPendingOpenNotifications(closingDocument?: string): Promise<boolean> {
+		if (!this._delayOpen) {
+			return Promise.resolve(false);
 		}
-		return didDropOpenNotification;
+		const generation = this._openGeneration;
+		let didDropOpenNotification = false;
+		if (closingDocument !== undefined) {
+			this.dropOpenNotification(closingDocument);
+			didDropOpenNotification = this._droppedOpenNotifications.delete(closingDocument);
+		}
+		return this._openSemaphore.lock(async () => {
+			this.checkOpenGeneration(generation);
+			if (this._openError !== undefined) {
+				throw this._openError.error;
+			}
+			for (;;) {
+				const next = this._pendingOpenNotifications.entries().next();
+				if (next.done) {
+					return didDropOpenNotification;
+				}
+				const [uri, document] = next.value;
+				this._pendingOpenNotifications.delete(uri);
+				this._openingDocuments.add(uri);
+				try {
+					await this.sendOpenNow(document, generation);
+					this.checkOpenGeneration(generation);
+				} catch (error) {
+					if (generation === this._openGeneration) {
+						this._openError = { error };
+					}
+					throw error;
+				} finally {
+					if (generation === this._openGeneration) {
+						this._openingDocuments.delete(uri);
+					}
+				}
+			}
+		});
+	}
+
+	private checkOpenGeneration(generation: number): void {
+		if (generation !== this._openGeneration) {
+			throw new Error('Document synchronization was cleared.');
+		}
+	}
+
+	private async sendOpenNow(document: TextDocument, generation: number): Promise<void> {
+		if (!this.matches(document)) {
+			return;
+		}
+		const send = async (textDocument: TextDocument): Promise<void> => {
+			this.checkOpenGeneration(generation);
+			const params = this._createParams(textDocument);
+			this.aboutToSendNotification(textDocument, this._type, params);
+			await this._sendOpenNotification(params, () => generation === this._openGeneration);
+			this.checkOpenGeneration(generation);
+			this.notificationSent(textDocument, this._type, params);
+		};
+		const middleware = this._client.middleware.didOpen;
+		return middleware === undefined ? send(document) : middleware(document, send);
 	}
 
 	protected getTextDocument(data: TextDocument): TextDocument {
@@ -192,6 +269,11 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 	}
 
 	public clear(): void {
+		this._openGeneration++;
+		this._openSemaphore = new Semaphore<boolean>(1);
+		this._openError = undefined;
+		this._openingDocuments.clear();
+		this._droppedOpenNotifications.clear();
 		this._pendingOpenNotifications.clear();
 		if (this._pendingOpenListeners !== undefined) {
 			for (const listener of this._pendingOpenListeners) {

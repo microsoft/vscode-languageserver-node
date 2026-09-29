@@ -22,12 +22,12 @@ namespace GetNotificationsRequest {
 	export const type = new RequestType0<NotificationData[], void>(method);
 }
 
-connection.onInitialize((_params: InitializeParams): InitializeResult => {
+connection.onInitialize((params: InitializeParams): InitializeResult => {
 	return {
 		capabilities: {
 			textDocumentSync: {
 				openClose: true,
-				change: TextDocumentSyncKind.Incremental
+				change: params.initializationOptions?.syncKind ?? TextDocumentSyncKind.Incremental
 			}
 		}
 	};
