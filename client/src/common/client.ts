@@ -391,8 +391,8 @@ export type LanguageClientOptions = {
 		 * Delays sending the open notification until one of the following
 		 * conditions becomes `true`:
 		 * - document is visible in the editor.
-		 * - any of the other notifications or requests is sent to the server, except
-		 *   a closed notification for the pending document.
+		 * - any request or notification is sent to the server, except an open or
+		 *   a close notification.
 		 */
 		delayOpenNotifications?: boolean;
 	};
@@ -1024,8 +1024,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 
 		const needsPendingFullTextDocumentSync: boolean = this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full;
+		const isOpenNotification = typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method;
 		let openNotification: string | undefined;
-		if (needsPendingFullTextDocumentSync && typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+		if (needsPendingFullTextDocumentSync && isOpenNotification) {
 			openNotification = (params as DidOpenTextDocumentParams)?.textDocument.uri;
 			this._inFlightOpenNotifications.add(openNotification);
 		}
@@ -1036,12 +1037,18 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
 
-		// Send any depending open notifications
-		const didDropOpenNotification = await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
-		if (didDropOpenNotification) {
-			// Don't forward this close notification if we dropped the
-			// corresponding open notification.
-			return;
+		if (documentToClose !== undefined) {
+			if (this._didOpenTextDocumentFeature!.dropPendingOpenNotification(documentToClose)) {
+				// Don't forward this close notification if we dropped the
+				// corresponding open notification.
+				return;
+			}
+		} else if (!isOpenNotification) {
+			// Send any depending open notifications. An open or close notification
+			// doesn't depend on them. It is sent right away since waiting for the pending
+			// open notifications to be sent one by one would let the messages that follow
+			// (e.g. a request or the open that follows a close) overtake it.
+			await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications();
 		}
 
 		// If any document is synced in full mode make sure we flush any pending
@@ -1423,7 +1430,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.error(`${this._name} client: couldn't create connection to server.`, error, 'force');
 			reject(error);
 		}
-		return this._onStart;
+		return promise;
 	}
 
 	private createOnStartPromise(): [ Promise<void>, () => void, (error:any) => void] {
@@ -1836,7 +1843,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 
 		const transports = await this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8');
-		this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this._clientOptions.connectionOptions);
+		this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this, this._clientOptions.connectionOptions);
 		return this._connection;
 	}
 
@@ -2480,6 +2487,29 @@ class ConsoleLogger implements Logger {
 	}
 }
 
+interface ChannelProvider {
+	error(message: string, data?: any, showNotification?: boolean | 'force'): void;
+	warn(message: string, data?: any, showNotification?: boolean): void;
+	info(message: string, data?: any, showNotification?: boolean): void;
+}
+
+class OutputChannelLogger implements Logger {
+	constructor(private readonly channelProvider: ChannelProvider) {
+	}
+	public error(message: string): void {
+		this.channelProvider.error(message, undefined, false);
+	}
+	public warn(message: string): void {
+		this.channelProvider.warn(message, undefined, false);
+	}
+	public info(message: string): void {
+		this.channelProvider.info(message, undefined, false);
+	}
+	public log(message: string): void {
+		this.channelProvider.info(message, undefined, false);
+	}
+}
+
 interface ConnectionErrorHandler {
 	(error: Error, message: Message | undefined, count: number | undefined): void;
 }
@@ -2488,8 +2518,8 @@ interface ConnectionCloseHandler {
 	(): void;
 }
 
-function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
-	const logger = new ConsoleLogger();
+function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, channelProvider: ChannelProvider | undefined, options?: ConnectionOptions): Connection {
+	const logger: Logger = channelProvider !== undefined ? new OutputChannelLogger(channelProvider) : new ConsoleLogger();
 	const connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);

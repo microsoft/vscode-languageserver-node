@@ -1,0 +1,70 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'release/*/*'
+  pull_request:
+    branches:
+      - main
+      - 'release/*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-latest
+          - name: macOS
+            os: macos-latest
+          - name: Windows
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.17.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Hygiene checks
+        run: npm run lint
+
+      - name: Unit tests
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum npm run test
+
+      - name: Unit tests
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          set "PATHEXT=.COM;.EXE;.BAT;.CMD"
+          npm run test
+
+      - name: Unit tests
+        if: runner.os == 'macOS'
+        run: npm run test

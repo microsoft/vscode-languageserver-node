@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { Range, Position, Hover, MarkedString, TextEdit } from '../main.js';
+import { Range, Position, Hover, MarkedString, TextEdit, ColorPresentation, FoldingRange } from '../main.js';
 
 suite('Type guards', () => {
 	suite('Position.is', () => {
@@ -60,6 +60,17 @@ suite('Type guards', () => {
 		test('undefined', () => {
 			const range = undefined;
 			assert.strictEqual(Range.is(range), false);
+		});
+	});
+	suite('FoldingRange.is', () => {
+		test('FoldingRange', () => {
+			assert.strictEqual(FoldingRange.is(FoldingRange.create(0, 1)), true);
+		});
+		test('missing endLine', () => {
+			const foldingRange = {
+				startLine: 0
+			};
+			assert.strictEqual(FoldingRange.is(foldingRange), false);
 		});
 	});
 	suite('MarkedString.is', () => {
@@ -188,6 +199,12 @@ suite('Type guards', () => {
 		test('undefined', () => {
 			const edit = undefined;
 			assert.strictEqual(TextEdit.is(edit), false);
+		});
+	});
+	suite('ColorPresentation.is', () => {
+		test('with textEdit', () => {
+			const presentation = ColorPresentation.create('red', TextEdit.insert(Position.create(0, 0), 'red'));
+			assert.strictEqual(ColorPresentation.is(presentation), true);
 		});
 	});
 });
