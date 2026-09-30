@@ -15,8 +15,6 @@ import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
-import * as UUID from './utils/uuid';
-
 export interface ProvideHoverSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VHover>;
 }
@@ -43,7 +41,7 @@ export class HoverFeature extends TextDocumentLanguageFeature<boolean | HoverOpt
 			return;
 		}
 		this.register({
-			id: UUID.generateUuid(),
+			id: crypto.randomUUID(),
 			registerOptions: options
 		});
 	}

@@ -16,8 +16,6 @@ import {
 	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
 } from './features';
 
-import * as UUID from './utils/uuid';
-
 export interface ProvideSignatureHelpSignature {
 	(this: void, document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken): ProviderResult<VSignatureHelp>;
 }
@@ -48,7 +46,7 @@ export class SignatureHelpFeature extends TextDocumentLanguageFeature<SignatureH
 			return;
 		}
 		this.register({
-			id: UUID.generateUuid(),
+			id: crypto.randomUUID(),
 			registerOptions: options
 		});
 	}

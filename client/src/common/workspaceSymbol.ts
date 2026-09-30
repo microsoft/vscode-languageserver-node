@@ -16,7 +16,6 @@ import {
 } from './features';
 
 import { SupportedSymbolKinds, SupportedSymbolTags } from './documentSymbol';
-import * as UUID from './utils/uuid';
 
 export interface ProvideWorkspaceSymbolsSignature {
 	(this: void, query: string, token: CancellationToken): ProviderResult<VSymbolInformation[]>;
@@ -54,7 +53,7 @@ export class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegi
 			return;
 		}
 		this.register({
-			id: UUID.generateUuid(),
+			id: crypto.randomUUID(),
 			registerOptions: capabilities.workspaceSymbolProvider === true ? { workDoneProgress: false } : capabilities.workspaceSymbolProvider
 		});
 	}

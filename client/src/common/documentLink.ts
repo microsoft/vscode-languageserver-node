@@ -14,8 +14,6 @@ import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
-import * as UUID from './utils/uuid';
-
 export interface ProvideDocumentLinksSignature {
 	(this: void, document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]>;
 }
@@ -46,7 +44,7 @@ export class DocumentLinkFeature extends TextDocumentLanguageFeature<DocumentLin
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentLinkRegistrationOptions): [Disposable, DocumentLinkProvider] {

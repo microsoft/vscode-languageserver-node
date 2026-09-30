@@ -11,8 +11,6 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeLensOptions, CodeLensRegistrationOptions, CodeLensRequest, CodeLensRefreshRequest, CodeLensResolveRequest
 } from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
-
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
 export interface ProvideCodeLensesSignature {
@@ -57,7 +55,7 @@ export class CodeLensFeature extends TextDocumentLanguageFeature<CodeLensOptions
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: CodeLensRegistrationOptions): [Disposable, CodeLensProviderShape] {
