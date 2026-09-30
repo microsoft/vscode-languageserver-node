@@ -37,7 +37,7 @@ import {
 	ConnectionOptions, PositionEncodingKind, DocumentDiagnosticRequest, NotebookDocumentSyncRegistrationType, NotebookDocumentSyncRegistrationOptions, ErrorCodes,
 	MessageStrategy, DidOpenTextDocumentParams, CodeLensResolveRequest, CompletionResolveRequest, CodeActionResolveRequest, InlayHintResolveRequest, DocumentLinkResolveRequest, WorkspaceSymbolResolveRequest,
 	CancellationToken as ProtocolCancellationToken, InlineCompletionRequest, InlineCompletionRegistrationOptions, ExecuteCommandRequest, ExecuteCommandOptions, RequestParam, HandlerResult,
-	type DidCloseTextDocumentParams, type TextDocumentContentRequest
+	type TextDocumentContentRequest
 } from 'vscode-languageserver-protocol';
 
 import * as c2p from './codeConverter';
@@ -393,6 +393,14 @@ export type LanguageClientOptions = {
 		 * - document is visible in the editor.
 		 * - any of the other notifications or requests is sent to the server, except
 		 *   a closed notification for the pending document.
+		 *
+		 * The open notification of a document is sent before the notifications and
+		 * requests for that document. Any other message waits for the open
+		 * notifications that are on their way but not for middleware that holds
+		 * them back. Therefore a middleware can send messages to the server itself.
+		 *
+		 * The `didOpen` middleware is called with a snapshot of the document taken
+		 * when the document was opened.
 		 */
 		delayOpenNotifications?: boolean;
 	};
@@ -920,15 +928,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
 
-		// Send ony depending open notifications
-		await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications();
-
-		// If any document is synced in full mode make sure we flush any pending
-		// full document syncs.
-		if (this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full) {
-			await this.sendPendingFullTextDocumentChanges(connection);
-		}
-
 		let param: any | undefined = undefined;
 		let token: CancellationToken | undefined = undefined;
 		// Separate cancellation tokens from other parameters for a better client interface
@@ -943,6 +942,16 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			param = params[0];
 			token = params[1];
 		}
+
+		// Send any depending open notifications
+		await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(getTextDocumentUri(param));
+
+		// If any document is synced in full mode make sure we flush any pending
+		// full document syncs.
+		if (this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full) {
+			await this.sendPendingFullTextDocumentChanges(connection);
+		}
+
 		if (token !== undefined && token.isCancellationRequested) {
 			return Promise.reject(new ResponseError(LSPErrorCodes.RequestCancelled, 'Request got cancelled'));
 		}
@@ -1018,39 +1027,37 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public sendNotification<P>(type: NotificationType<P>, params?: NoInfer<RequestParam<P>>): Promise<void>;
 	public sendNotification(method: string): Promise<void>;
 	public sendNotification(method: string, params: any): Promise<void>;
-	public sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
-		return this.doSendNotification(type, params);
-	}
-
-	private async doSendNotification<P>(type: string | MessageSignature, params?: P, synchronize: boolean = true, isCurrent?: () => boolean): Promise<void> {
+	public async sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
 		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
 
+		const method = typeof type === 'string' ? type : type.method;
+		const isOpenNotification = method === DidOpenTextDocumentNotification.method;
 		const needsPendingFullTextDocumentSync: boolean = this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full;
 		let openNotification: string | undefined;
-		if (needsPendingFullTextDocumentSync && typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+		if (needsPendingFullTextDocumentSync && isOpenNotification) {
 			openNotification = (params as DidOpenTextDocumentParams)?.textDocument.uri;
 			this._inFlightOpenNotifications.add(openNotification);
 		}
-		let documentToClose: string | undefined;
-		if (typeof type !== 'string' && type.method === DidCloseTextDocumentNotification.method) {
-			documentToClose = (params as DidCloseTextDocumentParams).textDocument.uri;
-		}
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
-		if (isCurrent?.() === false) {
-			throw new ResponseError(ErrorCodes.ConnectionInactive, 'Document synchronization was cleared.');
-		}
 
-		if (synchronize) {
-			// Send any depending open notifications
-			const didDropOpenNotification = await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
-			if (didDropOpenNotification) {
-				// Don't forward this close notification if we dropped the
-				// corresponding open notification.
-				return;
+		if (isOpenNotification) {
+			// An open notification doesn't depend on other documents being
+			// opened. Open notifications that got held back are sent through
+			// here and don't wait for each other.
+			if (this._didOpenTextDocumentFeature!.isStaleOpen(params as DidOpenTextDocumentParams)) {
+				if (openNotification !== undefined) {
+					this._inFlightOpenNotifications.delete(openNotification);
+				}
+				throw new ResponseError(ErrorCodes.ConnectionInactive, 'Document synchronization was cleared.');
 			}
+		} else {
+			// Send any depending open notifications. The document a close
+			// notification is for is taken care of by the close feature.
+			const document = method === DidCloseTextDocumentNotification.method ? undefined : getTextDocumentUri(params);
+			await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(document);
 
 			// If any document is synced in full mode make sure we flush any pending
 			// full document syncs.
@@ -1072,10 +1079,21 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 
 		const _sendNotification = this._clientOptions.middleware?.sendNotification;
-
-		return _sendNotification
-			? _sendNotification(type, connection.sendNotification.bind(connection), params)
-			: connection.sendNotification(type, params);
+		if (_sendNotification === undefined) {
+			return connection.sendNotification(type, params);
+		}
+		let next: (type: string | MessageSignature, params?: P) => Promise<void> = connection.sendNotification.bind(connection);
+		if (isOpenNotification) {
+			// The middleware is user code. Callers that are not interested in the
+			// document don't wait for it.
+			const leaveMiddleware = this._didOpenTextDocumentFeature!.enterNotificationMiddleware(params as DidOpenTextDocumentParams);
+			const send = next;
+			next = (type, params) => {
+				leaveMiddleware();
+				return send(type, params);
+			};
+		}
+		return _sendNotification(type, next, params as P);
 	}
 
 	public onNotification<RO>(type: ProtocolNotificationType0<RO>, handler: NotificationHandler0): Disposable;
@@ -1736,7 +1754,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				return;
 			}
 			try {
-				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(this._inFlightOpenNotifications);
+				const changes = this._didChangeTextDocumentFeature!.getPendingDocumentChanges(this.getUnsyncedDocuments());
 				if (changes.length === 0) {
 					return;
 				}
@@ -1753,6 +1771,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				throw error;
 			}
 		});
+	}
+
+	private getUnsyncedDocuments(): Set<string> {
+		const result = this._didOpenTextDocumentFeature!.getOpeningDocuments();
+		for (const uri of this._inFlightOpenNotifications) {
+			result.add(uri);
+		}
+		return result;
 	}
 
 	private triggerPendingChangeDelivery(): void {
@@ -2047,8 +2073,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	protected registerBuiltinFeatures() {
 		const pendingFullTextDocumentChanges: Map<string, TextDocument> = new Map();
 		this.registerFeature(new ConfigurationFeature(this));
-		this._didOpenTextDocumentFeature = new DidOpenTextDocumentFeature(this, this._syncedDocuments,
-			(params, isCurrent) => this.doSendNotification(DidOpenTextDocumentNotification.type, params, false, isCurrent));
+		this._didOpenTextDocumentFeature = new DidOpenTextDocumentFeature(this, this._syncedDocuments, () => {
+			// Changes of documents that were still being opened got held back.
+			if (this._didChangeTextDocumentFeature?.syncKind === TextDocumentSyncKind.Full) {
+				this.triggerPendingChangeDelivery();
+			}
+		});
 		this.registerFeature(this._didOpenTextDocumentFeature);
 		this._didChangeTextDocumentFeature = new DidChangeTextDocumentFeature(this, pendingFullTextDocumentChanges);
 		this._didChangeTextDocumentFeature.onPendingChangeAdded(() => {
@@ -2058,7 +2088,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new WillSaveFeature(this));
 		this.registerFeature(new WillSaveWaitUntilFeature(this));
 		this.registerFeature(new DidSaveTextDocumentFeature(this));
-		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments, pendingFullTextDocumentChanges));
+		this.registerFeature(new DidCloseTextDocumentFeature(this, this._syncedDocuments, pendingFullTextDocumentChanges, this._didOpenTextDocumentFeature));
 		this.registerFeature(new FileSystemWatcherFeature(this, (event) => this.notifyFileEvent(event)));
 		this.registerFeature(new CompletionItemFeature(this));
 		this.registerFeature(new HoverFeature(this));
@@ -2529,6 +2559,14 @@ interface ConnectionErrorHandler {
 
 interface ConnectionCloseHandler {
 	(): void;
+}
+
+function getTextDocumentUri(params: unknown): string | undefined {
+	if (typeof params !== 'object' || params === null) {
+		return undefined;
+	}
+	const uri = (params as { textDocument?: { uri?: unknown } }).textDocument?.uri;
+	return typeof uri === 'string' ? uri : undefined;
 }
 
 function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, channelProvider: ChannelProvider | undefined, options?: ConnectionOptions): Connection {

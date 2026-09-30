@@ -14,7 +14,8 @@ const receivedNotifications: GetNotificationsRequest.NotificationData[] = [];
 
 /**
  * A custom request to get a list of all text sync notifications that the server
- * has been sent.
+ * has been sent. Hover requests are recorded as well to be able to verify that
+ * they don't overtake the open notification of the document.
  */
 namespace GetNotificationsRequest {
 	export type NotificationData = { method: string; params: any };
@@ -28,7 +29,8 @@ connection.onInitialize((params: InitializeParams): InitializeResult => {
 			textDocumentSync: {
 				openClose: true,
 				change: params.initializationOptions?.syncKind ?? TextDocumentSyncKind.Incremental
-			}
+			},
+			hoverProvider: true
 		}
 	};
 });
@@ -43,6 +45,11 @@ connection.onDidChangeTextDocument((params) => {
 
 connection.onDidCloseTextDocument((params) => {
 	receivedNotifications.push({ method: 'textDocument/didClose', params });
+});
+
+connection.onHover((params) => {
+	receivedNotifications.push({ method: 'textDocument/hover', params });
+	return null;
 });
 
 connection.onRequest(GetNotificationsRequest.type, () => {

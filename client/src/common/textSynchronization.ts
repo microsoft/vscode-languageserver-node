@@ -5,7 +5,7 @@
 
 import {
 	workspace as Workspace, languages as Languages, TextDocument, TextLine, TextDocumentChangeEvent, TextDocumentWillSaveEvent, TextEdit as VTextEdit,
-	DocumentSelector as VDocumentSelector, Event, EventEmitter, Disposable, Uri as VUri, workspace, type EndOfLine, Position as VPosition, Range as VRange
+	DocumentSelector as VDocumentSelector, Event, EventEmitter, Disposable, Uri as VUri, type EndOfLine, Position as VPosition, Range as VRange
 } from 'vscode';
 
 import {
@@ -21,7 +21,6 @@ import {
 } from './features';
 
 import * as UUID from './utils/uuid';
-import { Semaphore } from './utils/async';
 import { TextDocument as TextDocumentImpl } from 'vscode-languageserver-textdocument';
 
 export interface TextDocumentSynchronizationMiddleware {
@@ -47,22 +46,125 @@ type $ConfigurationOptions = {
 	};
 };
 
+type Deferred<T = void> = {
+	promise: Promise<T>;
+	resolve: (value: T) => void;
+	reject: (error: unknown) => void;
+};
+
+function createDeferred<T = void>(): Deferred<T> {
+	let resolve!: (value: T) => void;
+	let reject!: (error: unknown) => void;
+	const promise = new Promise<T>((_resolve, _reject) => {
+		resolve = _resolve;
+		reject = _reject;
+	});
+	// Failures are reported to the parties that wait for the promise. There might be none.
+	promise.catch(() => { /* handled by the waiting parties */ });
+	return { promise, resolve, reject };
+}
+
+/**
+ * A document whose open notification is on its way to the server.
+ */
+class OpeningDocument {
+
+	private readonly _deferred: Deferred<void>;
+	private _state: 'pending' | 'complete' | 'failed';
+	private _inMiddleware: boolean;
+	private _enteredMiddleware: Deferred<void>;
+
+	constructor() {
+		this._deferred = createDeferred();
+		this._state = 'pending';
+		this._inMiddleware = false;
+		this._enteredMiddleware = createDeferred();
+	}
+
+	public get promise(): Promise<void> {
+		return this._deferred.promise;
+	}
+
+	/**
+	 * Whether user middleware is running that has not handed the notification on yet.
+	 * Callers that are not interested in the document don't wait for user code.
+	 */
+	public get inMiddleware(): boolean {
+		return this._inMiddleware;
+	}
+
+	/**
+	 * Resolves when user middleware starts to process the notification.
+	 */
+	public get enteredMiddleware(): Promise<void> {
+		return this._enteredMiddleware.promise;
+	}
+
+	public enterMiddleware(): void {
+		this._inMiddleware = true;
+		const entered = this._enteredMiddleware;
+		this._enteredMiddleware = createDeferred();
+		entered.resolve();
+	}
+
+	public leaveMiddleware(): void {
+		this._inMiddleware = false;
+	}
+
+	public get state(): 'pending' | 'complete' | 'failed' {
+		return this._state;
+	}
+
+	public complete(): void {
+		if (this._state === 'pending') {
+			this._state = 'complete';
+			this._deferred.resolve();
+		}
+	}
+
+	public fail(error: unknown): void {
+		if (this._state === 'pending') {
+			this._state = 'failed';
+			this._deferred.reject(error);
+		}
+	}
+}
+
+type ClosingDocument = {
+	count: number;
+	deferred: Deferred<void>;
+};
+
+export interface DocumentClosing {
+
+	/**
+	 * Resolves when the open notification that was on its way when the document got
+	 * closed has been sent. Rejects if sending it failed.
+	 */
+	readonly ready: Promise<void>;
+
+	/**
+	 * Signals that the close notification has been handled.
+	 */
+	done(): void;
+}
+
 export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpenTextDocumentParams, TextDocument, TextDocumentSynchronizationMiddleware> implements DidOpenTextDocumentFeatureShape {
+
+	private static readonly noClosing: DocumentClosing = { ready: Promise.resolve(), done: () => { /* nothing to do */ } };
 
 	private readonly _syncedDocuments: Map<string, TextDocument>;
 	private readonly _pendingOpenNotifications: Map<string, TextDocument>;
+	private readonly _openingDocuments: Map<string, OpeningDocument>;
+	private readonly _closingDocuments: Map<string, ClosingDocument>;
+	private readonly _openParams: WeakMap<DidOpenTextDocumentParams, { generation: number; opening: OpeningDocument }>;
 	private readonly _delayOpen: boolean;
+	private readonly _openCompleted: () => void;
 	private _pendingOpenListeners: Disposable[] | undefined;
-	private _openSemaphore: Semaphore<boolean>;
-	private readonly _openingDocuments: Set<string>;
-	private readonly _droppedOpenNotifications: Set<string>;
 	private _openGeneration: number;
-	private _openError: { error: unknown } | undefined;
-	private readonly _sendOpenNotification: (params: DidOpenTextDocumentParams, isCurrent: () => boolean) => Promise<void>;
+	private _cleared: Deferred<never>;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware, $ConfigurationOptions>, syncedDocuments: Map<string, TextDocument>,
-		sendOpenNotification: (params: DidOpenTextDocumentParams, isCurrent: () => boolean) => Promise<void>
-	) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware, $ConfigurationOptions>, syncedDocuments: Map<string, TextDocument>, openCompleted: () => void) {
 		super(
 			client, Workspace.onDidOpenTextDocument, DidOpenTextDocumentNotification.type,
 			() => client.middleware.didOpen,
@@ -72,13 +174,13 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 		);
 		this._syncedDocuments = syncedDocuments;
 		this._pendingOpenNotifications = new Map<string, TextDocument>();
+		this._openingDocuments = new Map<string, OpeningDocument>();
+		this._closingDocuments = new Map<string, ClosingDocument>();
+		this._openParams = new WeakMap();
 		this._delayOpen = client.clientOptions.textSynchronization?.delayOpenNotifications ?? false;
-		this._openSemaphore = new Semaphore<boolean>(1);
-		this._openingDocuments = new Set<string>();
-		this._droppedOpenNotifications = new Set<string>();
+		this._openCompleted = openCompleted;
 		this._openGeneration = 0;
-		this._openError = undefined;
-		this._sendOpenNotification = sendOpenNotification;
+		this._cleared = createDeferred<never>();
 	}
 
 	protected async callback(document: TextDocument): Promise<void> {
@@ -96,20 +198,15 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 
 	private queueOpenNotification(document: TextDocument): void {
 		const uri = document.uri.toString();
-		this._droppedOpenNotifications.delete(uri);
 		if (!this._pendingOpenNotifications.has(uri)) {
 			// Snapshot the text document so that when we send the delayed
 			// notification it is based on the content/version at the time
-			// it would've been sent, and not the updated version.
+			// it would've been sent, and not the updated version. This is
+			// also true for visible documents since the notification can be
+			// held back and the changes made in the meantime are sent after it.
 			//
 			// See https://github.com/microsoft/vscode-languageserver-node/issues/1695
 			this._pendingOpenNotifications.set(uri, new TextDocumentSnapshot(document));
-		}
-	}
-
-	private dropOpenNotification(uri: string): void {
-		if (this._pendingOpenNotifications.delete(uri)) {
-			this._droppedOpenNotifications.add(uri);
 		}
 	}
 
@@ -161,80 +258,111 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			}
 		});
 		if (sendPending) {
-			this.sendPendingOpenNotifications().catch((error) => {
-				this._client.error(`Sending document notification ${this._type.method} failed`, error);
-			});
+			this.flushPendingOpenNotifications();
 		}
 		if (this._delayOpen && this._pendingOpenListeners === undefined) {
 			this._pendingOpenListeners = [];
-			const visibleDocuments = this._client.visibleDocuments;
-			this._pendingOpenListeners.push(visibleDocuments.onClose((closed) => {
-				for (const uri of closed) {
-					this.dropOpenNotification(uri.toString());
-				}
-			}));
-			this._pendingOpenListeners.push(visibleDocuments.onOpen((opened) => {
+			this._pendingOpenListeners.push(this._client.visibleDocuments.onOpen((opened) => {
 				for (const uri of opened) {
 					if (this._pendingOpenNotifications.has(uri.toString())) {
-						this.sendPendingOpenNotifications().catch((error) => {
-							this._client.error(`Sending document notification ${this._type.method} failed`, error);
-						});
+						this.flushPendingOpenNotifications();
 						break;
 					}
 				}
 			}));
-			this._pendingOpenListeners.push(workspace.onDidCloseTextDocument((document) => {
-				this.dropOpenNotification(document.uri.toString());
-			}));
 		}
 	}
 
+	private flushPendingOpenNotifications(): void {
+		// Failures are reported when the open notification fails.
+		this.sendPendingOpenNotifications().catch(() => { /* already reported */ });
+	}
+
 	/**
-	 * Sends any pending open notifications unless they are for the document
-	 * being closed.
+	 * Makes sure the open notifications that were held back are sent to the
+	 * server before the notification or request the caller is about to send.
 	 *
-	 * @param closingDocument The document being closed.
-	 * @returns Whether a pending open notification was dropped because it was
-	 *          for the closing document.
+	 * Opens are not serialized and callers that are not interested in a document
+	 * don't wait for user middleware (`didOpen` or `sendNotification`) that holds
+	 * back its open notification. Otherwise middleware that talks to the server
+	 * itself would block itself. Callers that pass the `document` they are about
+	 * to send a message for wait for that document to be opened, however long it
+	 * takes.
+	 *
+	 * @param document The URI of the document the caller is about to send a
+	 *  message for.
+	 * @returns A promise that rejects if the open notification of `document` fails
+	 *  or if the client was stopped or restarted in the meantime.
 	 */
-	public sendPendingOpenNotifications(closingDocument?: string): Promise<boolean> {
+	public async sendPendingOpenNotifications(document?: string): Promise<void> {
 		if (!this._delayOpen) {
-			return Promise.resolve(false);
+			return;
 		}
 		const generation = this._openGeneration;
-		let didDropOpenNotification = false;
-		if (closingDocument !== undefined) {
-			this.dropOpenNotification(closingDocument);
-			didDropOpenNotification = this._droppedOpenNotifications.delete(closingDocument);
-		}
-		return this._openSemaphore.lock(async () => {
-			this.checkOpenGeneration(generation);
-			if (this._openError !== undefined) {
-				throw this._openError.error;
+		const cleared = this._cleared.promise;
+		if (document !== undefined && this._pendingOpenNotifications.has(document)) {
+			const closing = this._closingDocuments.get(document);
+			if (closing !== undefined) {
+				// The document got closed and opened again. The close has to reach
+				// the server before the open.
+				await Promise.race([closing.deferred.promise, cleared]);
+				this.checkOpenGeneration(generation);
 			}
-			for (;;) {
-				const next = this._pendingOpenNotifications.entries().next();
-				if (next.done) {
-					return didDropOpenNotification;
-				}
-				const [uri, document] = next.value;
-				this._pendingOpenNotifications.delete(uri);
-				this._openingDocuments.add(uri);
-				try {
-					await this.sendOpenNow(document, generation);
-					this.checkOpenGeneration(generation);
-				} catch (error) {
-					if (generation === this._openGeneration) {
-						this._openError = { error };
-					}
-					throw error;
-				} finally {
-					if (generation === this._openGeneration) {
-						this._openingDocuments.delete(uri);
-					}
-				}
+		}
+		for (const [uri, snapshot] of Array.from(this._pendingOpenNotifications)) {
+			// An open that follows a close of the same document is sent when the close is done.
+			if (this._closingDocuments.has(uri) || this._pendingOpenNotifications.get(uri) !== snapshot) {
+				continue;
+			}
+			this._pendingOpenNotifications.delete(uri);
+			this.startOpen(uri, snapshot, generation);
+		}
+		const waiting: Promise<unknown>[] = [];
+		for (const [uri, opening] of this._openingDocuments) {
+			if (opening.state !== 'pending') {
+				continue;
+			}
+			if (uri === document) {
+				waiting.push(opening.promise);
+			} else if (!opening.inMiddleware) {
+				// Callers that are not interested in the document wait until it is sent
+				// or handed to user middleware. Whether it fails is none of their business.
+				waiting.push(Promise.race([opening.promise, opening.enteredMiddleware]).catch(() => undefined));
+			}
+		}
+		if (waiting.length > 0) {
+			await Promise.race([Promise.all(waiting), cleared]);
+		}
+		this.checkOpenGeneration(generation);
+	}
+
+	private startOpen(uri: string, snapshot: TextDocument, generation: number): void {
+		const opening = new OpeningDocument();
+		this._openingDocuments.set(uri, opening);
+		void this.sendOpenNow(snapshot, generation, opening).then(() => {
+			opening.complete();
+		}, (error) => {
+			if (opening.state === 'pending') {
+				opening.fail(error);
+				this.reportOpenFailure(generation, error);
+			} else if (opening.state === 'complete') {
+				// The document got sent but the middleware failed afterwards.
+				this.reportOpenFailure(generation, error);
+			}
+		}).then(() => {
+			if (this._openingDocuments.get(uri) === opening) {
+				this._openingDocuments.delete(uri);
+			}
+			if (generation === this._openGeneration) {
+				this._openCompleted();
 			}
 		});
+	}
+
+	private reportOpenFailure(generation: number, error: unknown): void {
+		if (generation === this._openGeneration) {
+			this._client.error(`Sending document notification ${this._type.method} failed`, error);
+		}
 	}
 
 	private checkOpenGeneration(generation: number): void {
@@ -243,20 +371,124 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 		}
 	}
 
-	private async sendOpenNow(document: TextDocument, generation: number): Promise<void> {
-		if (!this.matches(document)) {
+	private async sendOpenNow(document: TextDocument, generation: number, opening: OpeningDocument): Promise<void> {
+		this.checkOpenGeneration(generation);
+		if (!this.matches(document) || (document instanceof TextDocumentSnapshot && document.original.isClosed)) {
 			return;
 		}
 		const send = async (textDocument: TextDocument): Promise<void> => {
-			this.checkOpenGeneration(generation);
-			const params = this._createParams(textDocument);
-			this.aboutToSendNotification(textDocument, this._type, params);
-			await this._sendOpenNotification(params, () => generation === this._openGeneration);
-			this.checkOpenGeneration(generation);
-			this.notificationSent(textDocument, this._type, params);
+			opening.leaveMiddleware();
+			try {
+				this.checkOpenGeneration(generation);
+				const params = this._createParams(textDocument);
+				this.aboutToSendNotification(textDocument, this._type, params);
+				this._openParams.set(params, { generation, opening });
+				await this._client.sendNotification(this._type, params);
+				this.checkOpenGeneration(generation);
+				this.notificationSent(textDocument, this._type, params);
+				opening.complete();
+			} catch (error) {
+				if (opening.state === 'pending') {
+					opening.fail(error);
+					this.reportOpenFailure(generation, error);
+				}
+				throw error;
+			}
 		};
 		const middleware = this._client.middleware.didOpen;
-		return middleware === undefined ? send(document) : middleware(document, send);
+		if (middleware === undefined) {
+			return send(document);
+		}
+		opening.enterMiddleware();
+		try {
+			await middleware(document, send);
+		} finally {
+			opening.leaveMiddleware();
+		}
+	}
+
+	/**
+	 * Called synchronously when a document gets closed, before the close
+	 * notification is sent, and therefore before any later event for the same
+	 * document (e.g. a change of the language mode closes and opens the document)
+	 * is processed.
+	 *
+	 * @param uri The URI of the document that is closed.
+	 * @returns `undefined` if the server never heard of the document because the
+	 *  open notification was held back or failed. The close must not be sent either.
+	 */
+	public beginClose(uri: string): DocumentClosing | undefined {
+		if (!this._delayOpen) {
+			return DidOpenTextDocumentFeature.noClosing;
+		}
+		const opening = this._openingDocuments.get(uri);
+		const isOpening = opening !== undefined && opening.state === 'pending';
+		if (this._pendingOpenNotifications.delete(uri) || (!isOpening && !this._syncedDocuments.has(uri))) {
+			return undefined;
+		}
+		let closing = this._closingDocuments.get(uri);
+		if (closing === undefined) {
+			closing = { count: 0, deferred: createDeferred() };
+			this._closingDocuments.set(uri, closing);
+		}
+		closing.count++;
+		const generation = this._openGeneration;
+		let finished = false;
+		return {
+			ready: isOpening ? opening.promise : Promise.resolve(),
+			done: () => {
+				if (finished || generation !== this._openGeneration) {
+					return;
+				}
+				finished = true;
+				const current = this._closingDocuments.get(uri);
+				if (current === undefined || --current.count > 0) {
+					return;
+				}
+				this._closingDocuments.delete(uri);
+				current.deferred.resolve();
+				// The document got opened again while the close was on its way.
+				if (this._pendingOpenNotifications.has(uri)) {
+					this.flushPendingOpenNotifications();
+				}
+			}
+		};
+	}
+
+	/**
+	 * Whether the given open notification was created before the client got
+	 * stopped or restarted.
+	 */
+	public isStaleOpen(params: DidOpenTextDocumentParams): boolean {
+		const entry = this._openParams.get(params);
+		return entry !== undefined && entry.generation !== this._openGeneration;
+	}
+
+	/**
+	 * Marks the given open notification as being processed by user middleware
+	 * and returns a function to call when the middleware hands it on.
+	 */
+	public enterNotificationMiddleware(params: DidOpenTextDocumentParams): () => void {
+		const entry = this._openParams.get(params);
+		if (entry === undefined) {
+			return () => { /* nothing to do */ };
+		}
+		entry.opening.enterMiddleware();
+		return () => entry.opening.leaveMiddleware();
+	}
+
+	/**
+	 * The URIs of the documents that are known to the client but whose open
+	 * notification was not sent yet.
+	 */
+	public getOpeningDocuments(): Set<string> {
+		const result = new Set<string>(this._pendingOpenNotifications.keys());
+		for (const [uri, opening] of this._openingDocuments) {
+			if (opening.state === 'pending') {
+				result.add(uri);
+			}
+		}
+		return result;
 	}
 
 	protected getTextDocument(data: TextDocument): TextDocument {
@@ -264,17 +496,20 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 	}
 
 	protected notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidOpenTextDocumentParams, TextDocumentRegistrationOptions>, params: DidOpenTextDocumentParams): void {
-		this._syncedDocuments.set(textDocument.uri.toString(), textDocument);
+		// Delayed documents are sent using a snapshot. Keep track of the document itself.
+		const document = textDocument instanceof TextDocumentSnapshot ? textDocument.original : textDocument;
+		this._syncedDocuments.set(textDocument.uri.toString(), document);
 		super.notificationSent(textDocument, type, params);
 	}
 
 	public clear(): void {
 		this._openGeneration++;
-		this._openSemaphore = new Semaphore<boolean>(1);
-		this._openError = undefined;
-		this._openingDocuments.clear();
-		this._droppedOpenNotifications.clear();
+		const cleared = this._cleared;
+		this._cleared = createDeferred<never>();
+		cleared.reject(new Error('Document synchronization was cleared.'));
 		this._pendingOpenNotifications.clear();
+		this._openingDocuments.clear();
+		this._closingDocuments.clear();
 		if (this._pendingOpenListeners !== undefined) {
 			for (const listener of this._pendingOpenListeners) {
 				listener.dispose();
@@ -292,8 +527,9 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 
 	private readonly _syncedDocuments: Map<string, TextDocument>;
 	private readonly _pendingTextDocumentChanges: Map<string, TextDocument>;
+	private readonly _openFeature: DidOpenTextDocumentFeature;
 
-	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>, pendingTextDocumentChanges: Map<string, TextDocument>) {
+	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, syncedDocuments: Map<string, TextDocument>, pendingTextDocumentChanges: Map<string, TextDocument>, openFeature: DidOpenTextDocumentFeature) {
 		super(
 			client, Workspace.onDidCloseTextDocument, DidCloseTextDocumentNotification.type,
 			() => client.middleware.didClose,
@@ -303,6 +539,7 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 		);
 		this._syncedDocuments = syncedDocuments;
 		this._pendingTextDocumentChanges = pendingTextDocumentChanges;
+		this._openFeature = openFeature;
 	}
 
 	public get registrationType(): RegistrationType<TextDocumentRegistrationOptions> {
@@ -321,8 +558,26 @@ export class DidCloseTextDocumentFeature extends TextDocumentEventFeature<DidClo
 	}
 
 	protected async callback(data: TextDocument): Promise<void> {
-		await super.callback(data);
-		this._pendingTextDocumentChanges.delete(data.uri.toString());
+		const uri = data.uri.toString();
+		// Has to happen before anything else can happen to the document.
+		const closing = this._openFeature.beginClose(uri);
+		if (closing === undefined) {
+			this._pendingTextDocumentChanges.delete(uri);
+			return;
+		}
+		try {
+			try {
+				await closing.ready;
+			} catch {
+				// Opening the document failed. The server doesn't know it and there is nothing to close.
+				this._pendingTextDocumentChanges.delete(uri);
+				return;
+			}
+			await super.callback(data);
+		} finally {
+			closing.done();
+		}
+		this._pendingTextDocumentChanges.delete(uri);
 	}
 
 	protected getTextDocument(data: TextDocument): TextDocument {
@@ -789,6 +1044,13 @@ class TextDocumentSnapshot implements TextDocument {
 		this._isClosed = textDocument.isClosed;
 
 		this._capturedTextDocument = TextDocumentImpl.create(this._uri.toString(), this._languageId, this._version, this._content);
+	}
+
+	/**
+	 * The document this snapshot was taken from.
+	 */
+	public get original(): TextDocument {
+		return this._extTextDocument;
 	}
 
 	public get uri(): VUri {
