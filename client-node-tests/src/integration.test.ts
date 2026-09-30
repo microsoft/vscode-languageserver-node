@@ -2653,4 +2653,61 @@ suite('delayOpenNotifications', () => {
 			contentProvider.dispose();
 		}
 	});
+
+	for (const delayOpen of [true, false]) {
+		test(`didOpen of a visible document is sent before requests when hidden documents are open at start (delayOpenNotifications=${delayOpen})`, async () => {
+			// See https://github.com/microsoft/vscode-languageserver-node/issues/1868
+			const scheme = `delayed-open-order-test-${delayOpen}`;
+			const contentProvider = vscode.workspace.registerTextDocumentContentProvider(scheme, {
+				provideTextDocumentContent: (uri) => `content of ${uri.path}`
+			});
+			try {
+				const hiddenCount = 30;
+				for (let i = 0; i < hiddenCount; i++) {
+					await vscode.workspace.openTextDocument(vscode.Uri.parse(`${scheme}:///hidden-${i}.txt`));
+				}
+				const visible = await vscode.workspace.openTextDocument(vscode.Uri.parse(`${scheme}:///visible.txt`));
+				await vscode.window.showTextDocument(visible);
+
+				await startClient(delayOpen, [{ scheme }]);
+				// The server answers the request after it processed all messages that got sent before it.
+				const notifications = await client.sendRequest(GetNotificationsRequest.type);
+				const opened = notifications.filter((n) => n.method === 'textDocument/didOpen').map((n) => n.params.textDocument.uri);
+				assert.ok(opened.includes(visible.uri.toString()), 'The request overtook the didOpen of the visible document.');
+				assert.strictEqual(opened.length, hiddenCount + 1);
+			} finally {
+				await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+				contentProvider.dispose();
+			}
+		});
+	}
+
+	test('didClose and didOpen keep their order when the language mode of a document changes', async () => {
+		// Changing the language mode closes the document and opens it again.
+		const document = await vscode.workspace.openTextDocument({ language: 'plaintext', content: 'hello' });
+		try {
+			await vscode.window.showTextDocument(document);
+			await startClient(true, [{ language: 'plaintext' }, { language: 'markdown' }]);
+			await client.sendRequest(GetNotificationsRequest.type);
+
+			const reopened = new Promise<void>((resolve) => {
+				const listener = vscode.workspace.onDidOpenTextDocument((opened) => {
+					if (opened.uri.toString() === document.uri.toString()) {
+						listener.dispose();
+						resolve();
+					}
+				});
+			});
+			await vscode.languages.setTextDocumentLanguage(document, 'markdown');
+			await reopened;
+
+			const notifications = (await client.sendRequest(GetNotificationsRequest.type))
+				.filter((n) => n.params?.textDocument.uri === document.uri.toString())
+				.map((n) => n.method === 'textDocument/didOpen' ? `didOpen(${n.params.textDocument.languageId})` : n.method);
+			assert.deepStrictEqual(notifications, ['didOpen(plaintext)', 'textDocument/didClose', 'didOpen(markdown)']);
+		} finally {
+			await revertAllDirty();
+			await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+		}
+	});
 });
