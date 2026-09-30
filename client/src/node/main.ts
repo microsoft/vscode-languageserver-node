@@ -647,6 +647,11 @@ function waitForConnection(childProcess: ChildProcess, transport: { onConnected(
 			transport.dispose();
 			reject(new Error(`Server process exited before the connection could be established (code: ${code}, signal: ${signal}).`));
 		});
+		// A failed spawn (e.g. invalid execPath) emits 'error' and never 'exit'.
+		childProcess.once('error', (error) => {
+			transport.dispose();
+			reject(error);
+		});
 		transport.onConnected().then((protocol) => resolve({ reader: protocol[0], writer: protocol[1] }), reject);
 	});
 }
