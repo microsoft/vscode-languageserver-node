@@ -323,6 +323,22 @@ suite('Socket transport', () => {
 			await client.start();
 		}, /Server process exited before the connection could be established/);
 	}).timeout(5000);
+
+	test('start() rejects if the executable server process exits before connecting', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			command: process.execPath,
+			args: [path.join(__dirname, './servers/exitBeforeConnectServer.js')],
+			// The tests run inside Electron, so process.execPath must be told to behave like node.
+			options: { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } },
+			transport: { kind: lsclient.TransportKind.socket, port: 0 },
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('socket executable exit before connect', 'Socket Transport (executable exits before connecting)', serverOptions, clientOptions);
+		// Covers the Executable branch (the command + socket path from #1586), which is separate from the NodeModule branch above.
+		await assert.rejects(async () => {
+			await client.start();
+		}, /Server process exited before the connection could be established/);
+	}).timeout(5000);
 });
 
 suite('Pipe transport', () => {
@@ -336,6 +352,22 @@ suite('Pipe transport', () => {
 		const client = new lsclient.LanguageClient('pipe exit before connect', 'Pipe Transport (exits before connecting)', serverOptions, clientOptions);
 		// Same underlying bug as the socket transport case: start() would hang forever
 		// instead of surfacing the server process exiting before it connected the pipe.
+		await assert.rejects(async () => {
+			await client.start();
+		}, /Server process exited before the connection could be established/);
+	}).timeout(5000);
+
+	test('start() rejects if the executable server process exits before connecting', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			command: process.execPath,
+			args: [path.join(__dirname, './servers/exitBeforeConnectServer.js')],
+			// The tests run inside Electron, so process.execPath must be told to behave like node.
+			options: { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } },
+			transport: lsclient.TransportKind.pipe,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('pipe executable exit before connect', 'Pipe Transport (executable exits before connecting)', serverOptions, clientOptions);
+		// Covers the Executable branch (the command + pipe path from #1586), which is separate from the NodeModule branch above.
 		await assert.rejects(async () => {
 			await client.start();
 		}, /Server process exited before the connection could be established/);
