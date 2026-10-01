@@ -296,145 +296,207 @@ suite('Server output', () => {
 
 suite('Client restart', () => {
 
+	const testExtensionOutputChannelId = 'ms-vscode.test-extension';
+	const outputChannels: vscode.LogOutputChannel[] = [];
+
+	setup(async () => {
+		await closeAllEditors();
+	});
+
+	teardown(async () => {
+		for (const outputChannel of outputChannels.splice(0)) {
+			outputChannel.hide();
+			outputChannel.dispose();
+		}
+		await closeAllEditors();
+	});
+
+	function createTestOutputChannel(name: string): vscode.LogOutputChannel {
+		const outputChannel = vscode.window.createOutputChannel(name, { log: true });
+		outputChannels.push(outputChannel);
+		return outputChannel;
+	}
+
+	function createRestartClient(outputChannelName: string): lsclient.LanguageClient {
+		const serverModule = path.join(__dirname, './servers/nullServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			module: serverModule,
+			transport: lsclient.TransportKind.ipc
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {
+			outputChannelId: testExtensionOutputChannelId,
+			outputChannelName
+		};
+		return new lsclient.LanguageClient(`test-restart-${outputChannelName.toLowerCase()}`, 'Test Restart Language Server', serverOptions, clientOptions);
+	}
+
 	test('Preserves output channel visibility after restart', async () => {
-		const client = new RestartTestLanguageClient('Restart', [
-			createOutputTextEditor('output:ms-vscode.test-extension.Restart.log', 'ms-vscode.test-extension.Restart.log')
-		], 'ms-vscode.test-extension');
+		const outputChannelName = 'RestartVisible';
+		const client = createRestartClient(outputChannelName);
+		try {
+			await client.start();
+			client.outputChannel.appendLine('visible before restart');
+			client.outputChannel.show(true);
+			await waitForOutputChannelVisible(testExtensionOutputChannelId, outputChannelName);
 
-		await client.restart();
+			await client.restart();
 
-		assert.deepStrictEqual(client.events, ['getVisibleTextEditors', 'stop', 'start', 'restoreOutputChannelVisibility:true']);
+			await waitForOutputChannelVisible(testExtensionOutputChannelId, outputChannelName);
+		} finally {
+			await stopQuietly(client);
+		}
 	});
 
 	test('Does not restore hidden output channel after restart', async () => {
-		const client = new RestartTestLanguageClient('Restart', [
-			createOutputTextEditor('output:ms-vscode.test-extension.Other.log', 'ms-vscode.test-extension.Other.log')
-		], 'ms-vscode.test-extension');
+		const outputChannelName = 'RestartHidden';
+		const client = createRestartClient(outputChannelName);
+		try {
+			await client.start();
+			assert.strictEqual(isOutputChannelVisible(testExtensionOutputChannelId, outputChannelName), false);
 
-		await client.restart();
+			await client.restart();
+			await waitForNextTurn();
 
-		assert.deepStrictEqual(client.events, ['getVisibleTextEditors', 'stop', 'start', 'restoreOutputChannelVisibility:false']);
+			assert.strictEqual(isOutputChannelVisible(testExtensionOutputChannelId, outputChannelName), false);
+		} finally {
+			await stopQuietly(client);
+		}
 	});
 
-	test('Detects visible output channel by normalized log channel id', () => {
-		const client = new RestartTestLanguageClient('ESLint', [
-			createOutputTextEditor('output:dbaeumer.vscode-eslint.ESLint.log', 'dbaeumer.vscode-eslint.ESLint.log')
-		], 'dbaeumer.vscode-eslint');
+	test('Detects visible output channel by normalized log channel id', async () => {
+		const outputChannel = createTestOutputChannel('ESLint');
+		const client = new RestartVisibilityTestLanguageClient(outputChannel, testExtensionOutputChannelId);
+
+		outputChannel.appendLine('visible output');
+		outputChannel.show(true);
+		await waitForOutputChannelVisible(testExtensionOutputChannelId, 'ESLint');
 
 		assert.strictEqual(client.isTestOutputChannelVisible(), true);
 	});
 
-	test('Uses language client id as the default output channel id', () => {
-		const client = new RestartTestLanguageClient('Restart', [
-			createOutputTextEditor('output:test-restart.Restart.log', 'test-restart.Restart.log')
-		], undefined);
+	test('Uses language client id as the default output channel id', async () => {
+		const outputChannel = createTestOutputChannel('RestartDefault');
+		const client = new RestartVisibilityTestLanguageClient(outputChannel, undefined, testExtensionOutputChannelId);
+
+		outputChannel.appendLine('visible output');
+		outputChannel.show(true);
+		await waitForOutputChannelVisible(testExtensionOutputChannelId, 'RestartDefault');
 
 		assert.strictEqual(client.isTestOutputChannelVisible(), true);
 	});
 
-	test('Does not match the same output channel name from another extension', () => {
-		const client = new RestartTestLanguageClient('ESLint', [
-			createOutputTextEditor('output:publisher.other-extension.ESLint.log', 'publisher.other-extension.ESLint.log')
-		], 'dbaeumer.vscode-eslint');
+	test('Does not match the same output channel name from another extension', async () => {
+		const outputChannel = createTestOutputChannel('ESLint');
+		const client = new RestartVisibilityTestLanguageClient(outputChannel, 'dbaeumer.vscode-eslint');
+
+		outputChannel.appendLine('visible output');
+		outputChannel.show(true);
+		await waitForOutputChannelVisible(testExtensionOutputChannelId, 'ESLint');
 
 		assert.strictEqual(client.isTestOutputChannelVisible(), false);
 	});
 
-	test('Does not match output channel names with different casing', () => {
-		const client = new RestartTestLanguageClient('Server', [
-			createOutputTextEditor('output:ms-vscode.test-extension.server.log', 'ms-vscode.test-extension.server.log')
-		], 'ms-vscode.test-extension');
+	test('Does not match output channel names with different casing', async () => {
+		const visibleOutputChannel = createTestOutputChannel('server');
+		const clientOutputChannel = createTestOutputChannel('Server');
+		const client = new RestartVisibilityTestLanguageClient(clientOutputChannel, testExtensionOutputChannelId);
+
+		visibleOutputChannel.appendLine('visible output');
+		visibleOutputChannel.show(true);
+		await waitForOutputChannelVisible(testExtensionOutputChannelId, 'server');
 
 		assert.strictEqual(client.isTestOutputChannelVisible(), false);
 	});
 
-	test('Detects visible output channel by file name', () => {
-		const client = new RestartTestLanguageClient('ESLint', [
-			createOutputTextEditor('output:unknown', 'dbaeumer.vscode-eslint.ESLint.log')
-		], 'dbaeumer.vscode-eslint');
+	test('Does not match another visible output channel by substring', async () => {
+		const visibleOutputChannel = createTestOutputChannel('Other');
+		const clientOutputChannel = createTestOutputChannel('ESLint');
+		const client = new RestartVisibilityTestLanguageClient(clientOutputChannel, testExtensionOutputChannelId);
 
-		assert.strictEqual(client.isTestOutputChannelVisible(), true);
-	});
-
-	test('Does not match another visible output channel by substring', () => {
-		const client = new RestartTestLanguageClient('ESLint', [
-			createOutputTextEditor('output:publisher.eslint-extension.Other.log', 'publisher.eslint-extension.Other.log')
-		], 'dbaeumer.vscode-eslint');
+		visibleOutputChannel.appendLine('visible output');
+		visibleOutputChannel.show(true);
+		await waitForOutputChannelVisible(testExtensionOutputChannelId, 'Other');
 
 		assert.strictEqual(client.isTestOutputChannelVisible(), false);
 	});
 
-	test('Detects output channels with VS Code sanitized log file names', () => {
-		const client = new RestartTestLanguageClient('C/C++', [
-			createOutputTextEditor('output:ms-vscode.cpptools.CC++.log', 'ms-vscode.cpptools.CC++.log')
-		], 'ms-vscode.cpptools');
+	test('Detects output channels with VS Code sanitized log file names', async () => {
+		const outputChannel = createTestOutputChannel('C/C++');
+		const client = new RestartVisibilityTestLanguageClient(outputChannel, testExtensionOutputChannelId);
+
+		outputChannel.appendLine('visible output');
+		outputChannel.show(true);
+		await waitForOutputChannelVisible(testExtensionOutputChannelId, 'C/C++');
 
 		assert.strictEqual(client.isTestOutputChannelVisible(), true);
 	});
 });
 
-class RestartTestLanguageClient extends lsclient.LanguageClient {
+class RestartVisibilityTestLanguageClient extends lsclient.LanguageClient {
 
-	public readonly events: string[] = [];
-
-	public constructor(outputChannelName: string, private readonly visibleTextEditors: readonly vscode.TextEditor[], outputChannelId: string | undefined) {
-		const clientOptions: lsclient.LanguageClientOptions = { outputChannel: createLogOutputChannel(outputChannelName) };
+	public constructor(outputChannel: vscode.LogOutputChannel, outputChannelId: string | undefined, clientId: string = 'test-restart') {
+		const clientOptions: lsclient.LanguageClientOptions = { outputChannel };
 		if (outputChannelId !== undefined) {
 			clientOptions.outputChannelId = outputChannelId;
 		}
-		super('test-restart', 'Test Restart Language Server', { module: 'unused', transport: lsclient.TransportKind.ipc }, clientOptions);
+		super(clientId, 'Test Restart Language Server', { module: 'unused', transport: lsclient.TransportKind.ipc }, clientOptions);
 	}
 
 	public isTestOutputChannelVisible(): boolean {
 		return this.isOutputChannelVisible();
 	}
-
-	public override async start(): Promise<void> {
-		this.events.push('start');
-	}
-
-	public override stop(): Promise<void> {
-		this.events.push('stop');
-		return Promise.resolve();
-	}
-
-	protected override getVisibleTextEditors(): readonly vscode.TextEditor[] {
-		this.events.push('getVisibleTextEditors');
-		return this.visibleTextEditors;
-	}
-
-	protected override restoreOutputChannelVisibility(wasVisible: boolean): void {
-		this.events.push(`restoreOutputChannelVisibility:${wasVisible}`);
-	}
 }
 
-function createOutputTextEditor(uri: string, fileName: string): vscode.TextEditor {
-	return {
-		document: {
-			uri: vscode.Uri.parse(uri),
-			fileName
+function sanitizeOutputChannelResourceSegment(value: string): string {
+	return value.replace(/[\\/:\*\?"<>\|]/g, '');
+}
+
+function getOutputChannelResourceName(id: string, name: string): string {
+	const resourceId = sanitizeOutputChannelResourceSegment(id);
+	const resourceName = sanitizeOutputChannelResourceSegment(name);
+	return `${resourceId}.${resourceName}.log`;
+}
+
+function matchesOutputChannelResource(resource: string, outputChannelResource: string): boolean {
+	const normalizedResource = resource.replace(/\\/g, '/');
+	return normalizedResource === outputChannelResource || normalizedResource.endsWith(`/${outputChannelResource}`) || normalizedResource.endsWith(`:${outputChannelResource}`);
+}
+
+function isOutputChannelVisible(id: string, name: string): boolean {
+	const outputChannelResource = getOutputChannelResourceName(id, name);
+	return vscode.window.visibleTextEditors.some(editor => {
+		if (editor.document.uri.scheme !== 'output') {
+			return false;
 		}
-	} as vscode.TextEditor;
+		return matchesOutputChannelResource(editor.document.uri.toString(true), outputChannelResource) || matchesOutputChannelResource(editor.document.fileName, outputChannelResource);
+	});
 }
 
-function createLogOutputChannel(name: string): vscode.LogOutputChannel {
-	return {
-		name,
-		append: () => undefined,
-		appendLine: () => undefined,
-		replace: () => undefined,
-		clear: () => undefined,
-		show: () => undefined,
-		hide: () => undefined,
-		dispose: () => undefined,
-		logLevel: vscode.LogLevel.Info,
-		onDidChangeLogLevel: () => ({ dispose: () => undefined }),
-		trace: () => undefined,
-		debug: () => undefined,
-		info: () => undefined,
-		warn: () => undefined,
-		error: () => undefined
-	} as vscode.LogOutputChannel;
+async function waitForOutputChannelVisible(id: string, name: string): Promise<void> {
+	await waitUntil(() => isOutputChannelVisible(id, name), `Output channel ${getOutputChannelResourceName(id, name)} did not become visible.`);
+}
+
+async function waitUntil(condition: () => boolean, message: string, timeout: number = 5000): Promise<void> {
+	const start = Date.now();
+	while (!condition()) {
+		if (Date.now() - start > timeout) {
+			throw new Error(message);
+		}
+		await new Promise((resolve) => setTimeout(resolve, 50));
+	}
+}
+
+async function closeAllEditors(): Promise<void> {
+	await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+	await waitForNextTurn();
+}
+
+async function stopQuietly(client: lsclient.LanguageClient): Promise<void> {
+	try {
+		await client.stop();
+	} catch {
+		// The test may fail before the client starts; keep cleanup from masking the assertion.
+	}
 }
 
 suite('Socket transport', () => {
