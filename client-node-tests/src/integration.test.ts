@@ -2322,6 +2322,38 @@ class CrashClient extends lsclient.LanguageClient {
 }
 
 suite('Server tests', () => {
+	test('Concurrent starts reject when the server closes during initialization', async () => {
+		const outputChannel = vscode.window.createOutputChannel('Initialization failure', { log: true });
+		const client = new lsclient.LanguageClient('initialization-failure', 'Initialization failure', {
+			module: path.join(__dirname, './servers/crashOnInitializeServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		}, {
+			outputChannel,
+			initializationFailedHandler: () => false,
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed: () => ({ action: lsclient.CloseAction.DoNotRestart, handled: true }),
+			}
+		});
+		// The initialization error path also calls stop(), which independently
+		// rejects for a non-running client. Isolate the promises returned by start().
+		const stop = sinon.stub(client, 'stop').resolves();
+		try {
+			// Observing both calls also handles the shared startup rejection, even
+			// if one caller incorrectly loses that promise when the connection closes.
+			const results = await Promise.allSettled([client.start(), client.start()]);
+			assert.strictEqual(results[0].status, 'rejected');
+			assert.strictEqual(results[1].status, 'rejected');
+			assert.strictEqual(results[0].reason, results[1].reason);
+			assert.match(String(results[0].reason), /Pending response rejected since connection got disposed/);
+		} finally {
+			await client.dispose();
+			stop.restore();
+			client.diagnostics?.dispose();
+			outputChannel.dispose();
+		}
+	}).timeout(5000);
+
 	test('Stop fails if server crashes after shutdown request', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
@@ -2762,6 +2794,63 @@ suite('delayOpenNotifications', () => {
 			assert.strictEqual(didOpen, true);
 		} finally {
 			contentProvider.dispose();
+		}
+	});
+
+	for (const delayOpen of [true, false]) {
+		test(`didOpen of a visible document is sent before requests when hidden documents are open at start (delayOpenNotifications=${delayOpen})`, async () => {
+			// See https://github.com/microsoft/vscode-languageserver-node/issues/1868
+			const scheme = `delayed-open-order-test-${delayOpen}`;
+			const contentProvider = vscode.workspace.registerTextDocumentContentProvider(scheme, {
+				provideTextDocumentContent: (uri) => `content of ${uri.path}`
+			});
+			try {
+				const hiddenCount = 30;
+				for (let i = 0; i < hiddenCount; i++) {
+					await vscode.workspace.openTextDocument(vscode.Uri.parse(`${scheme}:///hidden-${i}.txt`));
+				}
+				const visible = await vscode.workspace.openTextDocument(vscode.Uri.parse(`${scheme}:///visible.txt`));
+				await vscode.window.showTextDocument(visible);
+
+				await startClient(delayOpen, [{ scheme }]);
+				// The server answers the request after it processed all messages that got sent before it.
+				const notifications = await client.sendRequest(GetNotificationsRequest.type);
+				const opened = notifications.filter((n) => n.method === 'textDocument/didOpen').map((n) => n.params.textDocument.uri);
+				assert.ok(opened.includes(visible.uri.toString()), 'The request overtook the didOpen of the visible document.');
+				assert.strictEqual(opened.length, hiddenCount + 1);
+			} finally {
+				await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+				contentProvider.dispose();
+			}
+		});
+	}
+
+	test('didClose and didOpen keep their order when the language mode of a document changes', async () => {
+		// Changing the language mode closes the document and opens it again.
+		const document = await vscode.workspace.openTextDocument({ language: 'plaintext', content: 'hello' });
+		try {
+			await vscode.window.showTextDocument(document);
+			await startClient(true, [{ language: 'plaintext' }, { language: 'markdown' }]);
+			await client.sendRequest(GetNotificationsRequest.type);
+
+			const reopened = new Promise<void>((resolve) => {
+				const listener = vscode.workspace.onDidOpenTextDocument((opened) => {
+					if (opened.uri.toString() === document.uri.toString()) {
+						listener.dispose();
+						resolve();
+					}
+				});
+			});
+			await vscode.languages.setTextDocumentLanguage(document, 'markdown');
+			await reopened;
+
+			const notifications = (await client.sendRequest(GetNotificationsRequest.type))
+				.filter((n) => n.params?.textDocument.uri === document.uri.toString())
+				.map((n) => n.method === 'textDocument/didOpen' ? `didOpen(${n.params.textDocument.languageId})` : n.method);
+			assert.deepStrictEqual(notifications, ['didOpen(plaintext)', 'textDocument/didClose', 'didOpen(markdown)']);
+		} finally {
+			await revertAllDirty();
+			await vscode.commands.executeCommand('workbench.action.closeAllEditors');
 		}
 	});
 });

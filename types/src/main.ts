@@ -559,7 +559,7 @@ export namespace FoldingRange {
 	 */
 	export function is(value: any): value is FoldingRange {
 		const candidate = value as FoldingRange;
-		return Is.objectLiteral(candidate) && Is.uinteger(candidate.startLine) && Is.uinteger(candidate.startLine)
+		return Is.objectLiteral(candidate) && Is.uinteger(candidate.startLine) && Is.uinteger(candidate.endLine)
 			&& (Is.undefined(candidate.startCharacter) || Is.uinteger(candidate.startCharacter))
 			&& (Is.undefined(candidate.endCharacter) || Is.uinteger(candidate.endCharacter))
 			&& (Is.undefined(candidate.kind) || Is.string(candidate.kind));

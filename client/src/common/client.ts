@@ -401,8 +401,8 @@ export type LanguageClientOptions = {
 		 * Delays sending the open notification until one of the following
 		 * conditions becomes `true`:
 		 * - document is visible in the editor.
-		 * - any of the other notifications or requests is sent to the server, except
-		 *   a closed notification for the pending document.
+		 * - any request or notification is sent to the server, except an open or
+		 *   a close notification.
 		 */
 		delayOpenNotifications?: boolean;
 	};
@@ -1071,8 +1071,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 
 		const needsPendingFullTextDocumentSync: boolean = this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full;
+		const isOpenNotification = typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method;
 		let openNotification: string | undefined;
-		if (needsPendingFullTextDocumentSync && typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+		if (needsPendingFullTextDocumentSync && isOpenNotification) {
 			openNotification = (params as DidOpenTextDocumentParams)?.textDocument.uri;
 			this._inFlightOpenNotifications.add(openNotification);
 		}
@@ -1083,12 +1084,18 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
 
-		// Send any depending open notifications
-		const didDropOpenNotification = await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
-		if (didDropOpenNotification) {
-			// Don't forward this close notification if we dropped the
-			// corresponding open notification.
-			return;
+		if (documentToClose !== undefined) {
+			if (this._didOpenTextDocumentFeature!.dropPendingOpenNotification(documentToClose)) {
+				// Don't forward this close notification if we dropped the
+				// corresponding open notification.
+				return;
+			}
+		} else if (!isOpenNotification) {
+			// Send any depending open notifications. An open or close notification
+			// doesn't depend on them. It is sent right away since waiting for the pending
+			// open notifications to be sent one by one would let the messages that follow
+			// (e.g. a request or the open that follows a close) overtake it.
+			await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications();
 		}
 
 		// If any document is synced in full mode make sure we flush any pending
@@ -1470,7 +1477,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.error(`${this._name} client: couldn't create connection to server.`, error, 'force');
 			reject(error);
 		}
-		return this._onStart;
+		return promise;
 	}
 
 	private createOnStartPromise(): [ Promise<void>, () => void, (error:any) => void] {
