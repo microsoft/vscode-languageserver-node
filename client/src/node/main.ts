@@ -414,7 +414,7 @@ export class LanguageClient extends BaseLanguageClient {
 						return createClientPipeTransport(pipeName!).then((transport) => {
 							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
-								transport.dispose();
+								transport.close();
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
@@ -427,7 +427,7 @@ export class LanguageClient extends BaseLanguageClient {
 							args.push(`--socket=${transport.port()}`);
 							const process = cp.spawn(runtime, args, execOptions);
 							if (!process || !process.pid) {
-								transport.dispose();
+								transport.close();
 								return handleChildProcessStartError(process, `Launching server using runtime ${runtime} failed.`);
 							}
 							this._serverProcess = process;
@@ -515,7 +515,7 @@ export class LanguageClient extends BaseLanguageClient {
 					return createClientPipeTransport(pipeName!).then((transport) => {
 						const serverProcess = cp.spawn(command.command, args, options);
 						if (!serverProcess || !serverProcess.pid) {
-							transport.dispose();
+							transport.close();
 							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
@@ -529,7 +529,7 @@ export class LanguageClient extends BaseLanguageClient {
 						args.push(`--socket=${transport.port()}`);
 						const serverProcess = cp.spawn(command.command, args, options);
 						if (!serverProcess || !serverProcess.pid) {
-							transport.dispose();
+							transport.close();
 							return handleChildProcessStartError(serverProcess, `Launching server using command ${command.command} failed.`);
 						}
 						this._serverProcess = serverProcess;
@@ -640,19 +640,33 @@ export class SettingMonitor {
 	}
 }
 
-function waitForConnection(childProcess: ChildProcess, transport: { onConnected(): Promise<[MessageReader, MessageWriter]>; dispose(): void }): Promise<MessageTransports> {
+function waitForConnection(childProcess: ChildProcess, transport: { onConnected(): Promise<[MessageReader, MessageWriter]>; close(): void }): Promise<MessageTransports> {
 	return new Promise<MessageTransports>((resolve, reject) => {
-		childProcess.once('exit', (code, signal) => {
+		const removeListeners = () => {
+			childProcess.removeListener('exit', onExit);
+			childProcess.removeListener('error', onError);
+		};
+		const onExit = (code: number | null, signal: NodeJS.Signals | null) => {
+			removeListeners();
 			// The server never connected, so stop listening to release the pipe / port.
-			transport.dispose();
+			transport.close();
 			reject(new Error(`Server process exited before the connection could be established (code: ${code}, signal: ${signal}).`));
-		});
+		};
 		// A failed spawn (e.g. invalid execPath) emits 'error' and never 'exit'.
-		childProcess.once('error', (error) => {
-			transport.dispose();
+		const onError = (error: Error) => {
+			removeListeners();
+			transport.close();
+			reject(error);
+		};
+		childProcess.once('exit', onExit);
+		childProcess.once('error', onError);
+		transport.onConnected().then((protocol) => {
+			removeListeners();
+			resolve({ reader: protocol[0], writer: protocol[1] });
+		}, (error) => {
+			removeListeners();
 			reject(error);
 		});
-		transport.onConnected().then((protocol) => resolve({ reader: protocol[0], writer: protocol[1] }), reject);
 	});
 }
 
