@@ -49,6 +49,7 @@ import { MonikerFeature, MonikerFeatureShape } from './moniker';
 import type { ConnectionState } from './textDocuments';
 import { InlineCompletionFeature, type InlineCompletionFeatureShape } from './inlineCompletion';
 import { TextDocumentContentFeature, type TextDocumentContentFeatureShape } from './textDocumentContent';
+import { FileSystemFeature, FileSystemFeatureShape } from './fileSystem';
 
 function null2Undefined<T>(value: T | null): T | undefined {
 	if (value === null) {
@@ -646,7 +647,7 @@ export interface _RemoteWorkspace extends FeatureBase {
 	applyEdit(paramOrEdit: ApplyWorkspaceEditParams | WorkspaceEdit): Promise<ApplyWorkspaceEditResponse>;
 }
 
-export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders & FileOperationsFeatureShape & TextDocumentContentFeatureShape;
+export type RemoteWorkspace = _RemoteWorkspace & Configuration & WorkspaceFolders & FileOperationsFeatureShape & TextDocumentContentFeatureShape & FileSystemFeatureShape;
 
 class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 
@@ -682,7 +683,7 @@ class _RemoteWorkspaceImpl implements _RemoteWorkspace, Remote {
 	}
 }
 
-const RemoteWorkspaceImpl: new () => RemoteWorkspace = TextDocumentContentFeature(FileOperationsFeature(WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl)))) as (new () => RemoteWorkspace);
+const RemoteWorkspaceImpl: new () => RemoteWorkspace = FileSystemFeature(TextDocumentContentFeature(FileOperationsFeature(WorkspaceFoldersFeature(ConfigurationFeature(_RemoteWorkspaceImpl))))) as (new () => RemoteWorkspace);
 
 /**
  * Interface to log telemetry events. The events are actually send to the client
