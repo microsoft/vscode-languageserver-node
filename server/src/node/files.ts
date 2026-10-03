@@ -38,6 +38,14 @@ function isWindows(): boolean {
 	return process.platform === 'win32';
 }
 
+function runGlobalPackageManagerCommand(command: string, args: string[], options: SpawnSyncOptionsWithStringEncoding) {
+	if (isWindows()) {
+		const comSpec = process.env.ComSpec ?? 'cmd.exe';
+		return spawnSync(comSpec, ['/d', '/s', '/c', `${command}.cmd`, ...args], options);
+	}
+	return spawnSync(command, args, options);
+}
+
 export function resolve(moduleName: string, nodePath: string | undefined, cwd: string | undefined, tracer: (message: string, verbose?: string) => void): Promise<string> {
 	interface Message {
 		c: string;
@@ -124,7 +132,6 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
  * @param tracer the tracer to use
  */
 export function resolveGlobalNodePath(tracer?: (message: string) => void): string | undefined {
-	let npmCommand = 'npm';
 	const env: typeof process.env = Object.create(null);
 	Object.keys(process.env).forEach(key => env[key] = process.env[key]);
 	env['NO_UPDATE_NOTIFIER'] = 'true';
@@ -132,15 +139,11 @@ export function resolveGlobalNodePath(tracer?: (message: string) => void): strin
 		encoding: 'utf8',
 		env
 	};
-	if (isWindows()) {
-		npmCommand = 'npm.cmd';
-		options.shell = true;
-	}
 
 	const handler = () => {};
 	try {
 		process.on('SIGPIPE', handler);
-		const stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], options).stdout;
+		const stdout = runGlobalPackageManagerCommand('npm', ['config', 'get', 'prefix'], options).stdout;
 
 		if (!stdout) {
 			if (tracer) {
@@ -180,20 +183,14 @@ interface YarnJsonFormat {
  * @param tracer the tracer to use
  */
 export function resolveGlobalYarnPath(tracer?: (message: string) => void): string | undefined {
-	let yarnCommand = 'yarn';
 	const options: SpawnSyncOptionsWithStringEncoding = {
 		encoding: 'utf8'
 	};
 
-	if (isWindows()) {
-		yarnCommand = 'yarn.cmd';
-		options.shell = true;
-	}
-
 	const handler = () => {};
 	try {
 		process.on('SIGPIPE', handler);
-		const results = spawnSync(yarnCommand, ['global', 'dir', '--json'], options);
+		const results = runGlobalPackageManagerCommand('yarn', ['global', 'dir', '--json'], options);
 
 		const stdout = results.stdout;
 		if (!stdout) {
