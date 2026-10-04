@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { Range, Position, Hover, MarkedString, TextEdit, ColorPresentation, FoldingRange } from '../main';
+import { Range, Position, Hover, MarkedString, TextEdit, ColorPresentation, FoldingRange, InlayHint } from '../main';
 
 suite('Type guards', () => {
 	suite('Position.is', () => {
@@ -205,6 +205,23 @@ suite('Type guards', () => {
 		test('with textEdit', () => {
 			const presentation = ColorPresentation.create('red', TextEdit.insert(Position.create(0, 0), 'red'));
 			assert.strictEqual(ColorPresentation.is(presentation), true);
+		});
+	});
+	suite('InlayHint.is', () => {
+		test('InlayHint', () => {
+			assert.strictEqual(InlayHint.is(InlayHint.create(Position.create(0, 0), 'test')), true);
+		});
+		test('invalid paddingLeft', () => {
+			const inlayHint = { position: Position.create(0, 0), label: 'test', paddingLeft: 'yes' };
+			assert.strictEqual(InlayHint.is(inlayHint), false);
+		});
+		test('missing position and label', () => {
+			const inlayHint = { textEdits: [] };
+			assert.strictEqual(InlayHint.is(inlayHint), false);
+		});
+		test('undefined', () => {
+			const inlayHint = undefined;
+			assert.strictEqual(InlayHint.is(inlayHint), false);
 		});
 	});
 });
