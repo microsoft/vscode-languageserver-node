@@ -10,7 +10,6 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import * as Is from './utils/is';
-import * as UUID from './utils/uuid';
 
 import { StaticFeature, FeatureClient, FeatureState, DynamicFeature, ensure, RegistrationData } from './features';
 
@@ -174,7 +173,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 		const section = this._client.clientOptions.synchronize?.configurationSection;
 		if (section !== undefined) {
 			this.register({
-				id: UUID.generateUuid(),
+				id: crypto.randomUUID(),
 				registerOptions: {
 					section: section
 				}

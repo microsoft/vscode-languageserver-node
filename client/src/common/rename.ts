@@ -11,7 +11,6 @@ import {
 	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, RenameOptions, RenameRegistrationOptions, RenameRequest, PrepareSupportDefaultBehavior, RenameParams, ResponseError, TextDocumentPositionParams, PrepareRenameRequest, Range,
 	type WorkspaceEdit} from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure, DocumentSelectorOptions } from './features';
@@ -55,7 +54,7 @@ export class RenameFeature extends TextDocumentLanguageFeature<boolean | RenameO
 		if (Is.boolean(capabilities.renameProvider)) {
 			options.prepareProvider = false;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: RenameRegistrationOptions & DocumentSelectorOptions): [Disposable, RenameProvider] {
