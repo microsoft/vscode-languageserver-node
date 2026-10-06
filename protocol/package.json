@@ -4,6 +4,7 @@
 	"version": "3.18.4",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
+	"homepage": "https://github.com/microsoft/vscode-languageserver-node/tree/main/protocol",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
