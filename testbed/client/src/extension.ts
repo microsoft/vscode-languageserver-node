@@ -116,6 +116,32 @@ REM or .bmp extension from c:\\source to c:\\images;;`;
 	commands.registerCommand('testbed.refreshContent', async () => {
 		await client.sendNotification(refreshNotification, 'test-content://file.txt');
 	});
+
+	const readFileRequest = new NotificationType<string>('testbed/readFile');
+	commands.registerCommand('testbed.readCurrentFile', async () => {
+		const uri = window.activeTextEditor?.document.uri.toString();
+		if (uri) {
+			await client.sendNotification(readFileRequest, uri);
+		}
+	});
+
+	const readDirectoryRequest = new NotificationType<string>('testbed/readDirectory');
+	commands.registerCommand('testbed.readCurrentDirectory', async () => {
+		const activeEditorUri = window.activeTextEditor?.document.uri;
+		if (!activeEditorUri) {
+			return;
+		}
+		const directoryUri = activeEditorUri.with({ path: path.dirname(activeEditorUri.path) });
+		await client.sendNotification(readDirectoryRequest, directoryUri.toString());
+	});
+
+	const statRequest = new NotificationType<string>('testbed/stat');
+	commands.registerCommand('testbed.statCurrentFile', async () => {
+		const uri = window.activeTextEditor?.document.uri.toString();
+		if (uri) {
+			await client.sendNotification(statRequest, uri);
+		}
+	});
 }
 
 export function deactivate() {
