@@ -124,7 +124,6 @@ export function resolve(moduleName: string, nodePath: string | undefined, cwd: s
  * @param tracer the tracer to use
  */
 export function resolveGlobalNodePath(tracer?: (message: string) => void): string | undefined {
-	let npmCommand = 'npm';
 	const env: typeof process.env = Object.create(null);
 	Object.keys(process.env).forEach(key => env[key] = process.env[key]);
 	env['NO_UPDATE_NOTIFIER'] = 'true';
@@ -133,14 +132,16 @@ export function resolveGlobalNodePath(tracer?: (message: string) => void): strin
 		env
 	};
 	if (isWindows()) {
-		npmCommand = 'npm.cmd';
 		options.shell = true;
 	}
 
 	const handler = () => {};
 	try {
 		process.on('SIGPIPE', handler);
-		const stdout = spawnSync(npmCommand, ['config', 'get', 'prefix'], options).stdout;
+		const stdout = (isWindows()
+			? spawnSync('npm.cmd config get prefix', options)
+			: spawnSync('npm', ['config', 'get', 'prefix'], options)
+		).stdout;
 
 		if (!stdout) {
 			if (tracer) {
@@ -180,20 +181,20 @@ interface YarnJsonFormat {
  * @param tracer the tracer to use
  */
 export function resolveGlobalYarnPath(tracer?: (message: string) => void): string | undefined {
-	let yarnCommand = 'yarn';
 	const options: SpawnSyncOptionsWithStringEncoding = {
 		encoding: 'utf8'
 	};
 
 	if (isWindows()) {
-		yarnCommand = 'yarn.cmd';
 		options.shell = true;
 	}
 
 	const handler = () => {};
 	try {
 		process.on('SIGPIPE', handler);
-		const results = spawnSync(yarnCommand, ['global', 'dir', '--json'], options);
+		const results = isWindows()
+			? spawnSync('yarn.cmd global dir --json', options)
+			: spawnSync('yarn', ['global', 'dir', '--json'], options);
 
 		const stdout = results.stdout;
 		if (!stdout) {
