@@ -17,7 +17,7 @@ import {
 
 import {
 	FeatureClient, TextDocumentEventFeature, DynamicFeature, NextSignature, TextDocumentSendFeature, NotifyingFeature, ensure, RegistrationData, DynamicDocumentFeature,
-	NotificationSendEvent
+	NotificationSentEvent, AboutToSendNotificationEvent
 } from './features';
 
 import * as UUID from './utils/uuid';
@@ -121,7 +121,7 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 			}
 			if (Languages.match(documentSelector, textDocument) > 0 && !this._client.hasDedicatedTextSynchronizationFeature(textDocument)) {
 				const visibleDocuments = this._client.visibleDocuments;
-				if (visibleDocuments.isVisible(textDocument)) {
+				if (!this._delayOpen || visibleDocuments.isVisible(textDocument)) {
 					const middleware = this._client.middleware;
 					const didOpen = (textDocument: TextDocument): Promise<void> => {
 						return this._client.sendNotification(this._type, this._createParams(textDocument));
@@ -161,25 +161,24 @@ export class DidOpenTextDocumentFeature extends TextDocumentEventFeature<DidOpen
 	}
 
 	/**
-	 * Sends any pending open notifications unless they are for the document
-	 * being closed.
-	 *
-	 * @param closingDocument The document being closed.
-	 * @returns Whether a pending open notification was dropped because it was
-	 *          for the closing document.
+	 * Sends any pending open notifications.
 	 */
-	public async sendPendingOpenNotifications(closingDocument?: string): Promise<boolean> {
+	public async sendPendingOpenNotifications(): Promise<void> {
 		const notifications = Array.from(this._pendingOpenNotifications.values());
 		this._pendingOpenNotifications.clear();
-		let didDropOpenNotification = false;
 		for (const notification of notifications) {
-			if (closingDocument !== undefined && notification.uri.toString() === closingDocument) {
-				didDropOpenNotification = true;
-				continue;
-			}
 			await super.callback(notification);
 		}
-		return didDropOpenNotification;
+	}
+
+	/**
+	 * Drops the pending open notification of a document that is being closed.
+	 *
+	 * @param uri The URI of the document being closed.
+	 * @returns Whether a pending open notification was dropped.
+	 */
+	public dropPendingOpenNotification(uri: string): boolean {
+		return this._pendingOpenNotifications.delete(uri);
 	}
 
 	protected getTextDocument(data: TextDocument): TextDocument {
@@ -288,7 +287,8 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 
 	private _listener: Disposable | undefined;
 	private readonly _changeData: Map<string, DidChangeTextDocumentData>;
-	private readonly _onNotificationSent: EventEmitter<NotificationSendEvent<DidChangeTextDocumentParams>>;
+	private readonly _onAboutToSendNotification: EventEmitter<AboutToSendNotificationEvent<DidChangeTextDocumentParams>>;
+	private readonly _onNotificationSent: EventEmitter<NotificationSentEvent<DidChangeTextDocumentParams>>;
 	private readonly _onPendingChangeAdded: EventEmitter<void>;
 	private readonly _pendingTextDocumentChanges: Map<string, TextDocument>;
 	private _syncKind: TextDocumentSyncKind;
@@ -296,13 +296,18 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 	constructor(client: FeatureClient<TextDocumentSynchronizationMiddleware>, pendingTextDocumentChanges: Map<string, TextDocument>) {
 		super(client);
 		this._changeData = new Map<string, DidChangeTextDocumentData>();
+		this._onAboutToSendNotification = new EventEmitter();
 		this._onNotificationSent = new EventEmitter();
 		this._onPendingChangeAdded = new EventEmitter();
 		this._pendingTextDocumentChanges = pendingTextDocumentChanges;
 		this._syncKind = TextDocumentSyncKind.None;
 	}
 
-	public get onNotificationSent(): Event<NotificationSendEvent<DidChangeTextDocumentParams>> {
+	public get onAboutToSendNotification(): Event<AboutToSendNotificationEvent<DidChangeTextDocumentParams>> {
+		return this._onAboutToSendNotification.event;
+	}
+
+	public get onNotificationSent(): Event<NotificationSentEvent<DidChangeTextDocumentParams>> {
 		return this._onNotificationSent.event;
 	}
 
@@ -375,6 +380,7 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 				if (changeData.syncKind === TextDocumentSyncKind.Incremental) {
 					const didChange = async (event: TextDocumentChangeEvent): Promise<void> => {
 						const params = this._client.code2ProtocolConverter.asChangeTextDocumentParams(event, uri, version);
+						this.aboutToSendNotification(event.document, DidChangeTextDocumentNotification.type, params);
 						await this._client.sendNotification(DidChangeTextDocumentNotification.type, params);
 						this.notificationSent(event.document, DidChangeTextDocumentNotification.type, params);
 					};
@@ -393,6 +399,10 @@ export class DidChangeTextDocumentFeature extends DynamicDocumentFeature<TextDoc
 			this._client.error(`Sending document notification ${DidChangeTextDocumentNotification.type.method} failed`, error);
 			throw error;
 		});
+	}
+
+	public aboutToSendNotification(textDocument: TextDocument, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {
+		this._onAboutToSendNotification.fire({ textDocument, type, params });
 	}
 
 	public notificationSent(textDocument: TextDocument, type: ProtocolNotificationType<DidChangeTextDocumentParams, TextDocumentRegistrationOptions>, params: DidChangeTextDocumentParams): void {

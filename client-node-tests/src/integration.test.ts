@@ -6,6 +6,7 @@
 
 import * as assert from 'assert';
 import * as path from 'path';
+import * as sinon from 'sinon';
 import * as vscode from 'vscode';
 import * as lsclient from 'vscode-languageclient/node';
 import * as proto from 'vscode-languageserver-protocol';
@@ -87,6 +88,10 @@ function isInstanceOf<T>(value: T, clazz: any): asserts value is Exclude<T, unde
 
 function isFullDocumentDiagnosticReport(value: vsdiag.DocumentDiagnosticReport): asserts value is vsdiag.FullDocumentDiagnosticReport {
 	assert.ok(value.kind === vsdiag.DocumentDiagnosticReportKind.full);
+}
+
+function waitForNextTurn(): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 function processExists(pid: number): boolean {
@@ -204,6 +209,171 @@ suite ('Client Features', () => {
 	});
 });
 
+suite('Server output', () => {
+
+	test('Custom stdio handlers', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		let stdoutCalled = false;
+		let stderrCalled = false;
+		const expected: { outputChannel?: vscode.LogOutputChannel } = {};
+		const clientOptions: lsclient.LanguageClientOptions = {
+			stdioOptions: {
+				stdout: (input, outputChannel) => {
+					assert.strictEqual(typeof input.on, 'function');
+					assert.strictEqual(outputChannel, expected.outputChannel);
+					stdoutCalled = true;
+				},
+				stderr: (input, outputChannel) => {
+					assert.strictEqual(typeof input.on, 'function');
+					assert.strictEqual(outputChannel, expected.outputChannel);
+					stderrCalled = true;
+				}
+			}
+		};
+		const client = new lsclient.LanguageClient('test output', 'Test Output Language Server', serverOptions, clientOptions);
+		expected.outputChannel = client.outputChannel;
+
+		await client.start();
+		assert.strictEqual(stdoutCalled, true);
+		assert.strictEqual(stderrCalled, true);
+		await client.stop();
+	});
+
+	test('JSON-RPC diagnostics are routed to the output channel', async () => {
+		const serverModule = path.join(__dirname, './servers/customServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			module: serverModule,
+			transport: lsclient.TransportKind.ipc,
+		};
+		const client = new lsclient.LanguageClient('test diagnostics', 'Test Diagnostics Language Server', serverOptions, {});
+		assert.strictEqual((client as any)._outputChannel, undefined, 'no output channel should exist before the client is used');
+
+		const errorLog = sinon.spy(client, 'error');
+		await client.start();
+
+		// A throwing notification handler makes the jsonrpc connection catch the
+		// error and log a diagnostic through the shared logger.
+		client.onNotification('notification', () => {
+			throw new Error('boom');
+		});
+		await client.sendRequest('triggerNotification');
+
+		// The diagnostic must go through the client's guarded error() method (which
+		// respects shouldLogToOutputChannel()) rather than straight to the output
+		// channel or console, so a diagnostic that arrives after shutdown can't
+		// recreate a disposed channel.
+		assert.ok(errorLog.calledOnce, 'expected exactly one diagnostic to be logged');
+		assert.ok(/boom/.test(errorLog.firstCall.args[0]), 'expected the handler failure diagnostic');
+		assert.strictEqual(errorLog.firstCall.args[2], false, 'protocol diagnostics must not force a notification popup');
+
+		await client.stop();
+	});
+
+	test('JSON-RPC diagnostics after stop() do not recreate the output channel', async () => {
+		const serverModule = path.join(__dirname, './servers/customServer.js');
+		const serverOptions: lsclient.ServerOptions = {
+			module: serverModule,
+			transport: lsclient.TransportKind.ipc,
+		};
+		const client = new lsclient.LanguageClient('test diagnostics after stop', 'Test Diagnostics After Stop Language Server', serverOptions, {});
+		await client.start();
+		// client.start() already creates the output channel as a side effect of
+		// wiring up the trace log level listener, independent of any diagnostic.
+		assert.notStrictEqual((client as any)._outputChannel, undefined);
+		await client.stop();
+		assert.strictEqual((client as any)._outputChannel, undefined, 'stop() must dispose and clear the output channel');
+
+		// Simulate a diagnostic that is logged after the client considers itself
+		// stopped. shouldLogToOutputChannel() must suppress it so a disposed
+		// channel is not recreated for a client that is no longer running.
+		client.error('late diagnostic', undefined, false);
+		assert.strictEqual((client as any)._outputChannel, undefined, 'a diagnostic logged after stop() must not recreate the output channel');
+	});
+});
+
+suite('Socket transport', () => {
+
+	test('Uses an OS-assigned port when transport.port is 0', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: { kind: lsclient.TransportKind.socket, port: 0 },
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('socket zero', 'Socket Transport (port=0)', serverOptions, clientOptions);
+		await client.start();
+		// If the client had passed --socket=0 to the server (the pre-fix bug), the server
+		// would either fail to connect or listen on a different random port, and start()
+		// would time out. Reaching this line proves the actual bound port was handed over.
+		await client.stop();
+	});
+
+	test('start() rejects if the server process exits before connecting', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/exitBeforeConnectServer.js'),
+			transport: { kind: lsclient.TransportKind.socket, port: 0 },
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('socket exit before connect', 'Socket Transport (exits before connecting)', serverOptions, clientOptions);
+		// Before the fix start() would hang forever since the client only waited on
+		// the socket connection and never observed the server process exiting first.
+		await assert.rejects(async () => {
+			await client.start();
+		}, /Server process exited before the connection could be established/);
+	}).timeout(5000);
+
+	test('start() rejects if the executable server process exits before connecting', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			command: process.execPath,
+			args: [path.join(__dirname, './servers/exitBeforeConnectServer.js')],
+			// The tests run inside Electron, so process.execPath must be told to behave like node.
+			options: { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } },
+			transport: { kind: lsclient.TransportKind.socket, port: 0 },
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('socket executable exit before connect', 'Socket Transport (executable exits before connecting)', serverOptions, clientOptions);
+		// Covers the Executable branch (the command + socket path from #1586), which is separate from the NodeModule branch above.
+		await assert.rejects(async () => {
+			await client.start();
+		}, /Server process exited before the connection could be established/);
+	}).timeout(5000);
+});
+
+suite('Pipe transport', () => {
+
+	test('start() rejects if the server process exits before connecting', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/exitBeforeConnectServer.js'),
+			transport: lsclient.TransportKind.pipe,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('pipe exit before connect', 'Pipe Transport (exits before connecting)', serverOptions, clientOptions);
+		// Same underlying bug as the socket transport case: start() would hang forever
+		// instead of surfacing the server process exiting before it connected the pipe.
+		await assert.rejects(async () => {
+			await client.start();
+		}, /Server process exited before the connection could be established/);
+	}).timeout(5000);
+
+	test('start() rejects if the executable server process exits before connecting', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			command: process.execPath,
+			args: [path.join(__dirname, './servers/exitBeforeConnectServer.js')],
+			// The tests run inside Electron, so process.execPath must be told to behave like node.
+			options: { env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } },
+			transport: lsclient.TransportKind.pipe,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('pipe executable exit before connect', 'Pipe Transport (executable exits before connecting)', serverOptions, clientOptions);
+		// Covers the Executable branch (the command + pipe path from #1586), which is separate from the NodeModule branch above.
+		await assert.rejects(async () => {
+			await client.start();
+		}, /Server process exited before the connection could be established/);
+	}).timeout(5000);
+});
+
 suite('Client integration', () => {
 
 	let client!: lsclient.LanguageClient;
@@ -247,12 +417,13 @@ suite('Client integration', () => {
 			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
 			debug: { module: serverModule, transport: lsclient.TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6014'] } }
 		};
-		const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }];
+		const documentSelector: lsclient.DocumentSelector = [{ scheme: 'lsptests', language: 'bat' }, { scheme: 'lsptests', language: 'plaintext' }];
 
 		middleware = {};
 		const clientOptions: lsclient.LanguageClientOptions = {
 			documentSelector, synchronize: {}, initializationOptions: {}, middleware,
 			workspaceFolder: { index: 0, name: 'test_folder', uri: vscode.Uri.parse(`${fsProvider.scheme}:///`) },
+			diagnosticPullOptions: { onChange: true }
 		};
 
 		client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
@@ -1444,6 +1615,73 @@ suite('Client integration', () => {
 		assert.strictEqual(reporterCalled, true);
 	});
 
+	test('Document diagnostic pull after quick reopen', async () => {
+		await vscode.window.showTextDocument(document);
+		let initialPullFinished: (() => void) | undefined;
+		const initialPull = new Promise<void>((resolve) => {
+			initialPullFinished = resolve;
+		});
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = async (document, previousResultId, token, next) => {
+			const result = await next(document, previousResultId, token);
+			initialPullFinished?.();
+			initialPullFinished = undefined;
+			return result;
+		};
+		document = await vscode.languages.setTextDocumentLanguage(document, 'plaintext');
+		await initialPull;
+		await waitForNextTurn();
+
+		let pullCount = 0;
+		let releasePull!: () => void;
+		const holdPull = new Promise<void>((resolve) => {
+			releasePull = resolve;
+		});
+		let firstPullStarted!: () => void;
+		const firstPull = new Promise<void>((resolve) => {
+			firstPullStarted = resolve;
+		});
+		let firstPullFinished!: () => void;
+		const firstPullDone = new Promise<void>((resolve) => {
+			firstPullFinished = resolve;
+		});
+		let expectedEditPull: number | undefined;
+		let editPullFinished!: () => void;
+		const editPull = new Promise<void>((resolve) => {
+			editPullFinished = resolve;
+		});
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = async (document, previousResultId, token, next) => {
+			const currentPull = ++pullCount;
+			if (currentPull === 1) {
+				firstPullStarted();
+				await holdPull;
+			}
+			const result = await next(document, previousResultId, token);
+			if (currentPull === 1) {
+				firstPullFinished();
+			}
+			if (currentPull === expectedEditPull) {
+				expectedEditPull = undefined;
+				editPullFinished();
+			}
+			return result;
+		};
+
+		const changeLanguage = vscode.languages.setTextDocumentLanguage(document, 'bat');
+		await firstPull;
+		document = await changeLanguage;
+		releasePull();
+		await firstPullDone;
+		await waitForNextTurn();
+
+		expectedEditPull = pullCount + 1;
+		const edit = new vscode.WorkspaceEdit();
+		edit.insert(document.uri, new vscode.Position(0, 0), ' ');
+		await vscode.workspace.applyEdit(edit);
+		await editPull;
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = undefined;
+		await revertAllDirty();
+	}).timeout(5000);
+
 	test('Type Hierarchy', async () => {
 		const provider = client.getFeature(lsclient.TypeHierarchyPrepareRequest.method).getProvider(document);
 		isDefined(provider);
@@ -1891,7 +2129,7 @@ suite('Full notebook tests', () => {
 		assert.strictEqual(diagnostic.message, 'notebook-error');
 
 		await revertAllDirty();
-	});
+	}).timeout(5000);
 });
 
 suite('Simple notebook tests', () => {
@@ -2004,6 +2242,38 @@ class CrashClient extends lsclient.LanguageClient {
 }
 
 suite('Server tests', () => {
+	test('Concurrent starts reject when the server closes during initialization', async () => {
+		const outputChannel = vscode.window.createOutputChannel('Initialization failure', { log: true });
+		const client = new lsclient.LanguageClient('initialization-failure', 'Initialization failure', {
+			module: path.join(__dirname, './servers/crashOnInitializeServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		}, {
+			outputChannel,
+			initializationFailedHandler: () => false,
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed: () => ({ action: lsclient.CloseAction.DoNotRestart, handled: true }),
+			}
+		});
+		// The initialization error path also calls stop(), which independently
+		// rejects for a non-running client. Isolate the promises returned by start().
+		const stop = sinon.stub(client, 'stop').resolves();
+		try {
+			// Observing both calls also handles the shared startup rejection, even
+			// if one caller incorrectly loses that promise when the connection closes.
+			const results = await Promise.allSettled([client.start(), client.start()]);
+			assert.strictEqual(results[0].status, 'rejected');
+			assert.strictEqual(results[1].status, 'rejected');
+			assert.strictEqual(results[0].reason, results[1].reason);
+			assert.match(String(results[0].reason), /Pending response rejected since connection got disposed/);
+		} finally {
+			await client.dispose();
+			stop.restore();
+			client.diagnostics?.dispose();
+			outputChannel.dispose();
+		}
+	}).timeout(5000);
+
 	test('Stop fails if server crashes after shutdown request', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
@@ -2282,7 +2552,7 @@ suite('delayOpenNotifications', () => {
 		middleware = {};
 	});
 
-	async function startClient(delayOpen: boolean): Promise<void> {
+	async function startClient(delayOpen: boolean, documentSelector: lsclient.DocumentSelector = [{ language: 'plaintext' }]): Promise<void> {
 		const serverModule = path.join(__dirname, './servers/textSyncServer.js');
 		const serverOptions: lsclient.ServerOptions = {
 			run: { module: serverModule, transport: lsclient.TransportKind.ipc },
@@ -2290,7 +2560,7 @@ suite('delayOpenNotifications', () => {
 		};
 
 		const clientOptions: lsclient.LanguageClientOptions = {
-			documentSelector: [{ language: 'plaintext' }],
+			documentSelector,
 			synchronize: {},
 			initializationOptions: {},
 			middleware,
@@ -2331,9 +2601,12 @@ suite('delayOpenNotifications', () => {
 		await sendDidOpen(fakeDocument);
 		await sendDidClose(fakeDocument);
 
-		// Ensure no notifications.
+		// Ensure no notifications are send for the fake document.
 		const notifications = await client.sendRequest(GetNotificationsRequest.type);
-		assert.deepStrictEqual(notifications, []);
+		const filtered = notifications.
+			filter((n) => n.method === 'textDocument/didOpen' || n.method === 'textDocument/didClose').
+			filter((n) => n.params?.textDocument.uri === fakeDocument.uri.toString());
+		assert.deepStrictEqual(filtered, []);
 	});
 
 	test('didOpen/didClose are always sent when delayOpenNotifications=false', async () => {
@@ -2342,10 +2615,13 @@ suite('delayOpenNotifications', () => {
 		await sendDidOpen(fakeDocument);
 		await sendDidClose(fakeDocument);
 
-		// Ensure both notifications.
+		// Ensure both notifications are sent for the fake document.
 		const notifications = await client.sendRequest(GetNotificationsRequest.type);
+		const filtered = notifications.
+			filter((n) => n.method === 'textDocument/didOpen' || n.method === 'textDocument/didClose').
+			filter((n) => n.params?.textDocument.uri === fakeDocument.uri.toString());
 		assert.deepStrictEqual(
-			notifications.map((n) => n.method),
+			filtered.map((n) => n.method),
 			[
 				'textDocument/didOpen',
 				'textDocument/didClose',
@@ -2385,7 +2661,9 @@ suite('delayOpenNotifications', () => {
 		});
 
 		// Verify both notifications are as expected.
-		const notifications = await client.sendRequest(GetNotificationsRequest.type);
+		const notifications = (await client.sendRequest(GetNotificationsRequest.type)).
+			filter((n) => n.method === 'textDocument/didOpen' || n.method === 'textDocument/didChange').
+			filter((n) => n.params?.textDocument.uri === fakeDocument.uri.toString());
 		assert.equal(notifications.length, 2);
 		const [openNotification, changeNotification] = notifications;
 
@@ -2413,5 +2691,86 @@ suite('delayOpenNotifications', () => {
 		assert.equal(textDoc.offsetAt(positionOfLine3word), offsetOfLine3word);
 		assert.ok(textDoc.validatePosition(positionOfLine3word).isEqual(positionOfLine3word));
 		assert.ok(textDoc.validateRange(rangeOfLine3word!).isEqual(rangeOfLine3word!));
+	});
+
+	test('hidden documents are opened at startup when delayOpenNotifications=false', async () => {
+		const scheme = 'delayed-open-test';
+		const contentProvider = vscode.workspace.registerTextDocumentContentProvider(scheme, {
+			provideTextDocumentContent: () => 'hidden document'
+		});
+		try {
+			const document = await vscode.workspace.openTextDocument(vscode.Uri.parse(`${scheme}:///hidden.txt`));
+			assert.strictEqual(vscode.window.visibleTextEditors.some((editor) => editor.document === document), false);
+
+			let didOpen = false;
+			middleware.didOpen = (openedDocument, next) => {
+				if (openedDocument === document) {
+					didOpen = true;
+				}
+				return next(openedDocument);
+			};
+
+			await startClient(false, [{ scheme }]);
+			assert.strictEqual(didOpen, true);
+		} finally {
+			contentProvider.dispose();
+		}
+	});
+
+	for (const delayOpen of [true, false]) {
+		test(`didOpen of a visible document is sent before requests when hidden documents are open at start (delayOpenNotifications=${delayOpen})`, async () => {
+			// See https://github.com/microsoft/vscode-languageserver-node/issues/1868
+			const scheme = `delayed-open-order-test-${delayOpen}`;
+			const contentProvider = vscode.workspace.registerTextDocumentContentProvider(scheme, {
+				provideTextDocumentContent: (uri) => `content of ${uri.path}`
+			});
+			try {
+				const hiddenCount = 30;
+				for (let i = 0; i < hiddenCount; i++) {
+					await vscode.workspace.openTextDocument(vscode.Uri.parse(`${scheme}:///hidden-${i}.txt`));
+				}
+				const visible = await vscode.workspace.openTextDocument(vscode.Uri.parse(`${scheme}:///visible.txt`));
+				await vscode.window.showTextDocument(visible);
+
+				await startClient(delayOpen, [{ scheme }]);
+				// The server answers the request after it processed all messages that got sent before it.
+				const notifications = await client.sendRequest(GetNotificationsRequest.type);
+				const opened = notifications.filter((n) => n.method === 'textDocument/didOpen').map((n) => n.params.textDocument.uri);
+				assert.ok(opened.includes(visible.uri.toString()), 'The request overtook the didOpen of the visible document.');
+				assert.strictEqual(opened.length, hiddenCount + 1);
+			} finally {
+				await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+				contentProvider.dispose();
+			}
+		});
+	}
+
+	test('didClose and didOpen keep their order when the language mode of a document changes', async () => {
+		// Changing the language mode closes the document and opens it again.
+		const document = await vscode.workspace.openTextDocument({ language: 'plaintext', content: 'hello' });
+		try {
+			await vscode.window.showTextDocument(document);
+			await startClient(true, [{ language: 'plaintext' }, { language: 'markdown' }]);
+			await client.sendRequest(GetNotificationsRequest.type);
+
+			const reopened = new Promise<void>((resolve) => {
+				const listener = vscode.workspace.onDidOpenTextDocument((opened) => {
+					if (opened.uri.toString() === document.uri.toString()) {
+						listener.dispose();
+						resolve();
+					}
+				});
+			});
+			await vscode.languages.setTextDocumentLanguage(document, 'markdown');
+			await reopened;
+
+			const notifications = (await client.sendRequest(GetNotificationsRequest.type))
+				.filter((n) => n.params?.textDocument.uri === document.uri.toString())
+				.map((n) => n.method === 'textDocument/didOpen' ? `didOpen(${n.params.textDocument.languageId})` : n.method);
+			assert.deepStrictEqual(notifications, ['didOpen(plaintext)', 'textDocument/didClose', 'didOpen(markdown)']);
+		} finally {
+			await revertAllDirty();
+			await vscode.commands.executeCommand('workbench.action.closeAllEditors');
+		}
 	});
 });

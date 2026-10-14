@@ -170,7 +170,7 @@ export class StreamMessageWriter extends WriteableStreamMessageWriter {
 const XDG_RUNTIME_DIR = process.env['XDG_RUNTIME_DIR'];
 const safeIpcPathLengths: Map<NodeJS.Platform, number> = new Map([
 	['linux', 107],
-	['darwin', 103]
+	['darwin', 102]
 ]);
 
 export function generateRandomPipeName(): string {
@@ -195,6 +195,13 @@ export function generateRandomPipeName(): string {
 
 export interface PipeTransport {
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
+	/**
+	 * Closes the underlying server if a client hasn't connected yet. Callers
+	 * should invoke this if they abandon the transport before `onConnected`
+	 * resolves (for example because the server process failed to start) to
+	 * avoid leaking the listening pipe.
+	 */
+	close(): void;
 }
 
 export function createClientPipeTransport(pipeName: string, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<PipeTransport> {
@@ -214,7 +221,8 @@ export function createClientPipeTransport(pipeName: string, encoding: RAL.Messag
 		server.listen(pipeName, () => {
 			server.removeListener('error', reject);
 			resolve({
-				onConnected: () => { return connected; }
+				onConnected: () => { return connected; },
+				close: () => { server.close(); }
 			});
 		});
 	});
@@ -229,7 +237,15 @@ export function createServerPipeTransport(pipeName: string, encoding: RAL.Messag
 }
 
 export interface SocketTransport {
+	port(): number;
 	onConnected(): Promise<[MessageReader, MessageWriter]>;
+	/**
+	 * Closes the underlying server if a client hasn't connected yet. Callers
+	 * should invoke this if they abandon the transport before `onConnected`
+	 * resolves (for example because the server process failed to start) to
+	 * avoid leaking the listening socket.
+	 */
+	close(): void;
 }
 
 export function createClientSocketTransport(port: number, encoding: RAL.MessageBufferEncoding = 'utf-8'): Promise<SocketTransport> {
@@ -248,8 +264,16 @@ export function createClientSocketTransport(port: number, encoding: RAL.MessageB
 		server.on('error', reject);
 		server.listen(port, '127.0.0.1', () => {
 			server.removeListener('error', reject);
+			const address = server.address();
+			if (address === null || typeof address === 'string') {
+				reject(new Error(`Unexpected server address: ${address}`));
+				return;
+			}
+			const boundPort = address.port;
 			resolve({
-				onConnected: () => { return connected; }
+				port: () => boundPort,
+				onConnected: () => { return connected; },
+				close: () => { server.close(); }
 			});
 		});
 	});

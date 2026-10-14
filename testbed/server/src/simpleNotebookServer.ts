@@ -22,9 +22,9 @@ const patterns = [
 
 function computeDiagnostics(content: string): Diagnostic[] {
 	const result: Diagnostic[] = [];
-	const lines: string[] = content.match(/^.*(\n|\r\n|\r|$)/gm);
+	const lines: RegExpMatchArray | null = content.match(/^.*(\n|\r\n|\r|$)/gm);
 	let lineNumber: number = 0;
-	for (const line of lines) {
+	for (const line of lines ?? []) {
 		const pattern = patterns[Math.floor(Math.random() * 3)];
 		let match: RegExpExecArray | null;
 		while (match = pattern.exec(line)) {

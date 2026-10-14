@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 import {
-	workspace as Workspace, window as Window, languages as Languages, LogLevel, version as VSCodeVersion, TextDocument, Disposable,
+	workspace as Workspace, window as Window, LogLevel, version as VSCodeVersion, TextDocument, Disposable,
 	FileSystemWatcher as VFileSystemWatcher, DiagnosticCollection, Diagnostic as VDiagnostic, Uri, CancellationToken, WorkspaceEdit as VWorkspaceEdit,
 	MessageItem, WorkspaceFolder as VWorkspaceFolder, env as Env, TextDocumentShowOptions, CancellationError, CancellationTokenSource, FileCreateEvent,
 	FileRenameEvent, FileDeleteEvent, FileWillCreateEvent, FileWillRenameEvent, FileWillDeleteEvent, CompletionItemProvider, HoverProvider, SignatureHelpProvider,
@@ -49,7 +49,7 @@ import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
-	TextDocumentProviderFeature, WorkspaceProviderFeature, type VisibleDocuments
+	TextDocumentProviderFeature, WorkspaceProviderFeature, DefaultDiagnosticCollectionProvider, DiagnosticCollectionSource, type VisibleDocuments
 } from './features';
 
 import { DiagnosticFeature, DiagnosticProviderMiddleware, DiagnosticProviderShape, $DiagnosticPullOptions, DiagnosticFeatureShape } from './diagnostic';
@@ -346,6 +346,16 @@ InlineCompletionMiddleware & TextDocumentContentMiddleware & GeneralMiddleware;
 
 export type LanguageClientOptions = {
 	documentSelector?: DocumentSelector | string[];
+	/**
+	 * The name of the diagnostic collection that is created by the client.
+	 * If omitted the name of the client is used.
+	 *
+	 * **Note:** the name is only used if the server uses the old
+	 * `textDocument/publishDiagnostics` notification. If the server uses the
+	 * new `textDocument/diagnostic` request the name of the collection is
+	 * defined by the server using the `identifier` property of the
+	 * `DiagnosticOptions` during registration.
+	 */
 	diagnosticCollectionName?: string;
 	outputChannel?: LogOutputChannel;
 	outputChannelName?: string;
@@ -381,8 +391,8 @@ export type LanguageClientOptions = {
 		 * Delays sending the open notification until one of the following
 		 * conditions becomes `true`:
 		 * - document is visible in the editor.
-		 * - any of the other notifications or requests is sent to the server, except
-		 *   a closed notification for the pending document.
+		 * - any request or notification is sent to the server, except an open or
+		 *   a close notification.
 		 */
 		delayOpenNotifications?: boolean;
 	};
@@ -658,7 +668,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _traceLogLevel: LogLevel;
 	private _capabilities!: ServerCapabilities & ResolvedTextDocumentSyncCapabilities;
 
-	private _diagnostics: DiagnosticCollection | undefined;
+	// undefined: allow lazy creation of the diagnostic collection.
+	// null: the diagnostic collection has been disposed and should not be
+	// recreated.
+	private _diagnostics: DiagnosticCollection | undefined | null;
 	private _syncedDocuments: Map<string, TextDocument>;
 
 	private _didChangeTextDocumentFeature: DidChangeTextDocumentFeature | undefined;
@@ -722,6 +735,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			// 	interval: clientOptions.suspend?.interval ? Math.max(clientOptions.suspend.interval, defaultInterval) : defaultInterval
 			// },
 			diagnosticPullOptions: clientOptions.diagnosticPullOptions ?? { onChange: true, onSave: false },
+			diagnosticCollectionProvider: clientOptions.diagnosticCollectionProvider ?? new DefaultDiagnosticCollectionProvider(),
 			notebookDocumentOptions: clientOptions.notebookDocumentOptions ?? { },
 			textSynchronization: this.createTextSynchronizationOptions(clientOptions.textSynchronization)
 		};
@@ -757,6 +771,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (this._traceOutputChannel !== undefined) {
 			this._traceLogLevel = this._traceOutputChannel.logLevel;
 		}
+		// Allow lazy creation of the diagnostic collection.
 		this._diagnostics = undefined;
 
 		this._inFlightOpenNotifications = new Set();
@@ -848,6 +863,12 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public get diagnostics(): DiagnosticCollection | undefined {
+		if (this._diagnostics === null) {
+			return undefined;
+		}
+		if (this._diagnostics === undefined) {
+			this._diagnostics = this._clientOptions.diagnosticCollectionProvider.create(this._clientOptions.diagnosticCollectionName ?? this._id, DiagnosticCollectionSource.push);
+		}
 		return this._diagnostics;
 	}
 
@@ -1003,8 +1024,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 
 		const needsPendingFullTextDocumentSync: boolean = this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full;
+		const isOpenNotification = typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method;
 		let openNotification: string | undefined;
-		if (needsPendingFullTextDocumentSync && typeof type !== 'string' && type.method === DidOpenTextDocumentNotification.method) {
+		if (needsPendingFullTextDocumentSync && isOpenNotification) {
 			openNotification = (params as DidOpenTextDocumentParams)?.textDocument.uri;
 			this._inFlightOpenNotifications.add(openNotification);
 		}
@@ -1015,12 +1037,18 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// Ensure we have a connection before we force the document sync.
 		const connection = await this.$start();
 
-		// Send any depending open notifications
-		const didDropOpenNotification = await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications(documentToClose);
-		if (didDropOpenNotification) {
-			// Don't forward this close notification if we dropped the
-			// corresponding open notification.
-			return;
+		if (documentToClose !== undefined) {
+			if (this._didOpenTextDocumentFeature!.dropPendingOpenNotification(documentToClose)) {
+				// Don't forward this close notification if we dropped the
+				// corresponding open notification.
+				return;
+			}
+		} else if (!isOpenNotification) {
+			// Send any depending open notifications. An open or close notification
+			// doesn't depend on them. It is sent right away since waiting for the pending
+			// open notifications to be sent one by one would let the messages that follow
+			// (e.g. a request or the open that follows a close) overtake it.
+			await this._didOpenTextDocumentFeature!.sendPendingOpenNotifications();
 		}
 
 		// If any document is synced in full mode make sure we flush any pending
@@ -1284,10 +1312,9 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		const [promise, resolve, reject] = this.createOnStartPromise();
 		this._onStart = promise;
 
-		// If we restart then the diagnostics collection is reused.
-		if (this._diagnostics === undefined) {
-			this._diagnostics = Languages.createDiagnosticCollection(this._clientOptions.diagnosticCollectionName ?? this._id);
-		}
+		// A previous shutdown disposed the diagnostic collection and set it to
+		// `null` to prevent recreation. On (re)start we re-enable lazy creation.
+		this._diagnostics = undefined;
 
 		// When we start make all buffer handlers pending so that they
 		// get added.
@@ -1403,7 +1430,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			this.error(`${this._name} client: couldn't create connection to server.`, error, 'force');
 			reject(error);
 		}
-		return this._onStart;
+		return promise;
 	}
 
 	private createOnStartPromise(): [ Promise<void>, () => void, (error:any) => void] {
@@ -1648,9 +1675,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		for (const feature of Array.from(this._features.entries()).map(entry => entry[1]).reverse()) {
 			feature.clear();
 		}
-		if ((mode === ShutdownMode.Stop || mode === ShutdownMode.Restart) && this._diagnostics !== undefined) {
-			this._diagnostics.dispose();
-			this._diagnostics = undefined;
+		if ((mode === ShutdownMode.Stop || mode === ShutdownMode.Restart)) {
+			if (this._diagnostics === undefined) {
+				this._diagnostics = null;
+			}
+			if (this._diagnostics !== null) {
+				this._clientOptions.diagnosticCollectionProvider.dispose(this._diagnostics, DiagnosticCollectionSource.push);
+				this._diagnostics = null;
+			}
 		}
 
 		if (this._idleInterval !== undefined) {
@@ -1700,6 +1732,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					const params = this.code2ProtocolConverter.asChangeTextDocumentParams(document);
 					// We await the send and not the delivery since it is more or less the same for
 					// notifications.
+					this._didChangeTextDocumentFeature!.aboutToSendNotification(document, DidChangeTextDocumentNotification.type, params);
 					await connection.sendNotification(DidChangeTextDocumentNotification.type, params);
 					this._didChangeTextDocumentFeature!.notificationSent(document, DidChangeTextDocumentNotification.type, params);
 				}
@@ -1725,7 +1758,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	private _diagnosticQueue: Map<string, Diagnostic[]> = new Map();
 	private _diagnosticQueueState: { state: 'idle' } | { state: 'busy'; document: string; tokenSource: CancellationTokenSource } = { state: 'idle' };
 	private handleDiagnostics(params: PublishDiagnosticsParams) {
-		if (!this._diagnostics) {
+		if (this._diagnostics === null) {
 			return;
 		}
 		const key = params.uri;
@@ -1773,10 +1806,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	private setDiagnostics(uri: Uri, diagnostics: VDiagnostic[] | undefined) {
-		if (!this._diagnostics) {
+		if (this._diagnostics === null) {
 			return;
 		}
-		this._diagnostics.set(uri, diagnostics);
+		const diagnosticsCollection = this.diagnostics;
+		if (diagnosticsCollection !== undefined) {
+			diagnosticsCollection.set(uri, diagnostics);
+		}
 	}
 
 	protected getLocale(): string {
@@ -1807,7 +1843,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 
 		const transports = await this.createMessageTransports(this._clientOptions.stdioEncoding || 'utf8');
-		this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this._clientOptions.connectionOptions);
+		this._connection = createConnection(transports.reader, transports.writer, errorHandler, closeHandler, this, this._clientOptions.connectionOptions);
 		return this._connection;
 	}
 
@@ -2057,6 +2093,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new InlayHintsFeature(this));
 		this.registerFeature(new DiagnosticFeature(this));
 		this.registerFeature(new NotebookDocumentSyncFeature(this));
+		this.registerFeature(new InlineCompletionItemFeature(this));
+		this.registerFeature(new TextDocumentContentFeature(this));
 	}
 
 	public registerProposedFeatures() {
@@ -2452,6 +2490,29 @@ class ConsoleLogger implements Logger {
 	}
 }
 
+interface ChannelProvider {
+	error(message: string, data?: any, showNotification?: boolean | 'force'): void;
+	warn(message: string, data?: any, showNotification?: boolean): void;
+	info(message: string, data?: any, showNotification?: boolean): void;
+}
+
+class OutputChannelLogger implements Logger {
+	constructor(private readonly channelProvider: ChannelProvider) {
+	}
+	public error(message: string): void {
+		this.channelProvider.error(message, undefined, false);
+	}
+	public warn(message: string): void {
+		this.channelProvider.warn(message, undefined, false);
+	}
+	public info(message: string): void {
+		this.channelProvider.info(message, undefined, false);
+	}
+	public log(message: string): void {
+		this.channelProvider.info(message, undefined, false);
+	}
+}
+
 interface ConnectionErrorHandler {
 	(error: Error, message: Message | undefined, count: number | undefined): void;
 }
@@ -2460,8 +2521,8 @@ interface ConnectionCloseHandler {
 	(): void;
 }
 
-function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, options?: ConnectionOptions): Connection {
-	const logger = new ConsoleLogger();
+function createConnection(input: MessageReader, output: MessageWriter, errorHandler: ConnectionErrorHandler, closeHandler: ConnectionCloseHandler, channelProvider: ChannelProvider | undefined, options?: ConnectionOptions): Connection {
+	const logger: Logger = channelProvider !== undefined ? new OutputChannelLogger(channelProvider) : new ConsoleLogger();
 	const connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
@@ -2525,8 +2586,6 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 export namespace ProposedFeatures {
 	export function createAll(_client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
 		const result: (StaticFeature | DynamicFeature<any>)[] = [
-			new InlineCompletionItemFeature(_client),
-			new TextDocumentContentFeature(_client)
 		];
 		return result;
 	}

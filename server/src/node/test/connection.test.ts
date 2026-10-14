@@ -10,7 +10,7 @@ import { Duplex } from 'stream';
 import {
 	InitializeParams, InitializeRequest, InitializeResult, createConnection, DidChangeConfigurationNotification,
 	DidChangeConfigurationParams, Connection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress,
-	LocationLink
+	LocationLink, WorkDoneProgressReporter
 } from '../main';
 
 class TestStream extends Duplex {
@@ -73,6 +73,7 @@ suite('Connection Tests', () => {
 	test('Ensure work done converted', (done) => {
 		serverConnection.onDeclaration((_params, _cancel, workDone, result) => {
 			assert.ok(workDone !== undefined, 'Work Done token converted.');
+			assert.ok(!WorkDoneProgressReporter.isNullInstance(workDone), 'Work Done token uses a progress reporter.');
 			assert.ok(result === undefined, 'Result token undefined.');
 			done();
 			return [];
@@ -89,7 +90,7 @@ suite('Connection Tests', () => {
 
 	test('Ensure result converted', (done) => {
 		serverConnection.onDeclaration((_params, _cancel, workDone, result) => {
-			assert.ok(workDone === undefined || workDone.constructor.name === 'NullProgressReporter', 'Work Done token undefined or null progress.');
+			assert.ok(WorkDoneProgressReporter.isNullInstance(workDone), 'Work Done token uses a null progress reporter.');
 			assert.ok(result !== undefined, 'Result token converted.');
 			done();
 			return [];

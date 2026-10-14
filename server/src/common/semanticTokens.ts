@@ -19,9 +19,9 @@ import type { Feature, _Languages, ServerRequestHandler } from './server';
 export interface SemanticTokensFeatureShape {
 	semanticTokens: {
 		refresh(): Promise<void>;
-		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable;
-		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensPartialResult, void>): Disposable;
-		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable;
+		on(handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens | undefined | null, SemanticTokensPartialResult, void>): Disposable;
+		onDelta(handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens | undefined | null, SemanticTokensDeltaPartialResult | SemanticTokensPartialResult, void>): Disposable;
+		onRange(handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens | undefined | null, SemanticTokensPartialResult, void>): Disposable;
 	};
 }
 
@@ -32,19 +32,19 @@ export const SemanticTokensFeature: Feature<_Languages, SemanticTokensFeatureSha
 				refresh: (): Promise<void> => {
 					return this.connection.sendRequest(SemanticTokensRefreshRequest.type);
 				},
-				on: (handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable => {
+				on: (handler: ServerRequestHandler<SemanticTokensParams, SemanticTokens | undefined | null, SemanticTokensPartialResult, void>): Disposable => {
 					const type = SemanticTokensRequest.type;
 					return this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				},
-				onDelta: (handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens, SemanticTokensDeltaPartialResult | SemanticTokensDeltaPartialResult, void>): Disposable => {
+				onDelta: (handler: ServerRequestHandler<SemanticTokensDeltaParams, SemanticTokensDelta | SemanticTokens | undefined | null, SemanticTokensDeltaPartialResult | SemanticTokensPartialResult, void>): Disposable => {
 					const type = SemanticTokensDeltaRequest.type;
 					return this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
 					});
 				},
-				onRange: (handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens, SemanticTokensPartialResult, void>): Disposable => {
+				onRange: (handler: ServerRequestHandler<SemanticTokensRangeParams, SemanticTokens | undefined | null, SemanticTokensPartialResult, void>): Disposable => {
 					const type = SemanticTokensRangeRequest.type;
 					return this.connection.onRequest(type, (params, cancel) => {
 						return handler(params, cancel, this.attachWorkDoneProgress(params), this.attachPartialResultProgress(type, params));
@@ -264,6 +264,12 @@ export class SemanticTokensBuilder {
 	public previousResult(id: string) {
 		if (this.id === id) {
 			this._prevData = this.getFinalDataDelta();
+		} else {
+			// No data for the result the client is asking to diff against, so
+			// edits cannot be expressed relative to it. Dropping the previous
+			// data makes buildEdits() fall back to a full result, and keeps
+			// canBuildEdits() truthful.
+			this._prevData = undefined;
 		}
 		this.initialize();
 	}

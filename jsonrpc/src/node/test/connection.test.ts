@@ -5,11 +5,13 @@
 
 import * as assert from 'assert';
 
+import * as path from 'path';
+import { execFileSync } from 'child_process';
 import { Duplex  } from 'stream';
 import { inherits } from 'util';
 import { AsyncLocalStorage } from 'async_hooks';
 
-import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes } from '../main';
+import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes, Trace, Tracer } from '../main';
 
 import * as hostConnection from '../main';
 import { getCustomCancellationStrategy } from './customCancellationStrategy';
@@ -52,6 +54,88 @@ suite('Connection', () => {
 			done();
 		});
 		stream.write('Hello World');
+	});
+
+	test('Darwin pipe names fit OpenJDK Unix domain socket limit', () => {
+		const portableTmp = '/'.padEnd(65, 'a');
+		const main = path.join(__dirname, '..', 'main.js');
+		const script = `
+			process.env.XDG_RUNTIME_DIR = ${JSON.stringify(portableTmp)};
+			const connection = require(${JSON.stringify(main)});
+			const fs = require('fs');
+			fs.realpathSync = () => process.env.XDG_RUNTIME_DIR;
+			Object.defineProperty(process, 'platform', { value: 'darwin' });
+			const pipeName = connection.generateRandomPipeName();
+			if (Buffer.byteLength(pipeName) > 102) {
+				throw new Error(
+					\`Expected pipe name '\${pipeName}' to fit in 102 bytes\`
+				);
+			}
+		`;
+
+		execFileSync(process.execPath, ['-e', script], { stdio: 'pipe' });
+	});
+
+	test('createClientSocketTransport resolves with the requested port when non-zero', async () => {
+		const net = await import('net');
+		const probe = net.createServer();
+		await new Promise<void>((resolve, reject) => {
+			probe.on('error', reject);
+			probe.listen(0, '127.0.0.1', () => resolve());
+		});
+		const requested = (probe.address() as import('net').AddressInfo).port;
+		await new Promise<void>(resolve => probe.close(() => resolve()));
+
+		const transport = await hostConnection.createClientSocketTransport(requested);
+		const reported = transport.port();
+		const client = net.connect(reported, '127.0.0.1');
+		await transport.onConnected();
+		client.destroy();
+		assert.strictEqual(reported, requested);
+	});
+
+	test('createClientSocketTransport exposes the actual bound port when port=0', async () => {
+		const net = await import('net');
+		const transport = await hostConnection.createClientSocketTransport(0);
+		const bound = transport.port();
+		const client = net.connect(bound, '127.0.0.1');
+		await transport.onConnected();
+		client.destroy();
+		assert.ok(bound > 0, `expected a positive bound port, got ${bound}`);
+	});
+
+	test('createClientSocketTransport close closes the listening socket before a client connects', async () => {
+		const net = await import('net');
+		const transport = await hostConnection.createClientSocketTransport(0);
+		const bound = transport.port();
+
+		transport.close();
+
+		await new Promise<void>((resolve, reject) => {
+			const client = net.connect(bound, '127.0.0.1');
+			client.on('connect', () => {
+				client.destroy();
+				reject(new Error('expected the connection to be refused after close'));
+			});
+			client.on('error', () => resolve());
+		});
+	});
+
+	test('createClientPipeTransport close closes the listening pipe before a client connects', async () => {
+		const net = await import('net');
+		const pipeName = hostConnection.generateRandomPipeName();
+		const transport = await hostConnection.createClientPipeTransport(pipeName);
+
+		transport.close();
+
+		await new Promise<void>((resolve, reject) => {
+			const client = net.createConnection(pipeName);
+			client.on('connect', () => {
+				client.destroy();
+				reject(new Error('expected the connection to be refused after close'));
+			});
+			client.on('error', () => resolve());
+		});
 	});
 
 	test('Test Duplex Stream Connection', (done) => {
@@ -169,6 +253,77 @@ suite('Connection', () => {
 		});
 	});
 
+	test('Request write failure does not cause an unhandled rejection', () => {
+		const main = path.join(__dirname, '..', 'main.js');
+		const script = `
+			const assert = require('assert');
+			const { once } = require('events');
+			const { PassThrough } = require('stream');
+			const rpc = require(${JSON.stringify(main)});
+
+			async function run() {
+				const input = new PassThrough();
+				const output = new PassThrough();
+				const closed = once(output, 'close');
+				output.destroy();
+				await closed;
+
+				const cleaned = [];
+				let cancellations = 0;
+				const loggedErrors = [];
+				const connection = rpc.createMessageConnection(input, output, {
+					...rpc.NullLogger,
+					error: message => loggedErrors.push(message)
+				}, {
+					cancellationStrategy: {
+						receiver: rpc.CancellationStrategy.Message.receiver,
+						sender: {
+							sendCancellation: async () => { cancellations++; },
+							cleanup: id => cleaned.push(id)
+						}
+					}
+				});
+				const errors = [];
+				connection.onError(([error]) => errors.push(error));
+				const source = new rpc.CancellationTokenSource();
+				connection.listen();
+				try {
+					await assert.rejects(connection.sendRequest('test/writeFailure', source.token), error => {
+						assert.ok(error instanceof rpc.ResponseError);
+						assert.strictEqual(error.code, rpc.ErrorCodes.MessageWriteError);
+						assert.ok(errors.some(cause => cause.code === 'ERR_STREAM_DESTROYED' && cause.message === error.message));
+						return true;
+					});
+					assert.strictEqual(connection.hasPendingResponse(), false);
+					assert.deepStrictEqual(cleaned, [0]);
+					assert.deepStrictEqual(loggedErrors, ['Sending request failed.']);
+					source.cancel();
+					assert.strictEqual(cancellations, 0);
+				} finally {
+					connection.dispose();
+					source.dispose();
+					input.destroy();
+					output.destroy();
+				}
+				assert.deepStrictEqual(cleaned, [0]);
+				process.stdout.write('done');
+			}
+
+			run().catch(error => {
+				console.error(error);
+				process.exitCode = 1;
+			});
+		`;
+
+		// Isolate strict rejection handling from Mocha and let the child exit naturally.
+		const result = execFileSync(process.execPath, ['--unhandled-rejections=strict', '-e', script], {
+			encoding: 'utf8',
+			timeout: 10000,
+			stdio: 'pipe'
+		});
+		assert.strictEqual(result, 'done');
+	});
+
 	test('Handle Multiple Requests', (done) => {
 		const type = new RequestType<string, string, void>('test/handleSingleRequest');
 		const duplexStream1 = new TestDuplex('ds1');
@@ -208,6 +363,31 @@ suite('Connection', () => {
 		client.sendRequest(type, 'foo').then((_result) => {
 		}, (error: ResponseError<any>) => {
 			assert.strictEqual(error.code, ErrorCodes.MethodNotFound);
+			done();
+		});
+	});
+
+	test('Trace includes error code and message when sending an error response', (done) => {
+		const type = new RequestType<string, string, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, () => {
+			throw new ResponseError(ErrorCodes.InvalidParams, 'Boom');
+		});
+		const logs: string[] = [];
+		const tracer: Tracer = { log: (message: string) => logs.push(message) };
+		void server.trace(Trace.Verbose, tracer);
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+		client.sendRequest(type, 'foo').then((_result) => {
+		}, (_error: ResponseError<any>) => {
+			const sendingResponseLog = logs.find(message => message.includes('Sending response'));
+			assert.ok(sendingResponseLog !== undefined, 'Expected a "Sending response" trace message');
+			assert.ok(sendingResponseLog!.includes(`Boom (${ErrorCodes.InvalidParams})`), `Expected trace message to include the error message and code, got: ${sendingResponseLog}`);
 			done();
 		});
 	});
@@ -776,5 +956,83 @@ suite('Connection', () => {
 		const r2 = client.sendRequest(requestTwo);
 		await Promise.all([r1, r2]);
 		assert.deepStrictEqual(log, ['one-start', 'one-end', 'two-start', 'two-end']);
+	});
+
+	test('Parallelism - a rejected dispatch releases its slot', async () => {
+		const requestOne = new hostConnection.RequestType0<void, void>('test/parallelism_reject');
+		const requestTwo = new hostConnection.RequestType0<string, void>('test/parallelism_after_reject');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, { maxParallelism: 1 });
+		// The error payload cannot be serialized, so writing the response rejects
+		// and the promise the message queue awaits rejects with it.
+		server.onRequest(requestOne, () => {
+			const circular: any = {};
+			circular.self = circular;
+			throw new hostConnection.ResponseError(hostConnection.ErrorCodes.InternalError, 'boom', circular);
+		});
+		server.onRequest(requestTwo, () => 'handled');
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, { maxParallelism: 1 });
+		client.listen();
+
+		// The first request may never get an answer; that is not what is under test.
+		client.sendRequest(requestOne).catch(() => undefined);
+		await new Promise(resolve => setTimeout(resolve, 100));
+
+		// The queue must still be pumping, so an ordinary request is answered.
+		const answered = await Promise.race([
+			client.sendRequest(requestTwo),
+			new Promise<string>(resolve => setTimeout(() => resolve('timed out'), 1000))
+		]);
+		assert.strictEqual(answered, 'handled');
+	});
+
+	test('Parallelism - a rejected dispatch is logged and releases its slot', async () => {
+		const requestOne = new hostConnection.RequestType0<void, void>('test/parallelism_reject_logged');
+		const requestTwo = new hostConnection.RequestType0<string, void>('test/parallelism_after_reject_logged');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const errors: string[] = [];
+		const logger: hostConnection.Logger = {
+			...hostConnection.NullLogger,
+			error: (message: string) => errors.push(message)
+		};
+
+		// Force the promise the message queue awaits to reject directly, without
+		// relying on a serialization failure to produce the rejection.
+		const messageStrategy: hostConnection.MessageStrategy = {
+			handleMessage: (message, next) => {
+				const result = next(message);
+				if (hostConnection.Message.isRequest(message) && message.method === requestOne.method) {
+					return Promise.reject(new Error('forced rejection'));
+				}
+				return result;
+			}
+		};
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, logger, { maxParallelism: 1, messageStrategy });
+		server.onRequest(requestOne, () => { });
+		server.onRequest(requestTwo, () => 'handled');
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, { maxParallelism: 1 });
+		client.listen();
+
+		await client.sendRequest(requestOne);
+		await new Promise(resolve => setTimeout(resolve, 100));
+
+		assert.strictEqual(errors.length, 1);
+		assert.ok(errors[0].includes('forced rejection'));
+
+		// The queue must still be pumping, so an ordinary request is answered.
+		const answered = await Promise.race([
+			client.sendRequest(requestTwo),
+			new Promise<string>(resolve => setTimeout(() => resolve('timed out'), 1000))
+		]);
+		assert.strictEqual(answered, 'handled');
 	});
 });

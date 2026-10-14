@@ -20,7 +20,7 @@ import { generateUuid } from './utils/uuid';
 import { matchGlobPattern } from './utils/globPattern';
 
 import {
-	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError, type VisibleDocuments
+	TextDocumentLanguageFeature, FeatureClient, LSPCancellationError, DiagnosticCollectionSource, type DiagnosticCollectionProvider, type VisibleDocuments
 } from './features';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
@@ -167,6 +167,14 @@ export type DiagnosticPullOptions = {
 
 export type $DiagnosticPullOptions = {
 	diagnosticPullOptions?: DiagnosticPullOptions;
+
+	/**
+	 * The provider used to create and dispose the diagnostic collections for the
+	 * push (`textDocument/publishDiagnostics`) and the pull (`textDocument/diagnostic`)
+	 * model. If omitted a default provider is used that doesn't share a diagnostic
+	 * collection between the two models.
+	 */
+	diagnosticCollectionProvider?: DiagnosticCollectionProvider;
 };
 
 
@@ -299,6 +307,7 @@ class DiagnosticRequestor implements Disposable {
 	public readonly provider: vsdiag.DiagnosticProvider;
 	private readonly diagnostics: DiagnosticCollection;
 	private readonly openRequests: Map<string, RequestState>;
+	private readonly pendingDocumentForgets: Map<string, symbol>;
 	private readonly documentStates: DocumentPullStateTracker;
 
 	private workspaceErrorCounter: number;
@@ -314,10 +323,19 @@ class DiagnosticRequestor implements Disposable {
 		this.onDidChangeDiagnosticsEmitter = new EventEmitter<void>();
 		this.provider = this.createProvider();
 
-		this.diagnostics = Languages.createDiagnosticCollection(options.identifier);
+		this.diagnostics = this.createDiagnosticCollection();
 		this.openRequests = new Map();
+		this.pendingDocumentForgets = new Map();
 		this.documentStates = new DocumentPullStateTracker();
 		this.workspaceErrorCounter = 0;
+	}
+
+	private createDiagnosticCollection(): DiagnosticCollection {
+		if (this.client.clientOptions.diagnosticCollectionProvider === undefined) {
+			return Languages.createDiagnosticCollection(this.options.identifier);
+		} else {
+			return this.client.clientOptions.diagnosticCollectionProvider.create(this.options.identifier, DiagnosticCollectionSource.pull);
+		}
 	}
 
 	public knows(kind: PullState, document: TextDocument | Uri): boolean {
@@ -343,6 +361,10 @@ class DiagnosticRequestor implements Disposable {
 
 	private forget(kind: PullState, document: TextDocument | Uri): void {
 		this.documentStates.unTrack(kind, document);
+	}
+
+	public cancelPendingForget(document: TextDocument | Uri): void {
+		this.pendingDocumentForgets.delete(DocumentOrUri.asKey(document));
 	}
 
 	public pull(document: TextDocument | Uri, cb?: () => void): void {
@@ -438,8 +460,13 @@ class DiagnosticRequestor implements Disposable {
 			if (request !== undefined) {
 				this.openRequests.set(key, { state: RequestStateKind.reschedule, document: document });
 			} else {
+				const pendingForget = Symbol();
+				this.pendingDocumentForgets.set(key, pendingForget);
 				this.pull(document, () => {
-					this.forget(PullState.document, document);
+					if (this.pendingDocumentForgets.get(key) === pendingForget) {
+						this.pendingDocumentForgets.delete(key);
+						this.forget(PullState.document, document);
+					}
 				});
 			}
 
@@ -529,7 +556,13 @@ class DiagnosticRequestor implements Disposable {
 						return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 					}
 					return this.client.sendRequest(DocumentDiagnosticRequest.type, params, token).then(async (result) => {
-						if (result === undefined || result === null || this.isDisposed || token.isCancellationRequested) {
+						if (this.isDisposed) {
+							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
+						}
+						if (token.isCancellationRequested) {
+							throw new CancellationError();
+						}
+						if (result === undefined || result === null) {
 							return { kind: vsdiag.DocumentDiagnosticReportKind.full, items: [] };
 						}
 						if (result.kind === DocumentDiagnosticReportKind.Full) {
@@ -644,7 +677,11 @@ class DiagnosticRequestor implements Disposable {
 		}
 
 		// cleanup old diagnostics
-		this.diagnostics.dispose();
+		if (this.client.clientOptions.diagnosticCollectionProvider !== undefined) {
+			this.client.clientOptions.diagnosticCollectionProvider.dispose(this.diagnostics, DiagnosticCollectionSource.pull);
+		} else {
+			this.diagnostics.dispose();
+		}
 	}
 }
 
@@ -890,11 +927,12 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 		const openFeature = client.getFeature(DidOpenTextDocumentNotification.method);
 		disposables.push(openFeature.onNotificationSent((event) => {
 			const textDocument = event.textDocument;
-			// We already know about this document. This can happen via a tab open.
-			if (this.diagnosticRequestor.knowsSameVersion(PullState.document, textDocument)) {
-				return;
-			}
 			if (matches(textDocument)) {
+				this.diagnosticRequestor.cancelPendingForget(textDocument);
+				// We already know about this document. This can happen via a tab open.
+				if (this.diagnosticRequestor.knowsSameVersion(PullState.document, textDocument)) {
+					return;
+				}
 				this.diagnosticRequestor.pull(textDocument, () => { addToBackgroundIfNeeded(textDocument); });
 			}
 		}));
@@ -903,6 +941,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			// Send a pull for all opened cells in the notebook.
 			for (const cell of event.getCells()) {
 				if (matchesCell(cell)) {
+					this.diagnosticRequestor.cancelPendingForget(cell.document);
 					this.diagnosticRequestor.pull(cell.document, () => { addToBackgroundIfNeeded(cell.document); });
 				}
 			}
@@ -1019,9 +1058,11 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 			}));
 		}
 
-		// When the document closes clear things up
+		// When the document closes clear things up. We do that right before the
+		// close notification is sent to the server so that it is not taken
+		// from the pull queue in case it is still there.
 		const closeFeature = client.getFeature(DidCloseTextDocumentNotification.method);
-		disposables.push(closeFeature.onNotificationSent((event) => {
+		disposables.push(closeFeature.onAboutToSendNotification((event) => {
 			this.cleanUpDocument(event.textDocument);
 		}));
 		disposables.push(notebookFeature.onCloseNotificationSent((event) => {

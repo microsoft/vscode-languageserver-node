@@ -4,7 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { NotificationHandler, RequestHandler } from 'vscode-jsonrpc';
-import { WorkspaceEdit } from 'vscode-languageserver-types';
+import { WorkspaceEdit, type DocumentUri } from 'vscode-languageserver-types';
 import { CM, MessageDirection, ProtocolNotificationType, ProtocolRequestType } from './messages';
 
 /**
@@ -211,9 +211,9 @@ export interface CreateFilesParams {
 export interface FileCreate {
 
 	/**
-	 * A file:// URI for the location of the file/folder being created.
+	 * A URI for the location of the file/folder being created.
 	 */
-	uri: string;
+	uri: DocumentUri;
 }
 
 /**
@@ -239,14 +239,14 @@ export interface RenameFilesParams {
 export interface FileRename {
 
 	/**
-	 * A file:// URI for the original location of the file/folder being renamed.
+	 * A URI for the original location of the file/folder being renamed.
 	 */
-	oldUri: string;
+	oldUri: DocumentUri;
 
 	/**
-	 * A file:// URI for the new location of the file/folder being renamed.
+	 * A URI for the new location of the file/folder being renamed.
 	 */
-	newUri: string;
+	newUri: DocumentUri;
 }
 
 /**
@@ -271,9 +271,9 @@ export interface DeleteFilesParams {
 export interface FileDelete {
 
 	/**
-	 * A file:// URI for the location of the file/folder being deleted.
+	 * A URI for the location of the file/folder being deleted.
 	 */
-	uri: string;
+	uri: DocumentUri;
 }
 
 

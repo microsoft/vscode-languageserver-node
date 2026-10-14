@@ -13,7 +13,6 @@ import { type StaticRegistrationOptions } from './protocol';
  * Client capabilities for a text document content provider.
  *
  * @since 3.18.0
- * @proposed
  */
 export type TextDocumentContentClientCapabilities = {
 	/**
@@ -26,7 +25,6 @@ export type TextDocumentContentClientCapabilities = {
  * Text document content provider options.
  *
  * @since 3.18.0
- * @proposed
  */
 export type TextDocumentContentOptions = {
 	/**
@@ -39,7 +37,6 @@ export type TextDocumentContentOptions = {
  * Text document content provider registration options.
  *
  * @since 3.18.0
- * @proposed
  */
 export type TextDocumentContentRegistrationOptions = TextDocumentContentOptions & StaticRegistrationOptions;
 
@@ -47,7 +44,6 @@ export type TextDocumentContentRegistrationOptions = TextDocumentContentOptions 
  * Parameters for the `workspace/textDocumentContent` request.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentContentParams {
 	/**
@@ -60,7 +56,6 @@ export interface TextDocumentContentParams {
  * Result of the `workspace/textDocumentContent` request.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentContentResult {
 	/**
@@ -77,7 +72,6 @@ export interface TextDocumentContentResult {
  * server to request the content of a text document.
  *
  * @since 3.18.0
- * @proposed
  */
 export namespace TextDocumentContentRequest {
 	export const method: 'workspace/textDocumentContent' = 'workspace/textDocumentContent';
@@ -91,7 +85,6 @@ export namespace TextDocumentContentRequest {
  * Parameters for the `workspace/textDocumentContent/refresh` request.
  *
  * @since 3.18.0
- * @proposed
  */
 export interface TextDocumentContentRefreshParams {
 	/**
@@ -105,7 +98,6 @@ export interface TextDocumentContentRefreshParams {
  * the content of a specific text document.
  *
  * @since 3.18.0
- * @proposed
  */
 export namespace TextDocumentContentRefreshRequest {
 	export const method: `workspace/textDocumentContent/refresh` = `workspace/textDocumentContent/refresh`;
