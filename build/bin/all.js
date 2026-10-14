@@ -38,6 +38,19 @@ const script = args[0] === 'run' ? args[1] : args[0];
 for (const elem of folders.map(item => { return { folder: item.folder, scripts: new Set(item.scripts) }; } )) {
 	if (elem.scripts.has(script)) {
 		console.log(path.join(root, elem.folder));
-		child_process.spawnSync(`npm ${args.join(' ')}`, { cwd: path.join(root, elem.folder), shell: true, stdio: 'inherit' });
+		const result = child_process.spawnSync(`npm ${args.join(' ')}`, { cwd: path.join(root, elem.folder), shell: true, stdio: 'inherit' });
+		// Propagate failures so that `npm test` / `npm run lint` fail when a sub-package fails.
+		if (result.error !== undefined) {
+			console.error(`Failed to run 'npm ${args.join(' ')}' in ${elem.folder}: ${result.error.message}`);
+			process.exit(1);
+		}
+		if (result.signal !== null) {
+			console.error(`'npm ${args.join(' ')}' in ${elem.folder} was terminated by signal ${result.signal}`);
+			process.exit(1);
+		}
+		if (result.status !== 0) {
+			console.error(`'npm ${args.join(' ')}' in ${elem.folder} failed with exit code ${result.status}`);
+			process.exit(result.status ?? 1);
+		}
 	}
 }
