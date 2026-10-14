@@ -1171,7 +1171,7 @@
 				"kind": "reference",
 				"name": "StatParams"
 			},
-			"documentation": "The stat request is sent from the server to the client to get metadata about a file.\n\nThe request can return a `FileStat` which will be used to determine the type of the file,\nits size, and the creation and modification time. Returns `null` if the file does not exist.\n\n@since 3.19.0\n@proposed",
+			"documentation": "The stat request is sent from the server to the client to get metadata about a file.\n\nThe request can return a `FileStat` which will be used to determine the type of the file,\nits size, and the creation and modification time. Returns `null` if the file does not exist\nor the client cannot access it.\n\n@since 3.19.0\n@proposed",
 			"since": "3.19.0",
 			"proposed": true
 		},

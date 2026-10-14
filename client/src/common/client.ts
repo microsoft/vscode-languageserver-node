@@ -2093,7 +2093,6 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeature(new NotebookDocumentSyncFeature(this));
 		this.registerFeature(new InlineCompletionItemFeature(this));
 		this.registerFeature(new TextDocumentContentFeature(this));
-		this.registerFeature(new FileSystemFeature(this));
 	}
 
 	public registerProposedFeatures() {
@@ -2583,8 +2582,9 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 // Exporting proposed protocol.
 
 export namespace ProposedFeatures {
-	export function createAll(_client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
+	export function createAll(client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
 		const result: (StaticFeature | DynamicFeature<any>)[] = [
+			new FileSystemFeature(client)
 		];
 		return result;
 	}

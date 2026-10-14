@@ -587,5 +587,23 @@ connection.onRequest(
 	}
 );
 
+// Roundtrip through the server to request the filesystem data from the client
+connection.onRequest(
+	new ProtocolRequestType<{ uri: string }, any, never, any, any>('testing/fs/stat'),
+	(params) => connection.workspace.fs.stat(params.uri)
+);
+
+connection.onRequest(
+	new ProtocolRequestType<{ uri: string; kind: 'text' | 'binary'; encoding?: string }, any, never, any, any>('testing/fs/readFile'),
+	(params) => params.kind === 'binary'
+		? connection.workspace.fs.readFile('binary', params.uri)
+		: connection.workspace.fs.readFile('text', params.uri, params.encoding)
+);
+
+connection.onRequest(
+	new ProtocolRequestType<{ uri: string }, any, never, any, any>('testing/fs/readDirectory'),
+	(params) => connection.workspace.fs.readDirectory(params.uri)
+);
+
 // Listen on the connection
 connection.listen();

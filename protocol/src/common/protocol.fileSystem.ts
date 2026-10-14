@@ -216,7 +216,8 @@ export interface ReadFileResult {
  * The stat request is sent from the server to the client to get metadata about a file.
  *
  * The request can return a `FileStat` which will be used to determine the type of the file,
- * its size, and the creation and modification time. Returns `null` if the file does not exist.
+ * its size, and the creation and modification time. Returns `null` if the file does not exist
+ * or the client cannot access it.
  *
  * @since 3.19.0
  * @proposed
