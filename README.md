@@ -33,6 +33,8 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 After cloning the repository, run `npm install` to install dependencies and `npm run symlink` to point packages in this repository to each other.
 
+Run `npm run test:build` to test the package command runner, or `npm test` to also run the package test suites. The package command runner continues through the selected packages and exits with the first nonzero status if any command fails. Spawn errors and signal termination are reported and cause a nonzero exit status.
+
 ## History
 
 ## 3.18.4 Protocol, 9.0.3 JSON-RPC, 10.1.2 Client and 10.1.2 Server.
