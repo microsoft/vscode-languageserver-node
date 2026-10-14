@@ -33,7 +33,7 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 After cloning the repository, run `npm install` to install dependencies and `npm run symlink` to point packages in this repository to each other.
 
-Run `npm run test:build` to test the package command runner, or `npm test` to also run the package test suites. The package command runner continues through the selected packages and exits with the first nonzero status if any command fails. Spawn errors and signal termination are reported and cause a nonzero exit status.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the repository map, focused build and test commands, generated-file workflows, and maintenance hazards. AI coding agents should also read [AGENTS.md](./AGENTS.md).
 
 ## History
 
