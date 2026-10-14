@@ -89,6 +89,24 @@ function assertDiagnosticCode(value: string | number | DiagnosticCode | undefine
 
 suite('Async Array', () => {
 
+	// In test mode the async helpers yield once at least 2ms have elapsed in a
+	// batch. On fast machines the whole array can be processed before that, so
+	// the tests stall on the first item to guarantee at least one yield.
+	const yieldAfter = 2;
+	function stallOnFirstCall<T extends unknown[], R>(func: (...args: T) => R): (...args: T) => R {
+		let first = true;
+		return (...args: T): R => {
+			if (first) {
+				first = false;
+				const end = Date.now() + yieldAfter + 1;
+				while (Date.now() < end) {
+					// Busy wait to make the batch exceed the yield time.
+				}
+			}
+			return func(...args);
+		};
+	}
+
 	suiteSetup(() => {
 		async.setTestMode();
 	});
@@ -103,7 +121,7 @@ suite('Async Array', () => {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
 		let yielded = 0;
-		const converted = await async.map(ranges, p2c.asRange, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
+		const converted = await async.map(ranges, stallOnFirstCall((range: proto.Range) => p2c.asRange(range)), undefined, { yieldAfter, yieldCallback: () => { yielded++; }});
 		ok(yielded > 0);
 		strictEqual(converted.length, ranges.length);
 		for (let i = 0; i < converted.length; i++) {
@@ -118,13 +136,13 @@ suite('Async Array', () => {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
 		let yielded = 0;
-		const converted = await async.mapAsync(ranges, (item): Promise<vscode.Range> => {
+		const converted = await async.mapAsync(ranges, stallOnFirstCall((item: proto.Range): Promise<vscode.Range> => {
 			return new Promise((resolve) => {
 				proto.RAL().timer.setImmediate(() => {
 					resolve(p2c.asRange(item));
 				});
 			});
-		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
+		}), undefined, { yieldAfter, yieldCallback: () => { yielded++; }});
 		ok(yielded > 0);
 		strictEqual(converted.length, ranges.length);
 		for (let i = 0; i < converted.length; i++) {
@@ -140,10 +158,10 @@ suite('Async Array', () => {
 		}
 		let sum: number = 0;
 		let yielded = 0;
-		await async.forEach(ranges, (item) => {
+		await async.forEach(ranges, stallOnFirstCall((item: proto.Range) => {
 			const codeRange = p2c.asRange(item);
 			sum += codeRange.start.line;
-		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
+		}), undefined, { yieldAfter, yieldCallback: () => { yielded++; }});
 		ok(yielded > 0);
 		strictEqual(sum, 450015000);
 	}).timeout(5000);
