@@ -2295,6 +2295,53 @@ suite('Server tests', () => {
 		assert.strictEqual(client.needsStop(), false);
 	});
 
+	test('Server crash during stop is logged without a notification', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const closed = sinon.spy(() => ({ action: lsclient.CloseAction.DoNotRestart }));
+		const clientOptions: lsclient.LanguageClientOptions = {
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed,
+			}
+		};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		const sandbox = sinon.createSandbox();
+		let crashTimeout: ReturnType<typeof setTimeout> | undefined;
+		try {
+			await client.start();
+			const errorLog = sandbox.spy(client, 'error');
+			const showErrorMessage = sandbox.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+			await assert.rejects(async () => {
+				await client.stop();
+			}, /Pending response rejected since connection got disposed/);
+			// stop() rejecting does not itself guarantee that the close handler has finished.
+			// Bound the wait so a missing close event cannot leave the global stub installed.
+			await Promise.race([
+				client.onCrash,
+				new Promise<never>((_, reject) => {
+					crashTimeout = setTimeout(() => reject(new Error('Timed out waiting for the close handler')), 2000);
+				})
+			]);
+
+			assert.strictEqual(closed.called, false, 'errorHandler.closed() must not be called during stop()');
+			const closeLog = errorLog.getCalls().find(call => /Connection to server got closed/.test(call.args[0]));
+			assert.ok(closeLog !== undefined, 'expected the close to be logged');
+			assert.strictEqual(closeLog.args[2], false, 'the close must not request a notification');
+			assert.strictEqual(showErrorMessage.called, false, 'no error notification must be shown');
+		} finally {
+			clearTimeout(crashTimeout);
+			sandbox.restore();
+			// Only a client that is still running needs stopping. `dispose()` on a
+			// client that failed to start throws and would mask the original failure.
+			if (client.needsStop()) {
+				await client.dispose();
+			}
+		}
+	});
+
 	test('Stop fails if server shutdown request times out', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/timeoutOnShutdownServer.js'),
