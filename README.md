@@ -33,6 +33,8 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 After cloning the repository, run `npm install` to install dependencies and `npm run symlink` to point packages in this repository to each other.
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the repository map, focused build and test commands, generated-file workflows, and maintenance hazards. AI coding agents should also read [AGENTS.md](./AGENTS.md).
+
 ## History
 
 ## 3.18.4 Protocol, 9.0.3 JSON-RPC, 10.1.2 Client and 10.1.2 Server.
