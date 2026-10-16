@@ -1038,6 +1038,17 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 						this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
 					}
 				}
+
+				// Moving cells changes the order of the notebook without changing the text
+				// or the URIs of the cells. Cell order can change the diagnostics of other
+				// cells when the server reports inter file dependencies.
+				if (options.interFileDependencies && event.cells?.structure !== undefined) {
+					for (const cell of event.notebook.getCells()) {
+						if (matchesCell(cell)) {
+							this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
+						}
+					}
+				}
 			}));
 		}
 

@@ -2130,6 +2130,33 @@ suite('Full notebook tests', () => {
 
 		await revertAllDirty();
 	}).timeout(5000);
+
+	test('Notebook document: reordering cells pulls diagnostics', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		await vscode.window.showNotebookDocument(notebook);
+
+		const pulled: string[] = [];
+		client.middleware.provideDiagnostics = async (doc, p, token, next) => {
+			pulled.push(doc instanceof vscode.Uri ? doc.toString() : doc.uri.toString());
+			return next(doc, p, token);
+		};
+
+		try {
+			// Move the first cell down. This only changes the order of the cells.
+			const firstUri = notebook.cellAt(0).document.uri.toString();
+			const editor = vscode.window.activeNotebookEditor;
+			isDefined(editor);
+			editor.selection = new vscode.NotebookRange(0, 1);
+			pulled.length = 0;
+			await vscode.commands.executeCommand('notebook.cell.moveDown');
+			assert.strictEqual(notebook.cellAt(1).document.uri.toString(), firstUri);
+			await new Promise<void>((resolve) => setTimeout(resolve, 750));
+			assert.ok(pulled.length > 0, 'Expected diagnostics to be pulled after the cell order changed');
+		} finally {
+			client.middleware.provideDiagnostics = undefined;
+			await revertAllDirty();
+		}
+	}).timeout(5000);
 });
 
 suite('Simple notebook tests', () => {
