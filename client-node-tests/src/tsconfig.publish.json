@@ -30,16 +30,5 @@
     },
     "include": [
         "."
-    ],
-    "references": [
-        {
-            "path": "../../protocol/tsconfig.publish.json"
-        },
-        {
-            "path": "../../client/tsconfig.publish.json"
-        },
-        {
-            "path": "../../server/tsconfig.publish.json"
-        }
     ]
 }

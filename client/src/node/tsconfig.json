@@ -31,6 +31,9 @@
     "references": [
         {
             "path": "../common/tsconfig.json"
+        },
+        {
+            "path": "../../../protocol/src/node/tsconfig.json"
         }
     ]
 }

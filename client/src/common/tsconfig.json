@@ -27,5 +27,13 @@
     },
     "include": [
         "."
+    ],
+    "references": [
+        {
+            "path": "../../../protocol/src/common/tsconfig.json"
+        },
+        {
+            "path": "../../../textDocument/src/tsconfig.json"
+        }
     ]
 }

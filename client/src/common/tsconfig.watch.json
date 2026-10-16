@@ -28,5 +28,13 @@
     },
     "include": [
         "."
+    ],
+    "references": [
+        {
+            "path": "../../../protocol/src/common/tsconfig.watch.json"
+        },
+        {
+            "path": "../../../textDocument/src/tsconfig.watch.json"
+        }
     ]
 }

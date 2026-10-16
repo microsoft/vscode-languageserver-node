@@ -4,6 +4,7 @@
         "moduleResolution": "node16",
         "rootDir": ".",
         "types": [],
+        "disableSourceOfProjectReferenceRedirect": true,
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
