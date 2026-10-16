@@ -13,7 +13,7 @@
 		"url": "https://github.com/Microsoft/vscode-languageserver-node/issues"
 	},
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=14.17.0"
 	},
 	"exports": {
 		".": {
@@ -31,6 +31,7 @@
 	},
 	"devDependencies": {
 		"@types/msgpack-lite": "^0.1.12",
+		"@types/node": "22.13.14",
 		"msgpack-lite": "^0.1.26"
 	},
 	"scripts": {
