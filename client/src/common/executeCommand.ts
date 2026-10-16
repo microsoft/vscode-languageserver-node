@@ -11,8 +11,6 @@ import {
 	ClientCapabilities, ServerCapabilities, ExecuteCommandRegistrationOptions, RegistrationType, ExecuteCommandRequest, ExecuteCommandParams
 } from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
-
 import { FeatureClient, ensure, DynamicFeature, FeatureState, RegistrationData } from './features';
 
 
@@ -51,7 +49,7 @@ export class ExecuteCommandFeature implements DynamicFeature<ExecuteCommandRegis
 			return;
 		}
 		this.register({
-			id: UUID.generateUuid(),
+			id: crypto.randomUUID(),
 			registerOptions: Object.assign({}, capabilities.executeCommandProvider)
 		});
 	}

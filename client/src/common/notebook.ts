@@ -11,7 +11,6 @@ import {
 	NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook
 } from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
 import * as Is from './utils/is';
 
 import * as _c2p from './codeConverter';
@@ -1123,7 +1122,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 		if (options === undefined) {
 			return;
 		}
-		const id = (options as StaticRegistrationOptions).id ?? UUID.generateUuid();
+		const id = (options as StaticRegistrationOptions).id ?? crypto.randomUUID();
 		this.register({ id, registerOptions: options });
 	}
 
@@ -1197,4 +1196,3 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 		return [undefined, undefined];
 	}
 }
-
