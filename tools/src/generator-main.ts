@@ -21,27 +21,24 @@ async function main(): Promise<number> {
 		}
 	});
 
-	const api = new API();
+	using api = new API();
+	const projectPath = path.resolve(args.values.project ?? '.');
+	let initialSnapshot: Snapshot;
 	try {
-		const projectPath = path.resolve(args.values.project ?? '.');
-		let snapshot: Snapshot;
-		try {
-			snapshot = api.createSnapshot({ openProjects: [projectPath] });
-		} catch (error) {
-			console.error('Couldn\'t load project with underlying program.');
-			process.exitCode = -1;
-			return -1;
-		}
-
-		const visitor = new Visitor(snapshot.getProjects()[0]);
-		await visitor.visitProgram();
-		await visitor.endVisitProgram();
-
-		console.log(JSON.stringify(visitor.getMetaModel(), undefined, '\t'));
-		return 0;
-	} finally {
-		api.close();
+		initialSnapshot = api.createSnapshot({ openProjects: [projectPath] });
+	} catch (error) {
+		console.error('Couldn\'t load project with underlying program.');
+		process.exitCode = -1;
+		return -1;
 	}
+
+	using snapshot = initialSnapshot;
+	const visitor = new Visitor(snapshot.getProjects()[0]);
+	await visitor.visitProgram();
+	await visitor.endVisitProgram();
+
+	console.log(JSON.stringify(visitor.getMetaModel(), undefined, '\t'));
+	return 0;
 }
 main().then((code) => {
 	process.exitCode = code;
