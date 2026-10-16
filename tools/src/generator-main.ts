@@ -5,7 +5,7 @@
 
 import * as path from 'path';
 
-import { API, Snapshot } from '@typescript/native/unstable/sync';
+import { API, Snapshot } from '@typescript/native/sync';
 
 import Visitor from './visitor.js';
 import { parseArgs } from 'util';
@@ -21,17 +21,18 @@ async function main(): Promise<number> {
 		}
 	});
 
-	const api = new API();
+	using api = new API();
 	const projectPath = path.resolve(args.values.project ?? '.');
-	let snapshot: Snapshot;
+	let initialSnapshot: Snapshot;
 	try {
-		snapshot = api.updateSnapshot({ openProject: projectPath });
+		initialSnapshot = api.createSnapshot({ openProjects: [projectPath] });
 	} catch (error) {
 		console.error('Couldn\'t load project with underlying program.');
 		process.exitCode = -1;
 		return -1;
 	}
 
+	using snapshot = initialSnapshot;
 	const visitor = new Visitor(snapshot.getProjects()[0]);
 	await visitor.visitProgram();
 	await visitor.endVisitProgram();

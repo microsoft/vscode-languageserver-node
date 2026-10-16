@@ -4,6 +4,7 @@
         "moduleResolution": "node16",
         "rootDir": ".",
         "types": [],
+        "disableSourceOfProjectReferenceRedirect": true,
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
@@ -25,5 +26,13 @@
     },
     "include": [
         "."
+    ],
+    "references": [
+        {
+            "path": "../../../types/src/tsconfig.json"
+        },
+        {
+            "path": "../../../jsonrpc/src/common/tsconfig.json"
+        }
     ]
 }

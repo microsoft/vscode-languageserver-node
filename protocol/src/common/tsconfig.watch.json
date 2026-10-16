@@ -4,6 +4,7 @@
         "moduleResolution": "node16",
         "rootDir": ".",
         "types": [],
+        "disableSourceOfProjectReferenceRedirect": true,
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
@@ -26,5 +27,13 @@
     },
     "include": [
         "."
+    ],
+    "references": [
+        {
+            "path": "../../../types/src/tsconfig.watch.json"
+        },
+        {
+            "path": "../../../jsonrpc/src/common/tsconfig.watch.json"
+        }
     ]
 }
