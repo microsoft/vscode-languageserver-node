@@ -33,6 +33,8 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 After cloning the repository, run `npm install` to install dependencies. This repository uses npm workspaces, so a single install also links the packages in this repository to each other.
 
+Use `npm run compile` or `npm run watch` for the whole repository. These commands build projects serially because the solution configurations rely on reference order for dependencies between workspaces.
+
 ## History
 
 ## 3.18.4 Protocol, 9.0.3 JSON-RPC, 10.1.2 Client and 10.1.2 Server.
