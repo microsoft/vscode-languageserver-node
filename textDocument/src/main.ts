@@ -260,6 +260,14 @@ class FullTextDocument implements TextDocument {
 				const startOffset = this.offsetAt(range.start);
 				const endOffset = this.offsetAt(range.end);
 				this._content = this._content.substring(0, startOffset) + change.text + this._content.substring(endOffset, this._content.length);
+				const insertedEndOffset = startOffset + change.text.length;
+				const crlfAtStart = this._content.charCodeAt(startOffset - 1) === CharCode.CarriageReturn && this._content.charCodeAt(startOffset) === CharCode.LineFeed;
+				const crlfAtEnd = this._content.charCodeAt(insertedEndOffset - 1) === CharCode.CarriageReturn && this._content.charCodeAt(insertedEndOffset) === CharCode.LineFeed;
+				if (crlfAtStart || crlfAtEnd) {
+					// A CRLF pair across an edit boundary is not included in the inserted text's line offsets.
+					this._lineOffsets = undefined;
+					continue;
+				}
 
 				// update the offsets
 				const startLine = Math.max(range.start.line, 0);
