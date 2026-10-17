@@ -1843,6 +1843,66 @@ suite('Client integration', () => {
 		assert.strictEqual(middlewareCalled, true);
 	});
 
+	suite('File System', () => {
+		const dir = vscode.Uri.parse(`${fsProvider.scheme}:///fs-test`);
+		const textFile = vscode.Uri.joinPath(dir, 'text.txt');
+		const binaryFile = vscode.Uri.joinPath(dir, 'binary.bin');
+		const missing = vscode.Uri.joinPath(dir, 'missing.txt');
+		const bytes = new Uint8Array([0, 1, 2, 253, 254, 255]);
+		const fsRequest = (method: string, params: any) => client.sendRequest(new lsclient.ProtocolRequestType<any, any, never, any, any>(method), params, tokenSource.token);
+
+		suiteSetup(async () => {
+			await fsProvider.writeFile(textFile, new TextEncoder().encode('Hello Wörld'), { create: true, overwrite: true });
+			await fsProvider.writeFile(binaryFile, bytes, { create: true, overwrite: true });
+		});
+
+		suiteTeardown(async () => {
+			await fsProvider.delete(dir, { recursive: true });
+		});
+
+		test('stat', async () => {
+			assert.deepStrictEqual(await fsRequest('testing/fs/stat', { uri: textFile.toString() }), { type: 'file', flags: 0, ctime: 1, mtime: 1, size: 1 });
+			assert.deepStrictEqual(await fsRequest('testing/fs/stat', { uri: dir.toString() }), { type: 'directory', flags: 0, ctime: 1, mtime: 1, size: 1 });
+			assert.strictEqual(await fsRequest('testing/fs/stat', { uri: missing.toString() }), null);
+
+			let middlewareCalled = false;
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.fs = { stat: (uri, next) => { middlewareCalled = true; return next(uri); } };
+			await fsRequest('testing/fs/stat', { uri: textFile.toString() });
+			middleware.workspace.fs = undefined;
+			assert.strictEqual(middlewareCalled, true);
+		});
+
+		test('readFile', async () => {
+			assert.deepStrictEqual(await fsRequest('testing/fs/readFile', { kind: 'text', uri: textFile.toString() }), { content: 'Hello Wörld' });
+			assert.deepStrictEqual(await fsRequest('testing/fs/readFile', { kind: 'binary', uri: binaryFile.toString() }), { content: Buffer.from(bytes).toString('base64') });
+			assert.strictEqual(await fsRequest('testing/fs/readFile', { kind: 'text', uri: missing.toString() }), null);
+
+			let middlewareCalled = false;
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.fs = { readFile: (kind, uri, encoding, next) => { middlewareCalled = true; return next(kind, uri, encoding); } };
+			await fsRequest('testing/fs/readFile', { kind: 'text', uri: textFile.toString() });
+			middleware.workspace.fs = undefined;
+			assert.strictEqual(middlewareCalled, true);
+		});
+
+		test('readDirectory', async () => {
+			const entries = await fsRequest('testing/fs/readDirectory', { uri: dir.toString() });
+			assert.deepStrictEqual(entries.sort((a: any, b: any) => a.name.localeCompare(b.name)), [
+				{ name: 'binary.bin', type: 'file', flags: 0 },
+				{ name: 'text.txt', type: 'file', flags: 0 }
+			]);
+			assert.strictEqual(await fsRequest('testing/fs/readDirectory', { uri: missing.toString() }), null);
+
+			let middlewareCalled = false;
+			middleware.workspace = middleware.workspace || {};
+			middleware.workspace.fs = { readDirectory: (uri, next) => { middlewareCalled = true; return next(uri); } };
+			await fsRequest('testing/fs/readDirectory', { uri: dir.toString() });
+			middleware.workspace.fs = undefined;
+			assert.strictEqual(middlewareCalled, true);
+		});
+	});
+
 	test('General middleware', async () => {
 		let middlewareCallCount = 0;
 

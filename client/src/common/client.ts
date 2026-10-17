@@ -94,6 +94,7 @@ import { InlineCompletionItemFeature, InlineCompletionMiddleware } from './inlin
 import { TextDocumentContentFeature, type TextDocumentContentMiddleware, type TextDocumentContentProviderShape } from './textDocumentContent';
 import { FileSystemWatcherFeature } from './fileSystemWatcher';
 import { ProgressFeature } from './progress';
+import { FileSystemFeature, FileSystemMiddleware } from './fileSystem';
 
 /**
  * Controls when the output channel is revealed.
@@ -290,7 +291,7 @@ type _WorkspaceMiddleware = {
 	handleApplyEdit?: (this: void, params: ApplyWorkspaceEditParams, next: ApplyWorkspaceEditRequest.HandlerSignature) => HandlerResult<ApplyWorkspaceEditResult, void>;
 };
 
-export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware;
+export type WorkspaceMiddleware = _WorkspaceMiddleware & ConfigurationMiddleware & DidChangeConfigurationMiddleware & WorkspaceFolderMiddleware & FileOperationsMiddleware & FileSystemMiddleware;
 
 interface _WindowMiddleware {
 	showDocument?: ShowDocumentRequest.MiddlewareSignature;
@@ -2580,8 +2581,9 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 // Exporting proposed protocol.
 
 export namespace ProposedFeatures {
-	export function createAll(_client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
+	export function createAll(client: FeatureClient<Middleware, LanguageClientOptions>): (StaticFeature | DynamicFeature<any>)[] {
 		const result: (StaticFeature | DynamicFeature<any>)[] = [
+			new FileSystemFeature(client)
 		];
 		return result;
 	}
