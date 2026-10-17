@@ -45,6 +45,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	assert.equal(params.capabilities.textDocument!.inlineValue!.dynamicRegistration, true);
 	assert.equal(params.capabilities.textDocument!.inlayHint!.dynamicRegistration, true);
 	assert.equal(params.capabilities.textDocument!.inlayHint!.resolveSupport!.properties[0], 'tooltip');
+	assert.equal(params.capabilities.textDocument!.publishDiagnostics!.markupMessageSupport, false);
 
 	const valueSet = params.capabilities.textDocument!.completion!.completionItemKind!.valueSet!;
 	assert.equal(valueSet[0], 1);
@@ -54,6 +55,7 @@ connection.onInitialize((params: InitializeParams): any => {
 	const diagnosticClientCapabilities = params.capabilities.textDocument!.diagnostic;
 	assert.equal(diagnosticClientCapabilities?.dynamicRegistration, true);
 	assert.equal(diagnosticClientCapabilities?.relatedDocumentSupport, false);
+	assert.equal(diagnosticClientCapabilities?.markupMessageSupport, false);
 
 	const notebookCapabilities = params.capabilities.notebookDocument!;
 	assert.equal(notebookCapabilities.synchronization.dynamicRegistration, true);
