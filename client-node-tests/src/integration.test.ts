@@ -2307,6 +2307,49 @@ suite('Server tests', () => {
 		}
 	}).timeout(5000);
 
+	test('A refused initialization stops the client without an unhandled rejection', async () => {
+		const outputChannel = vscode.window.createOutputChannel('Initialization refused', { log: true });
+		const client = new lsclient.LanguageClient('initialization-refused', 'Initialization refused', {
+			module: path.join(__dirname, './servers/failInitializeServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		}, {
+			outputChannel,
+			initializationFailedHandler: () => false,
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed: () => ({ action: lsclient.CloseAction.DoNotRestart, handled: true }),
+			}
+		});
+		// The client moves from StartFailed to Stopped when the server's connection closes.
+		const stopped = new Promise<void>(resolve => {
+			const listener = client.onDidChangeState(event => {
+				if (event.newState === lsclient.State.Stopped) {
+					listener.dispose();
+					resolve();
+				}
+			});
+		});
+		const unhandled: unknown[] = [];
+		const onUnhandled = (reason: unknown) => unhandled.push(reason);
+		process.on('unhandledRejection', onUnhandled);
+		const stop = sinon.spy(client, 'stop');
+		try {
+			await assert.rejects(client.start(), /Initialization refused/);
+			// The client still stops after the failure, so the Node client terminates the
+			// server process, which closes the connection. The process has then also logged
+			// its exit, so the output channel can be disposed.
+			assert.strictEqual(stop.callCount, 1);
+			await stopped;
+			assert.deepStrictEqual(unhandled, []);
+		} finally {
+			process.off('unhandledRejection', onUnhandled);
+			stop.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+			outputChannel.dispose();
+		}
+	}).timeout(10000);
+
 	test('Stop fails if server crashes after shutdown request', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
