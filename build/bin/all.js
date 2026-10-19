@@ -38,6 +38,15 @@ const script = args[0] === 'run' ? args[1] : args[0];
 for (const elem of folders.map(item => { return { folder: item.folder, scripts: new Set(item.scripts) }; } )) {
 	if (elem.scripts.has(script)) {
 		console.log(path.join(root, elem.folder));
-		child_process.spawnSync(`npm ${args.join(' ')}`, { cwd: path.join(root, elem.folder), shell: true, stdio: 'inherit' });
+		const result = child_process.spawnSync(`npm ${args.join(' ')}`, { cwd: path.join(root, elem.folder), shell: true, stdio: 'inherit' });
+		if (result.error !== undefined) {
+			console.error(result.error);
+		}
+		if (result.signal !== null) {
+			console.error(`Command terminated by signal ${result.signal}.`);
+		}
+		if (result.error !== undefined || result.signal !== null || result.status !== 0) {
+			process.exitCode = process.exitCode || result.status || 1;
+		}
 	}
 }
