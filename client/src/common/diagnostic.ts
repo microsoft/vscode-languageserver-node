@@ -1018,8 +1018,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				const textEvents = event.cells?.textContent || [];
 				const changedCells = textEvents.map(
 					(c) => event.notebook.getCells().find(cell => cell.document.uri.toString() === c.document.uri.toString()));
+				const pulledUris = new Set<string>();
 				for (const cell of changedCells) {
 					if (cell && matchesCell(cell)) {
+						pulledUris.add(cell.document.uri.toString());
 						this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
 					}
 				}
@@ -1034,6 +1036,7 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				const openedCells = event.cells?.structure?.didOpen || [];
 				for (const cell of openedCells) {
 					if (matchesCell(cell)) {
+						pulledUris.add(cell.document.uri.toString());
 						this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
 					}
 				}
@@ -1043,7 +1046,8 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				// cells when the server reports inter file dependencies.
 				if (options.interFileDependencies && event.cells?.structure !== undefined) {
 					for (const cell of event.notebook.getCells()) {
-						if (matchesCell(cell)) {
+						// Cells pulled above for this event do not need a second pull.
+						if (matchesCell(cell) && !pulledUris.has(cell.document.uri.toString())) {
 							this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
 						}
 					}

@@ -2147,16 +2147,22 @@ suite('Full notebook tests', () => {
 			const editor = vscode.window.activeNotebookEditor;
 			isDefined(editor);
 			editor.selection = new vscode.NotebookRange(0, 1);
+			// Let the pulls caused by opening the notebook finish before observing.
+			await new Promise<void>((resolve) => setTimeout(resolve, 500));
 			pulled.length = 0;
 			await vscode.commands.executeCommand('notebook.cell.moveDown');
 			assert.strictEqual(notebook.cellAt(1).document.uri.toString(), firstUri);
-			await new Promise<void>((resolve) => setTimeout(resolve, 750));
-			assert.ok(pulled.length > 0, 'Expected diagnostics to be pulled after the cell order changed');
+			// Wait for a pull of the moved cell, with an upper bound.
+			const deadline = Date.now() + 3000;
+			while (!pulled.includes(firstUri) && Date.now() < deadline) {
+				await new Promise<void>((resolve) => setTimeout(resolve, 50));
+			}
+			assert.ok(pulled.includes(firstUri), 'Expected the moved cell to be pulled after the cell order changed');
 		} finally {
 			client.middleware.provideDiagnostics = undefined;
 			await revertAllDirty();
 		}
-	}).timeout(5000);
+	}).timeout(8000);
 });
 
 suite('Simple notebook tests', () => {
