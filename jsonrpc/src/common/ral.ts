@@ -59,6 +59,10 @@ interface _DuplexStream extends _ReadableStream, _WritableStream {
 
 interface RAL {
 
+	readonly crypto: {
+		randomUUID(): string;
+	};
+
 	readonly applicationJson: {
 		readonly encoder: ContentTypeEncoder;
 		readonly decoder: ContentTypeDecoder;
