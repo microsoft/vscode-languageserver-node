@@ -6,7 +6,6 @@
 // @ts-check
 
 import { CompilerOptions } from '@vscode/tsconfig-gen';
-import { posix as path } from 'node:path';
 
 /**
  * @typedef {import('@vscode/tsconfig-gen').SharableOptions} SharableOptions
@@ -25,18 +24,6 @@ import { posix as path } from 'node:path';
 function createPublishProjectDescription(projectDescription) {
 	const result = Object.assign({}, projectDescription);
 	delete result.references;
-	if (result.sourceFolders !== undefined) {
-		result.sourceFolders = result.sourceFolders.map(sourceFolder => {
-			const result = { ...sourceFolder };
-			if (result.references !== undefined) {
-				result.references = result.references.filter(reference => !path.normalize(path.join(result.path, reference)).startsWith('../'));
-				if (result.references.length === 0) {
-					delete result.references;
-				}
-			}
-			return result;
-		});
-	}
 	return result;
 }
 
@@ -212,14 +199,13 @@ const protocol = {
 	sourceFolders: [
 		{
 			path: './src/common',
-			extends: [ common ],
-			references: [ '../../../types', '../../../jsonrpc' ]
+			extends: [ common ]
 		},
 		{
 			path: './src/browser',
 			extends: [ browser ],
 			exclude: [ 'test' ],
-			references: [ '../common', '../../../jsonrpc' ]
+			references: [ '../common' ]
 		},
 		{
 			path: './src/browser/test',
@@ -230,7 +216,7 @@ const protocol = {
 			path: './src/node',
 			extends: [ node ],
 			exclude: [ 'test' ],
-			references: [ '../common', '../../../jsonrpc' ]
+			references: [ '../common' ]
 		},
 		{
 			path: './src/node/test',
@@ -254,27 +240,26 @@ const server = {
 	sourceFolders: [
 		{
 			path: './src/common',
-			extends: [ common ],
-			references: [ '../../../protocol' ]
+			extends: [ common ]
 		},
 		{
 			path: './src/browser',
 			extends: [ browser ],
-			references: [ '../common', '../../../protocol' ]
+			references: [ '../common' ]
 		},
 		{
 			path: './src/node',
 			extends: [ node ],
 			exclude: [ 'test' ],
-			references: [ '../common', '../../../protocol' ]
+			references: [ '../common' ]
 		},
 		{
 			path: './src/node/test',
 			extends: [ node, testMixin ],
-			references: [ '..', '../../../../textDocument' ]
+			references: [ '..' ]
 		}
 	],
-	references: [ protocol ]
+	references: [ protocol, textDocument ]
 };
 
 /** @type ProjectDescription */
@@ -288,21 +273,20 @@ const client = {
 	sourceFolders: [
 		{
 			path: './src/common',
-			extends: [ common, vscodeMixin ],
-			references: [ '../../../protocol', '../../../textDocument' ]
+			extends: [ common, vscodeMixin ]
 		},
 		{
 			path: './src/browser',
 			extends: [ browser, vscodeMixin ],
-			references: [ '../common', '../../../protocol' ]
+			references: [ '../common' ]
 		},
 		{
 			path: './src/node',
 			extends: [ node, vscodeMixin ],
-			references: [ '../common', '../../../protocol' ]
+			references: [ '../common' ]
 		}
 	],
-	references: [ protocol ]
+	references: [ protocol, textDocument ]
 };
 
 
@@ -317,8 +301,7 @@ const client_node_tests = {
 	sourceFolders: [
 		{
 			path: './src',
-			extends: [ node, vscodeMixin, testMixin, browser, skipLibCheckMixin ],
-			references: [ '../../protocol', '../../client', '../../server' ]
+			extends: [ node, vscodeMixin, testMixin, browser, skipLibCheckMixin ]
 		}
 	],
 	references: [ protocol, client, server ]

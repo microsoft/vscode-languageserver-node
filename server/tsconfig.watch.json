@@ -9,6 +9,9 @@
             "path": "./../protocol/tsconfig.watch.json"
         },
         {
+            "path": "./../textDocument/tsconfig.watch.json"
+        },
+        {
             "path": "./src/common/tsconfig.watch.json"
         },
         {

@@ -36,6 +36,9 @@
             "path": "../common/tsconfig.watch.json"
         },
         {
+            "path": "../../../types/tsconfig.watch.json"
+        },
+        {
             "path": "../../../jsonrpc/tsconfig.watch.json"
         }
     ]

@@ -32,6 +32,9 @@
         },
         {
             "path": "../../../protocol/tsconfig.json"
+        },
+        {
+            "path": "../../../textDocument/tsconfig.json"
         }
     ]
 }
