@@ -28,7 +28,7 @@
     ],
     "references": [
         {
-            "path": "../../../protocol/src/common/tsconfig.json"
+            "path": "../../../protocol/tsconfig.json"
         }
     ]
 }

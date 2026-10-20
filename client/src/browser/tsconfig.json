@@ -33,7 +33,7 @@
             "path": "../common/tsconfig.json"
         },
         {
-            "path": "../../../protocol/src/browser/tsconfig.json"
+            "path": "../../../protocol/tsconfig.json"
         }
     ]
 }

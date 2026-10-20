@@ -35,7 +35,7 @@
             "path": "../common/tsconfig.json"
         },
         {
-            "path": "../../../jsonrpc/src/browser/tsconfig.json"
+            "path": "../../../jsonrpc/tsconfig.json"
         }
     ]
 }

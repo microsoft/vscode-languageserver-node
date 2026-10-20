@@ -29,7 +29,7 @@
     ],
     "references": [
         {
-            "path": "../../../protocol/src/common/tsconfig.watch.json"
+            "path": "../../../protocol/tsconfig.watch.json"
         }
     ]
 }

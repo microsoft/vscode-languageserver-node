@@ -34,7 +34,7 @@
             "path": "../tsconfig.watch.json"
         },
         {
-            "path": "../../../../textDocument/src/tsconfig.watch.json"
+            "path": "../../../../textDocument/tsconfig.watch.json"
         }
     ]
 }

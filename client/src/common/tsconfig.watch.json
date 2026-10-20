@@ -31,10 +31,10 @@
     ],
     "references": [
         {
-            "path": "../../../protocol/src/common/tsconfig.watch.json"
+            "path": "../../../protocol/tsconfig.watch.json"
         },
         {
-            "path": "../../../textDocument/src/tsconfig.watch.json"
+            "path": "../../../textDocument/tsconfig.watch.json"
         }
     ]
 }

@@ -216,13 +216,13 @@ const protocol = {
 			compilerOptions: {
 				disableSourceOfProjectReferenceRedirect: true
 			},
-			references: [ '../../../types/src', '../../../jsonrpc/src/common' ]
+			references: [ '../../../types', '../../../jsonrpc' ]
 		},
 		{
 			path: './src/browser',
 			extends: [ browser ],
 			exclude: [ 'test' ],
-			references: [ '../common', '../../../jsonrpc/src/browser' ]
+			references: [ '../common', '../../../jsonrpc' ]
 		},
 		{
 			path: './src/browser/test',
@@ -233,7 +233,7 @@ const protocol = {
 			path: './src/node',
 			extends: [ node ],
 			exclude: [ 'test' ],
-			references: [ '../common', '../../../jsonrpc/src/node' ]
+			references: [ '../common', '../../../jsonrpc' ]
 		},
 		{
 			path: './src/node/test',
@@ -258,23 +258,23 @@ const server = {
 		{
 			path: './src/common',
 			extends: [ common ],
-			references: [ '../../../protocol/src/common' ]
+			references: [ '../../../protocol' ]
 		},
 		{
 			path: './src/browser',
 			extends: [ browser ],
-			references: [ '../common', '../../../protocol/src/browser' ]
+			references: [ '../common', '../../../protocol' ]
 		},
 		{
 			path: './src/node',
 			extends: [ node ],
 			exclude: [ 'test' ],
-			references: [ '../common', '../../../protocol/src/node' ]
+			references: [ '../common', '../../../protocol' ]
 		},
 		{
 			path: './src/node/test',
 			extends: [ node, testMixin ],
-			references: [ '..', '../../../../textDocument/src' ]
+			references: [ '..', '../../../../textDocument' ]
 		}
 	],
 	references: [ protocol ]
@@ -292,17 +292,17 @@ const client = {
 		{
 			path: './src/common',
 			extends: [ common, vscodeMixin ],
-			references: [ '../../../protocol/src/common', '../../../textDocument/src' ]
+			references: [ '../../../protocol', '../../../textDocument' ]
 		},
 		{
 			path: './src/browser',
 			extends: [ browser, vscodeMixin ],
-			references: [ '../common', '../../../protocol/src/browser' ]
+			references: [ '../common', '../../../protocol' ]
 		},
 		{
 			path: './src/node',
 			extends: [ node, vscodeMixin ],
-			references: [ '../common', '../../../protocol/src/node' ]
+			references: [ '../common', '../../../protocol' ]
 		}
 	],
 	references: [ protocol ]

@@ -29,10 +29,10 @@
     ],
     "references": [
         {
-            "path": "../../../types/src/tsconfig.json"
+            "path": "../../../types/tsconfig.json"
         },
         {
-            "path": "../../../jsonrpc/src/common/tsconfig.json"
+            "path": "../../../jsonrpc/tsconfig.json"
         }
     ]
 }

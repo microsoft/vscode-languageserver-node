@@ -33,7 +33,7 @@
             "path": "../tsconfig.json"
         },
         {
-            "path": "../../../../textDocument/src/tsconfig.json"
+            "path": "../../../../textDocument/tsconfig.json"
         }
     ]
 }

@@ -30,10 +30,10 @@
     ],
     "references": [
         {
-            "path": "../../../protocol/src/common/tsconfig.json"
+            "path": "../../../protocol/tsconfig.json"
         },
         {
-            "path": "../../../textDocument/src/tsconfig.json"
+            "path": "../../../textDocument/tsconfig.json"
         }
     ]
 }
