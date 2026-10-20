@@ -1682,6 +1682,68 @@ suite('Client integration', () => {
 		await revertAllDirty();
 	}).timeout(5000);
 
+	/**
+	 * Makes the next document pull fail with the given error, then triggers
+	 * another pull and waits for it to reach the provider. Returns the
+	 * `Document pull failed` errors logged by the client.
+	 */
+	async function pullAgainAfterFailedPull(failure: Error): Promise<sinon.SinonSpyCall[]> {
+		await vscode.window.showTextDocument(document);
+		await waitForNextTurn();
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+
+		let pullCount = 0;
+		let failedPullStarted!: () => void;
+		const failedPull = new Promise<void>((resolve) => {
+			failedPullStarted = resolve;
+		});
+		let nextPullFinished!: () => void;
+		const nextPull = new Promise<void>((resolve) => {
+			nextPullFinished = resolve;
+		});
+		const errorLog = sinon.spy(client, 'error');
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = async (document, previousResultId, token, next) => {
+			if (++pullCount === 1) {
+				failedPullStarted();
+				throw failure;
+			}
+			const result = await next(document, previousResultId, token);
+			nextPullFinished();
+			return result;
+		};
+		try {
+			provider.onDidChangeDiagnosticsEmitter.fire();
+			await failedPull;
+			// Let pullAsync handle the failure before triggering the next pull.
+			await waitForNextTurn();
+
+			provider.onDidChangeDiagnosticsEmitter.fire();
+			let timeout: NodeJS.Timeout | undefined;
+			await Promise.race([
+				nextPull,
+				new Promise<never>((_, reject) => {
+					timeout = setTimeout(() => reject(new Error('No document pull was sent after the failed pull.')), 1000);
+				})
+			]).finally(() => clearTimeout(timeout));
+			return errorLog.getCalls().filter(call => typeof call.args[0] === 'string' && call.args[0].startsWith('Document pull failed'));
+		} finally {
+			(middleware as DiagnosticProviderMiddleware).provideDiagnostics = undefined;
+			errorLog.restore();
+		}
+	}
+
+	test('Document diagnostic pull after failed request', async () => {
+		const failures = await pullAgainAfterFailedPull(new Error('pull failed'));
+		assert.strictEqual(failures.length, 1, 'expected the failed pull to be logged once');
+		assert.strictEqual(failures[0].args[1].message, 'pull failed');
+	}).timeout(5000);
+
+	test('Document diagnostic pull after server cancellation without retrigger', async () => {
+		const failures = await pullAgainAfterFailedPull(new lsclient.LSPCancellationError({ retriggerRequest: false }));
+		assert.strictEqual(failures.length, 0, 'a server cancellation without retrigger must not be reported as a failure');
+	}).timeout(5000);
+
 	test('Type Hierarchy', async () => {
 		const provider = client.getFeature(lsclient.TypeHierarchyPrepareRequest.method).getProvider(document);
 		isDefined(provider);
