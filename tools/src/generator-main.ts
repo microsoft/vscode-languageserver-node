@@ -4,8 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as path from 'path';
+import { statSync } from 'fs';
 
-import { API, Snapshot } from '@typescript/native/sync';
+import { API, formatDiagnostics, Snapshot } from '@typescript/native/sync';
 
 import Visitor from './visitor.js';
 import { parseArgs } from 'util';
@@ -25,7 +26,24 @@ async function main(): Promise<number> {
 	const projectPath = path.resolve(args.values.project ?? '.');
 	let initialSnapshot: Snapshot;
 	try {
-		initialSnapshot = api.createSnapshot({ openProjects: [projectPath] });
+		const configFilePath = statSync(projectPath).isDirectory() ? path.join(projectPath, 'tsconfig.json') : projectPath;
+		const config = api.parseConfigFile(configFilePath);
+		if (config.errors.length > 0) {
+			console.error(formatDiagnostics(config.errors, api));
+			return -1;
+		}
+		initialSnapshot = api.createSnapshot({
+			createPrograms: [{
+				rootFiles: config.fileNames,
+				compilerOptions: {
+					...config.options,
+					disableSourceOfProjectReferenceRedirect: true
+				},
+				options: {
+					projectReferences: config.projectReferences
+				}
+			}]
+		});
 	} catch (error) {
 		console.error('Couldn\'t load project with underlying program.');
 		process.exitCode = -1;

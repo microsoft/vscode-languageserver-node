@@ -213,9 +213,6 @@ const protocol = {
 		{
 			path: './src/common',
 			extends: [ common ],
-			compilerOptions: {
-				disableSourceOfProjectReferenceRedirect: true
-			},
 			references: [ '../../../types', '../../../jsonrpc' ]
 		},
 		{
