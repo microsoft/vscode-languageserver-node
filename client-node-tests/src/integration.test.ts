@@ -113,6 +113,64 @@ async function waitForProcessExit(pid: number, timeout: number): Promise<void> {
 	}
 }
 
+const NativePromise = Promise;
+
+/**
+ * A Promise implementation without `finally`, like the pre ES2018 polyfills
+ * that other code in a shared extension host can install as the global `Promise`.
+ */
+class PromiseWithoutFinally<T> implements PromiseLike<T> {
+
+	private readonly promise: Promise<T>;
+
+	constructor(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
+		this.promise = new NativePromise<T>(executor);
+	}
+
+	public then<R1 = T, R2 = never>(onfulfilled?: ((value: T) => R1 | PromiseLike<R1>) | null, onrejected?: ((reason: any) => R2 | PromiseLike<R2>) | null): PromiseWithoutFinally<R1 | R2> {
+		return PromiseWithoutFinally.from(this.promise.then(onfulfilled, onrejected));
+	}
+
+	public catch<R = never>(onrejected?: ((reason: any) => R | PromiseLike<R>) | null): PromiseWithoutFinally<T | R> {
+		return PromiseWithoutFinally.from(this.promise.catch(onrejected));
+	}
+
+	public static resolve<T>(value?: T | PromiseLike<T>): PromiseWithoutFinally<T> {
+		return new PromiseWithoutFinally<T>(resolve => resolve(value as T));
+	}
+
+	public static reject<T = never>(reason?: any): PromiseWithoutFinally<T> {
+		return new PromiseWithoutFinally<T>((_resolve, reject) => reject(reason));
+	}
+
+	public static all(values: Iterable<unknown>): PromiseWithoutFinally<unknown[]> {
+		return PromiseWithoutFinally.from(NativePromise.all(values));
+	}
+
+	public static race(values: Iterable<unknown>): PromiseWithoutFinally<unknown> {
+		return PromiseWithoutFinally.from(NativePromise.race(values));
+	}
+
+	private static from<T>(promise: Promise<T>): PromiseWithoutFinally<T> {
+		return new PromiseWithoutFinally<T>((resolve, reject) => promise.then(resolve, reject));
+	}
+}
+
+/**
+ * Runs the synchronous part of `callback` while the global `Promise` is
+ * replaced by `PromiseWithoutFinally`. The original is restored before
+ * `callback` returns so that other code in the test host is not affected.
+ */
+function withPromiseWithoutFinally<T>(callback: () => T): T {
+	const global = globalThis as { Promise: PromiseConstructor };
+	global.Promise = PromiseWithoutFinally as unknown as PromiseConstructor;
+	try {
+		return callback();
+	} finally {
+		global.Promise = NativePromise;
+	}
+}
+
 interface FoldingRangeTestFeature {
 	getRegistration(documentSelector: lsclient.DocumentSelector | undefined, capability: undefined | lsclient.FoldingRangeOptions | (lsclient.FoldingRangeRegistrationOptions & lsclient.StaticRegistrationOptions)): [string | undefined, (lsclient.FoldingRangeRegistrationOptions & { documentSelector: lsclient.DocumentSelector }) | undefined];
 	getRegistrationOptions(documentSelector: lsclient.DocumentSelector | undefined, capability: undefined | lsclient.FoldingRangeOptions) : (lsclient.FoldingRangeRegistrationOptions & { documentSelector: lsclient.DocumentSelector }) | undefined;
@@ -2130,6 +2188,39 @@ suite('Full notebook tests', () => {
 
 		await revertAllDirty();
 	}).timeout(5000);
+
+	test('Notebook document: reordering cells pulls diagnostics', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		await vscode.window.showNotebookDocument(notebook);
+
+		const pulled: string[] = [];
+		client.middleware.provideDiagnostics = async (doc, p, token, next) => {
+			pulled.push(doc instanceof vscode.Uri ? doc.toString() : doc.uri.toString());
+			return next(doc, p, token);
+		};
+
+		try {
+			// Move the first cell down. This only changes the order of the cells.
+			const firstUri = notebook.cellAt(0).document.uri.toString();
+			const editor = vscode.window.activeNotebookEditor;
+			isDefined(editor);
+			editor.selection = new vscode.NotebookRange(0, 1);
+			// Let the pulls caused by opening the notebook finish before observing.
+			await new Promise<void>((resolve) => setTimeout(resolve, 500));
+			pulled.length = 0;
+			await vscode.commands.executeCommand('notebook.cell.moveDown');
+			assert.strictEqual(notebook.cellAt(1).document.uri.toString(), firstUri);
+			// Wait for a pull of the moved cell, with an upper bound.
+			const deadline = Date.now() + 3000;
+			while (!pulled.includes(firstUri) && Date.now() < deadline) {
+				await new Promise<void>((resolve) => setTimeout(resolve, 50));
+			}
+			assert.ok(pulled.includes(firstUri), 'Expected the moved cell to be pulled after the cell order changed');
+		} finally {
+			client.middleware.provideDiagnostics = undefined;
+			await revertAllDirty();
+		}
+	}).timeout(8000);
 });
 
 suite('Simple notebook tests', () => {
@@ -2326,6 +2417,34 @@ suite('Server tests', () => {
 
 		await client.start();
 		await client.stop();
+	});
+
+	test('Start works if the global Promise has no finally', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await withPromiseWithoutFinally(() => client.start());
+		assert.strictEqual(client.state, lsclient.State.Running);
+
+		await client.stop();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+	});
+
+	test('Stop works if the global Promise has no finally', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await client.start();
+		assert.strictEqual(client.state, lsclient.State.Running);
+
+		await withPromiseWithoutFinally(() => client.stop());
+		assert.strictEqual(client.state, lsclient.State.Stopped);
 	});
 
 	test('Test state change events', async() => {

@@ -7,6 +7,7 @@
 	"engines": {
 		"vscode": "^1.91.0"
 	},
+	"homepage": "https://github.com/microsoft/vscode-languageserver-node/tree/main/client",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
@@ -35,7 +36,6 @@
 		}
 	},
 	"devDependencies": {
-		"@types/minimatch": "^6.0.0",
 		"@types/semver": "^7.7.1",
 		"@types/vscode": "1.106.0",
 		"shx": "^0.4.0"
