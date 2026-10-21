@@ -1554,14 +1554,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				if (this._clientOptions.initializationFailedHandler(error)) {
 					void this.initialize(connection);
 				} else {
-					void this.stop();
+					this.stopAfterFailedInitialize();
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
 				void Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }).then(item => {
 					if (item && item.id === 'retry') {
 						void this.initialize(connection);
 					} else {
-						void this.stop();
+						this.stopAfterFailedInitialize();
 					}
 				});
 			} else {
@@ -1569,10 +1569,20 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					void Window.showErrorMessage(error.message);
 				}
 				this.error('Server initialization failed.', error);
-				void this.stop();
+				this.stopAfterFailedInitialize();
 			}
 			throw error;
 		}
+	}
+
+	private stopAfterFailedInitialize(): void {
+		// The client is still starting, so the base shutdown rejects because the client is
+		// not running. Calling stop() still lets subclasses release what they own: the Node
+		// client terminates the server process. Nothing awaits the result, so handle the
+		// rejection here instead of leaving it unhandled.
+		this.stop().catch((error) => {
+			this.error(`Stopping server failed`, error, false);
+		});
 	}
 
 	private _clientGetRootPath(): string | undefined {
