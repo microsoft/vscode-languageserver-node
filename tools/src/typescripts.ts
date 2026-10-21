@@ -5,8 +5,8 @@
 
 import * as crypto from 'crypto';
 
-import * as ts from '@typescript/native/unstable/sync';
-import { SyntaxKind, ClassDeclaration, Node } from '@typescript/native/unstable/ast';
+import * as ts from '@typescript/native/sync';
+import { SyntaxKind, ClassDeclaration, Node, isTypeReferenceNode } from '@typescript/native/ast';
 
 interface InternalSymbol extends ts.Symbol {
 	__symbol__data__key__: string | undefined;
@@ -122,7 +122,7 @@ export class Symbols {
 			if (heritageClauses) {
 				for (const heritageClause of heritageClauses) {
 					for (const type of heritageClause.types) {
-						const tsType = typeChecker.getTypeAtLocation(type.expression);
+						const tsType = typeChecker.getTypeAtLocation(isTypeReferenceNode(type) ? type.typeName : type.expression);
 						if (tsType !== undefined) {
 							const baseSymbol = tsType.getSymbol();
 							if (baseSymbol !== undefined && baseSymbol !== symbol) {

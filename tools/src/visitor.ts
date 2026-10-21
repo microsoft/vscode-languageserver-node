@@ -48,8 +48,8 @@ import {
 	TypeNode,
 	TypeReferenceNode,
 	VariableDeclaration
-} from '@typescript/native/unstable/ast';
-import * as ts from '@typescript/native/unstable/sync';
+} from '@typescript/native/ast';
+import * as ts from '@typescript/native/sync';
 
 import { Symbols } from './typescripts.js';
 
@@ -894,10 +894,11 @@ export default class Visitor {
 				const extend: JsonType[] = [];
 				for (const clause of declaration.heritageClauses) {
 					for (const type of clause.types) {
-						if (isIdentifier(type.expression)) {
-							const typeInfo = this.getTypeInfo(type.expression);
+						const typeName = isTypeReferenceNode(type) ? type.typeName : type.expression;
+						if (isIdentifier(typeName)) {
+							const typeInfo = this.getTypeInfo(typeName);
 							if (typeInfo === undefined || typeInfo.kind !== 'reference') {
-								throw new Error(`Can't create type info for extends clause ${type.expression.getText()}`);
+								throw new Error(`Can't create type info for extends clause ${typeName.getText()}`);
 							}
 							if (Visitor.Mixins.has(typeInfo.name)) {
 								mixins.push(TypeInfo.asJsonType(typeInfo));

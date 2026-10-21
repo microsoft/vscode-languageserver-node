@@ -32,6 +32,12 @@
     "references": [
         {
             "path": "../tsconfig.watch.json"
+        },
+        {
+            "path": "../../../../protocol/tsconfig.watch.json"
+        },
+        {
+            "path": "../../../../textDocument/tsconfig.watch.json"
         }
     ]
 }

@@ -139,6 +139,7 @@ export class ProjectGenerator {
 			}
 		}
 
+		const projectReferences = tsconfig.references?.slice() ?? [];
 		if (description.sourceFolders !== undefined) {
 			tsconfig.compilerOptions = tsconfig.compilerOptions ?? {};
 			tsconfig.references = tsconfig.references ?? [];
@@ -159,6 +160,17 @@ export class ProjectGenerator {
 		const sourceFolderResults: Map<string, GeneratorResultEntry> = new Map();
 		for (const sourceFolder of sourceFolders) {
 			const sfr =  sourceFolder.generate(_p.join(root, description.path));
+			if (projectReferences.length > 0) {
+				const references = sfr.result.tsconfig.references ??= [];
+				for (const reference of projectReferences) {
+					const referencePath = path.isAbsolute(reference.path)
+						? reference.path
+						: path.relative(sourceFolder.description.path, reference.path);
+					if (!references.some(reference => reference.path === referencePath)) {
+						references.push({ path: referencePath });
+					}
+				}
+			}
 			result.push(sfr.result);
 			sourceFolderResults.set(path.normalize(sourceFolder.description.path), sfr.result);
 			if (sfr.compositeTargets) {

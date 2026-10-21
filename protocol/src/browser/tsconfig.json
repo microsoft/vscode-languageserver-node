@@ -33,6 +33,12 @@
     "references": [
         {
             "path": "../common/tsconfig.json"
+        },
+        {
+            "path": "../../../types/tsconfig.json"
+        },
+        {
+            "path": "../../../jsonrpc/tsconfig.json"
         }
     ]
 }

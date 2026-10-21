@@ -31,6 +31,12 @@
     "references": [
         {
             "path": "../tsconfig.json"
+        },
+        {
+            "path": "../../../../protocol/tsconfig.json"
+        },
+        {
+            "path": "../../../../textDocument/tsconfig.json"
         }
     ]
 }

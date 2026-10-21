@@ -259,7 +259,7 @@ const server = {
 			references: [ '..' ]
 		}
 	],
-	references: [ protocol ]
+	references: [ protocol, textDocument ]
 };
 
 /** @type ProjectDescription */
@@ -286,7 +286,7 @@ const client = {
 			references: [ '../common' ]
 		}
 	],
-	references: [ protocol ]
+	references: [ protocol, textDocument ]
 };
 
 
@@ -301,8 +301,7 @@ const client_node_tests = {
 	sourceFolders: [
 		{
 			path: './src',
-			extends: [ node, vscodeMixin, testMixin, browser, skipLibCheckMixin ],
-			references: [ '../../protocol', '../../client', '../../server' ]
+			extends: [ node, vscodeMixin, testMixin, browser, skipLibCheckMixin ]
 		}
 	],
 	references: [ protocol, client, server ]

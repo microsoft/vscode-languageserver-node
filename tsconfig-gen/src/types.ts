@@ -3,7 +3,7 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import { CompilerOptions as TCompilerOptions } from '@typescript/native/unstable/sync';
+import { RawCompilerOptions as TCompilerOptions } from '@typescript/native/sync';
 
 type RCompilerOptions = Required<TCompilerOptions>;
 type ScriptTarget = RCompilerOptions['target'];
