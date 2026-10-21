@@ -36,7 +36,6 @@
 		}
 	},
 	"devDependencies": {
-		"@types/minimatch": "^6.0.0",
 		"@types/semver": "^7.7.1",
 		"@types/vscode": "1.106.0",
 		"shx": "^0.4.0"
