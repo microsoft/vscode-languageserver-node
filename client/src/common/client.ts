@@ -1645,26 +1645,34 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			return connection;
 		})(connection);
 
-		return this._onStop = Promise.race([tp, shutdown]).then((connection) => {
-			// The connection won the race with the timeout.
-			if (connection !== undefined) {
-				connection.end();
-				connection.dispose();
-			} else {
-				this.error(`Stopping server timed out`, undefined, false);
-				throw new Error(`Stopping the server timed out`);
+		// Use try / finally instead of Promise.prototype.finally since the
+		// global Promise might not provide it (see #1653).
+		return this._onStop = (async () => {
+			try {
+				let result: Connection | undefined;
+				try {
+					result = await Promise.race([tp, shutdown]);
+				} catch (error) {
+					this.error(`Stopping server failed`, error, false);
+					throw error;
+				}
+				// The connection won the race with the timeout.
+				if (result !== undefined) {
+					result.end();
+					result.dispose();
+				} else {
+					this.error(`Stopping server timed out`, undefined, false);
+					throw new Error(`Stopping the server timed out`);
+				}
+			} finally {
+				this.$state = ClientState.Stopped;
+				mode === ShutdownMode.Stop && this.cleanUpChannel();
+				this._onStart = undefined;
+				this._onStop = undefined;
+				this._connection = undefined;
+				this._ignoredRegistrations.clear();
 			}
-		}, (error) => {
-			this.error(`Stopping server failed`, error, false);
-			throw error;
-		}).finally(() => {
-			this.$state = ClientState.Stopped;
-			mode === ShutdownMode.Stop && this.cleanUpChannel();
-			this._onStart = undefined;
-			this._onStop = undefined;
-			this._connection = undefined;
-			this._ignoredRegistrations.clear();
-		});
+		})();
 	}
 
 	private cleanUp(mode: ShutdownMode): void {
