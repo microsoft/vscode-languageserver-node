@@ -131,7 +131,7 @@ REM or .bmp extension from c:\\source to c:\\images;;`;
 		if (!activeEditorUri) {
 			return;
 		}
-		const directoryUri = activeEditorUri.with({ path: path.dirname(activeEditorUri.path) });
+		const directoryUri = activeEditorUri.with({ path: path.posix.dirname(activeEditorUri.path) });
 		await client.sendNotification(readDirectoryRequest, directoryUri.toString());
 	});
 
