@@ -4511,7 +4511,7 @@ export namespace InlayHint {
 		return Is.objectLiteral(candidate) && Position.is(candidate.position)
 			&& (Is.string(candidate.label) || Is.typedArray(candidate.label, InlayHintLabelPart.is))
 			&& (candidate.kind === undefined || InlayHintKind.is(candidate.kind))
-			&& (candidate.textEdits === undefined) || Is.typedArray(candidate.textEdits, TextEdit.is)
+			&& (candidate.textEdits === undefined || Is.typedArray(candidate.textEdits, TextEdit.is))
 			&& (candidate.tooltip === undefined || Is.string(candidate.tooltip) || MarkupContent.is(candidate.tooltip))
 			&& (candidate.paddingLeft === undefined || Is.boolean(candidate.paddingLeft))
 			&& (candidate.paddingRight === undefined || Is.boolean(candidate.paddingRight));
