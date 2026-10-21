@@ -159,7 +159,14 @@ function toBase64(bytes: Uint8Array): string {
 	if (typeof Buffer !== 'undefined') {
 		return Buffer.from(bytes).toString('base64');
 	}
-	// Fallback to a manual implementation, which is slower but works in all environments.
+	return toBase64Fallback(bytes);
+}
+
+/**
+ * Pure JavaScript base64 encoding. Slower than the platform implementations
+ * but works in all environments. Exported for testing.
+ */
+export function toBase64Fallback(bytes: Uint8Array): string {
 	// File might be quite large, use an array to avoid concat overhead
 	const chars = new Array<string>(Math.ceil(bytes.length / 3) * 4);
 	let j = 0;
