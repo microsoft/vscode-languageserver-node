@@ -402,10 +402,12 @@ class DiagnosticRequestor implements Disposable {
 			} catch (error) {
 				if (error instanceof LSPCancellationError && DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, document };
-				}
-				if (afterState === undefined && error instanceof CancellationError) {
+				} else if (error instanceof CancellationError) {
 					afterState = { state: RequestStateKind.reschedule, document };
 				} else {
+					// Clear the open request so that later pulls for this document aren't
+					// treated as already in flight.
+					this.openRequests.delete(key);
 					throw error;
 				}
 			}
