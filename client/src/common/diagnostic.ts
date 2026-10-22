@@ -609,6 +609,10 @@ class DiagnosticRequestor implements Disposable {
 					return converted;
 				};
 				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token, resultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
+					// Check before registering the progress handler so the early return can't leak it.
+					if (this.isDisposed === true || !this.client.isRunning()) {
+						return { items: [] };
+					}
 					const partialResultToken: string = RAL().crypto.randomUUID();
 					const disposable = this.client.onProgress(WorkspaceDiagnosticRequest.partialResult, partialResultToken, async (partialResult) => {
 						if (partialResult === undefined || partialResult === null) {
@@ -632,9 +636,6 @@ class DiagnosticRequestor implements Disposable {
 						previousResultIds: convertPreviousResultIds(resultIds),
 						partialResultToken: partialResultToken
 					};
-					if (this.isDisposed === true || !this.client.isRunning()) {
-						return { items: [] };
-					}
 					return this.client.sendRequest(WorkspaceDiagnosticRequest.type, params, token).then(async (result): Promise<vsdiag.WorkspaceDiagnosticReport> => {
 						if (token.isCancellationRequested) {
 							return { items: [] };
@@ -645,12 +646,13 @@ class DiagnosticRequestor implements Disposable {
 						for (const item of result.items) {
 							converted.items.push(await convertReport(item));
 						}
-						disposable.dispose();
 						resultReporter(converted);
 						return { items: [] };
 					}, (error) => {
-						disposable.dispose();
 						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { items: [] });
+					}).finally(() => {
+						// Runs on success, cancellation, request failure, and a convertReport throw.
+						disposable.dispose();
 					});
 				};
 				const middleware: DiagnosticProviderMiddleware = this.client.middleware;
