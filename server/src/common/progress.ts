@@ -46,10 +46,7 @@ export interface WindowProgress {
 
 class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 
-	public static Instances: Map<string | number, WorkDoneProgressReporterImpl> = new Map();
-
-	constructor(private _connection: ProgressContext, private _token: ProgressToken) {
-		WorkDoneProgressReporterImpl.Instances.set(this._token, this);
+	constructor(private _connection: ProgressContext, protected readonly _token: ProgressToken) {
 	}
 
 	public begin(title: string, percentage?: number, message?: string, cancellable?: boolean): void {
@@ -85,7 +82,6 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 	}
 
 	done(): void {
-		WorkDoneProgressReporterImpl.Instances.delete(this._token);
 		this._connection.sendProgress(WorkDoneProgress.type, this._token, { kind: 'end' } );
 	}
 
@@ -93,11 +89,19 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 
 class WorkDoneProgressServerReporterImpl extends WorkDoneProgressReporterImpl implements WorkDoneProgressServerReporter {
 
+	/**
+	 * Server-created reporters, keyed by token. Only these can be cancelled via
+	 * `window/workDoneProgress/cancel`, so reporters attached to client-provided
+	 * tokens are never tracked here.
+	 */
+	public static Instances: Map<string | number, WorkDoneProgressServerReporterImpl> = new Map();
+
 	private _source: CancellationTokenSource;
 
 	constructor(connection: ProgressContext, token: ProgressToken) {
 		super(connection, token);
 		this._source = new CancellationTokenSource();
+		WorkDoneProgressServerReporterImpl.Instances.set(token, this);
 	}
 
 	get token(): CancellationToken {
@@ -105,6 +109,7 @@ class WorkDoneProgressServerReporterImpl extends WorkDoneProgressReporterImpl im
 	}
 
 	done(): void {
+		WorkDoneProgressServerReporterImpl.Instances.delete(this._token);
 		this._source.dispose();
 		super.done();
 	}
@@ -173,10 +178,7 @@ export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) =>
 			if (capabilities?.window?.workDoneProgress === true) {
 				this._progressSupported = true;
 				this.connection.onNotification(WorkDoneProgressCancelNotification.type, (params) => {
-					const progress = WorkDoneProgressReporterImpl.Instances.get(params.token);
-					if (progress instanceof WorkDoneProgressServerReporterImpl || progress instanceof NullProgressServerReporter) {
-						progress.cancel();
-					}
+					WorkDoneProgressServerReporterImpl.Instances.get(params.token)?.cancel();
 				});
 			}
 		}
