@@ -626,7 +626,7 @@ class DiagnosticRequestor implements Disposable {
 							try {
 								converted.items.push(await convertReport(item));
 							} catch (error) {
-								this.client.error(`Converting workspace diagnostics failed.`, error);
+								this.client.error(`Converting workspace diagnostics failed.`, error, false);
 							}
 						}
 						resultReporter(converted);
@@ -647,7 +647,7 @@ class DiagnosticRequestor implements Disposable {
 							try {
 								converted.items.push(await convertReport(item));
 							} catch (error) {
-								this.client.error(`Converting workspace diagnostics failed.`, error);
+								this.client.error(`Converting workspace diagnostics failed.`, error, false);
 							}
 						}
 						resultReporter(converted);

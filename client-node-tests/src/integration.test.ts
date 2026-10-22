@@ -1782,7 +1782,7 @@ suite('Client integration', () => {
 		const items = chunks[0]?.items ?? [];
 		assert.strictEqual(items.length, 1, 'expected the valid report to be kept');
 		assert.notStrictEqual(items[0].uri.toString(), 'file:///bad.txt', 'expected the bad report to be skipped');
-		assert.ok(errorLog.calledOnceWith('Converting workspace diagnostics failed.'), 'expected the conversion failure to be logged');
+		assert.ok(errorLog.calledOnceWithExactly('Converting workspace diagnostics failed.', sinon.match.any, false), 'expected the conversion failure to be logged without a notification');
 	});
 
 	test('Document diagnostic pull after quick reopen', async () => {
