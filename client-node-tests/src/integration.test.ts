@@ -1679,7 +1679,7 @@ suite('Client integration', () => {
 	 * settled. Only registrations made synchronously by this call are counted, so
 	 * the client's background workspace pull doesn't interfere.
 	 */
-	async function workspacePullProgressHandlers(token: vscode.CancellationToken, expectRejection?: RegExp): Promise<{ registered: (string | number)[]; active: (string | number)[] }> {
+	async function workspacePullProgressHandlers(token: vscode.CancellationToken): Promise<{ registered: (string | number)[]; active: (string | number)[] }> {
 		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
 		isDefined(provider);
 		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
@@ -1695,11 +1695,7 @@ suite('Client integration', () => {
 		} finally {
 			onProgress.restore();
 		}
-		if (expectRejection !== undefined) {
-			await assert.rejects(pull, expectRejection);
-		} else {
-			await pull;
-		}
+		await pull;
 		return { registered, active: registered.filter(item => progressHandlers.has(item)) };
 	}
 
@@ -1750,13 +1746,43 @@ suite('Client integration', () => {
 		});
 		let handlers: { registered: (string | number)[]; active: (string | number)[] };
 		try {
-			handlers = await workspacePullProgressHandlers(source.token, /conversion failed/);
+			handlers = await workspacePullProgressHandlers(source.token);
 		} finally {
 			stub.restore();
 			source.dispose();
 		}
 		assert.strictEqual(handlers.registered.length, 1, 'expected one progress handler to be registered');
 		assert.strictEqual(handlers.active.length, 0, 'expected the progress handler to be disposed');
+	});
+
+	test('Workspace diagnostic pull skips a report that fails to convert and keeps the rest', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
+		const source = new vscode.CancellationTokenSource();
+		const sendRequest = client.sendRequest.bind(client) as (...args: any[]) => Promise<any>;
+		// Append a report whose empty message makes VS Code's Diagnostic constructor throw.
+		const stub = sinon.stub(client, 'sendRequest').callsFake(async (...args: any[]) => {
+			const result = await sendRequest(...args);
+			if (args[2] === source.token) {
+				result.items.push({ kind: 'full', uri: 'file:///bad.txt', items: [{ range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } }, message: '' }] });
+			}
+			return result;
+		});
+		const errorLog = sinon.stub(client, 'error');
+		const chunks: (vsdiag.WorkspaceDiagnosticReportPartialResult | null)[] = [];
+		try {
+			await provider.diagnostics.provideWorkspaceDiagnostics([], source.token, (chunk) => chunks.push(chunk));
+		} finally {
+			stub.restore();
+			errorLog.restore();
+			source.dispose();
+		}
+		assert.strictEqual(chunks.length, 1, 'expected the final report to be delivered');
+		const items = chunks[0]?.items ?? [];
+		assert.strictEqual(items.length, 1, 'expected the valid report to be kept');
+		assert.notStrictEqual(items[0].uri.toString(), 'file:///bad.txt', 'expected the bad report to be skipped');
+		assert.ok(errorLog.calledOnceWith('Converting workspace diagnostics failed.'), 'expected the conversion failure to be logged');
 	});
 
 	test('Document diagnostic pull after quick reopen', async () => {
