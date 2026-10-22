@@ -1,10 +1,11 @@
 {
 	"name": "@vscode/languageserver-types",
 	"description": "Types used by the Language server for node",
-	"version": "3.18.4",
+	"version": "3.18.5",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"type": "module",
+	"homepage": "https://github.com/microsoft/vscode-languageserver-node/tree/main/types",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",

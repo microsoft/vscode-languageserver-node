@@ -15,6 +15,7 @@ declare module 'vscode' {
 }
 
 import { strictEqual, deepEqual, ok, deepStrictEqual } from 'assert';
+import * as sinon from 'sinon';
 
 import * as proto from '@vscode/languageclient';
 import * as codeConverter from '@vscode/languageclient/$test/common/codeConverter';
@@ -89,6 +90,8 @@ function assertDiagnosticCode(value: string | number | DiagnosticCode | undefine
 
 suite('Async Array', () => {
 
+	let clock: sinon.SinonFakeTimers;
+
 	suiteSetup(() => {
 		async.setTestMode();
 	});
@@ -97,14 +100,25 @@ suite('Async Array', () => {
 		async.clearTestMode();
 	});
 
+	setup(() => {
+		clock = sinon.useFakeTimers({ toFake: ['Date'] });
+	});
+
+	teardown(() => {
+		clock.restore();
+	});
+
 	test('map', async() => {
-		const ranges: proto.Range[] = new Array(20000);
+		const ranges: proto.Range[] = new Array(10);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
 		let yielded = 0;
-		const converted = await async.map(ranges, p2c.asRange, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
-		ok(yielded > 0);
+		const converted = await async.map(ranges, (item) => {
+			clock.tick(2);
+			return p2c.asRange(item);
+		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
+		strictEqual(yielded, ranges.length);
 		strictEqual(converted.length, ranges.length);
 		for (let i = 0; i < converted.length; i++) {
 			ok(converted[i] instanceof vscode.Range);
@@ -113,7 +127,7 @@ suite('Async Array', () => {
 	}).timeout(5000);
 
 	test('map async', async() => {
-		const ranges: proto.Range[] = new Array(5000);
+		const ranges: proto.Range[] = new Array(10);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i, i, i, i);
 		}
@@ -121,11 +135,12 @@ suite('Async Array', () => {
 		const converted = await async.mapAsync(ranges, (item): Promise<vscode.Range> => {
 			return new Promise((resolve) => {
 				proto.RAL().timer.setImmediate(() => {
+					clock.tick(2);
 					resolve(p2c.asRange(item));
 				});
 			});
 		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
-		ok(yielded > 0);
+		strictEqual(yielded, ranges.length);
 		strictEqual(converted.length, ranges.length);
 		for (let i = 0; i < converted.length; i++) {
 			ok(converted[i] instanceof vscode.Range);
@@ -134,18 +149,19 @@ suite('Async Array', () => {
 	}).timeout(5000);
 
 	test('forEach', async() => {
-		const ranges: proto.Range[] = new Array(30000);
+		const ranges: proto.Range[] = new Array(10);
 		for (let i = 0; i < ranges.length; i++) {
 			ranges[i] = proto.Range.create(i + 1, 0, i + 2, 1);
 		}
 		let sum: number = 0;
 		let yielded = 0;
 		await async.forEach(ranges, (item) => {
+			clock.tick(2);
 			const codeRange = p2c.asRange(item);
 			sum += codeRange.start.line;
 		}, undefined, { yieldAfter: 2, yieldCallback: () => { yielded++; }});
-		ok(yielded > 0);
-		strictEqual(sum, 450015000);
+		strictEqual(yielded, ranges.length);
+		strictEqual(sum, 55);
 	}).timeout(5000);
 });
 

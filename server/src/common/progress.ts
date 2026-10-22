@@ -4,12 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {
-	ClientCapabilities, CancellationToken, CancellationTokenSource, ProgressToken, ProgressType, WorkDoneProgressParams, PartialResultParams,
+	RAL, ClientCapabilities, CancellationToken, CancellationTokenSource, ProgressToken, ProgressType, WorkDoneProgressParams, PartialResultParams,
 	WorkDoneProgressBegin, WorkDoneProgress, WorkDoneProgressReport, WorkDoneProgressCancelNotification, WorkDoneProgressCreateRequest,
 	RequestParam
 } from '@vscode/languageserver-protocol';
 
-import { generateUuid } from './utils/uuid.js';
 import type { Feature, _RemoteWindow } from './server.js';
 
 export interface ProgressContext {
@@ -190,7 +189,7 @@ export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) =>
 		}
 		public createWorkDoneProgress(): Promise<WorkDoneProgressServerReporter> {
 			if (this._progressSupported) {
-				const token: string = generateUuid();
+				const token: string = RAL().crypto.randomUUID();
 				return this.connection.sendRequest(WorkDoneProgressCreateRequest.type, { token }).then(() => {
 					const result: WorkDoneProgressServerReporterImpl = new WorkDoneProgressServerReporterImpl(this.connection, token);
 					return result;

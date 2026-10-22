@@ -5,6 +5,7 @@
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"type": "module",
+	"homepage": "https://github.com/microsoft/vscode-languageserver-node/tree/main/tsconfig-gen",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",

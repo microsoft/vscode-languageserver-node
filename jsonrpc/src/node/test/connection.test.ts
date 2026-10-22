@@ -9,6 +9,7 @@ import { execFileSync } from 'node:child_process';
 import { Duplex  } from 'node:stream';
 import { inherits } from 'node:util';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { EventEmitter } from 'node:events';
 import { MessageChannel } from 'node:worker_threads';
 import { fileURLToPath } from 'node:url';
 
@@ -908,6 +909,29 @@ suite('Connection', () => {
 		assert.strictEqual(result, 'foo');
 		clientPort.unref();
 		serverPort.unref();
+	});
+
+	test('Message port reader and writer fire onClose', async () => {
+		const { port1 } = new MessageChannel();
+		const reader = new hostConnection.PortMessageReader(port1);
+		const writer = new hostConnection.PortMessageWriter(port1);
+		const readerClosed = new Promise<void>(resolve => reader.onClose(() => resolve()));
+		const writerClosed = new Promise<void>(resolve => writer.onClose(() => resolve()));
+		port1.close();
+		await Promise.all([readerClosed, writerClosed]);
+	});
+
+	test('IPC reader and writer fire onClose', () => {
+		const proc = new EventEmitter();
+		const reader = new hostConnection.IPCMessageReader(proc as NodeJS.Process);
+		const writer = new hostConnection.IPCMessageWriter(proc as NodeJS.Process);
+		let readerClosed = false;
+		let writerClosed = false;
+		reader.onClose(() => { readerClosed = true; });
+		writer.onClose(() => { writerClosed = true; });
+		proc.emit('close');
+		assert.ok(readerClosed, 'IPCMessageReader did not fire onClose');
+		assert.ok(writerClosed, 'IPCMessageWriter did not fire onClose');
 	});
 
 	test('Parallelism - unlimited', async () => {

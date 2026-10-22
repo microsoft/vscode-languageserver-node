@@ -1,10 +1,11 @@
 {
 	"name": "@vscode/languageserver-protocol",
 	"description": "VSCode Language Server Protocol implementation",
-	"version": "3.18.4",
+	"version": "3.18.5",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
 	"type": "module",
+	"homepage": "https://github.com/microsoft/vscode-languageserver-node/tree/main/protocol",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
@@ -28,8 +29,8 @@
 		}
 	},
 	"dependencies": {
-		"@vscode/jsonrpc": "9.0.3",
-		"@vscode/languageserver-types": "3.18.4"
+		"@vscode/jsonrpc": "10.0.0",
+		"@vscode/languageserver-types": "3.18.5"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run all:publish",

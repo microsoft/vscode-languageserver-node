@@ -7,11 +7,10 @@ import * as vscode from 'vscode';
 
 import * as proto from '@vscode/languageserver-protocol';
 import {
-	StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentItem, NotebookCellTextDocumentFilter, LSPAny,
+	RAL, StaticRegistrationOptions, NotebookDocumentFilter, TextDocumentItem, NotebookCellTextDocumentFilter, LSPAny,
 	NotebookDocumentFilterWithCells, NotebookDocumentFilterWithNotebook
 } from '@vscode/languageserver-protocol';
 
-import * as UUID from './utils/uuid.js';
 import * as Is from './utils/is.js';
 
 import * as _c2p from './codeConverter.js';
@@ -1123,7 +1122,7 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 		if (options === undefined) {
 			return;
 		}
-		const id = (options as StaticRegistrationOptions).id ?? UUID.generateUuid();
+		const id = (options as StaticRegistrationOptions).id ?? RAL().crypto.randomUUID();
 		this.register({ id, registerOptions: options });
 	}
 
@@ -1197,4 +1196,3 @@ export class NotebookDocumentSyncFeature implements DynamicFeature<proto.Noteboo
 		return [undefined, undefined];
 	}
 }
-

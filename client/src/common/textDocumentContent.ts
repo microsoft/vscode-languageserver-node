@@ -4,10 +4,9 @@
  * ------------------------------------------------------------------------------------------ */
 
 import * as vscode from 'vscode';
-import { StaticRegistrationOptions, TextDocumentContentRefreshRequest, TextDocumentContentRequest, type ClientCapabilities, type RegistrationType, type ServerCapabilities, type TextDocumentContentParams, type TextDocumentContentRegistrationOptions } from '@vscode/languageserver-protocol';
+import { RAL, StaticRegistrationOptions, TextDocumentContentRefreshRequest, TextDocumentContentRequest, type ClientCapabilities, type RegistrationType, type ServerCapabilities, type TextDocumentContentParams, type TextDocumentContentRegistrationOptions } from '@vscode/languageserver-protocol';
 
 import { ensure, type DynamicFeature, type FeatureClient, type FeatureState, type RegistrationData } from './features.js';
-import * as UUID from './utils/uuid.js';
 
 
 export interface ProvideTextDocumentContentSignature {
@@ -72,7 +71,7 @@ export class TextDocumentContentFeature implements DynamicFeature<TextDocumentCo
 			return;
 		}
 		const capability = capabilities.workspace.textDocumentContent;
-		const id = StaticRegistrationOptions.hasId(capability) ? capability.id : UUID.generateUuid();
+		const id = StaticRegistrationOptions.hasId(capability) ? capability.id : RAL().crypto.randomUUID();
 		this.register({
 			id: id,
 			registerOptions: capability

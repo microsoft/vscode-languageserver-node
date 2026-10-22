@@ -14,7 +14,7 @@ import {
 } from 'vscode';
 
 import {
-	CallHierarchyPrepareRequest, ClientCapabilities, CodeActionRequest, CodeLensRequest, CompletionRequest, DeclarationRequest, DefinitionRequest,
+	RAL, CallHierarchyPrepareRequest, ClientCapabilities, CodeActionRequest, CodeLensRequest, CompletionRequest, DeclarationRequest, DefinitionRequest,
 	DidChangeTextDocumentNotification, DidCloseTextDocumentNotification, DidCreateFilesNotification, DidDeleteFilesNotification, DidOpenTextDocumentNotification,
 	DidRenameFilesNotification, DidSaveTextDocumentNotification, DocumentColorRequest, DocumentDiagnosticRequest, DocumentFormattingRequest, DocumentHighlightRequest,
 	DocumentLinkRequest, DocumentOnTypeFormattingRequest, DocumentRangeFormattingRequest, DocumentSelector, DocumentSymbolRequest, ExecuteCommandOptions, ExecuteCommandRequest, FileOperationRegistrationOptions,
@@ -28,7 +28,6 @@ import {
 } from '@vscode/languageserver-protocol';
 
 import * as Is from './utils/is.js';
-import * as UUID from './utils/uuid.js';
 
 import type * as c2p from './codeConverter.js';
 import type * as p2c from './protocolConverter.js';
@@ -559,7 +558,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 		if (!capability) {
 			return [undefined, undefined];
 		} else if (TextDocumentRegistrationOptions.is(capability)) {
-			const id = StaticRegistrationOptions.hasId(capability) ? capability.id : UUID.generateUuid();
+			const id = StaticRegistrationOptions.hasId(capability) ? capability.id : RAL().crypto.randomUUID();
 			const selector = capability.documentSelector ?? documentSelector;
 			if (selector) {
 				return [id, Object.assign({}, capability, { documentSelector: selector })];
@@ -569,7 +568,7 @@ export abstract class TextDocumentLanguageFeature<PO, RO extends TextDocumentReg
 				return [undefined, undefined];
 			}
 			const options: RO & { documentSelector: DocumentSelector } = (Is.boolean(capability) && capability === true ? { documentSelector } : Object.assign({}, capability, { documentSelector })) as any;
-			return [UUID.generateUuid(), options];
+			return [RAL().crypto.randomUUID(), options];
 		}
 		return [undefined, undefined];
 	}

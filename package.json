@@ -50,7 +50,8 @@
 	},
 	"scripts": {
 		"postinstall": "npx playwright install",
-		"test": "node ./build/bin/all.js run test",
+		"test": "npm run test:build && node ./build/bin/all.js run test",
+		"test:build": "mocha --ui tdd \"build/test/**/*.test.js\"",
 		"clean": "node ./build/bin/all.js run clean",
 		"symlink:tests": "node ./build/bin/symlink-tests.js",
 		"compile": "tsc -b tsconfig.json",

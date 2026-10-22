@@ -8,14 +8,12 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DocumentHighlightOptions, DocumentHighlightRegistrationOptions, DocumentHighlightRequest, DocumentSelector, ServerCapabilities, TextDocumentRegistrationOptions
+	RAL, ClientCapabilities, DocumentHighlightOptions, DocumentHighlightRegistrationOptions, DocumentHighlightRequest, DocumentSelector, ServerCapabilities, TextDocumentRegistrationOptions
 } from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features.js';
-
-import * as UUID from './utils/uuid.js';
 
 export interface ProvideDocumentHighlightsSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDocumentHighlight[]>;
@@ -40,7 +38,7 @@ export class DocumentHighlightFeature extends TextDocumentLanguageFeature<boolea
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: RAL().crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, DocumentHighlightProvider] {

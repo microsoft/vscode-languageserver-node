@@ -8,7 +8,6 @@ import * as minimatch from 'minimatch';
 import * as proto from '@vscode/languageserver-protocol';
 
 import { DynamicFeature, RegistrationData, NextSignature, FeatureState, FeatureClient } from './features.js';
-import * as UUID from './utils/uuid.js';
 
 function ensure<T, K extends keyof T>(target: T, key: K): T[K] {
 	if (target[key] === void 0) {
@@ -97,7 +96,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		if (capability?.filters !== undefined) {
 			try {
 				this.register({
-					id: UUID.generateUuid(),
+					id: proto.RAL().crypto.randomUUID(),
 					registerOptions: { filters: capability.filters }
 				});
 			} catch (e) {

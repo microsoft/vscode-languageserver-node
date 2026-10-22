@@ -304,6 +304,11 @@ export class NotebookDocuments<T extends { uri: DocumentUri }> {
 			}
 
 			// Update internal data structure.
+			const removed: NotebookCell[] = [];
+			for (const close of closed) {
+				removed.push(this.getNotebookCell(close)!);
+				this.notebookCellMap.delete(close);
+			}
 			this.updateCellMap(notebookDocument);
 
 			const changeEvent: NotebookDocumentChangeEvent = { notebookDocument };
@@ -314,10 +319,6 @@ export class NotebookDocuments<T extends { uri: DocumentUri }> {
 			const added: NotebookCell[] = [];
 			for (const open of opened) {
 				added.push(this.getNotebookCell(open)!);
-			}
-			const removed: NotebookCell[] = [];
-			for (const close of closed) {
-				removed.push(this.getNotebookCell(close)!);
 			}
 			const textContent: NotebookCell[] = [];
 			for (const change of text) {

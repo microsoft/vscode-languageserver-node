@@ -8,10 +8,8 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeLensOptions, CodeLensRegistrationOptions, CodeLensRequest, CodeLensRefreshRequest, CodeLensResolveRequest
+	RAL, ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeLensOptions, CodeLensRegistrationOptions, CodeLensRequest, CodeLensRefreshRequest, CodeLensResolveRequest
 } from '@vscode/languageserver-protocol';
-
-import * as UUID from './utils/uuid.js';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features.js';
 
@@ -57,7 +55,7 @@ export class CodeLensFeature extends TextDocumentLanguageFeature<CodeLensOptions
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: RAL().crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: CodeLensRegistrationOptions): [Disposable, CodeLensProviderShape] {

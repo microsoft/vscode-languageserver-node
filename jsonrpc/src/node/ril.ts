@@ -4,6 +4,7 @@
  * ------------------------------------------------------------------------------------------ */
 
 import { TextDecoder } from 'util';
+import { randomUUID } from 'crypto';
 
 import {
 	RAL, Disposable, Message, ContentTypeEncoderOptions, ContentTypeDecoderOptions, AbstractMessageBuffer
@@ -36,7 +37,7 @@ class MessageBuffer extends AbstractMessageBuffer {
 		if (length === undefined) {
 			return buffer instanceof Buffer ? buffer : Buffer.from(buffer);
 		} else {
-			return buffer instanceof Buffer ? buffer.slice(0, length) : Buffer.from(buffer.buffer, buffer.byteOffset, length);
+			return buffer instanceof Buffer ? buffer.slice(0, length) : Buffer.from(buffer.subarray(0, length));
 		}
 	}
 
@@ -121,6 +122,9 @@ interface RIL extends RAL {
 }
 
 const _ril: RIL = Object.freeze<RIL>({
+	crypto: Object.freeze({
+		randomUUID: (): string => randomUUID()
+	}),
 	messageBuffer: Object.freeze({
 		create: (encoding: RAL.MessageBufferEncoding) => new MessageBuffer(encoding)
 	}),

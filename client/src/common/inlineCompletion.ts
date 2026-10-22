@@ -9,15 +9,13 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, InlineCompletionOptions, InlineCompletionRegistrationOptions, InlineCompletionRequest,
+	RAL, ClientCapabilities, InlineCompletionOptions, InlineCompletionRegistrationOptions, InlineCompletionRequest,
 	DocumentSelector, ServerCapabilities
 } from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features.js';
-
-import * as UUID from './utils/uuid.js';
 
 export interface ProvideInlineCompletionItemsSignature {
 	(this: void, document: TextDocument, position: VPosition, context: VInlineCompletionContext, token: CancellationToken): ProviderResult<VInlineCompletionItem[] | VInlineCompletionList>;
@@ -49,7 +47,7 @@ export class InlineCompletionItemFeature extends TextDocumentLanguageFeature<boo
 		}
 
 		this.register({
-			id: UUID.generateUuid(),
+			id: RAL().crypto.randomUUID(),
 			registerOptions: options
 		});
 	}

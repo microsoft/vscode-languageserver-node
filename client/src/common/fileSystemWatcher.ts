@@ -49,6 +49,7 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 		if (!Array.isArray(data.registerOptions.watchers)) {
 			return;
 		}
+		this.unregister(data.id);
 		const disposables: Disposable[] = [];
 		for (const watcher of data.registerOptions.watchers) {
 			const globPattern = this._client.protocol2CodeConverter.asGlobPattern(watcher.globPattern);
@@ -69,6 +70,7 @@ export class FileSystemWatcherFeature implements DynamicFeature<DidChangeWatched
 	}
 
 	public registerRaw(id: string, fileSystemWatchers: VFileSystemWatcher[]) {
+		this.unregister(id);
 		const disposables: Disposable[] = [];
 		for (const fileSystemWatcher of fileSystemWatchers) {
 			this.hookListeners(fileSystemWatcher, true, true, true, disposables);

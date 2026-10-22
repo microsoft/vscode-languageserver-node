@@ -6,11 +6,10 @@
 import { workspace, Uri, Disposable, ConfigurationChangeEvent, FileSystemWatcher as VFileSystemWatcher, WorkspaceFolder as VWorkspaceFolder } from 'vscode';
 
 import {
-	ClientCapabilities, ConfigurationRequest, DidChangeConfigurationNotification, DidChangeConfigurationRegistrationOptions, RegistrationType
+	RAL, ClientCapabilities, ConfigurationRequest, DidChangeConfigurationNotification, DidChangeConfigurationRegistrationOptions, RegistrationType
 } from '@vscode/languageserver-protocol';
 
 import * as Is from './utils/is.js';
-import * as UUID from './utils/uuid.js';
 
 import { StaticFeature, FeatureClient, FeatureState, DynamicFeature, ensure, RegistrationData } from './features.js';
 
@@ -174,7 +173,7 @@ export class SyncConfigurationFeature implements DynamicFeature<DidChangeConfigu
 		const section = this._client.clientOptions.synchronize?.configurationSection;
 		if (section !== undefined) {
 			this.register({
-				id: UUID.generateUuid(),
+				id: RAL().crypto.randomUUID(),
 				registerOptions: {
 					section: section
 				}

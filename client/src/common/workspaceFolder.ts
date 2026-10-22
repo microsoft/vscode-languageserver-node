@@ -3,13 +3,11 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as UUID from './utils/uuid.js';
-
 import { workspace, Disposable, WorkspaceFolder as VWorkspaceFolder, WorkspaceFoldersChangeEvent as VWorkspaceFoldersChangeEvent } from 'vscode';
 
 import { DynamicFeature, RegistrationData, FeatureClient, NextSignature, FeatureState } from './features.js';
 import {
-	ClientCapabilities, InitializeParams, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
+	RAL, ClientCapabilities, InitializeParams, CancellationToken, ServerCapabilities, WorkspaceFoldersRequest, WorkspaceFolder,
 	DidChangeWorkspaceFoldersNotification, DidChangeWorkspaceFoldersParams, RegistrationType
 } from '@vscode/languageserver-protocol';
 
@@ -95,7 +93,7 @@ export class WorkspaceFoldersFeature implements DynamicFeature<void> {
 		if (typeof value === 'string') {
 			id = value;
 		} else if (value === true) {
-			id = UUID.generateUuid();
+			id = RAL().crypto.randomUUID();
 		}
 		if (id) {
 			this.register({ id: id, registerOptions: undefined });

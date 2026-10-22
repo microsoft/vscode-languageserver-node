@@ -9,7 +9,7 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DocumentSelector, DocumentSymbol, DocumentSymbolOptions, DocumentSymbolRegistrationOptions, DocumentSymbolRequest, ServerCapabilities, SymbolInformation,
+	RAL, ClientCapabilities, DocumentSelector, DocumentSymbol, DocumentSymbolOptions, DocumentSymbolRegistrationOptions, DocumentSymbolRequest, ServerCapabilities, SymbolInformation,
 	SymbolKind,
 	SymbolTag
 } from '@vscode/languageserver-protocol';
@@ -17,8 +17,6 @@ import {
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features.js';
-
-import * as UUID from './utils/uuid.js';
 
 export const SupportedSymbolKinds: SymbolKind[] = [
 	SymbolKind.File,
@@ -85,7 +83,7 @@ export class DocumentSymbolFeature extends TextDocumentLanguageFeature<boolean |
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: RAL().crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentSymbolRegistrationOptions): [Disposable, DocumentSymbolProvider] {

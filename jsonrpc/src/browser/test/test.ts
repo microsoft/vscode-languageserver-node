@@ -5,7 +5,7 @@
 
 import * as assert from 'assert';
 
-import { CancellationTokenSource, RequestMessage, RequestType0, ResponseMessage } from '../../common/api.js';
+import { CancellationTokenSource, RAL, RequestMessage, RequestType0, ResponseMessage } from '../../common/api.js';
 import { SharedArrayReceiverStrategy, SharedArraySenderStrategy } from '../../common/sharedArrayCancellation.js';
 import { BrowserMessageReader, BrowserMessageWriter, createMessageConnection } from '../main.js';
 import RIL, { QueueMicrotaskImpl, PromiseImpl } from '../ril.js';
@@ -13,6 +13,63 @@ import RIL, { QueueMicrotaskImpl, PromiseImpl } from '../ril.js';
 function assertDefined<T>(value: T | undefined | null): asserts value is T {
 	assert.ok(value !== undefined && value !== null);
 }
+
+suite('Browser runtime crypto', () => {
+	const descriptors = new Map<string, PropertyDescriptor | undefined>();
+
+	setup(() => {
+		for (const name of ['randomUUID', 'getRandomValues']) {
+			descriptors.set(name, Object.getOwnPropertyDescriptor(globalThis.crypto, name));
+		}
+	});
+
+	teardown(() => {
+		for (const [name, descriptor] of descriptors) {
+			if (descriptor === undefined) {
+				Reflect.deleteProperty(globalThis.crypto, name);
+			} else {
+				Object.defineProperty(globalThis.crypto, name, descriptor);
+			}
+		}
+	});
+
+	test('randomUUID delegates to the native method with its receiver', () => {
+		const value = '01234567-89ab-4cde-8fab-0123456789ab';
+		Object.defineProperty(globalThis.crypto, 'randomUUID', {
+			configurable: true,
+			value: function (this: Crypto): string {
+				assert.strictEqual(this, globalThis.crypto);
+				return value;
+			}
+		});
+		assert.strictEqual(RAL().crypto.randomUUID(), value);
+	});
+
+	test('randomUUID fallback generates distinct canonical v4 UUIDs', () => {
+		Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: undefined });
+		const values = new Set<string>();
+		for (let i = 0; i < 100; i++) {
+			const value = RAL().crypto.randomUUID();
+			assert.match(value, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+			values.add(value);
+		}
+		assert.strictEqual(values.size, 100);
+	});
+
+	test('randomUUID fallback preserves version and variant bits', () => {
+		Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: undefined });
+		for (const [byte, expected] of [
+			[0, '10000000-1000-4000-8000-100000000000'],
+			[255, 'efffffff-efff-4fff-bfff-efffffffffff']
+		] as const) {
+			Object.defineProperty(globalThis.crypto, 'getRandomValues', {
+				configurable: true,
+				value: (array: Uint8Array): Uint8Array => array.fill(byte)
+			});
+			assert.strictEqual(RAL().crypto.randomUUID(), expected);
+		}
+	});
+});
 
 suite('Browser IPC Reader / Writer', () => {
 	test('Simple request message with response', (done) => {

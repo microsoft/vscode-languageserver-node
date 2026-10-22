@@ -9,15 +9,13 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CompletionItemKind, CompletionItemTag, CompletionOptions, CompletionRegistrationOptions, CompletionRequest, CompletionResolveRequest,
+	RAL, ClientCapabilities, CompletionItemKind, CompletionItemTag, CompletionOptions, CompletionRegistrationOptions, CompletionRequest, CompletionResolveRequest,
 	DocumentSelector, InsertTextMode, MarkupKind, ServerCapabilities
 } from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features.js';
-
-import * as UUID from './utils/uuid.js';
 
 const SupportedCompletionItemKinds: CompletionItemKind[] = [
 	CompletionItemKind.Text,
@@ -104,7 +102,7 @@ export class CompletionItemFeature extends TextDocumentLanguageFeature<Completio
 		}
 
 		this.register({
-			id: UUID.generateUuid(),
+			id: RAL().crypto.randomUUID(),
 			registerOptions: options
 		});
 	}

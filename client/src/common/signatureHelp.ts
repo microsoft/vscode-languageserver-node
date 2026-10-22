@@ -9,14 +9,12 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DocumentSelector, MarkupKind, ServerCapabilities, SignatureHelpOptions, SignatureHelpRegistrationOptions, SignatureHelpRequest
+	RAL, ClientCapabilities, DocumentSelector, MarkupKind, ServerCapabilities, SignatureHelpOptions, SignatureHelpRegistrationOptions, SignatureHelpRequest
 } from '@vscode/languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature, DocumentSelectorOptions
 } from './features.js';
-
-import * as UUID from './utils/uuid.js';
 
 export interface ProvideSignatureHelpSignature {
 	(this: void, document: TextDocument, position: VPosition, context: VSignatureHelpContext, token: CancellationToken): ProviderResult<VSignatureHelp>;
@@ -48,7 +46,7 @@ export class SignatureHelpFeature extends TextDocumentLanguageFeature<SignatureH
 			return;
 		}
 		this.register({
-			id: UUID.generateUuid(),
+			id: RAL().crypto.randomUUID(),
 			registerOptions: options
 		});
 	}

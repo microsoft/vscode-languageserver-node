@@ -8,7 +8,7 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, ServerCapabilities, WorkspaceSymbolRegistrationOptions, WorkspaceSymbolRequest, WorkspaceSymbolResolveRequest
+	RAL, ClientCapabilities, ServerCapabilities, WorkspaceSymbolRegistrationOptions, WorkspaceSymbolRequest, WorkspaceSymbolResolveRequest
 } from '@vscode/languageserver-protocol';
 
 import {
@@ -16,7 +16,6 @@ import {
 } from './features.js';
 
 import { SupportedSymbolKinds, SupportedSymbolTags } from './documentSymbol.js';
-import * as UUID from './utils/uuid.js';
 
 export interface ProvideWorkspaceSymbolsSignature {
 	(this: void, query: string, token: CancellationToken): ProviderResult<VSymbolInformation[]>;
@@ -54,7 +53,7 @@ export class WorkspaceSymbolFeature extends WorkspaceFeature<WorkspaceSymbolRegi
 			return;
 		}
 		this.register({
-			id: UUID.generateUuid(),
+			id: RAL().crypto.randomUUID(),
 			registerOptions: capabilities.workspaceSymbolProvider === true ? { workDoneProgress: false } : capabilities.workspaceSymbolProvider
 		});
 	}

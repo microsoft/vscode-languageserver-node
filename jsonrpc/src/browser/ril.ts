@@ -171,6 +171,16 @@ export class PromiseImpl implements Disposable {
 
 const _textEncoder = new TextEncoder();
 const _ril: RIL = Object.freeze<RIL>({
+	crypto: Object.freeze({
+		randomUUID(): string {
+			if (typeof globalThis.crypto.randomUUID === 'function') {
+				return globalThis.crypto.randomUUID();
+			}
+			return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
+				(+c ^ (globalThis.crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16)
+			);
+		}
+	}),
 	messageBuffer: Object.freeze({
 		create: (encoding: RAL.MessageBufferEncoding) => new MessageBuffer(encoding)
 	}),
