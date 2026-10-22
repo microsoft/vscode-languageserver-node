@@ -1676,6 +1676,92 @@ suite('Client integration', () => {
 		assert.strictEqual(reporterCalled, true);
 	});
 
+	/**
+	 * Runs a workspace diagnostic pull and returns the partial result tokens it
+	 * registered progress handlers for, plus those still active after the pull
+	 * settled. Only registrations made synchronously by this call are counted, so
+	 * the client's background workspace pull doesn't interfere.
+	 */
+	async function workspacePullProgressHandlers(token: vscode.CancellationToken, expectRejection?: RegExp): Promise<{ registered: (string | number)[]; active: (string | number)[] }> {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
+		const progressHandlers: Map<string | number, unknown> = (client as any)._progressHandlers;
+		const onProgress = sinon.spy(client, 'onProgress');
+		let registered: (string | number)[];
+		let pull: Promise<unknown>;
+		try {
+			pull = Promise.resolve(provider.diagnostics.provideWorkspaceDiagnostics([], token, () => {}));
+			registered = onProgress.getCalls()
+				.filter(call => call.args[0] === lsclient.WorkspaceDiagnosticRequest.partialResult)
+				.map(call => call.args[1]);
+		} finally {
+			onProgress.restore();
+		}
+		if (expectRejection !== undefined) {
+			await assert.rejects(pull, expectRejection);
+		} else {
+			await pull;
+		}
+		return { registered, active: registered.filter(item => progressHandlers.has(item)) };
+	}
+
+	test('Workspace diagnostic pull does not register a progress handler when the client is not running', async () => {
+		const isRunning = sinon.stub(client, 'isRunning').returns(false);
+		let handlers: { registered: (string | number)[]; active: (string | number)[] };
+		try {
+			handlers = await workspacePullProgressHandlers(tokenSource.token);
+		} finally {
+			isRunning.restore();
+		}
+		assert.strictEqual(handlers.registered.length, 0, 'expected no progress handler to be registered');
+		assert.strictEqual(handlers.active.length, 0, 'expected no active progress handler');
+	});
+
+	test('Workspace diagnostic pull disposes its progress handler when cancelled', async () => {
+		const source = new vscode.CancellationTokenSource();
+		const sendRequest = client.sendRequest.bind(client) as (...args: any[]) => Promise<any>;
+		// Cancel once the response arrives, so the cancellation branch of the success handler runs.
+		const stub = sinon.stub(client, 'sendRequest').callsFake(async (...args: any[]) => {
+			const result = await sendRequest(...args);
+			if (args[2] === source.token) {
+				source.cancel();
+			}
+			return result;
+		});
+		let handlers: { registered: (string | number)[]; active: (string | number)[] };
+		try {
+			handlers = await workspacePullProgressHandlers(source.token);
+		} finally {
+			stub.restore();
+			source.dispose();
+		}
+		assert.strictEqual(source.token.isCancellationRequested, true, 'expected the pull to be cancelled');
+		assert.strictEqual(handlers.registered.length, 1, 'expected one progress handler to be registered');
+		assert.strictEqual(handlers.active.length, 0, 'expected the progress handler to be disposed');
+	});
+
+	test('Workspace diagnostic pull disposes its progress handler when converting the report fails', async () => {
+		const source = new vscode.CancellationTokenSource();
+		const converter = client.protocol2CodeConverter;
+		const asDiagnostics = converter.asDiagnostics.bind(converter) as (...args: any[]) => Promise<vscode.Diagnostic[]>;
+		const stub = sinon.stub(converter, 'asDiagnostics').callsFake(async (...args: any[]) => {
+			if (args[1] === source.token) {
+				throw new Error('conversion failed');
+			}
+			return asDiagnostics(...args);
+		});
+		let handlers: { registered: (string | number)[]; active: (string | number)[] };
+		try {
+			handlers = await workspacePullProgressHandlers(source.token, /conversion failed/);
+		} finally {
+			stub.restore();
+			source.dispose();
+		}
+		assert.strictEqual(handlers.registered.length, 1, 'expected one progress handler to be registered');
+		assert.strictEqual(handlers.active.length, 0, 'expected the progress handler to be disposed');
+	});
+
 	test('Document diagnostic pull after quick reopen', async () => {
 		await vscode.window.showTextDocument(document);
 		let initialPullFinished: (() => void) | undefined;

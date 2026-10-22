@@ -5,7 +5,11 @@
 'use strict';
 
 import * as assert from 'assert';
-import { Range, Position, Hover, MarkedString, TextEdit, ColorPresentation, FoldingRange } from '../main.js';
+import {
+	Range, Position, Hover, MarkedString, TextEdit, ColorPresentation, FoldingRange, Location, DiagnosticRelatedInformation, Diagnostic, Command,
+	TextDocumentEdit, TextDocumentIdentifier, VersionedTextDocumentIdentifier, OptionalVersionedTextDocumentIdentifier, TextDocumentItem,
+	CodeActionContext, CodeLens, FormattingOptions, DocumentLink, InlineValueContext, TextDocument
+} from '../main.js';
 
 suite('Type guards', () => {
 	suite('Position.is', () => {
@@ -205,6 +209,37 @@ suite('Type guards', () => {
 		test('with textEdit', () => {
 			const presentation = ColorPresentation.create('red', TextEdit.insert(Position.create(0, 0), 'red'));
 			assert.strictEqual(ColorPresentation.is(presentation), true);
+		});
+	});
+	suite('null and undefined', () => {
+		const range = Range.create(0, 0, 0, 1);
+		const guards: [string, (value: any) => boolean, any][] = [
+			['DiagnosticRelatedInformation', DiagnosticRelatedInformation.is, DiagnosticRelatedInformation.create(Location.create('file:///a', range), 'message')],
+			['Diagnostic', Diagnostic.is, Diagnostic.create(range, 'message')],
+			['Command', Command.is, Command.create('title', 'command')],
+			['TextDocumentEdit', TextDocumentEdit.is, TextDocumentEdit.create(OptionalVersionedTextDocumentIdentifier.create('file:///a', null), [])],
+			['TextDocumentIdentifier', TextDocumentIdentifier.is, TextDocumentIdentifier.create('file:///a')],
+			['VersionedTextDocumentIdentifier', VersionedTextDocumentIdentifier.is, VersionedTextDocumentIdentifier.create('file:///a', 1)],
+			['OptionalVersionedTextDocumentIdentifier', OptionalVersionedTextDocumentIdentifier.is, OptionalVersionedTextDocumentIdentifier.create('file:///a', null)],
+			['TextDocumentItem', TextDocumentItem.is, TextDocumentItem.create('file:///a', 'plaintext', 1, 'text')],
+			['CodeActionContext', CodeActionContext.is, CodeActionContext.create([])],
+			['CodeLens', CodeLens.is, CodeLens.create(range)],
+			['FormattingOptions', FormattingOptions.is, FormattingOptions.create(4, true)],
+			['DocumentLink', DocumentLink.is, DocumentLink.create(range)],
+			['InlineValueContext', InlineValueContext.is, InlineValueContext.create(1, range)],
+			['TextDocument', TextDocument.is, TextDocument.create('file:///a', 'plaintext', 1, 'text')],
+		];
+		for (const [label, is, valid] of guards) {
+			test(label, () => {
+				assert.strictEqual(is(valid), true);
+				assert.strictEqual(is(null), false);
+				assert.strictEqual(is(undefined), false);
+			});
+		}
+		test('nested null', () => {
+			assert.strictEqual(CodeLens.is({ range, command: null }), false);
+			assert.strictEqual(Diagnostic.is({ range, message: 'message', relatedInformation: [null] }), false);
+			assert.strictEqual(CodeActionContext.is({ diagnostics: [null] }), false);
 		});
 	});
 });

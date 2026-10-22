@@ -604,7 +604,7 @@ export namespace DiagnosticRelatedInformation {
 	 */
 	export function is(value: any): value is DiagnosticRelatedInformation {
 		const candidate: DiagnosticRelatedInformation = value as DiagnosticRelatedInformation;
-		return Is.defined(candidate) && Location.is(candidate.location) && Is.string(candidate.message);
+		return Is.objectLiteral(candidate) && Location.is(candidate.location) && Is.string(candidate.message);
 	}
 }
 
@@ -778,7 +778,7 @@ export namespace Diagnostic {
 	 */
 	export function is(value: any): value is Diagnostic {
 		const candidate = value as Diagnostic;
-		return Is.defined(candidate)
+		return Is.objectLiteral(candidate)
 			&& Range.is(candidate.range)
 			&& (Is.string(candidate.message) || MarkupContent.is(candidate.message))
 			&& (Is.number(candidate.severity) || Is.undefined(candidate.severity))
@@ -870,7 +870,7 @@ export namespace Command {
 	 */
 	export function is(value: any): value is Command {
 		const candidate = value as Command;
-		return Is.defined(candidate) && Is.string(candidate.title) && (candidate.tooltip === undefined || Is.string(candidate.tooltip)) && Is.string(candidate.command);
+		return Is.objectLiteral(candidate) && Is.string(candidate.title) && (candidate.tooltip === undefined || Is.string(candidate.tooltip)) && Is.string(candidate.command);
 	}
 }
 
@@ -1073,7 +1073,7 @@ export namespace TextDocumentEdit {
 
 	export function is(value: any): value is TextDocumentEdit {
 		const candidate = value as TextDocumentEdit;
-		return Is.defined(candidate)
+		return Is.objectLiteral(candidate)
 			&& OptionalVersionedTextDocumentIdentifier.is(candidate.textDocument)
 			&& Array.isArray(candidate.edits);
 	}
@@ -1816,7 +1816,7 @@ export namespace TextDocumentIdentifier {
 	 */
 	export function is(value: any): value is TextDocumentIdentifier {
 		const candidate = value as TextDocumentIdentifier;
-		return Is.defined(candidate) && Is.string(candidate.uri);
+		return Is.objectLiteral(candidate) && Is.string(candidate.uri);
 	}
 }
 
@@ -1849,7 +1849,7 @@ export namespace VersionedTextDocumentIdentifier {
 	 */
 	export function is(value: any): value is VersionedTextDocumentIdentifier {
 		const candidate = value as VersionedTextDocumentIdentifier;
-		return Is.defined(candidate) && Is.string(candidate.uri) && Is.integer(candidate.version);
+		return Is.objectLiteral(candidate) && Is.string(candidate.uri) && Is.integer(candidate.version);
 	}
 }
 
@@ -1886,7 +1886,7 @@ export namespace OptionalVersionedTextDocumentIdentifier {
 	 */
 	export function is(value: any): value is OptionalVersionedTextDocumentIdentifier {
 		const candidate = value as OptionalVersionedTextDocumentIdentifier;
-		return Is.defined(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.integer(candidate.version));
+		return Is.objectLiteral(candidate) && Is.string(candidate.uri) && (candidate.version === null || Is.integer(candidate.version));
 	}
 }
 
@@ -2018,7 +2018,7 @@ export namespace TextDocumentItem {
 	 */
 	export function is(value: any): value is TextDocumentItem {
 		const candidate = value as TextDocumentItem;
-		return Is.defined(candidate) && Is.string(candidate.uri) && Is.string(candidate.languageId) && Is.integer(candidate.version) && Is.string(candidate.text);
+		return Is.objectLiteral(candidate) && Is.string(candidate.uri) && Is.string(candidate.languageId) && Is.integer(candidate.version) && Is.string(candidate.text);
 	}
 }
 
@@ -3499,7 +3499,7 @@ export namespace CodeActionContext {
 	 */
 	export function is(value: any): value is CodeActionContext {
 		const candidate = value as CodeActionContext;
-		return Is.defined(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is)
+		return Is.objectLiteral(candidate) && Is.typedArray<Diagnostic[]>(candidate.diagnostics, Diagnostic.is)
 			&& (candidate.only === undefined || Is.typedArray(candidate.only, Is.string))
 			&& (candidate.triggerKind === undefined || candidate.triggerKind === CodeActionTriggerKind.Invoked || candidate.triggerKind === CodeActionTriggerKind.Automatic);
 	}
@@ -3723,7 +3723,7 @@ export namespace CodeLens {
 	 */
 	export function is(value: any): value is CodeLens {
 		const candidate = value as CodeLens;
-		return Is.defined(candidate) && Range.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && (Is.undefined(candidate.command) || Command.is(candidate.command));
 	}
 }
 
@@ -3784,7 +3784,7 @@ export namespace FormattingOptions {
 	 */
 	export function is(value: any): value is FormattingOptions {
 		const candidate = value as FormattingOptions;
-		return Is.defined(candidate) && Is.uinteger(candidate.tabSize) && Is.boolean(candidate.insertSpaces);
+		return Is.objectLiteral(candidate) && Is.uinteger(candidate.tabSize) && Is.boolean(candidate.insertSpaces);
 	}
 }
 
@@ -3839,7 +3839,7 @@ export namespace DocumentLink {
 	 */
 	export function is(value: any): value is DocumentLink {
 		const candidate = value as DocumentLink;
-		return Is.defined(candidate) && Range.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
+		return Is.objectLiteral(candidate) && Range.is(candidate.range) && (Is.undefined(candidate.target) || Is.string(candidate.target));
 	}
 }
 
@@ -4341,7 +4341,7 @@ export namespace InlineValueContext {
 	 */
 	export function is(value: any): value is InlineValueContext {
 		const candidate = value as InlineValueContext;
-		return Is.defined(candidate) && Range.is(value.stoppedLocation);
+		return Is.objectLiteral(candidate) && Range.is(value.stoppedLocation);
 	}
 }
 
@@ -4788,7 +4788,7 @@ export namespace TextDocument {
 	 */
 	export function is(value: any): value is TextDocument {
 		const candidate = value as TextDocument;
-		return Is.defined(candidate) && Is.string(candidate.uri) && (Is.undefined(candidate.languageId) || Is.string(candidate.languageId)) && Is.uinteger(candidate.lineCount)
+		return Is.objectLiteral(candidate) && Is.string(candidate.uri) && (Is.undefined(candidate.languageId) || Is.string(candidate.languageId)) && Is.uinteger(candidate.lineCount)
 			&& Is.func(candidate.getText) && Is.func(candidate.positionAt) && Is.func(candidate.offsetAt) ? true : false;
 	}
 
