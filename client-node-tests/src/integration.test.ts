@@ -2337,6 +2337,75 @@ suite('Full notebook tests', () => {
 		await revertAllDirty();
 	}).timeout(5000);
 
+	test('Notebook document: text changes refresh dependent cells without waiting for background pulls', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', new vscode.NotebookData([
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'value = 1', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'other = 2', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'value + other', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'const unrelated = 1;', 'javascript')
+		]));
+		const cellUris = new Set(notebook.getCells().map(cell => cell.document.uri.toString()));
+		const expected = notebook.getCells().slice(0, 3).map(cell => cell.document.uri.toString());
+		const opened = new Set<string>();
+		const pulled: string[] = [];
+		let observingChanges = false;
+		client.middleware.provideDiagnostics = async (document, previousResultId, token, next) => {
+			const uri = document instanceof vscode.Uri ? document.toString() : document.uri.toString();
+			if (observingChanges && cellUris.has(uri)) {
+				pulled.push(uri);
+			}
+			const result = await next(document, previousResultId, token);
+			if (!observingChanges && cellUris.has(uri)) {
+				opened.add(uri);
+			}
+			return result;
+		};
+
+		const runtime = lsclient.RAL();
+		// Hold background pulls so the assertion does not depend on machine speed.
+		lsclient.RAL.install({
+			...runtime,
+			timer: {
+				...runtime.timer,
+				setTimeout: (callback, milliseconds, ...args) => milliseconds === 500
+					? lsclient.Disposable.create(() => {})
+					: runtime.timer.setTimeout(callback, milliseconds, ...args)
+			}
+		});
+		let listener: vscode.Disposable | undefined;
+		let notificationTimeout: ReturnType<typeof setTimeout> | undefined;
+		try {
+			await vscode.window.showNotebookDocument(notebook);
+			const deadline = Date.now() + 3000;
+			while (opened.size < expected.length && Date.now() < deadline) {
+				await waitForNextTurn();
+			}
+			assert.deepStrictEqual([...opened].sort(), [...expected].sort());
+			await waitForNextTurn();
+			observingChanges = true;
+			const changed = new Promise<void>((resolve, reject) => {
+				notificationTimeout = setTimeout(() => reject(new Error('No notebook text change notification was sent')), 3000);
+				listener = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method).onChangeNotificationSent(event => {
+					if (event.notebook === notebook && event.cells?.textContent?.length) {
+						resolve();
+					}
+				});
+			});
+			const edit = new vscode.WorkspaceEdit();
+			edit.insert(notebook.cellAt(0).document.uri, new vscode.Position(0, 0), '# changed\n');
+			assert.strictEqual(await vscode.workspace.applyEdit(edit), true);
+			await changed;
+			await waitForNextTurn();
+			assert.deepStrictEqual(pulled.sort(), [...expected].sort(), 'Pull each matching cell once, including unchanged dependent cells');
+		} finally {
+			clearTimeout(notificationTimeout);
+			listener?.dispose();
+			lsclient.RAL.install(runtime);
+			client.middleware.provideDiagnostics = undefined;
+			await revertAllDirty();
+		}
+	}).timeout(8000);
+
 	test('Notebook document: reordering cells pulls diagnostics', async(): Promise<void> => {
 		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
 		await vscode.window.showNotebookDocument(notebook);
