@@ -1562,7 +1562,7 @@ class ChangeAnnotations {
 	public constructor(annotations?: { [id: string]: ChangeAnnotation }) {
 		this._annotations = annotations === undefined ? Object.create(null) : annotations;
 		this._counter = 0;
-		this._size = 0;
+		this._size = Object.keys(this._annotations).length;
 	}
 
 	public all(): { [id: string]: ChangeAnnotation } {
@@ -1595,8 +1595,12 @@ class ChangeAnnotations {
 	}
 
 	private nextId(): ChangeAnnotationIdentifier {
-		this._counter++;
-		return this._counter.toString();
+		let id: ChangeAnnotationIdentifier;
+		do {
+			this._counter++;
+			id = this._counter.toString();
+		} while (this._annotations[id] !== undefined);
+		return id;
 	}
 }
 
