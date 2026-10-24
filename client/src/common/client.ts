@@ -1679,6 +1679,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// purge outstanding file events.
 		this._fileEvents = [];
 		this._fileEventDelayer.cancel();
+		this._pendingChangeDelayer.cancel();
 
 		const disposables = this._listeners.splice(0, this._listeners.length);
 		for (const disposable of disposables) {
