@@ -649,7 +649,7 @@ class DiagnosticRequestor implements Disposable {
 						resultReporter(converted);
 						return { items: [] };
 					}, (error) => {
-						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { items: [] });
+						return this.client.handleFailedRequest(WorkspaceDiagnosticRequest.type, token, error, { items: [] });
 					}).finally(() => {
 						// Runs on success, cancellation, request failure, and a convertReport throw.
 						disposable.dispose();
