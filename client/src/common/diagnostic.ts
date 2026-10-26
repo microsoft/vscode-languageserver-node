@@ -626,7 +626,7 @@ class DiagnosticRequestor implements Disposable {
 							try {
 								converted.items.push(await convertReport(item));
 							} catch (error) {
-								this.client.error(`Converting workspace diagnostics failed.`, error);
+								this.client.error(`Converting workspace diagnostics failed.`, error, false);
 							}
 						}
 						resultReporter(converted);
@@ -644,14 +644,18 @@ class DiagnosticRequestor implements Disposable {
 							items: []
 						};
 						for (const item of result.items) {
-							converted.items.push(await convertReport(item));
+							try {
+								converted.items.push(await convertReport(item));
+							} catch (error) {
+								this.client.error(`Converting workspace diagnostics failed.`, error, false);
+							}
 						}
 						resultReporter(converted);
 						return { items: [] };
 					}, (error) => {
 						return this.client.handleFailedRequest(WorkspaceDiagnosticRequest.type, token, error, { items: [] });
 					}).finally(() => {
-						// Runs on success, cancellation, request failure, and a convertReport throw.
+						// Runs on success, cancellation, and request failure.
 						disposable.dispose();
 					});
 				};
