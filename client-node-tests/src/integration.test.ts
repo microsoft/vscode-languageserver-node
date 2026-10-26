@@ -1785,6 +1785,58 @@ suite('Client integration', () => {
 		assert.ok(errorLog.calledOnceWithExactly('Converting workspace diagnostics failed.', sinon.match.any, false), 'expected the conversion failure to be logged without a notification');
 	});
 
+	test('Workspace diagnostic pull keeps retrying after non-consecutive failures', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		// The suite server's identifier disables the background workspace pull, so drive it directly.
+		const requestor = (provider as any).diagnosticRequestor as { pullWorkspace(): void };
+		const runtime = lsclient.RAL();
+		const scheduled: (() => void)[] = [];
+		// Capture the 2s workspace pull reschedules instead of waiting for them.
+		lsclient.RAL.install({
+			...runtime,
+			timer: {
+				...runtime.timer,
+				setTimeout: (callback, milliseconds, ...args) => {
+					if (milliseconds === 2000) {
+						scheduled.push(() => callback(...args));
+						return lsclient.Disposable.create(() => {});
+					}
+					return runtime.timer.setTimeout(callback, milliseconds, ...args);
+				}
+			}
+		});
+		let fail = false;
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = (resultIds, token, reporter, next) => {
+			if (fail) {
+				throw new Error('transient failure');
+			}
+			return next(resultIds, token, reporter);
+		};
+		const errorLog = sinon.stub(client, 'error');
+		try {
+			// Alternate failure and success for 12 pulls: 6 failures, never more than one in a row.
+			for (let pull = 0; pull < 12; pull++) {
+				fail = pull % 2 === 0;
+				if (pull === 0) {
+					requestor.pullWorkspace();
+				} else {
+					scheduled.shift()!();
+				}
+				const deadline = Date.now() + 2000;
+				while (scheduled.length === 0 && Date.now() < deadline) {
+					await waitForNextTurn();
+				}
+				assert.strictEqual(scheduled.length, 1, `expected a workspace pull to be rescheduled after pull ${pull + 1}`);
+			}
+			assert.strictEqual(errorLog.callCount, 6);
+		} finally {
+			errorLog.restore();
+			lsclient.RAL.install(runtime);
+			(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = undefined;
+		}
+	}).timeout(10000);
+
 	test('Document diagnostic pull after quick reopen', async () => {
 		await vscode.window.showTextDocument(document);
 		let initialPullFinished: (() => void) | undefined;

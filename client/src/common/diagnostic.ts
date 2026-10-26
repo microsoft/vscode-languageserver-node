@@ -495,6 +495,7 @@ class DiagnosticRequestor implements Disposable {
 			return;
 		}
 		this.pullWorkspaceAsync().then(() => {
+			this.workspaceErrorCounter = 0;
 			this.workspaceTimeout = RAL().timer.setTimeout(() => {
 				this.pullWorkspace();
 			}, 2000);
