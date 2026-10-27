@@ -8,14 +8,13 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DocumentSelector, ReferenceOptions, ReferenceRegistrationOptions, ReferencesRequest, ServerCapabilities, TextDocumentRegistrationOptions
+	RAL, ClientCapabilities, DocumentSelector, ReferenceOptions, ReferenceRegistrationOptions, ReferencesRequest, ServerCapabilities, TextDocumentRegistrationOptions
 } from 'vscode-languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
-import * as UUID from './utils/uuid';
 
 export interface ProvideReferencesSignature {
 	(this: void, document: TextDocument, position: VPosition, options: { includeDeclaration: boolean }, token: CancellationToken): ProviderResult<VLocation[]>;
@@ -40,7 +39,7 @@ export class ReferencesFeature extends TextDocumentLanguageFeature<boolean | Ref
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: RAL().crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: TextDocumentRegistrationOptions): [Disposable, ReferenceProvider] {

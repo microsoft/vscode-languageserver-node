@@ -9,13 +9,12 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DefinitionOptions, DefinitionRegistrationOptions, DefinitionRequest, DocumentSelector, ServerCapabilities} from 'vscode-languageserver-protocol';
+	RAL, ClientCapabilities, DefinitionOptions, DefinitionRegistrationOptions, DefinitionRequest, DocumentSelector, ServerCapabilities} from 'vscode-languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
-import * as UUID from './utils/uuid';
 
 export interface ProvideDefinitionSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VDefinition | VDefinitionLink[]>;
@@ -42,7 +41,7 @@ export class DefinitionFeature extends TextDocumentLanguageFeature<boolean | Def
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: RAL().crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DefinitionRegistrationOptions): [Disposable, DefinitionProvider] {

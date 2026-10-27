@@ -1,9 +1,10 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "10.1.2",
+	"version": "11.0.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
+	"homepage": "https://github.com/microsoft/vscode-languageserver-node/tree/main/server",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
@@ -30,10 +31,10 @@
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
 	},
 	"devDependencies": {
-		"vscode-languageserver-textdocument": "1.0.15"
+		"vscode-languageserver-textdocument": "1.0.16"
 	},
 	"dependencies": {
-		"vscode-languageserver-protocol": "3.18.4"
+		"vscode-languageserver-protocol": "3.18.5"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run all:publish",

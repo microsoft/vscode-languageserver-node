@@ -8,14 +8,13 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DocumentSelector, HoverOptions, HoverRegistrationOptions, HoverRequest, MarkupKind, ServerCapabilities
+	RAL, ClientCapabilities, DocumentSelector, HoverOptions, HoverRegistrationOptions, HoverRequest, MarkupKind, ServerCapabilities
 } from 'vscode-languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
-import * as UUID from './utils/uuid';
 
 export interface ProvideHoverSignature {
 	(this: void, document: TextDocument, position: VPosition, token: CancellationToken): ProviderResult<VHover>;
@@ -43,7 +42,7 @@ export class HoverFeature extends TextDocumentLanguageFeature<boolean | HoverOpt
 			return;
 		}
 		this.register({
-			id: UUID.generateUuid(),
+			id: RAL().crypto.randomUUID(),
 			registerOptions: options
 		});
 	}

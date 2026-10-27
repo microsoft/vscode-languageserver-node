@@ -45,7 +45,6 @@ import * as p2c from './protocolConverter';
 
 import * as Is from './utils/is';
 import { Delayer, Semaphore } from './utils/async';
-import * as UUID from './utils/uuid';
 import { ProgressPart } from './progressPart';
 import {
 	DynamicFeature, ensure, FeatureClient, LSPCancellationError, TextDocumentSendFeature, RegistrationData, StaticFeature,
@@ -1467,7 +1466,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		};
 		this.fillInitializeParams(initParams);
 		if (this._clientOptions.progressOnInitialization) {
-			const token: ProgressToken = UUID.generateUuid();
+			const token: ProgressToken = RAL().crypto.randomUUID();
 			const part: ProgressPart = new ProgressPart(connection, token);
 			initParams.workDoneToken = token;
 			try {
@@ -1555,14 +1554,14 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				if (this._clientOptions.initializationFailedHandler(error)) {
 					void this.initialize(connection);
 				} else {
-					void this.stop();
+					this.stopAfterFailedInitialize();
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
 				void Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }).then(item => {
 					if (item && item.id === 'retry') {
 						void this.initialize(connection);
 					} else {
-						void this.stop();
+						this.stopAfterFailedInitialize();
 					}
 				});
 			} else {
@@ -1570,10 +1569,20 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					void Window.showErrorMessage(error.message);
 				}
 				this.error('Server initialization failed.', error);
-				void this.stop();
+				this.stopAfterFailedInitialize();
 			}
 			throw error;
 		}
+	}
+
+	private stopAfterFailedInitialize(): void {
+		// The client is still starting, so the base shutdown rejects because the client is
+		// not running. Calling stop() still lets subclasses release what they own: the Node
+		// client terminates the server process. Nothing awaits the result, so handle the
+		// rejection here instead of leaving it unhandled.
+		this.stop().catch((error) => {
+			this.error(`Stopping server failed`, error, false);
+		});
 	}
 
 	private _clientGetRootPath(): string | undefined {
@@ -1636,32 +1645,41 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			return connection;
 		})(connection);
 
-		return this._onStop = Promise.race([tp, shutdown]).then((connection) => {
-			// The connection won the race with the timeout.
-			if (connection !== undefined) {
-				connection.end();
-				connection.dispose();
-			} else {
-				this.error(`Stopping server timed out`, undefined, false);
-				throw new Error(`Stopping the server timed out`);
+		// Use try / finally instead of Promise.prototype.finally since the
+		// global Promise might not provide it (see #1653).
+		return this._onStop = (async () => {
+			try {
+				let result: Connection | undefined;
+				try {
+					result = await Promise.race([tp, shutdown]);
+				} catch (error) {
+					this.error(`Stopping server failed`, error, false);
+					throw error;
+				}
+				// The connection won the race with the timeout.
+				if (result !== undefined) {
+					result.end();
+					result.dispose();
+				} else {
+					this.error(`Stopping server timed out`, undefined, false);
+					throw new Error(`Stopping the server timed out`);
+				}
+			} finally {
+				this.$state = ClientState.Stopped;
+				mode === ShutdownMode.Stop && this.cleanUpChannel();
+				this._onStart = undefined;
+				this._onStop = undefined;
+				this._connection = undefined;
+				this._ignoredRegistrations.clear();
 			}
-		}, (error) => {
-			this.error(`Stopping server failed`, error, false);
-			throw error;
-		}).finally(() => {
-			this.$state = ClientState.Stopped;
-			mode === ShutdownMode.Stop && this.cleanUpChannel();
-			this._onStart = undefined;
-			this._onStop = undefined;
-			this._connection = undefined;
-			this._ignoredRegistrations.clear();
-		});
+		})();
 	}
 
 	private cleanUp(mode: ShutdownMode): void {
 		// purge outstanding file events.
 		this._fileEvents = [];
 		this._fileEventDelayer.cancel();
+		this._pendingChangeDelayer.cancel();
 
 		const disposables = this._listeners.splice(0, this._listeners.length);
 		for (const disposable of disposables) {
@@ -1868,8 +1886,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			}
 		}
 		this._connection = undefined;
+		// `Stopping` counts as handled. The application asked for the close via `stop()`,
+		// and `closed()` was skipped above so the handler had no chance to set `handled`.
+		const handled = this.$state === ClientState.Stopping || handlerResult.handled === true;
 		if (handlerResult.action === CloseAction.DoNotRestart) {
-			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, handlerResult.handled === true ? false : 'force');
+			this.error(handlerResult.message ?? 'Connection to server got closed. Server will not be restarted.', undefined, handled ? false : 'force');
 			this.cleanUp(ShutdownMode.Stop);
 			if (this.$state === ClientState.Starting) {
 				this.$state = ClientState.StartFailed;
@@ -1956,7 +1977,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		if (!watchers) {
 			return;
 		}
-		(this._dynamicFeatures.get(DidChangeWatchedFilesNotification.type.method)! as FileSystemWatcherFeature).registerRaw(UUID.generateUuid(), watchers);
+		(this._dynamicFeatures.get(DidChangeWatchedFilesNotification.type.method)! as FileSystemWatcherFeature).registerRaw(RAL().crypto.randomUUID(), watchers);
 	}
 
 	private readonly _features: (StaticFeature | DynamicFeature<any>)[] = [];

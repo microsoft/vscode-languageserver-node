@@ -16,7 +16,6 @@ import {
 	NotebookDocumentSyncRegistrationType
 } from 'vscode-languageserver-protocol';
 
-import { generateUuid } from './utils/uuid';
 import { matchGlobPattern } from './utils/globPattern';
 
 import {
@@ -403,10 +402,12 @@ class DiagnosticRequestor implements Disposable {
 			} catch (error) {
 				if (error instanceof LSPCancellationError && DiagnosticServerCancellationData.is(error.data) && error.data.retriggerRequest === false) {
 					afterState = { state: RequestStateKind.outDated, document };
-				}
-				if (afterState === undefined && error instanceof CancellationError) {
+				} else if (error instanceof CancellationError) {
 					afterState = { state: RequestStateKind.reschedule, document };
 				} else {
+					// Clear the open request so that later pulls for this document aren't
+					// treated as already in flight.
+					this.openRequests.delete(key);
 					throw error;
 				}
 			}
@@ -494,6 +495,7 @@ class DiagnosticRequestor implements Disposable {
 			return;
 		}
 		this.pullWorkspaceAsync().then(() => {
+			this.workspaceErrorCounter = 0;
 			this.workspaceTimeout = RAL().timer.setTimeout(() => {
 				this.pullWorkspace();
 			}, 2000);
@@ -608,7 +610,11 @@ class DiagnosticRequestor implements Disposable {
 					return converted;
 				};
 				const provideDiagnostics: ProvideWorkspaceDiagnosticSignature = (resultIds, token, resultReporter): ProviderResult<vsdiag.WorkspaceDiagnosticReport> => {
-					const partialResultToken: string = generateUuid();
+					// Check before registering the progress handler so the early return can't leak it.
+					if (this.isDisposed === true || !this.client.isRunning()) {
+						return { items: [] };
+					}
+					const partialResultToken: string = RAL().crypto.randomUUID();
 					const disposable = this.client.onProgress(WorkspaceDiagnosticRequest.partialResult, partialResultToken, async (partialResult) => {
 						if (partialResult === undefined || partialResult === null) {
 							resultReporter(null);
@@ -621,7 +627,7 @@ class DiagnosticRequestor implements Disposable {
 							try {
 								converted.items.push(await convertReport(item));
 							} catch (error) {
-								this.client.error(`Converting workspace diagnostics failed.`, error);
+								this.client.error(`Converting workspace diagnostics failed.`, error, false);
 							}
 						}
 						resultReporter(converted);
@@ -631,9 +637,6 @@ class DiagnosticRequestor implements Disposable {
 						previousResultIds: convertPreviousResultIds(resultIds),
 						partialResultToken: partialResultToken
 					};
-					if (this.isDisposed === true || !this.client.isRunning()) {
-						return { items: [] };
-					}
 					return this.client.sendRequest(WorkspaceDiagnosticRequest.type, params, token).then(async (result): Promise<vsdiag.WorkspaceDiagnosticReport> => {
 						if (token.isCancellationRequested) {
 							return { items: [] };
@@ -642,14 +645,19 @@ class DiagnosticRequestor implements Disposable {
 							items: []
 						};
 						for (const item of result.items) {
-							converted.items.push(await convertReport(item));
+							try {
+								converted.items.push(await convertReport(item));
+							} catch (error) {
+								this.client.error(`Converting workspace diagnostics failed.`, error, false);
+							}
 						}
-						disposable.dispose();
 						resultReporter(converted);
 						return { items: [] };
 					}, (error) => {
+						return this.client.handleFailedRequest(WorkspaceDiagnosticRequest.type, token, error, { items: [] });
+					}).finally(() => {
+						// Runs on success, cancellation, and request failure.
 						disposable.dispose();
-						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { items: [] });
 					});
 				};
 				const middleware: DiagnosticProviderMiddleware = this.client.middleware;
@@ -1019,8 +1027,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				const textEvents = event.cells?.textContent || [];
 				const changedCells = textEvents.map(
 					(c) => event.notebook.getCells().find(cell => cell.document.uri.toString() === c.document.uri.toString()));
+				const pulledUris = new Set<string>();
 				for (const cell of changedCells) {
 					if (cell && matchesCell(cell)) {
+						pulledUris.add(cell.document.uri.toString());
 						this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
 					}
 				}
@@ -1035,7 +1045,20 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 				const openedCells = event.cells?.structure?.didOpen || [];
 				for (const cell of openedCells) {
 					if (matchesCell(cell)) {
+						pulledUris.add(cell.document.uri.toString());
 						this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
+					}
+				}
+
+				// Text edits and cell order changes can affect other cells when the server
+				// reports inter file dependencies. Refresh them together instead of waiting
+				// for the background scheduler's per-document delay.
+				if (options.interFileDependencies && (textEvents.length > 0 || event.cells?.structure !== undefined)) {
+					for (const cell of event.notebook.getCells()) {
+						// Cells pulled above for this event do not need a second pull.
+						if (matchesCell(cell) && !pulledUris.has(cell.document.uri.toString())) {
+							this.diagnosticRequestor.pull(cell.document, () => { this.backgroundScheduler.trigger(); });
+						}
 					}
 				}
 			}));

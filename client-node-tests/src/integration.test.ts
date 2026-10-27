@@ -113,6 +113,64 @@ async function waitForProcessExit(pid: number, timeout: number): Promise<void> {
 	}
 }
 
+const NativePromise = Promise;
+
+/**
+ * A Promise implementation without `finally`, like the pre ES2018 polyfills
+ * that other code in a shared extension host can install as the global `Promise`.
+ */
+class PromiseWithoutFinally<T> implements PromiseLike<T> {
+
+	private readonly promise: Promise<T>;
+
+	constructor(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
+		this.promise = new NativePromise<T>(executor);
+	}
+
+	public then<R1 = T, R2 = never>(onfulfilled?: ((value: T) => R1 | PromiseLike<R1>) | null, onrejected?: ((reason: any) => R2 | PromiseLike<R2>) | null): PromiseWithoutFinally<R1 | R2> {
+		return PromiseWithoutFinally.from(this.promise.then(onfulfilled, onrejected));
+	}
+
+	public catch<R = never>(onrejected?: ((reason: any) => R | PromiseLike<R>) | null): PromiseWithoutFinally<T | R> {
+		return PromiseWithoutFinally.from(this.promise.catch(onrejected));
+	}
+
+	public static resolve<T>(value?: T | PromiseLike<T>): PromiseWithoutFinally<T> {
+		return new PromiseWithoutFinally<T>(resolve => resolve(value as T));
+	}
+
+	public static reject<T = never>(reason?: any): PromiseWithoutFinally<T> {
+		return new PromiseWithoutFinally<T>((_resolve, reject) => reject(reason));
+	}
+
+	public static all(values: Iterable<unknown>): PromiseWithoutFinally<unknown[]> {
+		return PromiseWithoutFinally.from(NativePromise.all(values));
+	}
+
+	public static race(values: Iterable<unknown>): PromiseWithoutFinally<unknown> {
+		return PromiseWithoutFinally.from(NativePromise.race(values));
+	}
+
+	private static from<T>(promise: Promise<T>): PromiseWithoutFinally<T> {
+		return new PromiseWithoutFinally<T>((resolve, reject) => promise.then(resolve, reject));
+	}
+}
+
+/**
+ * Runs the synchronous part of `callback` while the global `Promise` is
+ * replaced by `PromiseWithoutFinally`. The original is restored before
+ * `callback` returns so that other code in the test host is not affected.
+ */
+function withPromiseWithoutFinally<T>(callback: () => T): T {
+	const global = globalThis as { Promise: PromiseConstructor };
+	global.Promise = PromiseWithoutFinally as unknown as PromiseConstructor;
+	try {
+		return callback();
+	} finally {
+		global.Promise = NativePromise;
+	}
+}
+
 interface FoldingRangeTestFeature {
 	getRegistration(documentSelector: lsclient.DocumentSelector | undefined, capability: undefined | lsclient.FoldingRangeOptions | (lsclient.FoldingRangeRegistrationOptions & lsclient.StaticRegistrationOptions)): [string | undefined, (lsclient.FoldingRangeRegistrationOptions & { documentSelector: lsclient.DocumentSelector }) | undefined];
 	getRegistrationOptions(documentSelector: lsclient.DocumentSelector | undefined, capability: undefined | lsclient.FoldingRangeOptions) : (lsclient.FoldingRangeRegistrationOptions & { documentSelector: lsclient.DocumentSelector }) | undefined;
@@ -1615,6 +1673,170 @@ suite('Client integration', () => {
 		assert.strictEqual(reporterCalled, true);
 	});
 
+	/**
+	 * Runs a workspace diagnostic pull and returns the partial result tokens it
+	 * registered progress handlers for, plus those still active after the pull
+	 * settled. Only registrations made synchronously by this call are counted, so
+	 * the client's background workspace pull doesn't interfere.
+	 */
+	async function workspacePullProgressHandlers(token: vscode.CancellationToken): Promise<{ registered: (string | number)[]; active: (string | number)[] }> {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
+		const progressHandlers: Map<string | number, unknown> = (client as any)._progressHandlers;
+		const onProgress = sinon.spy(client, 'onProgress');
+		let registered: (string | number)[];
+		let pull: Promise<unknown>;
+		try {
+			pull = Promise.resolve(provider.diagnostics.provideWorkspaceDiagnostics([], token, () => {}));
+			registered = onProgress.getCalls()
+				.filter(call => call.args[0] === lsclient.WorkspaceDiagnosticRequest.partialResult)
+				.map(call => call.args[1]);
+		} finally {
+			onProgress.restore();
+		}
+		await pull;
+		return { registered, active: registered.filter(item => progressHandlers.has(item)) };
+	}
+
+	test('Workspace diagnostic pull does not register a progress handler when the client is not running', async () => {
+		const isRunning = sinon.stub(client, 'isRunning').returns(false);
+		let handlers: { registered: (string | number)[]; active: (string | number)[] };
+		try {
+			handlers = await workspacePullProgressHandlers(tokenSource.token);
+		} finally {
+			isRunning.restore();
+		}
+		assert.strictEqual(handlers.registered.length, 0, 'expected no progress handler to be registered');
+		assert.strictEqual(handlers.active.length, 0, 'expected no active progress handler');
+	});
+
+	test('Workspace diagnostic pull disposes its progress handler when cancelled', async () => {
+		const source = new vscode.CancellationTokenSource();
+		const sendRequest = client.sendRequest.bind(client) as (...args: any[]) => Promise<any>;
+		// Cancel once the response arrives, so the cancellation branch of the success handler runs.
+		const stub = sinon.stub(client, 'sendRequest').callsFake(async (...args: any[]) => {
+			const result = await sendRequest(...args);
+			if (args[2] === source.token) {
+				source.cancel();
+			}
+			return result;
+		});
+		let handlers: { registered: (string | number)[]; active: (string | number)[] };
+		try {
+			handlers = await workspacePullProgressHandlers(source.token);
+		} finally {
+			stub.restore();
+			source.dispose();
+		}
+		assert.strictEqual(source.token.isCancellationRequested, true, 'expected the pull to be cancelled');
+		assert.strictEqual(handlers.registered.length, 1, 'expected one progress handler to be registered');
+		assert.strictEqual(handlers.active.length, 0, 'expected the progress handler to be disposed');
+	});
+
+	test('Workspace diagnostic pull disposes its progress handler when converting the report fails', async () => {
+		const source = new vscode.CancellationTokenSource();
+		const converter = client.protocol2CodeConverter;
+		const asDiagnostics = converter.asDiagnostics.bind(converter) as (...args: any[]) => Promise<vscode.Diagnostic[]>;
+		const stub = sinon.stub(converter, 'asDiagnostics').callsFake(async (...args: any[]) => {
+			if (args[1] === source.token) {
+				throw new Error('conversion failed');
+			}
+			return asDiagnostics(...args);
+		});
+		let handlers: { registered: (string | number)[]; active: (string | number)[] };
+		try {
+			handlers = await workspacePullProgressHandlers(source.token);
+		} finally {
+			stub.restore();
+			source.dispose();
+		}
+		assert.strictEqual(handlers.registered.length, 1, 'expected one progress handler to be registered');
+		assert.strictEqual(handlers.active.length, 0, 'expected the progress handler to be disposed');
+	});
+
+	test('Workspace diagnostic pull skips a report that fails to convert and keeps the rest', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
+		const source = new vscode.CancellationTokenSource();
+		const sendRequest = client.sendRequest.bind(client) as (...args: any[]) => Promise<any>;
+		// Append a report whose empty message makes VS Code's Diagnostic constructor throw.
+		const stub = sinon.stub(client, 'sendRequest').callsFake(async (...args: any[]) => {
+			const result = await sendRequest(...args);
+			if (args[2] === source.token) {
+				result.items.push({ kind: 'full', uri: 'file:///bad.txt', items: [{ range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } }, message: '' }] });
+			}
+			return result;
+		});
+		const errorLog = sinon.stub(client, 'error');
+		const chunks: (vsdiag.WorkspaceDiagnosticReportPartialResult | null)[] = [];
+		try {
+			await provider.diagnostics.provideWorkspaceDiagnostics([], source.token, (chunk) => chunks.push(chunk));
+		} finally {
+			stub.restore();
+			errorLog.restore();
+			source.dispose();
+		}
+		assert.strictEqual(chunks.length, 1, 'expected the final report to be delivered');
+		const items = chunks[0]?.items ?? [];
+		assert.strictEqual(items.length, 1, 'expected the valid report to be kept');
+		assert.notStrictEqual(items[0].uri.toString(), 'file:///bad.txt', 'expected the bad report to be skipped');
+		assert.ok(errorLog.calledOnceWithExactly('Converting workspace diagnostics failed.', sinon.match.any, false), 'expected the conversion failure to be logged without a notification');
+	});
+
+	test('Workspace diagnostic pull keeps retrying after non-consecutive failures', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		// The suite server's identifier disables the background workspace pull, so drive it directly.
+		const requestor = (provider as any).diagnosticRequestor as { pullWorkspace(): void };
+		const runtime = lsclient.RAL();
+		const scheduled: (() => void)[] = [];
+		// Capture the 2s workspace pull reschedules instead of waiting for them.
+		lsclient.RAL.install({
+			...runtime,
+			timer: {
+				...runtime.timer,
+				setTimeout: (callback, milliseconds, ...args) => {
+					if (milliseconds === 2000) {
+						scheduled.push(() => callback(...args));
+						return lsclient.Disposable.create(() => {});
+					}
+					return runtime.timer.setTimeout(callback, milliseconds, ...args);
+				}
+			}
+		});
+		let fail = false;
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = (resultIds, token, reporter, next) => {
+			if (fail) {
+				throw new Error('transient failure');
+			}
+			return next(resultIds, token, reporter);
+		};
+		const errorLog = sinon.stub(client, 'error');
+		try {
+			// Alternate failure and success for 12 pulls: 6 failures, never more than one in a row.
+			for (let pull = 0; pull < 12; pull++) {
+				fail = pull % 2 === 0;
+				if (pull === 0) {
+					requestor.pullWorkspace();
+				} else {
+					scheduled.shift()!();
+				}
+				const deadline = Date.now() + 2000;
+				while (scheduled.length === 0 && Date.now() < deadline) {
+					await waitForNextTurn();
+				}
+				assert.strictEqual(scheduled.length, 1, `expected a workspace pull to be rescheduled after pull ${pull + 1}`);
+			}
+			assert.strictEqual(errorLog.callCount, 6);
+		} finally {
+			errorLog.restore();
+			lsclient.RAL.install(runtime);
+			(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = undefined;
+		}
+	}).timeout(10000);
+
 	test('Document diagnostic pull after quick reopen', async () => {
 		await vscode.window.showTextDocument(document);
 		let initialPullFinished: (() => void) | undefined;
@@ -1680,6 +1902,68 @@ suite('Client integration', () => {
 		await editPull;
 		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = undefined;
 		await revertAllDirty();
+	}).timeout(5000);
+
+	/**
+	 * Makes the next document pull fail with the given error, then triggers
+	 * another pull and waits for it to reach the provider. Returns the
+	 * `Document pull failed` errors logged by the client.
+	 */
+	async function pullAgainAfterFailedPull(failure: Error): Promise<sinon.SinonSpyCall[]> {
+		await vscode.window.showTextDocument(document);
+		await waitForNextTurn();
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+
+		let pullCount = 0;
+		let failedPullStarted!: () => void;
+		const failedPull = new Promise<void>((resolve) => {
+			failedPullStarted = resolve;
+		});
+		let nextPullFinished!: () => void;
+		const nextPull = new Promise<void>((resolve) => {
+			nextPullFinished = resolve;
+		});
+		const errorLog = sinon.spy(client, 'error');
+		(middleware as DiagnosticProviderMiddleware).provideDiagnostics = async (document, previousResultId, token, next) => {
+			if (++pullCount === 1) {
+				failedPullStarted();
+				throw failure;
+			}
+			const result = await next(document, previousResultId, token);
+			nextPullFinished();
+			return result;
+		};
+		try {
+			provider.onDidChangeDiagnosticsEmitter.fire();
+			await failedPull;
+			// Let pullAsync handle the failure before triggering the next pull.
+			await waitForNextTurn();
+
+			provider.onDidChangeDiagnosticsEmitter.fire();
+			let timeout: NodeJS.Timeout | undefined;
+			await Promise.race([
+				nextPull,
+				new Promise<never>((_, reject) => {
+					timeout = setTimeout(() => reject(new Error('No document pull was sent after the failed pull.')), 1000);
+				})
+			]).finally(() => clearTimeout(timeout));
+			return errorLog.getCalls().filter(call => typeof call.args[0] === 'string' && call.args[0].startsWith('Document pull failed'));
+		} finally {
+			(middleware as DiagnosticProviderMiddleware).provideDiagnostics = undefined;
+			errorLog.restore();
+		}
+	}
+
+	test('Document diagnostic pull after failed request', async () => {
+		const failures = await pullAgainAfterFailedPull(new Error('pull failed'));
+		assert.strictEqual(failures.length, 1, 'expected the failed pull to be logged once');
+		assert.strictEqual(failures[0].args[1].message, 'pull failed');
+	}).timeout(5000);
+
+	test('Document diagnostic pull after server cancellation without retrigger', async () => {
+		const failures = await pullAgainAfterFailedPull(new lsclient.LSPCancellationError({ retriggerRequest: false }));
+		assert.strictEqual(failures.length, 0, 'a server cancellation without retrigger must not be reported as a failure');
 	}).timeout(5000);
 
 	test('Type Hierarchy', async () => {
@@ -2130,6 +2414,108 @@ suite('Full notebook tests', () => {
 
 		await revertAllDirty();
 	}).timeout(5000);
+
+	test('Notebook document: text changes refresh dependent cells without waiting for background pulls', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', new vscode.NotebookData([
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'value = 1', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'other = 2', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'value + other', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'const unrelated = 1;', 'javascript')
+		]));
+		const cellUris = new Set(notebook.getCells().map(cell => cell.document.uri.toString()));
+		const expected = notebook.getCells().slice(0, 3).map(cell => cell.document.uri.toString());
+		const opened = new Set<string>();
+		const pulled: string[] = [];
+		let observingChanges = false;
+		client.middleware.provideDiagnostics = async (document, previousResultId, token, next) => {
+			const uri = document instanceof vscode.Uri ? document.toString() : document.uri.toString();
+			if (observingChanges && cellUris.has(uri)) {
+				pulled.push(uri);
+			}
+			const result = await next(document, previousResultId, token);
+			if (!observingChanges && cellUris.has(uri)) {
+				opened.add(uri);
+			}
+			return result;
+		};
+
+		const runtime = lsclient.RAL();
+		// Hold background pulls so the assertion does not depend on machine speed.
+		lsclient.RAL.install({
+			...runtime,
+			timer: {
+				...runtime.timer,
+				setTimeout: (callback, milliseconds, ...args) => milliseconds === 500
+					? lsclient.Disposable.create(() => {})
+					: runtime.timer.setTimeout(callback, milliseconds, ...args)
+			}
+		});
+		let listener: vscode.Disposable | undefined;
+		let notificationTimeout: ReturnType<typeof setTimeout> | undefined;
+		try {
+			await vscode.window.showNotebookDocument(notebook);
+			const deadline = Date.now() + 3000;
+			while (opened.size < expected.length && Date.now() < deadline) {
+				await waitForNextTurn();
+			}
+			assert.deepStrictEqual([...opened].sort(), [...expected].sort());
+			await waitForNextTurn();
+			observingChanges = true;
+			const changed = new Promise<void>((resolve, reject) => {
+				notificationTimeout = setTimeout(() => reject(new Error('No notebook text change notification was sent')), 3000);
+				listener = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method).onChangeNotificationSent(event => {
+					if (event.notebook === notebook && event.cells?.textContent?.length) {
+						resolve();
+					}
+				});
+			});
+			const edit = new vscode.WorkspaceEdit();
+			edit.insert(notebook.cellAt(0).document.uri, new vscode.Position(0, 0), '# changed\n');
+			assert.strictEqual(await vscode.workspace.applyEdit(edit), true);
+			await changed;
+			await waitForNextTurn();
+			assert.deepStrictEqual(pulled.sort(), [...expected].sort(), 'Pull each matching cell once, including unchanged dependent cells');
+		} finally {
+			clearTimeout(notificationTimeout);
+			listener?.dispose();
+			lsclient.RAL.install(runtime);
+			client.middleware.provideDiagnostics = undefined;
+			await revertAllDirty();
+		}
+	}).timeout(8000);
+
+	test('Notebook document: reordering cells pulls diagnostics', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
+		await vscode.window.showNotebookDocument(notebook);
+
+		const pulled: string[] = [];
+		client.middleware.provideDiagnostics = async (doc, p, token, next) => {
+			pulled.push(doc instanceof vscode.Uri ? doc.toString() : doc.uri.toString());
+			return next(doc, p, token);
+		};
+
+		try {
+			// Move the first cell down. This only changes the order of the cells.
+			const firstUri = notebook.cellAt(0).document.uri.toString();
+			const editor = vscode.window.activeNotebookEditor;
+			isDefined(editor);
+			editor.selection = new vscode.NotebookRange(0, 1);
+			// Let the pulls caused by opening the notebook finish before observing.
+			await new Promise<void>((resolve) => setTimeout(resolve, 500));
+			pulled.length = 0;
+			await vscode.commands.executeCommand('notebook.cell.moveDown');
+			assert.strictEqual(notebook.cellAt(1).document.uri.toString(), firstUri);
+			// Wait for a pull of the moved cell, with an upper bound.
+			const deadline = Date.now() + 3000;
+			while (!pulled.includes(firstUri) && Date.now() < deadline) {
+				await new Promise<void>((resolve) => setTimeout(resolve, 50));
+			}
+			assert.ok(pulled.includes(firstUri), 'Expected the moved cell to be pulled after the cell order changed');
+		} finally {
+			client.middleware.provideDiagnostics = undefined;
+			await revertAllDirty();
+		}
+	}).timeout(8000);
 });
 
 suite('Simple notebook tests', () => {
@@ -2274,6 +2660,49 @@ suite('Server tests', () => {
 		}
 	}).timeout(5000);
 
+	test('A refused initialization stops the client without an unhandled rejection', async () => {
+		const outputChannel = vscode.window.createOutputChannel('Initialization refused', { log: true });
+		const client = new lsclient.LanguageClient('initialization-refused', 'Initialization refused', {
+			module: path.join(__dirname, './servers/failInitializeServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		}, {
+			outputChannel,
+			initializationFailedHandler: () => false,
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed: () => ({ action: lsclient.CloseAction.DoNotRestart, handled: true }),
+			}
+		});
+		// The client moves from StartFailed to Stopped when the server's connection closes.
+		const stopped = new Promise<void>(resolve => {
+			const listener = client.onDidChangeState(event => {
+				if (event.newState === lsclient.State.Stopped) {
+					listener.dispose();
+					resolve();
+				}
+			});
+		});
+		const unhandled: unknown[] = [];
+		const onUnhandled = (reason: unknown) => unhandled.push(reason);
+		process.on('unhandledRejection', onUnhandled);
+		const stop = sinon.spy(client, 'stop');
+		try {
+			await assert.rejects(client.start(), /Initialization refused/);
+			// The client still stops after the failure, so the Node client terminates the
+			// server process, which closes the connection. The process has then also logged
+			// its exit, so the output channel can be disposed.
+			assert.strictEqual(stop.callCount, 1);
+			await stopped;
+			assert.deepStrictEqual(unhandled, []);
+		} finally {
+			process.off('unhandledRejection', onUnhandled);
+			stop.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+			outputChannel.dispose();
+		}
+	}).timeout(10000);
+
 	test('Stop fails if server crashes after shutdown request', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
@@ -2293,6 +2722,53 @@ suite('Server tests', () => {
 		await client.stop();
 		assert.strictEqual(client.needsStart(), true);
 		assert.strictEqual(client.needsStop(), false);
+	});
+
+	test('Server crash during stop is logged without a notification', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const closed = sinon.spy(() => ({ action: lsclient.CloseAction.DoNotRestart }));
+		const clientOptions: lsclient.LanguageClientOptions = {
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed,
+			}
+		};
+		const client = new CrashClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		const sandbox = sinon.createSandbox();
+		let crashTimeout: ReturnType<typeof setTimeout> | undefined;
+		try {
+			await client.start();
+			const errorLog = sandbox.spy(client, 'error');
+			const showErrorMessage = sandbox.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+			await assert.rejects(async () => {
+				await client.stop();
+			}, /Pending response rejected since connection got disposed/);
+			// stop() rejecting does not itself guarantee that the close handler has finished.
+			// Bound the wait so a missing close event cannot leave the global stub installed.
+			await Promise.race([
+				client.onCrash,
+				new Promise<never>((_, reject) => {
+					crashTimeout = setTimeout(() => reject(new Error('Timed out waiting for the close handler')), 2000);
+				})
+			]);
+
+			assert.strictEqual(closed.called, false, 'errorHandler.closed() must not be called during stop()');
+			const closeLog = errorLog.getCalls().find(call => /Connection to server got closed/.test(call.args[0]));
+			assert.ok(closeLog !== undefined, 'expected the close to be logged');
+			assert.strictEqual(closeLog.args[2], false, 'the close must not request a notification');
+			assert.strictEqual(showErrorMessage.called, false, 'no error notification must be shown');
+		} finally {
+			clearTimeout(crashTimeout);
+			sandbox.restore();
+			// Only a client that is still running needs stopping. `dispose()` on a
+			// client that failed to start throws and would mask the original failure.
+			if (client.needsStop()) {
+				await client.dispose();
+			}
+		}
 	});
 
 	test('Stop fails if server shutdown request times out', async () => {
@@ -2326,6 +2802,34 @@ suite('Server tests', () => {
 
 		await client.start();
 		await client.stop();
+	});
+
+	test('Start works if the global Promise has no finally', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await withPromiseWithoutFinally(() => client.start());
+		assert.strictEqual(client.state, lsclient.State.Running);
+
+		await client.stop();
+		assert.strictEqual(client.state, lsclient.State.Stopped);
+	});
+
+	test('Stop works if the global Promise has no finally', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/nullServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await client.start();
+		assert.strictEqual(client.state, lsclient.State.Running);
+
+		await withPromiseWithoutFinally(() => client.stop());
+		assert.strictEqual(client.state, lsclient.State.Stopped);
 	});
 
 	test('Test state change events', async() => {

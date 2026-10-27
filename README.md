@@ -33,7 +33,30 @@ language servers for [VSCode](https://code.visualstudio.com/).
 
 After cloning the repository, run `npm install` to install dependencies and `npm run symlink` to point packages in this repository to each other.
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the repository map, focused build and test commands, generated-file workflows, and maintenance hazards. AI coding agents should also read [AGENTS.md](./AGENTS.md).
+
 ## History
+
+## 3.18.5 Protocol, 10.0.0 JSON-RPC, 11.0.0 Client and 11.0.0 Server.
+
+[Fixed issues](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aissue%20is%3Aclosed%20reason%3Acompleted%20milestone%3A%223.18.5%22%20sort%3Aupdated-desc) | [Merged pull requests](https://github.com/microsoft/vscode-languageserver-node/pulls?q=is%3Apr%20is%3Amerged%20milestone%3A%223.18.5%22%20sort%3Aupdated-desc)
+
+### Compatibility
+
+- JSON-RPC now requires Node.js 14.17.0 or newer.
+- The exported `PipeTransport` and `SocketTransport` interfaces now require a `close()` method to release listeners when a server fails before connecting. The built-in transport factories provide this method. These interfaces are also re-exported by the client and server Node.js entry points.
+- UUID generation is centralized in the JSON-RPC runtime abstraction layer. `RAL` is implemented by the npm module; external implementations are not supported.
+- No protocol requests, notifications, or responses changed. The protocol package remains a patch release with updated JSON-RPC and types dependencies.
+
+### Bug fixes and improvements
+
+- Client: fix startup and shutdown failures, connection-close races, and cleanup when a server process exits before connecting.
+- Client: preserve document-open notification ordering, dispose duplicate file-watcher registrations, and avoid relying on `Promise.prototype.finally` during startup and shutdown.
+- Client: allow diagnostic pulls to recover after failures and refresh notebook diagnostics after cell reordering.
+- JSON-RPC: release parallel dispatch slots after rejected messages, fire missing IPC writer and port reader close events, and correct buffer slicing.
+- Server: remove deleted notebook cells from the cell map and avoid Windows command-spawning deprecation warnings.
+- Types 3.18.5: correct the `ColorPresentation.is` and `FoldingRange.is` type guards.
+- Text document 1.0.16: correct line offsets when incremental edits form CRLF across edit boundaries.
 
 ## 3.18.4 Protocol, 9.0.3 JSON-RPC, 10.1.2 Client and 10.1.2 Server.
 

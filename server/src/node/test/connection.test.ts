@@ -23,6 +23,20 @@ class TestStream extends Duplex {
 	}
 }
 
+class ForwardingStream extends Duplex {
+	constructor(private readonly target: TestStream) {
+		super();
+	}
+
+	_write(chunk: string, _encoding: string, done: () => void) {
+		this.target.emit('data', chunk);
+		done();
+	}
+
+	_read(_size: number) {
+	}
+}
+
 suite('Connection Tests', () => {
 	let serverConnection: Connection;
 	let clientConnection: Connection;
@@ -177,5 +191,70 @@ suite('Connection Tests', () => {
 			assert.ok((values as LocationLink[]).length === 0, 'No final values');
 			done();
 		});
+	});
+
+	const progressParams: DeclarationParams = {
+		position: { line: 0, character: 0 },
+		textDocument: {
+			uri: 'file:///home/dirkb/test.ts'
+		},
+		workDoneToken: 'xx',
+		partialResultToken: 'rr'
+	};
+
+	test('Reporting progress on a closed connection does not throw', (done) => {
+		serverConnection.onDeclaration((_params, _cancel, workDone, result) => {
+			serverConnection.dispose();
+			try {
+				assert.doesNotThrow(() => {
+					workDone.begin('title', 0, 'message', false);
+					workDone.report(50, 'report');
+					result!.report([]);
+					workDone.done();
+				});
+				done();
+			} catch (error) {
+				done(error);
+			}
+			return [];
+		});
+		void clientConnection.sendRequest(DeclarationRequest.type, progressParams);
+	});
+
+	test('Failed progress writes do not cause unhandled rejections', (done) => {
+		// Give the server its own output stream so destroying it doesn't close the
+		// client's input stream (which would exit the process).
+		const up = new TestStream();
+		const down = new TestStream();
+		const serverOutput = new ForwardingStream(down);
+		serverConnection = createConnection(up, serverOutput);
+		clientConnection = createConnection(down, up);
+		serverConnection.listen();
+		clientConnection.listen();
+
+		const unhandled: unknown[] = [];
+		const onUnhandledRejection = (reason: unknown) => unhandled.push(reason);
+		process.on('unhandledRejection', onUnhandledRejection);
+		serverConnection.onDeclaration((_params, _cancel, workDone, result) => {
+			// Simulate the client going away: the stream is destroyed but the
+			// connection hasn't processed the close yet, so writes reject.
+			serverOutput.destroy();
+			workDone.begin('title', 0, 'message', false);
+			workDone.report(50, 'report');
+			result!.report([]);
+			workDone.done();
+			// Give the rejected writes time to settle and be reported as unhandled.
+			setTimeout(() => {
+				process.removeListener('unhandledRejection', onUnhandledRejection);
+				try {
+					assert.deepStrictEqual(unhandled, []);
+					done();
+				} catch (error) {
+					done(error);
+				}
+			}, 50);
+			return new Promise<never>(() => {});
+		});
+		void clientConnection.sendRequest(DeclarationRequest.type, progressParams);
 	});
 });

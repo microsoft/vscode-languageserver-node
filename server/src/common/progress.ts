@@ -4,16 +4,36 @@
  * ------------------------------------------------------------------------------------------ */
 
 import {
-	ClientCapabilities, CancellationToken, CancellationTokenSource, ProgressToken, ProgressType, WorkDoneProgressParams, PartialResultParams,
+	RAL, ClientCapabilities, CancellationToken, CancellationTokenSource, ProgressToken, ProgressType, WorkDoneProgressParams, PartialResultParams,
 	WorkDoneProgressBegin, WorkDoneProgress, WorkDoneProgressReport, WorkDoneProgressCancelNotification, WorkDoneProgressCreateRequest,
 	RequestParam
 } from 'vscode-languageserver-protocol';
 
-import { generateUuid } from './utils/uuid';
 import type { Feature, _RemoteWindow } from './server';
+import * as Is from './utils/is';
 
 export interface ProgressContext {
 	sendProgress<P>(type: ProgressType<P>, token: ProgressToken, value: NoInfer<RequestParam<P>>): void;
+}
+
+namespace ProgressReporter {
+	/**
+	 * Progress is best-effort: reporters return `void`, so callers can't observe a
+	 * failed send. Swallow both the synchronous throw of a closed connection and the
+	 * rejection of a failed write (already logged by the connection) so neither
+	 * escapes as an exception or an unhandled rejection.
+	 */
+	export function sendProgress<P>(connection: ProgressContext, type: ProgressType<P>, token: ProgressToken, value: NoInfer<RequestParam<P>>): void {
+		try {
+			// The connection's implementation returns a promise even though the context types it as void.
+			const result: unknown = connection.sendProgress(type, token, value);
+			if (Is.thenable(result)) {
+				result.then(undefined, () => {});
+			}
+		} catch {
+			// The connection is closed or disposed.
+		}
+	}
 }
 
 export interface WorkDoneProgressReporter {
@@ -47,10 +67,7 @@ export interface WindowProgress {
 
 class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 
-	public static Instances: Map<string | number, WorkDoneProgressReporterImpl> = new Map();
-
-	constructor(private _connection: ProgressContext, private _token: ProgressToken) {
-		WorkDoneProgressReporterImpl.Instances.set(this._token, this);
+	constructor(private _connection: ProgressContext, protected readonly _token: ProgressToken) {
 	}
 
 	public begin(title: string, percentage?: number, message?: string, cancellable?: boolean): void {
@@ -65,7 +82,7 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 			// is a uinteger according to the specification
 			param.percentage = Math.round(percentage);
 		}
-		this._connection.sendProgress(WorkDoneProgress.type, this._token, param);
+		ProgressReporter.sendProgress(this._connection, WorkDoneProgress.type, this._token, param);
 	}
 
 	report(arg0: number | string, arg1?: string): void {
@@ -82,23 +99,30 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 		} else {
 			param.message = arg0;
 		}
-		this._connection.sendProgress(WorkDoneProgress.type, this._token, param);
+		ProgressReporter.sendProgress(this._connection, WorkDoneProgress.type, this._token, param);
 	}
 
 	done(): void {
-		WorkDoneProgressReporterImpl.Instances.delete(this._token);
-		this._connection.sendProgress(WorkDoneProgress.type, this._token, { kind: 'end' } );
+		ProgressReporter.sendProgress(this._connection, WorkDoneProgress.type, this._token, { kind: 'end' } );
 	}
 
 }
 
 class WorkDoneProgressServerReporterImpl extends WorkDoneProgressReporterImpl implements WorkDoneProgressServerReporter {
 
+	/**
+	 * Server-created reporters, keyed by token. Only these can be cancelled via
+	 * `window/workDoneProgress/cancel`, so reporters attached to client-provided
+	 * tokens are never tracked here.
+	 */
+	public static Instances: Map<string | number, WorkDoneProgressServerReporterImpl> = new Map();
+
 	private _source: CancellationTokenSource;
 
 	constructor(connection: ProgressContext, token: ProgressToken) {
 		super(connection, token);
 		this._source = new CancellationTokenSource();
+		WorkDoneProgressServerReporterImpl.Instances.set(token, this);
 	}
 
 	get token(): CancellationToken {
@@ -106,6 +130,7 @@ class WorkDoneProgressServerReporterImpl extends WorkDoneProgressReporterImpl im
 	}
 
 	done(): void {
+		WorkDoneProgressServerReporterImpl.Instances.delete(this._token);
 		this._source.dispose();
 		super.done();
 	}
@@ -174,10 +199,7 @@ export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) =>
 			if (capabilities?.window?.workDoneProgress === true) {
 				this._progressSupported = true;
 				this.connection.onNotification(WorkDoneProgressCancelNotification.type, (params) => {
-					const progress = WorkDoneProgressReporterImpl.Instances.get(params.token);
-					if (progress instanceof WorkDoneProgressServerReporterImpl || progress instanceof NullProgressServerReporter) {
-						progress.cancel();
-					}
+					WorkDoneProgressServerReporterImpl.Instances.get(params.token)?.cancel();
 				});
 			}
 		}
@@ -190,7 +212,7 @@ export const ProgressFeature: Feature<_RemoteWindow, WindowProgress> = (Base) =>
 		}
 		public createWorkDoneProgress(): Promise<WorkDoneProgressServerReporter> {
 			if (this._progressSupported) {
-				const token: string = generateUuid();
+				const token: string = RAL().crypto.randomUUID();
 				return this.connection.sendRequest(WorkDoneProgressCreateRequest.type, { token }).then(() => {
 					const result: WorkDoneProgressServerReporterImpl = new WorkDoneProgressServerReporterImpl(this.connection, token);
 					return result;
@@ -215,7 +237,7 @@ class ResultProgressReporterImpl<R> implements ResultProgressReporter<R> {
 	}
 
 	public report(data: R): void {
-		this._connection.sendProgress(ResultProgress.type, this._token, data);
+		ProgressReporter.sendProgress(this._connection, ResultProgress.type, this._token, data);
 	}
 }
 
