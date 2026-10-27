@@ -885,6 +885,92 @@ suite('Connection', () => {
 		});
 	});
 
+	test('Message strategy handles outgoing and incoming messages', async () => {
+		const type = new RequestType<number, string | undefined, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const asyncLocalStorage = new AsyncLocalStorage<string | undefined>();
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
+			messageStrategy: {
+				handleIncomingMessage(message, next) {
+					const traceparent = (message as { traceparent?: string }).traceparent;
+					return asyncLocalStorage.run(traceparent, () => next(message));
+				}
+			}
+		});
+		server.onRequest(type, () => asyncLocalStorage.getStore());
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, {
+			messageStrategy: {
+				handleOutgoingMessage(message, next) {
+					return next({ ...message, traceparent: '00-trace-span-01' } as hostConnection.Message);
+				}
+			}
+		});
+		client.listen();
+
+		assert.strictEqual(await client.sendRequest(type, 0), '00-trace-span-01');
+	});
+
+	test('Message strategy handles outgoing responses and notifications', async () => {
+		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+		const notificationType = new NotificationType<number>('test/notification');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const sent: string[] = [];
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
+			messageStrategy: {
+				handleOutgoingMessage(message, next) {
+					sent.push(hostConnection.Message.isNotification(message) ? message.method : 'response');
+					return next(message);
+				}
+			}
+		});
+		server.onRequest(type, async (param) => {
+			await server.sendNotification(notificationType, param);
+			return param + 1;
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+
+		assert.strictEqual(await client.sendRequest(type, 1), 2);
+		assert.deepStrictEqual(sent, ['test/notification', 'response']);
+	});
+
+	test('Message strategy prefers handleIncomingMessage over handleMessage', async () => {
+		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const calls: string[] = [];
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
+			messageStrategy: {
+				handleMessage(message, next) {
+					calls.push('handleMessage');
+					return next(message);
+				},
+				handleIncomingMessage(message, next) {
+					calls.push('handleIncomingMessage');
+					return next(message);
+				}
+			}
+		});
+		server.onRequest(type, (param) => param + 1);
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+
+		assert.strictEqual(await client.sendRequest(type, 1), 2);
+		assert.deepStrictEqual(calls, ['handleIncomingMessage']);
+	});
+
 	test('Message ports', async () => {
 		const type = new RequestType<string, string, void>('test/handleSingleRequest');
 		const messageChannel = new MessageChannel();

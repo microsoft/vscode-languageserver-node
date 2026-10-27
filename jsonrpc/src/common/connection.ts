@@ -474,13 +474,38 @@ export namespace CancellationStrategy {
 }
 
 export interface MessageStrategy {
-	handleMessage(message: Message, next: (message: Message) => NotificationResult): NotificationResult;
+	/**
+	 * Handles a received message before it is dispatched. Not called if
+	 * `handleIncomingMessage` is provided.
+	 *
+	 * @param message The received message.
+	 * @param next Dispatches the message.
+	 */
+	handleMessage?(message: Message, next: (message: Message) => NotificationResult): NotificationResult;
+
+	/**
+	 * Handles a received message before it is dispatched. If provided, it is
+	 * used instead of `handleMessage`.
+	 *
+	 * @param message The received message.
+	 * @param next Dispatches the message.
+	 */
+	handleIncomingMessage?(message: Message, next: (message: Message) => NotificationResult): NotificationResult;
+
+	/**
+	 * Handles a message before it is written, for example to add a property
+	 * like a trace context to it.
+	 *
+	 * @param message The message to send.
+	 * @param next Writes the message. Pass it the message to write.
+	 */
+	handleOutgoingMessage?(message: Message, next: (message: Message) => Promise<void>): Promise<void>;
 }
 
 export namespace MessageStrategy {
 	export function is(value: any): value is MessageStrategy {
 		const candidate: MessageStrategy = value;
-		return candidate && Is.func(candidate.handleMessage);
+		return candidate && (Is.func(candidate.handleMessage) || Is.func(candidate.handleIncomingMessage) || Is.func(candidate.handleOutgoingMessage));
 	}
 }
 
@@ -735,7 +760,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			try {
 				inFlight++;
 				const messageStrategy = options?.messageStrategy;
-				if (MessageStrategy.is(messageStrategy)) {
+				if (messageStrategy !== undefined && Is.func(messageStrategy.handleIncomingMessage)) {
+					result = messageStrategy.handleIncomingMessage(message, handleMessage);
+				} else if (messageStrategy !== undefined && Is.func(messageStrategy.handleMessage)) {
 					result = messageStrategy.handleMessage(message, handleMessage);
 				} else {
 					result = handleMessage(message);
@@ -775,6 +802,14 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
+	function writeMessage(message: Message): Promise<void> {
+		const messageStrategy = options?.messageStrategy;
+		if (messageStrategy !== undefined && Is.func(messageStrategy.handleOutgoingMessage)) {
+			return messageStrategy.handleOutgoingMessage(message, (message) => messageWriter.write(message));
+		}
+		return messageWriter.write(message);
+	}
+
 	const callback: DataCallback = (message) => {
 		try {
 			// We have received a cancellation message. Check if the message is still in the queue
@@ -791,7 +826,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						requestTokens.delete(cancelId);
 						response.id = toCancel.id;
 						traceSendingResponse(response, message.method, Date.now());
-						messageWriter.write(response).catch(() => logger.error(`Sending response for canceled message failed.`));
+						writeMessage(response).catch(() => logger.error(`Sending response for canceled message failed.`));
 						return;
 					}
 				}
@@ -831,7 +866,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				message.result = resultOrError === undefined ? null : resultOrError;
 			}
 			traceSendingResponse(message, method, startTime);
-			return messageWriter.write(message);
+			return writeMessage(message);
 		}
 		function replyError(error: ResponseError<any>, method: string, startTime: number): Promise<void> {
 			const message: ResponseMessage = {
@@ -840,7 +875,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				error: error.toJson()
 			};
 			traceSendingResponse(message, method, startTime);
-			return messageWriter.write(message);
+			return writeMessage(message);
 		}
 		traceReceivedRequest(requestMessage);
 
@@ -1313,7 +1348,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				params: messageParams
 			};
 			traceSendingNotification(notificationMessage);
-			return messageWriter.write(notificationMessage).catch((error) => {
+			return writeMessage(notificationMessage).catch((error) => {
 				logger.error(`Sending notification failed.`);
 				throw error;
 			});
@@ -1460,7 +1495,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				const responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				try {
 					responsePromises.set(id, responsePromise);
-					await messageWriter.write(requestMessage);
+					await writeMessage(requestMessage);
 					if (tokenWasCancelled) {
 						sendCancellation(connection, id);
 					}
