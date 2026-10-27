@@ -1425,7 +1425,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			await this.initialize(connection);
 			resolve();
 		} catch (error) {
-			this.$state = ClientState.StartFailed;
+			// If the connection closed during the start, the close handling may already have
+			// moved the client on, for example to a restart. Only a current start fails it.
+			if (this._onStart === promise) {
+				this.$state = ClientState.StartFailed;
+			}
 			this.error(`${this._name} client: couldn't create connection to server.`, error, 'force');
 			reject(error);
 		}
@@ -1557,7 +1561,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					return this.initialize(connection);
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
-				const item = await Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' });
+				// The connection can close while the message is shown. The close handling then
+				// already cleaned up or restarted the client, so settle the start without
+				// waiting for the user and ignore the stale answer.
+				const item = await Promise.race([
+					Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }),
+					connection.closed.then((): never => {
+						throw new Error(`Connection to server got closed before initialization was retried.`);
+					})
+				]);
 				if (item && item.id === 'retry') {
 					return this.initialize(connection);
 				}
@@ -2448,6 +2460,11 @@ export class LanguageClient extends BaseLanguageClient {
 
 interface Connection {
 
+	/**
+	 * Resolves once the connection got closed, also for callers that ask after the fact.
+	 */
+	readonly closed: Promise<void>;
+
 	listen(): void;
 
 	sendRequest<R, PR, E, RO>(type: ProtocolRequestType0<R, PR, E, RO>, token?: CancellationToken): Promise<R>;
@@ -2541,7 +2558,10 @@ function createConnection(input: MessageReader, output: MessageWriter, errorHand
 	const connection = createProtocolConnection(input, output, logger, options);
 	connection.onError((data) => { errorHandler(data[0], data[1], data[2]); });
 	connection.onClose(closeHandler);
+	const closed = new Promise<void>(resolve => connection.onClose(() => resolve()));
 	const result: Connection = {
+
+		closed,
 
 		listen: (): void => connection.listen(),
 

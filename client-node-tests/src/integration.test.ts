@@ -2831,6 +2831,41 @@ suite('Server tests', () => {
 		}
 	}).timeout(10000);
 
+	test('Start rejects when the connection closes while the retry choice is shown', async () => {
+		const client = createRetryClient('exitOnInitializeRetryServer.js');
+		// Keep the retry choice open until the test answers it.
+		let answer!: (item: vscode.MessageItem | undefined) => void;
+		const choice = new Promise<vscode.MessageItem | undefined>(resolve => answer = resolve);
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage');
+		showErrorMessage.withArgs('Initialization refused').returns(choice as any);
+		showErrorMessage.resolves(undefined);
+		const initialize = sinon.spy(client as any, 'initialize');
+		// The client must not stop after the close: the close handling already did. A failed
+		// start can't be stopped either, so the stub also keeps dispose() from rejecting.
+		const stop = sinon.stub(client, 'stop').resolves();
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Connection to server got closed before initialization was retried/);
+				assert.strictEqual(showErrorMessage.withArgs('Initialization refused').callCount, 1);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				// Answering the stale choice afterwards changes nothing.
+				answer({ title: 'Retry', id: 'retry' } as vscode.MessageItem);
+				await new Promise(resolve => setTimeout(resolve, 100));
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				assert.strictEqual(stop.callCount, 0);
+				assert.strictEqual(initialize.callCount, 1);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			answer(undefined);
+			initialize.restore();
+			showErrorMessage.restore();
+			await client.dispose();
+			stop.restore();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
 	test('Stop fails if server crashes after shutdown request', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
