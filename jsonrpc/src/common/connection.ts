@@ -485,7 +485,9 @@ export interface MessageStrategy {
 
 	/**
 	 * Handles a received message before it is dispatched. If provided, it is
-	 * used instead of `handleMessage`.
+	 * used instead of `handleMessage`. Unlike `handleMessage`, it also gets the
+	 * messages that skip the message queue: responses when `maxParallelism` is
+	 * set and `$/cancelRequest` notifications handled as soon as they are read.
 	 *
 	 * @param message The received message.
 	 * @param next Dispatches the message.
@@ -494,7 +496,9 @@ export interface MessageStrategy {
 
 	/**
 	 * Handles a message before it is written, for example to add a property
-	 * like a trace context to it.
+	 * like a trace context to it. Messages are passed one at a time in send
+	 * order: the next one is passed when the promise returned for the previous
+	 * one settles.
 	 *
 	 * @param message The message to send.
 	 * @param next Writes the message. Pass it the message to write.
@@ -733,7 +737,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			} else {
 				// If we have limited parallelism we resolve responses to avoid
 				// dead locks.
-				handleResponse(message);
+				handleUnqueuedMessage(message, handleMessage);
 			}
 		} else {
 			queue.set(createNotificationQueueKey(), message);
@@ -802,12 +806,27 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
+	// Messages that skip the queue go through `handleIncomingMessage`.
+	// `handleMessage` keeps getting queued messages only.
+	function handleUnqueuedMessage(message: Message, handle: (message: Message) => NotificationResult): void {
+		const messageStrategy = options?.messageStrategy;
+		const result = messageStrategy !== undefined && Is.func(messageStrategy.handleIncomingMessage) ? messageStrategy.handleIncomingMessage(message, handle) : handle(message);
+		if (result instanceof Promise) {
+			result.catch((error) => logger.error(`Processing message failed: ${error.toString()}`));
+		}
+	}
+
+	let lastOutgoingMessage: Promise<void> = Promise.resolve();
 	function writeMessage(message: Message): Promise<void> {
 		const messageStrategy = options?.messageStrategy;
-		if (messageStrategy !== undefined && Is.func(messageStrategy.handleOutgoingMessage)) {
-			return messageStrategy.handleOutgoingMessage(message, (message) => messageWriter.write(message));
+		if (messageStrategy === undefined || !Is.func(messageStrategy.handleOutgoingMessage)) {
+			return messageWriter.write(message);
 		}
-		return messageWriter.write(message);
+		// Pass one message at a time to the hook. Otherwise a hook that awaits
+		// before calling next lets a later message reach the writer first.
+		const result = lastOutgoingMessage.then(() => messageStrategy.handleOutgoingMessage!(message, (message) => messageWriter.write(message)));
+		lastOutgoingMessage = result.catch(() => undefined);
+		return result;
 	}
 
 	const callback: DataCallback = (message) => {
@@ -825,16 +844,20 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						messageQueue.delete(key);
 						requestTokens.delete(cancelId);
 						response.id = toCancel.id;
-						traceSendingResponse(response, message.method, Date.now());
-						writeMessage(response).catch(() => logger.error(`Sending response for canceled message failed.`));
+						handleUnqueuedMessage(message, () => {
+							traceSendingResponse(response, message.method, Date.now());
+							return writeMessage(response).catch(() => logger.error(`Sending response for canceled message failed.`));
+						});
 						return;
 					}
 				}
 				const cancellationToken = requestTokens.get(cancelId);
 				// The request is already running. Cancel the token
 				if (cancellationToken !== undefined) {
-					cancellationToken.cancel();
-					traceReceivedNotification(message);
+					handleUnqueuedMessage(message, () => {
+						cancellationToken.cancel();
+						traceReceivedNotification(message);
+					});
 					return;
 				} else {
 					// Remember the cancel but still queue the message to

@@ -971,6 +971,111 @@ suite('Connection', () => {
 		assert.deepStrictEqual(calls, ['handleIncomingMessage']);
 	});
 
+	test('Message strategy keeps the send order when handleOutgoingMessage awaits', async () => {
+		const didOpen = new NotificationType<number>('test/didOpen');
+		const didChange = new NotificationType<number>('test/didChange');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const received: string[] = [];
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const bothReceived = new Promise<void>((resolve) => {
+			server.onNotification((method) => {
+				received.push(method);
+				if (received.length === 2) {
+					resolve();
+				}
+			});
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, {
+			messageStrategy: {
+				async handleOutgoingMessage(message, next) {
+					if (hostConnection.Message.isNotification(message) && message.method === didOpen.method) {
+						await new Promise(resolve => setTimeout(resolve, 10));
+					}
+					return next(message);
+				}
+			}
+		});
+		client.listen();
+
+		void client.sendNotification(didOpen, 1);
+		void client.sendNotification(didChange, 2);
+		await bothReceived;
+		assert.deepStrictEqual(received, [didOpen.method, didChange.method]);
+	});
+
+	test('Message strategy handles responses that skip the queue', async () => {
+		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		server.onRequest(type, (param) => param + 1);
+		server.listen();
+
+		// With maxParallelism set, responses are handled as soon as they are read.
+		const received: hostConnection.Message[] = [];
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, {
+			maxParallelism: 1,
+			messageStrategy: {
+				handleIncomingMessage(message, next) {
+					received.push(message);
+					return next(message);
+				}
+			}
+		});
+		client.listen();
+
+		assert.strictEqual(await client.sendRequest(type, 1), 2);
+		assert.deepStrictEqual(received, [{ jsonrpc: '2.0', id: 0, result: 2 }]);
+	});
+
+	test('Message strategy handles cancellations that skip the queue', async () => {
+		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const received: string[] = [];
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
+			maxParallelism: 1,
+			connectionStrategy: {
+				cancelUndispatched: (message) => ({ jsonrpc: '2.0', id: (message as hostConnection.RequestMessage).id, result: 0 })
+			},
+			messageStrategy: {
+				handleIncomingMessage(message, next) {
+					received.push((message as hostConnection.RequestMessage).method);
+					return next(message);
+				}
+			}
+		});
+		let started!: () => void;
+		const firstStarted = new Promise<void>(resolve => started = resolve);
+		server.onRequest(type, (param, token) => {
+			started();
+			return new Promise<number>(resolve => token.onCancellationRequested(() => resolve(param)));
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+
+		// The first request runs while the second one waits in the queue. Both
+		// cancellations are handled as soon as they are read.
+		const firstSource = new CancellationTokenSource();
+		const first = client.sendRequest(type, 1, firstSource.token);
+		await firstStarted;
+		const secondSource = new CancellationTokenSource();
+		const second = client.sendRequest(type, 2, secondSource.token);
+		secondSource.cancel();
+		assert.strictEqual(await second, 0);
+		firstSource.cancel();
+		assert.strictEqual(await first, 1);
+		assert.deepStrictEqual(received, [type.method, '$/cancelRequest', '$/cancelRequest']);
+	});
+
 	test('Message ports', async () => {
 		const type = new RequestType<string, string, void>('test/handleSingleRequest');
 		const messageChannel = new MessageChannel();
