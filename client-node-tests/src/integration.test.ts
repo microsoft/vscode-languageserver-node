@@ -1679,7 +1679,7 @@ suite('Client integration', () => {
 	 * settled. Only registrations made synchronously by this call are counted, so
 	 * the client's background workspace pull doesn't interfere.
 	 */
-	async function workspacePullProgressHandlers(token: vscode.CancellationToken, expectRejection?: RegExp): Promise<{ registered: (string | number)[]; active: (string | number)[] }> {
+	async function workspacePullProgressHandlers(token: vscode.CancellationToken): Promise<{ registered: (string | number)[]; active: (string | number)[] }> {
 		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
 		isDefined(provider);
 		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
@@ -1695,11 +1695,7 @@ suite('Client integration', () => {
 		} finally {
 			onProgress.restore();
 		}
-		if (expectRejection !== undefined) {
-			await assert.rejects(pull, expectRejection);
-		} else {
-			await pull;
-		}
+		await pull;
 		return { registered, active: registered.filter(item => progressHandlers.has(item)) };
 	}
 
@@ -1750,7 +1746,7 @@ suite('Client integration', () => {
 		});
 		let handlers: { registered: (string | number)[]; active: (string | number)[] };
 		try {
-			handlers = await workspacePullProgressHandlers(source.token, /conversion failed/);
+			handlers = await workspacePullProgressHandlers(source.token);
 		} finally {
 			stub.restore();
 			source.dispose();
@@ -1758,6 +1754,88 @@ suite('Client integration', () => {
 		assert.strictEqual(handlers.registered.length, 1, 'expected one progress handler to be registered');
 		assert.strictEqual(handlers.active.length, 0, 'expected the progress handler to be disposed');
 	});
+
+	test('Workspace diagnostic pull skips a report that fails to convert and keeps the rest', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
+		const source = new vscode.CancellationTokenSource();
+		const sendRequest = client.sendRequest.bind(client) as (...args: any[]) => Promise<any>;
+		// Append a report whose empty message makes VS Code's Diagnostic constructor throw.
+		const stub = sinon.stub(client, 'sendRequest').callsFake(async (...args: any[]) => {
+			const result = await sendRequest(...args);
+			if (args[2] === source.token) {
+				result.items.push({ kind: 'full', uri: 'file:///bad.txt', items: [{ range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } }, message: '' }] });
+			}
+			return result;
+		});
+		const errorLog = sinon.stub(client, 'error');
+		const chunks: (vsdiag.WorkspaceDiagnosticReportPartialResult | null)[] = [];
+		try {
+			await provider.diagnostics.provideWorkspaceDiagnostics([], source.token, (chunk) => chunks.push(chunk));
+		} finally {
+			stub.restore();
+			errorLog.restore();
+			source.dispose();
+		}
+		assert.strictEqual(chunks.length, 1, 'expected the final report to be delivered');
+		const items = chunks[0]?.items ?? [];
+		assert.strictEqual(items.length, 1, 'expected the valid report to be kept');
+		assert.notStrictEqual(items[0].uri.toString(), 'file:///bad.txt', 'expected the bad report to be skipped');
+		assert.ok(errorLog.calledOnceWithExactly('Converting workspace diagnostics failed.', sinon.match.any, false), 'expected the conversion failure to be logged without a notification');
+	});
+
+	test('Workspace diagnostic pull keeps retrying after non-consecutive failures', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		// The suite server's identifier disables the background workspace pull, so drive it directly.
+		const requestor = (provider as any).diagnosticRequestor as { pullWorkspace(): void };
+		const runtime = lsclient.RAL();
+		const scheduled: (() => void)[] = [];
+		// Capture the 2s workspace pull reschedules instead of waiting for them.
+		lsclient.RAL.install({
+			...runtime,
+			timer: {
+				...runtime.timer,
+				setTimeout: (callback, milliseconds, ...args) => {
+					if (milliseconds === 2000) {
+						scheduled.push(() => callback(...args));
+						return lsclient.Disposable.create(() => {});
+					}
+					return runtime.timer.setTimeout(callback, milliseconds, ...args);
+				}
+			}
+		});
+		let fail = false;
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = (resultIds, token, reporter, next) => {
+			if (fail) {
+				throw new Error('transient failure');
+			}
+			return next(resultIds, token, reporter);
+		};
+		const errorLog = sinon.stub(client, 'error');
+		try {
+			// Alternate failure and success for 12 pulls: 6 failures, never more than one in a row.
+			for (let pull = 0; pull < 12; pull++) {
+				fail = pull % 2 === 0;
+				if (pull === 0) {
+					requestor.pullWorkspace();
+				} else {
+					scheduled.shift()!();
+				}
+				const deadline = Date.now() + 2000;
+				while (scheduled.length === 0 && Date.now() < deadline) {
+					await waitForNextTurn();
+				}
+				assert.strictEqual(scheduled.length, 1, `expected a workspace pull to be rescheduled after pull ${pull + 1}`);
+			}
+			assert.strictEqual(errorLog.callCount, 6);
+		} finally {
+			errorLog.restore();
+			lsclient.RAL.install(runtime);
+			(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = undefined;
+		}
+	}).timeout(10000);
 
 	test('Document diagnostic pull after quick reopen', async () => {
 		await vscode.window.showTextDocument(document);
@@ -2336,6 +2414,75 @@ suite('Full notebook tests', () => {
 
 		await revertAllDirty();
 	}).timeout(5000);
+
+	test('Notebook document: text changes refresh dependent cells without waiting for background pulls', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', new vscode.NotebookData([
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'value = 1', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'other = 2', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'value + other', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'const unrelated = 1;', 'javascript')
+		]));
+		const cellUris = new Set(notebook.getCells().map(cell => cell.document.uri.toString()));
+		const expected = notebook.getCells().slice(0, 3).map(cell => cell.document.uri.toString());
+		const opened = new Set<string>();
+		const pulled: string[] = [];
+		let observingChanges = false;
+		client.middleware.provideDiagnostics = async (document, previousResultId, token, next) => {
+			const uri = document instanceof vscode.Uri ? document.toString() : document.uri.toString();
+			if (observingChanges && cellUris.has(uri)) {
+				pulled.push(uri);
+			}
+			const result = await next(document, previousResultId, token);
+			if (!observingChanges && cellUris.has(uri)) {
+				opened.add(uri);
+			}
+			return result;
+		};
+
+		const runtime = lsclient.RAL();
+		// Hold background pulls so the assertion does not depend on machine speed.
+		lsclient.RAL.install({
+			...runtime,
+			timer: {
+				...runtime.timer,
+				setTimeout: (callback, milliseconds, ...args) => milliseconds === 500
+					? lsclient.Disposable.create(() => {})
+					: runtime.timer.setTimeout(callback, milliseconds, ...args)
+			}
+		});
+		let listener: vscode.Disposable | undefined;
+		let notificationTimeout: ReturnType<typeof setTimeout> | undefined;
+		try {
+			await vscode.window.showNotebookDocument(notebook);
+			const deadline = Date.now() + 3000;
+			while (opened.size < expected.length && Date.now() < deadline) {
+				await waitForNextTurn();
+			}
+			assert.deepStrictEqual([...opened].sort(), [...expected].sort());
+			await waitForNextTurn();
+			observingChanges = true;
+			const changed = new Promise<void>((resolve, reject) => {
+				notificationTimeout = setTimeout(() => reject(new Error('No notebook text change notification was sent')), 3000);
+				listener = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method).onChangeNotificationSent(event => {
+					if (event.notebook === notebook && event.cells?.textContent?.length) {
+						resolve();
+					}
+				});
+			});
+			const edit = new vscode.WorkspaceEdit();
+			edit.insert(notebook.cellAt(0).document.uri, new vscode.Position(0, 0), '# changed\n');
+			assert.strictEqual(await vscode.workspace.applyEdit(edit), true);
+			await changed;
+			await waitForNextTurn();
+			assert.deepStrictEqual(pulled.sort(), [...expected].sort(), 'Pull each matching cell once, including unchanged dependent cells');
+		} finally {
+			clearTimeout(notificationTimeout);
+			listener?.dispose();
+			lsclient.RAL.install(runtime);
+			client.middleware.provideDiagnostics = undefined;
+			await revertAllDirty();
+		}
+	}).timeout(8000);
 
 	test('Notebook document: reordering cells pulls diagnostics', async(): Promise<void> => {
 		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
