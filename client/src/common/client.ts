@@ -1550,27 +1550,24 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 
 			return result;
 		} catch (error: any) {
+			// A retry settles the start of the client, so its outcome is returned rather
+			// than run in the background after start() has already rejected.
 			if (this._clientOptions.initializationFailedHandler) {
 				if (this._clientOptions.initializationFailedHandler(error)) {
-					void this.initialize(connection);
-				} else {
-					this.stopAfterFailedInitialize();
+					return this.initialize(connection);
 				}
 			} else if (error instanceof ResponseError && error.data && error.data.retry) {
-				void Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' }).then(item => {
-					if (item && item.id === 'retry') {
-						void this.initialize(connection);
-					} else {
-						this.stopAfterFailedInitialize();
-					}
-				});
+				const item = await Window.showErrorMessage(error.message, { title: 'Retry', id: 'retry' });
+				if (item && item.id === 'retry') {
+					return this.initialize(connection);
+				}
 			} else {
 				if (error && error.message) {
 					void Window.showErrorMessage(error.message);
 				}
 				this.error('Server initialization failed.', error);
-				this.stopAfterFailedInitialize();
 			}
+			this.stopAfterFailedInitialize();
 			throw error;
 		}
 	}
