@@ -807,12 +807,18 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	// Messages that skip the queue go through `handleIncomingMessage`.
-	// `handleMessage` keeps getting queued messages only.
+	// `handleMessage` keeps getting queued messages only. Errors are logged,
+	// since the reader can call us from an event handler.
 	function handleUnqueuedMessage(message: Message, handle: (message: Message) => NotificationResult): void {
 		const messageStrategy = options?.messageStrategy;
-		const result = messageStrategy !== undefined && Is.func(messageStrategy.handleIncomingMessage) ? messageStrategy.handleIncomingMessage(message, handle) : handle(message);
-		if (result instanceof Promise) {
-			result.catch((error) => logger.error(`Processing message failed: ${error.toString()}`));
+		const logError = (error: any) => logger.error(`Processing message failed: ${error}`);
+		try {
+			const result = messageStrategy !== undefined && Is.func(messageStrategy.handleIncomingMessage) ? messageStrategy.handleIncomingMessage(message, handle) : handle(message);
+			if (result instanceof Promise) {
+				result.catch(logError);
+			}
+		} catch (error) {
+			logError(error);
 		}
 	}
 
@@ -841,10 +847,17 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					const strategy = options?.connectionStrategy;
 					const response = (strategy && strategy.cancelUndispatched) ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
 					if (response && (response.error !== undefined || response.result !== undefined)) {
-						messageQueue.delete(key);
-						requestTokens.delete(cancelId);
 						response.id = toCancel.id;
 						handleUnqueuedMessage(message, () => {
+							// The hook can call next later or not at all. Only drop the
+							// request if it is still queued then, otherwise cancel it.
+							if (messageQueue.get(key) !== toCancel) {
+								requestTokens.get(cancelId)?.cancel();
+								traceReceivedNotification(message);
+								return;
+							}
+							messageQueue.delete(key);
+							requestTokens.delete(cancelId);
 							traceSendingResponse(response, message.method, Date.now());
 							return writeMessage(response).catch(() => logger.error(`Sending response for canceled message failed.`));
 						});

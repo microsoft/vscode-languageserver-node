@@ -1076,6 +1076,80 @@ suite('Connection', () => {
 		assert.deepStrictEqual(received, [type.method, '$/cancelRequest', '$/cancelRequest']);
 	});
 
+	test('Message strategy can ignore the cancellation of a queued request', async () => {
+		const type = new RequestType<number, number, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		let dropped!: () => void;
+		const cancelDropped = new Promise<void>(resolve => dropped = resolve);
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
+			maxParallelism: 1,
+			connectionStrategy: {
+				cancelUndispatched: (message) => ({ jsonrpc: '2.0', id: (message as hostConnection.RequestMessage).id, result: 0 })
+			},
+			messageStrategy: {
+				handleIncomingMessage(message, next) {
+					// Cancellations are dropped without calling next.
+					if (hostConnection.Message.isNotification(message) && message.method === '$/cancelRequest') {
+						dropped();
+						return;
+					}
+					return next(message);
+				}
+			}
+		});
+		let started!: () => void;
+		const firstStarted = new Promise<void>(resolve => started = resolve);
+		let release!: () => void;
+		const released = new Promise<void>(resolve => release = resolve);
+		server.onRequest(type, async (param) => {
+			if (param === 1) {
+				started();
+				await released;
+			}
+			return param;
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+
+		// The second request waits in the queue while the first one runs.
+		const first = client.sendRequest(type, 1);
+		await firstStarted;
+		const source = new CancellationTokenSource();
+		const second = client.sendRequest(type, 2, source.token);
+		source.cancel();
+		await cancelDropped;
+		release();
+		assert.strictEqual(await first, 1);
+		assert.strictEqual(await second, 2);
+	});
+
+	test('Message strategy errors on messages that skip the queue are logged', () => {
+		const proc = new EventEmitter();
+		const errors: string[] = [];
+		const logger: hostConnection.Logger = {
+			...hostConnection.NullLogger,
+			error: (message: string) => errors.push(message)
+		};
+		const connection = hostConnection.createMessageConnection(new hostConnection.IPCMessageReader(proc as NodeJS.Process), new hostConnection.IPCMessageWriter(proc as NodeJS.Process), logger, {
+			maxParallelism: 1,
+			messageStrategy: {
+				handleIncomingMessage() {
+					throw new Error('hook failed');
+				}
+			}
+		});
+		connection.listen();
+
+		// The IPC reader calls the connection from the process message event,
+		// so an error escaping there would be an uncaught exception.
+		assert.doesNotThrow(() => proc.emit('message', { jsonrpc: '2.0', id: 0, result: 1 }));
+		assert.deepStrictEqual(errors, ['Processing message failed: Error: hook failed']);
+	});
+
 	test('Message ports', async () => {
 		const type = new RequestType<string, string, void>('test/handleSingleRequest');
 		const messageChannel = new MessageChannel();
