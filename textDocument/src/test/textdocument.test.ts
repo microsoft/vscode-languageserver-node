@@ -659,4 +659,24 @@ suite('Text Document Incremental Updates', () => {
 		assert.equal(document.lineCount, 1);
 		assertValidLineNumbers(document);
 	});
+
+	test('Update ranges starting after the document ends keep line offsets valid', () => {
+		const changes = [
+			{ range: Ranges.create(5, 0, 6, 0), text: 'x\n' },
+			{ range: Ranges.create(5, 0, 7, 0), text: 'x\ny\n' },
+			{ range: Ranges.create(5, 0, 5, 0), text: 'x\ny' }
+		];
+		for (const change of changes) {
+			const document = newDocument('a\nb');
+			TextDocument.update(document, [change], 1);
+			const expected = newDocument(document.getText());
+			assert.strictEqual(document.lineCount, expected.lineCount, change.text);
+			for (let offset = 0; offset <= document.getText().length; offset++) {
+				assert.deepStrictEqual(document.positionAt(offset), expected.positionAt(offset), change.text);
+			}
+			for (let line = 0; line <= expected.lineCount; line++) {
+				assert.strictEqual(document.offsetAt(Positions.create(line, 0)), expected.offsetAt(Positions.create(line, 0)), change.text);
+			}
+		}
+	});
 });
