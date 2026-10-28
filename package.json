@@ -45,7 +45,7 @@
 		"shx": "^0.4.0",
 		"source-map-support": "^0.5.21",
 		"ts-json-schema-generator": "^2.9.0",
-		"@typescript/native": "npm:typescript@^7.1.0-dev.20261016.1",
+		"@typescript/native": "npm:typescript@^7.1.0-dev.20260930.4",
 		"typescript": "npm:@typescript/typescript6@^6.0.3"
 	},
 	"scripts": {
