@@ -10,9 +10,30 @@ import {
 } from 'vscode-languageserver-protocol';
 
 import type { Feature, _RemoteWindow } from './server';
+import * as Is from './utils/is';
 
 export interface ProgressContext {
 	sendProgress<P>(type: ProgressType<P>, token: ProgressToken, value: NoInfer<RequestParam<P>>): void;
+}
+
+namespace ProgressReporter {
+	/**
+	 * Progress is best-effort: reporters return `void`, so callers can't observe a
+	 * failed send. Swallow both the synchronous throw of a closed connection and the
+	 * rejection of a failed write (already logged by the connection) so neither
+	 * escapes as an exception or an unhandled rejection.
+	 */
+	export function sendProgress<P>(connection: ProgressContext, type: ProgressType<P>, token: ProgressToken, value: NoInfer<RequestParam<P>>): void {
+		try {
+			// The connection's implementation returns a promise even though the context types it as void.
+			const result: unknown = connection.sendProgress(type, token, value);
+			if (Is.thenable(result)) {
+				result.then(undefined, () => {});
+			}
+		} catch {
+			// The connection is closed or disposed.
+		}
+	}
 }
 
 export interface WorkDoneProgressReporter {
@@ -61,7 +82,7 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 			// is a uinteger according to the specification
 			param.percentage = Math.round(percentage);
 		}
-		this._connection.sendProgress(WorkDoneProgress.type, this._token, param);
+		ProgressReporter.sendProgress(this._connection, WorkDoneProgress.type, this._token, param);
 	}
 
 	report(arg0: number | string, arg1?: string): void {
@@ -78,11 +99,11 @@ class WorkDoneProgressReporterImpl implements WorkDoneProgressReporter {
 		} else {
 			param.message = arg0;
 		}
-		this._connection.sendProgress(WorkDoneProgress.type, this._token, param);
+		ProgressReporter.sendProgress(this._connection, WorkDoneProgress.type, this._token, param);
 	}
 
 	done(): void {
-		this._connection.sendProgress(WorkDoneProgress.type, this._token, { kind: 'end' } );
+		ProgressReporter.sendProgress(this._connection, WorkDoneProgress.type, this._token, { kind: 'end' } );
 	}
 
 }
@@ -216,7 +237,7 @@ class ResultProgressReporterImpl<R> implements ResultProgressReporter<R> {
 	}
 
 	public report(data: R): void {
-		this._connection.sendProgress(ResultProgress.type, this._token, data);
+		ProgressReporter.sendProgress(this._connection, ResultProgress.type, this._token, data);
 	}
 }
 
