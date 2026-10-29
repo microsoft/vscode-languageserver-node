@@ -487,7 +487,8 @@ export interface MessageStrategy {
 	 * Handles a received message before it is dispatched. If provided, it is
 	 * used instead of `handleMessage`. Unlike `handleMessage`, it also gets the
 	 * messages that skip the message queue: responses when `maxParallelism` is
-	 * set and `$/cancelRequest` notifications handled as soon as they are read.
+	 * set, and `$/cancelRequest` notifications as soon as they are read. A
+	 * request is only canceled once `next` is called for its `$/cancelRequest`.
 	 *
 	 * @param message The received message.
 	 * @param next Dispatches the message.
@@ -765,7 +766,8 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				inFlight++;
 				const messageStrategy = options?.messageStrategy;
 				if (messageStrategy !== undefined && Is.func(messageStrategy.handleIncomingMessage)) {
-					result = messageStrategy.handleIncomingMessage(message, handleMessage);
+					// A queued cancellation already went through the hook when it was read.
+					result = isCancelNotification(message) ? handleMessage(message) : messageStrategy.handleIncomingMessage(message, handleMessage);
 				} else if (messageStrategy !== undefined && Is.func(messageStrategy.handleMessage)) {
 					result = messageStrategy.handleMessage(message, handleMessage);
 				} else {
@@ -836,10 +838,25 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 	}
 
 	const callback: DataCallback = (message) => {
+		const messageStrategy = options?.messageStrategy;
+		// The hook gets cancellations as soon as they are read and can drop them,
+		// so nothing is canceled or remembered before it calls next.
+		if (isCancelNotification(message) && messageStrategy !== undefined && Is.func(messageStrategy.handleIncomingMessage)) {
+			handleUnqueuedMessage(message, receiveMessage);
+		} else {
+			receiveMessage(message);
+		}
+	};
+
+	function isCancelNotification(message: Message): message is NotificationMessage {
+		return Message.isNotification(message) && message.method === CancelNotification.type.method;
+	}
+
+	function receiveMessage(message: Message): void {
 		try {
 			// We have received a cancellation message. Check if the message is still in the queue
 			// and cancel it if allowed to do so.
-			if (Message.isNotification(message) && message.method === CancelNotification.type.method) {
+			if (isCancelNotification(message)) {
 				const cancelId = (message.params as CancelParams).id;
 				const key = createRequestQueueKey(cancelId);
 				const toCancel = messageQueue.get(key);
@@ -847,30 +864,19 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					const strategy = options?.connectionStrategy;
 					const response = (strategy && strategy.cancelUndispatched) ? strategy.cancelUndispatched(toCancel, cancelUndispatched) : cancelUndispatched(toCancel);
 					if (response && (response.error !== undefined || response.result !== undefined)) {
+						messageQueue.delete(key);
+						requestTokens.delete(cancelId);
 						response.id = toCancel.id;
-						handleUnqueuedMessage(message, () => {
-							// The hook can call next later or not at all. Only drop the
-							// request if it is still queued then, otherwise cancel it.
-							if (messageQueue.get(key) !== toCancel) {
-								requestTokens.get(cancelId)?.cancel();
-								traceReceivedNotification(message);
-								return;
-							}
-							messageQueue.delete(key);
-							requestTokens.delete(cancelId);
-							traceSendingResponse(response, message.method, Date.now());
-							return writeMessage(response).catch(() => logger.error(`Sending response for canceled message failed.`));
-						});
+						traceSendingResponse(response, message.method, Date.now());
+						writeMessage(response).catch(() => logger.error(`Sending response for canceled message failed.`));
 						return;
 					}
 				}
 				const cancellationToken = requestTokens.get(cancelId);
 				// The request is already running. Cancel the token
 				if (cancellationToken !== undefined) {
-					handleUnqueuedMessage(message, () => {
-						cancellationToken.cancel();
-						traceReceivedNotification(message);
-					});
+					cancellationToken.cancel();
+					traceReceivedNotification(message);
 					return;
 				} else {
 					// Remember the cancel but still queue the message to
@@ -882,7 +888,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		} finally {
 			triggerMessageQueue();
 		}
-	};
+	}
 
 	async function handleRequest(requestMessage: RequestMessage): Promise<void> {
 		if (isDisposed()) {

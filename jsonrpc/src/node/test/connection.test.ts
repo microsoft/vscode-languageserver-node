@@ -1127,6 +1127,51 @@ suite('Connection', () => {
 		assert.strictEqual(await second, 2);
 	});
 
+	test('Message strategy can ignore the cancellation of a queued request without cancelUndispatched', async () => {
+		const type = new RequestType<number, boolean, void>('test/handleSingleRequest');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger, {
+			maxParallelism: 1,
+			messageStrategy: {
+				handleIncomingMessage(message, next) {
+					// The cancellation of the queued request (id 1) is dropped.
+					if (hostConnection.Message.isNotification(message) && message.method === '$/cancelRequest' && (message.params as { id: number }).id === 1) {
+						return;
+					}
+					return next(message);
+				}
+			}
+		});
+		let started!: () => void;
+		const firstStarted = new Promise<void>(resolve => started = resolve);
+		server.onRequest(type, (param, token) => {
+			if (param === 1) {
+				started();
+				return new Promise<boolean>(resolve => token.onCancellationRequested(() => resolve(true)));
+			}
+			return token.isCancellationRequested;
+		});
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+
+		// The second request waits in the queue while the first one runs. The
+		// first one ends on its own cancellation, which is read after the
+		// dropped one.
+		const firstSource = new CancellationTokenSource();
+		const first = client.sendRequest(type, 1, firstSource.token);
+		await firstStarted;
+		const secondSource = new CancellationTokenSource();
+		const second = client.sendRequest(type, 2, secondSource.token);
+		secondSource.cancel();
+		firstSource.cancel();
+		assert.strictEqual(await first, true);
+		assert.strictEqual(await second, false);
+	});
+
 	test('Message strategy errors on messages that skip the queue are logged', () => {
 		const proc = new EventEmitter();
 		const errors: string[] = [];
