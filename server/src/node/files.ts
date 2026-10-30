@@ -22,8 +22,10 @@ export function uriToFilePath(uri: string): string | undefined {
 		return undefined;
 	}
 	// URL.pathname resolves '..' before percent-decoding. Use the raw path so
-	// segments are decoded before path.normalize, as url.parse did.
-	const rawPath = /^file:(?:\/\/[^/?#]*)?([^?#]*)/i.exec(uri)?.[1];
+	// segments are decoded before path.normalize, as url.parse did. Trim and
+	// convert backslashes first, as url.parse and URL both do.
+	const normalized = uri.trim().replace(/\\/g, '/');
+	const rawPath = /^file:(?:\/\/[^/?#]*)?([^?#]*)/i.exec(normalized)?.[1];
 	if (!rawPath) {
 		return undefined;
 	}
