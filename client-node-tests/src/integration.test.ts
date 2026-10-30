@@ -904,15 +904,20 @@ suite('Client integration', () => {
 			customSetting: 'customValue'
 		}, tokenSource.token);
 		isArray(result, vscode.TextEdit);
-		const options = await client.sendRequest(
-			new lsclient.ProtocolRequestType<null, lsclient.FormattingOptions | undefined, never, any, any>('testing/lastFormattingOptions'),
-			null,
+		const params = await client.sendRequest(
+			new lsclient.ProtocolRequestType<any, any, never, any, any>('testing/lastFormattingRequest'),
+			{},
 			tokenSource.token
 		);
-		assert.strictEqual(options?.tabSize, 4);
-		assert.strictEqual(options?.insertSpaces, false);
-		assert.strictEqual(options?.trimTrailingWhitespace, true);
-		assert.strictEqual(options?.customSetting, 'customValue');
+		assert.deepStrictEqual(params, {
+			textDocument: { uri: document.uri.toString() },
+			options: {
+				tabSize: 4,
+				insertSpaces: false,
+				trimTrailingWhitespace: true,
+				customSetting: 'customValue'
+			}
+		});
 	});
 
 	test('Document Range Formatting', async () => {

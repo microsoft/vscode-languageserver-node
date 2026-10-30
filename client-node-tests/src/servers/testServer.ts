@@ -11,7 +11,7 @@ import {
 	ColorInformation, Color, ColorPresentation, FoldingRange, SelectionRange, SymbolKind, ProtocolRequestType, WorkDoneProgress,
 	InlineValueText, InlineValueVariableLookup, InlineValueEvaluatableExpression, WorkDoneProgressCreateRequest, WillCreateFilesRequest,
 	WillRenameFilesRequest, WillDeleteFilesRequest, DidDeleteFilesNotification, DidRenameFilesNotification, DidCreateFilesNotification,
-	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind, DocumentSymbol, InlineCompletionItem, ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, FormattingOptions
+	ProposedFeatures, Diagnostic, DiagnosticSeverity, TypeHierarchyItem, InlayHint, InlayHintLabelPart, InlayHintKind, DocumentDiagnosticReportKind, DocumentSymbol, InlineCompletionItem, ApplyWorkspaceEditRequest, ApplyWorkspaceEditParams, DocumentFormattingParams
 } from 'vscode-languageserver/node';
 
 import { URI } from 'vscode-uri';
@@ -265,15 +265,20 @@ connection.onCodeActionResolve((codeAction) => {
 	return codeAction;
 });
 
-let lastFormattingOptions: FormattingOptions | undefined;
+let lastFormattingRequest: DocumentFormattingParams | undefined;
 connection.onDocumentFormatting((params) => {
-	lastFormattingOptions = params.options;
+	lastFormattingRequest = params;
 	return [
 		TextEdit.insert(Position.create(0, 0), 'insert')
 	];
 });
 
-connection.onRequest(new ProtocolRequestType<null, FormattingOptions | undefined, never, any, any>('testing/lastFormattingOptions'), () => lastFormattingOptions);
+connection.onRequest(
+	new ProtocolRequestType<null, unknown, never, any, any>('testing/lastFormattingRequest'),
+	() => {
+		return lastFormattingRequest;
+	},
+);
 
 connection.onDocumentRangeFormatting((_params) => {
 	return [
