@@ -2703,6 +2703,205 @@ suite('Server tests', () => {
 		}
 	}).timeout(10000);
 
+	function createRetryClient(server: string, initializationFailedHandler?: lsclient.InitializationFailedHandler): lsclient.LanguageClient {
+		// The client owns its output channel: it logs the server's exit after start() and
+		// stop() settle, and recreates a channel it already disposed on stop.
+		return new lsclient.LanguageClient('initialization-retry', 'Initialization retry', {
+			module: path.join(__dirname, './servers', server),
+			transport: lsclient.TransportKind.ipc,
+		}, {
+			initializationFailedHandler,
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed: () => ({ action: lsclient.CloseAction.DoNotRestart, handled: true }),
+			}
+		});
+	}
+
+	async function withUnhandledRejections(body: (unhandled: unknown[]) => Promise<void>): Promise<void> {
+		const unhandled: unknown[] = [];
+		const onUnhandled = (reason: unknown) => unhandled.push(reason);
+		process.on('unhandledRejection', onUnhandled);
+		try {
+			await body(unhandled);
+		} finally {
+			process.off('unhandledRejection', onUnhandled);
+		}
+	}
+
+	test('Start resolves once a retried initialization succeeds', async () => {
+		const handler = sinon.stub().returns(true);
+		const client = createRetryClient('retryInitializeServer.js', handler);
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await client.start();
+				assert.strictEqual(handler.callCount, 1);
+				assert.strictEqual(client.state, lsclient.State.Running);
+				assert.strictEqual(client.isRunning(), true);
+				// A second start shares the settled start promise.
+				await client.start();
+				await client.stop();
+				assert.strictEqual(client.state, lsclient.State.Stopped);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start rejects when a retried initialization fails again', async () => {
+		const handler = sinon.stub();
+		handler.onFirstCall().returns(true);
+		handler.returns(false);
+		// The server fails the retry with a distinct error, so the final error is observable.
+		const client = createRetryClient('retryThenFailInitializeServer.js', handler);
+		const stopped = new Promise<void>(resolve => {
+			const listener = client.onDidChangeState(event => {
+				if (event.newState === lsclient.State.Stopped) {
+					listener.dispose();
+					resolve();
+				}
+			});
+		});
+		const stop = sinon.spy(client, 'stop');
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Initialization failed after retry/);
+				assert.strictEqual(handler.callCount, 2);
+				assert.match(String(handler.secondCall.args[0]), /Initialization failed after retry/);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				assert.strictEqual(stop.callCount, 1);
+				await stopped;
+				assert.notStrictEqual(client.state, lsclient.State.Running);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			stop.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start waits for the retry choice of a retryable initialization error', async () => {
+		const client = createRetryClient('retryInitializeServer.js');
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage').resolves({ title: 'Retry', id: 'retry' } as any);
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await client.start();
+				assert.deepStrictEqual(showErrorMessage.getCalls().map(call => call.args), [['Initialization refused', { title: 'Retry', id: 'retry' }]]);
+				assert.strictEqual(client.state, lsclient.State.Running);
+				await client.stop();
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			showErrorMessage.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start rejects when the retry choice of a retryable initialization error is dismissed', async () => {
+		const client = createRetryClient('retryInitializeServer.js');
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+		const stopped = new Promise<void>(resolve => {
+			const listener = client.onDidChangeState(event => {
+				if (event.newState === lsclient.State.Stopped) {
+					listener.dispose();
+					resolve();
+				}
+			});
+		});
+		const stop = sinon.spy(client, 'stop');
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Initialization refused/);
+				// The retry choice is offered once; the failed start is then reported as well.
+				assert.deepStrictEqual(showErrorMessage.firstCall.args, ['Initialization refused', { title: 'Retry', id: 'retry' }]);
+				assert.strictEqual(showErrorMessage.getCalls().filter(call => call.args[0] === 'Initialization refused').length, 1);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				assert.strictEqual(stop.callCount, 1);
+				await stopped;
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			stop.restore();
+			showErrorMessage.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start rejects with the final error when the retry chosen for an initialization error fails', async () => {
+		const client = createRetryClient('retryThenFailInitializeServer.js');
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage');
+		showErrorMessage.withArgs('Initialization refused').resolves({ title: 'Retry', id: 'retry' } as any);
+		showErrorMessage.resolves(undefined);
+		const stopped = new Promise<void>(resolve => {
+			const listener = client.onDidChangeState(event => {
+				if (event.newState === lsclient.State.Stopped) {
+					listener.dispose();
+					resolve();
+				}
+			});
+		});
+		const stop = sinon.spy(client, 'stop');
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Initialization failed after retry/);
+				// Retry is offered for the first error only; the final error can't be retried.
+				assert.deepStrictEqual(showErrorMessage.withArgs('Initialization refused').getCalls().map(call => call.args), [['Initialization refused', { title: 'Retry', id: 'retry' }]]);
+				assert.strictEqual(showErrorMessage.withArgs('Initialization failed after retry', sinon.match.object).callCount, 0);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				// Only the failed retry stops the client, which terminates the server process.
+				assert.strictEqual(stop.callCount, 1);
+				await stopped;
+				assert.strictEqual(stop.callCount, 1);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			stop.restore();
+			showErrorMessage.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start rejects when the connection closes while the retry choice is shown', async () => {
+		const client = createRetryClient('exitOnInitializeRetryServer.js');
+		// Keep the retry choice open until the test answers it.
+		let answer!: (item: vscode.MessageItem | undefined) => void;
+		const choice = new Promise<vscode.MessageItem | undefined>(resolve => answer = resolve);
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage');
+		showErrorMessage.withArgs('Initialization refused').returns(choice as any);
+		showErrorMessage.resolves(undefined);
+		const initialize = sinon.spy(client as any, 'initialize');
+		// The client must not stop after the close: the close handling already did. A failed
+		// start can't be stopped either, so the stub also keeps dispose() from rejecting.
+		const stop = sinon.stub(client, 'stop').resolves();
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Connection to server got closed before initialization was retried/);
+				assert.strictEqual(showErrorMessage.withArgs('Initialization refused').callCount, 1);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				// Answering the stale choice afterwards changes nothing.
+				answer({ title: 'Retry', id: 'retry' } as vscode.MessageItem);
+				await new Promise(resolve => setTimeout(resolve, 100));
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				assert.strictEqual(stop.callCount, 0);
+				assert.strictEqual(initialize.callCount, 1);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			answer(undefined);
+			initialize.restore();
+			showErrorMessage.restore();
+			await client.dispose();
+			stop.restore();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
 	test('Stop fails if server crashes after shutdown request', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/crashOnShutdownServer.js'),
