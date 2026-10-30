@@ -18,10 +18,16 @@ export function uriToFilePath(uri: string): string | undefined {
 	} catch {
 		return undefined;
 	}
-	if (parsed.protocol !== 'file:' || !parsed.pathname) {
+	if (parsed.protocol !== 'file:') {
 		return undefined;
 	}
-	const segments = parsed.pathname.split('/');
+	// URL.pathname resolves '..' before percent-decoding. Use the raw path so
+	// segments are decoded before path.normalize, as url.parse did.
+	const rawPath = /^file:(?:\/\/[^/?#]*)?([^?#]*)/i.exec(uri)?.[1];
+	if (!rawPath) {
+		return undefined;
+	}
+	const segments = rawPath.split('/');
 	for (let i = 0, len = segments.length; i < len; i++) {
 		segments[i] = decodeURIComponent(segments[i]);
 	}
