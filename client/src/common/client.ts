@@ -1677,10 +1677,13 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 				// timed out or failed to shut down keeps its close handler, which
 				// would later act on a restarted client.
 				try {
-					connection.end();
-					connection.dispose();
+					try {
+						connection.end();
+					} finally {
+						connection.dispose();
+					}
 				} catch (error) {
-					// Disposing a connection could fail in error cases.
+					// Ending or disposing a connection could fail in error cases.
 				}
 				this.$state = ClientState.Stopped;
 				mode === ShutdownMode.Stop && this.cleanUpChannel();
