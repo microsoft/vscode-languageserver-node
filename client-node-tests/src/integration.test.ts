@@ -3003,6 +3003,50 @@ suite('Server tests', () => {
 		await client.stop();
 	});
 
+	test('sendRequest rejects when client is stopped while awaiting document sync', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/startStopServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector: [{ scheme: 'file', language: 'plaintext' }],
+		};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await client.start();
+
+		const document = await vscode.workspace.openTextDocument({ language: 'plaintext', content: 'content' });
+		(client as any)._didOpenTextDocumentFeature._pendingOpenNotifications.set(document.uri.toString(), document);
+
+		const requestPromise = client.sendRequest('workspace/executeCommand', { command: 'foo.command' });
+		await client.stop();
+
+		await assert.rejects(async () => {
+			await requestPromise;
+		}, /Client is not running/);
+	});
+
+	test('sendNotification rejects when client is stopped while awaiting document sync', async () => {
+		const serverOptions: lsclient.ServerOptions = {
+			module: path.join(__dirname, './servers/startStopServer.js'),
+			transport: lsclient.TransportKind.ipc,
+		};
+		const clientOptions: lsclient.LanguageClientOptions = {
+			documentSelector: [{ scheme: 'file', language: 'plaintext' }],
+		};
+		const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+		await client.start();
+
+		const document = await vscode.workspace.openTextDocument({ language: 'plaintext', content: 'content' });
+		(client as any)._didOpenTextDocumentFeature._pendingOpenNotifications.set(document.uri.toString(), document);
+
+		const notificationPromise = client.sendNotification('custom/notification', { test: true });
+		await client.stop();
+
+		await assert.rejects(async () => {
+			await notificationPromise;
+		}, /Client is not running/);
+	});
+
 	test('Start works if the global Promise has no finally', async () => {
 		const serverOptions: lsclient.ServerOptions = {
 			module: path.join(__dirname, './servers/nullServer.js'),
