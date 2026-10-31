@@ -3,7 +3,6 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as url from 'url';
 import * as path from 'path';
 import * as fs from 'fs';
 import { spawnSync, fork, ChildProcess, SpawnSyncOptionsWithStringEncoding } from 'child_process';
@@ -13,11 +12,24 @@ import { spawnSync, fork, ChildProcess, SpawnSyncOptionsWithStringEncoding } fro
  * complete implementation of handling VS Code URIs.
  */
 export function uriToFilePath(uri: string): string | undefined {
-	const parsed = url.parse(uri);
-	if (parsed.protocol !== 'file:' || !parsed.path) {
+	let parsed: URL;
+	try {
+		parsed = new URL(uri);
+	} catch {
 		return undefined;
 	}
-	const segments = parsed.path.split('/');
+	if (parsed.protocol !== 'file:') {
+		return undefined;
+	}
+	// URL.pathname resolves '..' before percent-decoding. Use the raw path so
+	// segments are decoded before path.normalize, as url.parse did. Trim and
+	// convert backslashes first, as url.parse and URL both do.
+	const normalized = uri.trim().replace(/\\/g, '/');
+	const rawPath = /^file:(?:\/\/[^/?#]*)?([^?#]*)/i.exec(normalized)?.[1];
+	if (!rawPath) {
+		return undefined;
+	}
+	const segments = rawPath.split('/');
 	for (let i = 0, len = segments.length; i < len; i++) {
 		segments[i] = decodeURIComponent(segments[i]);
 	}
