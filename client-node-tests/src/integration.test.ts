@@ -894,6 +894,32 @@ suite('Client integration', () => {
 		assert.ok(middlewareCalled);
 	});
 
+	test('Document Formatting passes through additional formatting options', async () => {
+		const provider = client.getFeature(lsclient.DocumentFormattingRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = await provider.provideDocumentFormattingEdits(document, {
+			tabSize: 4,
+			insertSpaces: false,
+			trimTrailingWhitespace: true,
+			customSetting: 'customValue'
+		}, tokenSource.token);
+		isArray(result, vscode.TextEdit);
+		const params = await client.sendRequest(
+			new lsclient.ProtocolRequestType<any, any, never, any, any>('testing/lastFormattingRequest'),
+			{},
+			tokenSource.token
+		);
+		assert.deepStrictEqual(params, {
+			textDocument: { uri: document.uri.toString() },
+			options: {
+				tabSize: 4,
+				insertSpaces: false,
+				trimTrailingWhitespace: true,
+				customSetting: 'customValue'
+			}
+		});
+	});
+
 	test('Document Range Formatting', async () => {
 		const provider = client.getFeature(lsclient.DocumentRangeFormattingRequest.method).getProvider(document);
 		isDefined(provider);

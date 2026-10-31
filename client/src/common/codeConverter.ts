@@ -859,7 +859,7 @@ export function createConverter(uriConverter?: URIConverter): Converter {
 	}
 
 	function asFormattingOptions(options: code.FormattingOptions, fileOptions: FileFormattingOptions): proto.FormattingOptions {
-		const result: proto.FormattingOptions = { tabSize: options.tabSize, insertSpaces: options.insertSpaces };
+		const result: proto.FormattingOptions = { ...options };
 		if (fileOptions.trimTrailingWhitespace) {
 			result.trimTrailingWhitespace = true;
 		}
