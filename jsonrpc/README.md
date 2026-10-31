@@ -50,6 +50,22 @@ connection.onNotification(notification, (param: string) => {
 connection.listen();
 ```
 
+Both sides can pass a `messageStrategy` in the connection options to work with the messages of the connection. `handleOutgoingMessage` gets every message before it is written, and `handleIncomingMessage` gets every received message before it is dispatched. Outgoing messages are passed one at a time in send order, so a `handleOutgoingMessage` that awaits before calling `next` delays the messages after it instead of reordering them. For example, to send a trace context along with each message and restore it while the other side handles the message (`getTraceparent` and `runWithTraceparent` stand for your own tracing code):
+
+```ts
+let connection = rpc.createMessageConnection(reader, writer, undefined, {
+	messageStrategy: {
+		handleOutgoingMessage(message, next) {
+			return next({ ...message, traceparent: getTraceparent() } as rpc.Message);
+		},
+		handleIncomingMessage(message, next) {
+			const traceparent = (message as { traceparent?: string }).traceparent;
+			return runWithTraceparent(traceparent, () => next(message));
+		}
+	}
+});
+```
+
 # History
 
 For the history please see the [main repository](https://github.com/Microsoft/vscode-languageserver-node/blob/master/README.md)
