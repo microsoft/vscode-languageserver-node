@@ -1647,7 +1647,8 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.$state = ClientState.Stopping;
 		this.cleanUp(mode);
 
-		const tp = new Promise<undefined>(c => { RAL().timer.setTimeout(c, timeout); });
+		let timer: Disposable | undefined;
+		const tp = new Promise<undefined>(c => { timer = RAL().timer.setTimeout(c, timeout); });
 		const shutdown = (async (connection) => {
 			await connection.shutdown();
 			await connection.exit();
@@ -1665,15 +1666,22 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 					this.error(`Stopping server failed`, error, false);
 					throw error;
 				}
-				// The connection won the race with the timeout.
-				if (result !== undefined) {
-					result.end();
-					result.dispose();
-				} else {
+				// The timeout won the race with the connection.
+				if (result === undefined) {
 					this.error(`Stopping server timed out`, undefined, false);
 					throw new Error(`Stopping the server timed out`);
 				}
 			} finally {
+				timer?.dispose();
+				// Dispose the connection on every path. Otherwise a connection that
+				// timed out or failed to shut down keeps its close handler, which
+				// would later act on a restarted client.
+				try {
+					connection.end();
+					connection.dispose();
+				} catch (error) {
+					// Disposing a connection could fail in error cases.
+				}
 				this.$state = ClientState.Stopped;
 				mode === ShutdownMode.Stop && this.cleanUpChannel();
 				this._onStart = undefined;
