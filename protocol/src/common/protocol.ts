@@ -329,7 +329,7 @@ export type NotebookDocumentFilter = NotebookDocumentFilterNotebookType | Notebo
 export namespace NotebookDocumentFilter {
 	export function is(value: any): value is NotebookDocumentFilter {
 		const candidate: NotebookDocumentFilter = value;
-		return Is.objectLiteral(candidate) && (Is.string(candidate.notebookType) || Is.string(candidate.scheme) || Is.string(candidate.pattern));
+		return Is.objectLiteral(candidate) && (Is.string(candidate.notebookType) || Is.string(candidate.scheme) || GlobPattern.is(candidate.pattern));
 	}
 }
 
