@@ -1271,6 +1271,43 @@ suite('Client integration', () => {
 			'my/only-files/folder/',
 		].map(toWorkspaceUri);
 
+		test('Invalid patterns', () => {
+			const feature = client.getFeature(lsclient.DidCreateFilesNotification.method);
+			isDefined(feature);
+
+			const id = 'invalid-pattern';
+			try {
+				for (const glob of ['', '#comment']) {
+					assert.throws(() => feature.register({
+						id,
+						registerOptions: { filters: [{ pattern: { glob } }] }
+					}), { message: `Invalid pattern ${glob}!` });
+				}
+			} finally {
+				feature.unregister(id);
+			}
+		});
+
+		test('Literal pattern', async () => {
+			const feature = client.getFeature(lsclient.DidCreateFilesNotification.method);
+			isDefined(feature);
+
+			const file = toWorkspaceUri('my/literal-file.txt');
+			const id = 'literal-pattern';
+			try {
+				feature.register({
+					id,
+					registerOptions: {
+						filters: [{ scheme: fsProvider.scheme, pattern: { glob: file.fsPath.replace(/\\/g, '/') } }]
+					}
+				});
+				await feature.send({ files: [file, toWorkspaceUri('my/other-file.txt')] });
+				await ensureNotificationReceived('create', { files: [{ uri: file.toString() }] });
+			} finally {
+				feature.unregister(id);
+			}
+		});
+
 		test('Will Create Files', async () => {
 			const feature = client.getFeature(lsclient.WillCreateFilesRequest.method);
 			isDefined(feature);

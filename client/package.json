@@ -41,7 +41,7 @@
 		"shx": "^0.4.0"
 	},
 	"dependencies": {
-		"minimatch": "^10.2.6",
+		"minimatch": "^11.0.1",
 		"semver": "^7.8.1",
 		"vscode-languageserver-textdocument": "1.0.16",
 		"vscode-languageserver-protocol": "3.18.5"

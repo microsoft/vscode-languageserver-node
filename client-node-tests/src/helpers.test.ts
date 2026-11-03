@@ -205,6 +205,23 @@ suite('Protocol Helper Tests', () => {
 		strictEqual(annotation.description, 'description');
 	});
 
+	test('String Pattern', () => {
+		const resource = Uri.file('/folder/file.txt');
+		strictEqual(matchGlobPattern(resource.fsPath, resource), true);
+		strictEqual(matchGlobPattern('**/*.txt', resource), true);
+		strictEqual(matchGlobPattern('**/*.js', resource), false);
+	});
+
+	test('Empty Pattern', () => {
+		const resource = Uri.parse('untitled:');
+		strictEqual(resource.fsPath, '');
+		strictEqual(matchGlobPattern('', resource), false);
+	});
+
+	test('Comment Pattern', () => {
+		strictEqual(matchGlobPattern('#comment', Uri.file('/comment')), false);
+	});
+
 	test('Relative Pattern', () => {
 		if (process.platform === 'win32') {
 			const pattern: RelativePattern = { baseUri: Uri.file('C:\\folder1\\folder2').toString(), pattern: '**/*.txt' };
