@@ -10,10 +10,24 @@ import {
 	DiagnosticServerCancellationData, DocumentSelector, NotebookCellTextDocumentFilter, NotebookDocumentFilter,
 	RelativePattern, TextDocumentFilter, TextDocumentRegistrationOptions, WorkDoneProgressOptions
 } from '../main';
+import { DocumentSelector, NotebookCellTextDocumentFilter, NotebookDocumentFilter, RelativePattern, TextDocumentFilter, TextDocumentRegistrationOptions } from '../main';
 
 suite('Document filter type guards', () => {
 
 	const relativePattern: RelativePattern = { baseUri: 'file:///workspace', pattern: '**/*.ipynb' };
+
+	suite('TextDocumentFilter.is', () => {
+		test('valid filters', () => {
+			assert.strictEqual(TextDocumentFilter.is('typescript'), true);
+			assert.strictEqual(TextDocumentFilter.is({ language: 'typescript' }), true);
+			assert.strictEqual(TextDocumentFilter.is({ scheme: 'file' }), true);
+			assert.strictEqual(TextDocumentFilter.is({ pattern: '**/*.ts' }), true);
+		});
+		test('null and undefined', () => {
+			assert.strictEqual(TextDocumentFilter.is(null), false);
+			assert.strictEqual(TextDocumentFilter.is(undefined), false);
+		});
+	});
 
 	suite('NotebookDocumentFilter.is', () => {
 		test('string pattern', () => {
@@ -73,6 +87,10 @@ suite('Document filter type guards', () => {
 	});
 
 	suite('DocumentSelector.is', () => {
+		test('null and undefined elements', () => {
+			assert.strictEqual(DocumentSelector.is([null as any]), false);
+			assert.strictEqual(DocumentSelector.is([undefined as any]), false);
+		});
 		test('notebook cell filter with relative pattern', () => {
 			const documentSelector = [{ notebook: { pattern: relativePattern } }];
 			assert.strictEqual(DocumentSelector.is(documentSelector), true);
@@ -119,6 +137,10 @@ suite('Document filter type guards', () => {
 			assert.strictEqual(DiagnosticServerCancellationData.is({}), false);
 			assert.strictEqual(DiagnosticServerCancellationData.is(null), false);
 			assert.strictEqual(DiagnosticServerCancellationData.is(undefined), false);
+		test('TextDocumentRegistrationOptions.is with null and undefined', () => {
+			assert.strictEqual(TextDocumentRegistrationOptions.is(null), false);
+			assert.strictEqual(TextDocumentRegistrationOptions.is(undefined), false);
+			assert.strictEqual(TextDocumentRegistrationOptions.is({ documentSelector: [null] }), false);
 		});
 	});
 });
