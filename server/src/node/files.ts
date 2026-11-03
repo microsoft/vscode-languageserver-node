@@ -25,7 +25,9 @@ export function uriToFilePath(uri: string): string | undefined {
 	// segments are decoded before path.normalize, as url.parse did. Trim and
 	// convert backslashes first, as url.parse and URL both do.
 	const normalized = uri.trim().replace(/\\/g, '/');
-	const rawPath = /^file:(?:\/\/[^/?#]*)?([^?#]*)/i.exec(normalized)?.[1];
+	const match = /^file:(?:\/\/([^/?#]*))?([^?#]*)/i.exec(normalized);
+	// An authority with no path (e.g. file://localhost) implies the root path.
+	const rawPath = match?.[2] || (match?.[1] ? '/' : undefined);
 	if (!rawPath) {
 		return undefined;
 	}
