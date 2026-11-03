@@ -241,7 +241,7 @@ export type TextDocumentFilter = TextDocumentFilterLanguage | TextDocumentFilter
 export namespace TextDocumentFilter {
 	export function is(value: any): value is TextDocumentFilter {
 		const candidate: TextDocumentFilter = value;
-		return Is.string(candidate) || (Is.string(candidate.language) || Is.string(candidate.scheme) || GlobPattern.is(candidate.pattern));
+		return Is.string(candidate) || (Is.objectLiteral(candidate) && (Is.string(candidate.language) || Is.string(candidate.scheme) || GlobPattern.is(candidate.pattern)));
 	}
 }
 
@@ -1159,7 +1159,7 @@ export interface TextDocumentRegistrationOptions {
 export namespace TextDocumentRegistrationOptions {
 	export function is(value: any): value is TextDocumentRegistrationOptions {
 		const candidate = value as TextDocumentRegistrationOptions;
-		return candidate && (candidate.documentSelector === null || DocumentSelector.is(candidate.documentSelector));
+		return Is.objectLiteral(candidate) && (candidate.documentSelector === null || DocumentSelector.is(candidate.documentSelector));
 	}
 }
 
