@@ -12,7 +12,7 @@ import { inherits } from 'util';
 import { AsyncLocalStorage } from 'async_hooks';
 import { EventEmitter } from 'events';
 
-import { CancellationTokenSource, RequestType, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes, Trace, Tracer } from '../main';
+import { CancellationTokenSource, RequestType, RequestType0, RequestType3, ResponseError, NotificationType, NotificationType2, ErrorCodes, Trace, Tracer } from '../main';
 
 import * as hostConnection from '../main';
 import { getCustomCancellationStrategy } from './customCancellationStrategy';
@@ -1005,6 +1005,142 @@ suite('Connection', () => {
 		void client.sendNotification(didChange, 2);
 		await bothReceived;
 		assert.deepStrictEqual(received, [didOpen.method, didChange.method]);
+	});
+
+	test('Message strategy fails a request when handleOutgoingMessage does not call next', async () => {
+		const type = new RequestType0<void, void>('test/request');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, {
+			messageStrategy: {
+				async handleOutgoingMessage() {
+				}
+			}
+		});
+		client.listen();
+
+		await assert.rejects(client.sendRequest(type), (error: ResponseError<void>) => error.code === ErrorCodes.MessageWriteError);
+	});
+
+	test('Message strategy fails a notification when handleOutgoingMessage does not call next', async () => {
+		const type = new NotificationType<number>('test/notification');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, {
+			messageStrategy: {
+				async handleOutgoingMessage() {
+				}
+			}
+		});
+		client.listen();
+
+		await assert.rejects(client.sendNotification(type, 1));
+	});
+
+	test('Message strategy writes a message once when handleOutgoingMessage calls next twice', async () => {
+		const first = new NotificationType<number>('test/first');
+		const second = new NotificationType<number>('test/second');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const received: string[] = [];
+		const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+		const secondReceived = new Promise<void>((resolve) => {
+			server.onNotification((method) => {
+				received.push(method);
+				if (method === second.method) {
+					resolve();
+				}
+			});
+		});
+		server.listen();
+
+		const warnings: string[] = [];
+		const logger: hostConnection.Logger = { ...hostConnection.NullLogger, warn: (message) => warnings.push(message) };
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, logger, {
+			messageStrategy: {
+				async handleOutgoingMessage(message, next) {
+					await next(message);
+					if (hostConnection.Message.isNotification(message) && message.method === first.method) {
+						await next(message);
+					}
+				}
+			}
+		});
+		client.listen();
+
+		void client.sendNotification(first, 1);
+		void client.sendNotification(second, 2);
+		await secondReceived;
+		assert.deepStrictEqual(received, [first.method, second.method]);
+		assert.strictEqual(warnings.length, 1);
+	});
+
+	for (const failure of ['throws', 'rejects']) {
+		test(`Message strategy keeps writing after handleOutgoingMessage ${failure}`, async () => {
+			const failing = new NotificationType<number>('test/failing');
+			const after = new NotificationType<number>('test/after');
+			const duplexStream1 = new TestDuplex('ds1');
+			const duplexStream2 = new TestDuplex('ds2');
+
+			const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+			const received = new Promise<string>((resolve) => {
+				server.onNotification((method) => resolve(method));
+			});
+			server.listen();
+
+			const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, {
+				messageStrategy: {
+					handleOutgoingMessage(message, next) {
+						if (hostConnection.Message.isNotification(message) && message.method === failing.method) {
+							if (failure === 'throws') {
+								throw new Error('hook failed');
+							}
+							return Promise.reject(new Error('hook failed'));
+						}
+						return next(message);
+					}
+				}
+			});
+			client.listen();
+
+			await assert.rejects(client.sendNotification(failing, 1), /hook failed/);
+			await client.sendNotification(after, 2);
+			assert.strictEqual(await received, after.method);
+		});
+	}
+
+	test('Message strategy does not handle queued outgoing messages after dispose', async () => {
+		const first = new NotificationType<number>('test/first');
+		const second = new NotificationType<number>('test/second');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		let release!: () => void;
+		const released = new Promise<void>((resolve) => release = resolve);
+		const handled: string[] = [];
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger, {
+			messageStrategy: {
+				async handleOutgoingMessage(message, next) {
+					handled.push((message as hostConnection.NotificationMessage).method);
+					await released;
+					return next(message);
+				}
+			}
+		});
+		client.listen();
+
+		const firstSent = client.sendNotification(first, 1);
+		const secondSent = client.sendNotification(second, 2);
+		await new Promise(resolve => setTimeout(resolve, 0));
+		client.dispose();
+		release();
+
+		await firstSent.catch(() => undefined);
+		await assert.rejects(secondSent, (error: hostConnection.ConnectionError) => error.code === hostConnection.ConnectionErrors.Disposed);
+		assert.deepStrictEqual(handled, [first.method]);
 	});
 
 	test('Message strategy handles responses that skip the queue', async () => {

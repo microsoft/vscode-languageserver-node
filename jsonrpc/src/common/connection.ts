@@ -478,6 +478,8 @@ export interface MessageStrategy {
 	 * Handles a received message before it is dispatched. Not called if
 	 * `handleIncomingMessage` is provided.
 	 *
+	 * @deprecated Use `handleIncomingMessage` instead.
+	 *
 	 * @param message The received message.
 	 * @param next Dispatches the message.
 	 */
@@ -487,8 +489,10 @@ export interface MessageStrategy {
 	 * Handles a received message before it is dispatched. If provided, it is
 	 * used instead of `handleMessage`. Unlike `handleMessage`, it also gets the
 	 * messages that skip the message queue: responses when `maxParallelism` is
-	 * set, and `$/cancelRequest` notifications as soon as they are read. A
-	 * request is only canceled once `next` is called for its `$/cancelRequest`.
+	 * set, and `$/cancelRequest` notifications as soon as they are read.
+	 *
+	 * You must call `next` for `$/cancelRequest`, or the request is not
+	 * canceled.
 	 *
 	 * @param message The received message.
 	 * @param next Dispatches the message.
@@ -500,6 +504,16 @@ export interface MessageStrategy {
 	 * like a trace context to it. Messages are passed one at a time in send
 	 * order: the next one is passed when the promise returned for the previous
 	 * one settles.
+	 *
+	 * Properties added at the top level of a message reach the writer
+	 * unchanged. `Message` does not declare them, so the object passed to
+	 * `next` has to be cast to `Message`.
+	 *
+	 * You must call `next` exactly once before the returned promise settles.
+	 * If it is not called, the message is not written and sending it fails: a
+	 * request is rejected with `ErrorCodes.MessageWriteError` and the promise
+	 * of a notification is rejected. Any other call to `next` logs a warning
+	 * and writes nothing.
 	 *
 	 * @param message The message to send.
 	 * @param next Writes the message. Pass it the message to write.
@@ -765,9 +779,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			try {
 				inFlight++;
 				const messageStrategy = options?.messageStrategy;
-				if (messageStrategy !== undefined && Is.func(messageStrategy.handleIncomingMessage)) {
+				const handleIncoming = incomingHook();
+				if (handleIncoming !== undefined) {
 					// A queued cancellation already went through the hook when it was read.
-					result = isCancelNotification(message) ? handleMessage(message) : messageStrategy.handleIncomingMessage(message, handleMessage);
+					result = isCancelNotification(message) ? handleMessage(message) : handleIncoming(message, handleMessage);
 				} else if (messageStrategy !== undefined && Is.func(messageStrategy.handleMessage)) {
 					result = messageStrategy.handleMessage(message, handleMessage);
 				} else {
@@ -808,14 +823,22 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
+	function incomingHook(): MessageStrategy['handleIncomingMessage'] {
+		const messageStrategy = options?.messageStrategy;
+		if (messageStrategy === undefined || !Is.func(messageStrategy.handleIncomingMessage)) {
+			return undefined;
+		}
+		return (message, next) => messageStrategy.handleIncomingMessage!(message, next);
+	}
+
 	// Messages that skip the queue go through `handleIncomingMessage`.
 	// `handleMessage` keeps getting queued messages only. Errors are logged,
 	// since the reader can call us from an event handler.
 	function handleUnqueuedMessage(message: Message, handle: (message: Message) => NotificationResult): void {
-		const messageStrategy = options?.messageStrategy;
+		const handleIncoming = incomingHook();
 		const logError = (error: any) => logger.error(`Processing message failed: ${error}`);
 		try {
-			const result = messageStrategy !== undefined && Is.func(messageStrategy.handleIncomingMessage) ? messageStrategy.handleIncomingMessage(message, handle) : handle(message);
+			const result = handleIncoming !== undefined ? handleIncoming(message, handle) : handle(message);
 			if (result instanceof Promise) {
 				result.catch(logError);
 			}
@@ -832,16 +855,37 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 		// Pass one message at a time to the hook. Otherwise a hook that awaits
 		// before calling next lets a later message reach the writer first.
-		const result = lastOutgoingMessage.then(() => messageStrategy.handleOutgoingMessage!(message, (message) => messageWriter.write(message)));
+		const result = lastOutgoingMessage.then(async () => {
+			if (isDisposed()) {
+				throw new ConnectionError(ConnectionErrors.Disposed, 'Connection is disposed.');
+			}
+			let written: Promise<void> | undefined;
+			let settled = false;
+			const next = (outgoing: Message): Promise<void> => {
+				if (written !== undefined || settled) {
+					logger.warn(`handleOutgoingMessage must call next exactly once before it settles.`);
+					return written ?? Promise.resolve();
+				}
+				written = messageWriter.write(outgoing);
+				return written;
+			};
+			try {
+				await messageStrategy.handleOutgoingMessage!(message, next);
+			} finally {
+				settled = true;
+			}
+			if (written === undefined) {
+				throw new Error(`handleOutgoingMessage did not call next, so the message was not written.`);
+			}
+		});
 		lastOutgoingMessage = result.catch(() => undefined);
 		return result;
 	}
 
 	const callback: DataCallback = (message) => {
-		const messageStrategy = options?.messageStrategy;
 		// The hook gets cancellations as soon as they are read and can drop them,
 		// so nothing is canceled or remembered before it calls next.
-		if (isCancelNotification(message) && messageStrategy !== undefined && Is.func(messageStrategy.handleIncomingMessage)) {
+		if (isCancelNotification(message) && incomingHook() !== undefined) {
 			handleUnqueuedMessage(message, receiveMessage);
 		} else {
 			receiveMessage(message);

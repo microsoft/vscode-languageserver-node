@@ -66,6 +66,12 @@ let connection = rpc.createMessageConnection(reader, writer, undefined, {
 });
 ```
 
+A `handleIncomingMessage` hook must call `next` for `$/cancelRequest`, or the request is not canceled.
+
+A `handleOutgoingMessage` hook must call `next` exactly once before its promise settles. If it does not call `next`, the message is not written and sending it fails: a request is rejected with `ErrorCodes.MessageWriteError` and the promise of a notification is rejected. Any other call to `next` logs a warning and writes nothing.
+
+Properties added at the top level of a message reach the writer unchanged. `Message` does not declare them, which is why the example casts the object passed to `next`.
+
 # History
 
 For the history please see the [main repository](https://github.com/Microsoft/vscode-languageserver-node/blob/master/README.md)
