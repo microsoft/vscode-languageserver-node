@@ -270,9 +270,10 @@ class FullTextDocument implements TextDocument {
 				}
 
 				// update the offsets
-				const startLine = Math.max(range.start.line, 0);
-				const endLine = Math.max(range.end.line, 0);
 				let lineOffsets = this._lineOffsets!;
+				const lastLine = lineOffsets.length - 1;
+				const startLine = Math.min(Math.max(range.start.line, 0), lastLine);
+				const endLine = Math.min(Math.max(range.end.line, 0), lastLine);
 				const addedLineOffsets = computeLineOffsets(change.text, false, startOffset);
 				if (endLine - startLine === addedLineOffsets.length) {
 					for (let i = 0, len = addedLineOffsets.length; i < len; i++) {
