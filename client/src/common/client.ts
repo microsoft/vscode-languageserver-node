@@ -901,6 +901,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		}
 	}
 
+	private isInactive(): boolean {
+		const state = this.$state;
+		return state === ClientState.StartFailed || state === ClientState.Stopping || state === ClientState.Stopped;
+	}
+
 	public get initializeResult(): InitializeResult | undefined {
 		return this._initializeResult;
 	}
@@ -912,7 +917,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public sendRequest<R>(method: string, token?: CancellationToken): Promise<R>;
 	public sendRequest<R>(method: string, param: any, token?: CancellationToken): Promise<R>;
 	public async sendRequest<R>(type: string | MessageSignature, ...params: any[]): Promise<R> {
-		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
+		if (this.isInactive()) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
 
@@ -926,6 +931,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// full document syncs.
 		if (this._didChangeTextDocumentFeature!.syncKind === TextDocumentSyncKind.Full) {
 			await this.sendPendingFullTextDocumentChanges(connection);
+		}
+
+		if (this.isInactive()) {
+			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
 
 		let param: any | undefined = undefined;
@@ -1018,7 +1027,7 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	public sendNotification(method: string): Promise<void>;
 	public sendNotification(method: string, params: any): Promise<void>;
 	public async sendNotification<P>(type: string | MessageSignature, params?: P): Promise<void> {
-		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
+		if (this.isInactive()) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
 
@@ -1066,6 +1075,10 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		// the message is actually handed off.
 		if (openNotification !== undefined) {
 			this._inFlightOpenNotifications.delete(openNotification);
+		}
+
+		if (this.isInactive()) {
+			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
 
 		const _sendNotification = this._clientOptions.middleware?.sendNotification;
@@ -1118,12 +1131,15 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 	}
 
 	public async sendProgress<P>(type: ProgressType<P>, token: string | number, value: NoInfer<RequestParam<P>>): Promise<void> {
-		if (this.$state === ClientState.StartFailed || this.$state === ClientState.Stopping || this.$state === ClientState.Stopped) {
+		if (this.isInactive()) {
 			return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
 		}
 		try {
 			// Ensure we have a connection before we force the document sync.
 			const connection = await this.$start();
+			if (this.isInactive()) {
+				return Promise.reject(new ResponseError(ErrorCodes.ConnectionInactive, `Client is not running`));
+			}
 			return connection.sendProgress(type, token, value);
 		} catch (error) {
 			this.error(`Sending progress for token ${token} failed.`, error);
