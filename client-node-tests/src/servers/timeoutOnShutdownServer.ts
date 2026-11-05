@@ -14,4 +14,8 @@ connection.onShutdown(async () => {
 		setTimeout(resolve, 200000);
 	});
 });
+connection.onRequest('test/hang', () => {
+	void connection.sendNotification('test/hanging');
+	return new Promise<void>(() => {});
+});
 connection.listen();

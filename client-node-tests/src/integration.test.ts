@@ -113,6 +113,60 @@ async function waitForProcessExit(pid: number, timeout: number): Promise<void> {
 	}
 }
 
+/**
+ * Stops a client whose server neither completes shutdown nor closes the
+ * transport, then restarts it before the old server process is terminated.
+ */
+async function assertFailedStopDisposesConnection(serverModule: string, stopError: RegExp): Promise<void> {
+	const serverOptions: lsclient.ServerOptions = {
+		module: path.join(__dirname, 'servers', serverModule),
+		transport: lsclient.TransportKind.ipc,
+	};
+	const closed = sinon.spy(() => ({ action: lsclient.CloseAction.DoNotRestart }));
+	const clientOptions: lsclient.LanguageClientOptions = {
+		errorHandler: {
+			error: () => ({ action: lsclient.ErrorAction.Continue }),
+			closed,
+		}
+	};
+	const client = new lsclient.LanguageClient('test svr', 'Test Language Server', serverOptions, clientOptions);
+	await client.start();
+	try {
+		const oldPid = client.serverProcess!.pid!;
+		// Wait until the server has received a request it never answers.
+		const hanging = new Promise<void>((resolve) => {
+			const disposable = client.onNotification('test/hanging', () => {
+				disposable.dispose();
+				resolve();
+			});
+		});
+		let pendingError: string | undefined;
+		client.sendRequest('test/hang').then(undefined, (error: Error) => { pendingError = error.message; });
+		await hanging;
+
+		await assert.rejects(client.stop(100), stopError);
+		// Restart before the old server process is terminated (2s after stop).
+		await client.start();
+		await waitForProcessExit(oldPid, 5000);
+		// Give the old transport's close event time to arrive.
+		await new Promise((resolve) => setTimeout(resolve, 200));
+
+		assert.deepStrictEqual({ pendingError, closedCalls: closed.callCount, state: client.state }, {
+			pendingError: 'Pending response rejected since connection got disposed',
+			closedCalls: 0,
+			state: lsclient.State.Running
+		});
+	} finally {
+		const pid = client.serverProcess?.pid;
+		if (client.needsStop()) {
+			await client.stop(100).catch(() => undefined);
+		}
+		if (pid !== undefined) {
+			await waitForProcessExit(pid, 5000);
+		}
+	}
+}
+
 const NativePromise = Promise;
 
 /**
@@ -3012,6 +3066,14 @@ suite('Server tests', () => {
 		}, /Stopping the server timed out/);
 		await waitForProcessExit(serverPid!, 5000);
 	}).timeout(7500);
+
+	test('Stop disposes the connection if server shutdown request times out', async () => {
+		await assertFailedStopDisposesConnection('timeoutOnShutdownServer.js', /Stopping the server timed out/);
+	}).timeout(15000);
+
+	test('Stop disposes the connection if server shutdown request fails', async () => {
+		await assertFailedStopDisposesConnection('failShutdownServer.js', /Shutdown refused/);
+	}).timeout(15000);
 
 	test('Server can\'t be stopped right after start', async() => {
 		const serverOptions: lsclient.ServerOptions = {
