@@ -22,9 +22,10 @@ export function uriToFilePath(uri: string): string | undefined {
 		return undefined;
 	}
 	// URL.pathname resolves '..' before percent-decoding. Use the raw path so
-	// segments are decoded before path.normalize, as url.parse did. Trim and
+	// segments are decoded before path.normalize, as url.parse did. Trim the
+	// characters url.parse trimmed (C0 controls, space, U+00A0, U+FEFF) and
 	// convert backslashes first, as url.parse and URL both do.
-	const normalized = uri.trim().replace(/\\/g, '/');
+	const normalized = uri.replace(/^[\u0000-  ﻿]+|[\u0000-  ﻿]+$/g, '').replace(/\\/g, '/');
 	const match = /^file:(?:\/\/([^/?#]*))?([^?#]*)/i.exec(normalized);
 	// An authority with no path (e.g. file://localhost) implies the root path.
 	const rawPath = match?.[2] || (match?.[1] ? '/' : undefined);
