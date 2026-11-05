@@ -103,4 +103,5 @@
 		"XCOPY"
 	],
 	"githubPullRequests.createDefaultBaseBranch": "repositoryDefault",
+	"workbench.colorTheme": "Default High Contrast",
 }
