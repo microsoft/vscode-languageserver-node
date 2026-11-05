@@ -1039,6 +1039,29 @@ suite('Connection', () => {
 		await assert.rejects(client.sendNotification(type, 1));
 	});
 
+	test('Message strategy fails a request when a write fails and the hook does not return next', async () => {
+		class FailingWriter extends hostConnection.AbstractMessageWriter implements hostConnection.MessageWriter {
+			public write(): Promise<void> {
+				return Promise.reject(new Error('write failed'));
+			}
+			public end(): void {
+			}
+		}
+		const type = new RequestType0<void, void>('test/request');
+		const duplexStream = new TestDuplex('ds1');
+
+		const client = hostConnection.createMessageConnection(new hostConnection.StreamMessageReader(duplexStream), new FailingWriter(), hostConnection.NullLogger, {
+			messageStrategy: {
+				async handleOutgoingMessage(message, next) {
+					void next(message);
+				}
+			}
+		});
+		client.listen();
+
+		await assert.rejects(client.sendRequest(type), (error: ResponseError<void>) => error.code === ErrorCodes.MessageWriteError);
+	});
+
 	test('Message strategy writes a message once when handleOutgoingMessage calls next twice', async () => {
 		const first = new NotificationType<number>('test/first');
 		const second = new NotificationType<number>('test/second');

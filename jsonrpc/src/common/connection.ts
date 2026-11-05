@@ -877,6 +877,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			if (written === undefined) {
 				throw new Error(`handleOutgoingMessage did not call next, so the message was not written.`);
 			}
+			// A hook may not return the promise of next, so a failed write has to
+			// be reported here or the request would wait forever.
+			await written;
 		});
 		lastOutgoingMessage = result.catch(() => undefined);
 		return result;
