@@ -56,7 +56,7 @@ allow corrections. Explain any unresolved policy choices before asking.
 **Wait for explicit approval before editing manifests or mutating GitHub.**
 If the user revises the proposal, use the approved numbers, not the original ones.
 
-## 3. Update manifests consistently
+## 3. Update manifests and release history
 
 - Update approved versions in package `package.json` files.
 - Find every reference to affected local npm packages in all manifests, including
@@ -70,8 +70,10 @@ If the user revises the proposal, use the approved numbers, not the original one
   Otherwise report that lockfiles were not regenerated.
 - Do not use `npm version`, `update:lock`, `all:publish`, `npm pack`, or publishing
   commands as shortcuts: lifecycle hooks can clean files or run release actions.
-- If requested, update the root README release history in its existing style,
-  including compatibility notes and milestone query links.
+- Update the root `README.md` release history as part of release preparation;
+  do not wait for a separate request. Follow its existing style, use the approved
+  package versions, and include compatibility notes, relevant fixes and
+  improvements, and fixed-issue and merged-PR query links for the protocol milestone.
 
 ## 4. Validate before updating GitHub
 
@@ -117,7 +119,8 @@ restrictions or claim success. Stop before milestone mutations until resolved.
 
 ## Completion report
 
-Report the approved versions, manifest changes, actual validation result, and
-milestone link with counts of assigned PRs and fixed issues. Mention exclusions,
-preserved milestones, lockfile status, and any blockers. Do not describe packages
-as published or tests as passed when those actions were not performed.
+Report the approved versions, manifest and README release-history changes, actual
+validation result, and milestone link with counts of assigned PRs and fixed issues.
+Mention exclusions, preserved milestones, lockfile status, and any blockers. Do
+not describe packages as published or tests as passed when those actions were not
+performed.

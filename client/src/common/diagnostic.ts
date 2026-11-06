@@ -495,6 +495,7 @@ class DiagnosticRequestor implements Disposable {
 			return;
 		}
 		this.pullWorkspaceAsync().then(() => {
+			this.workspaceErrorCounter = 0;
 			this.workspaceTimeout = RAL().timer.setTimeout(() => {
 				this.pullWorkspace();
 			}, 2000);
@@ -626,7 +627,7 @@ class DiagnosticRequestor implements Disposable {
 							try {
 								converted.items.push(await convertReport(item));
 							} catch (error) {
-								this.client.error(`Converting workspace diagnostics failed.`, error);
+								this.client.error(`Converting workspace diagnostics failed.`, error, false);
 							}
 						}
 						resultReporter(converted);
@@ -644,14 +645,18 @@ class DiagnosticRequestor implements Disposable {
 							items: []
 						};
 						for (const item of result.items) {
-							converted.items.push(await convertReport(item));
+							try {
+								converted.items.push(await convertReport(item));
+							} catch (error) {
+								this.client.error(`Converting workspace diagnostics failed.`, error, false);
+							}
 						}
 						resultReporter(converted);
 						return { items: [] };
 					}, (error) => {
-						return this.client.handleFailedRequest(DocumentDiagnosticRequest.type, token, error, { items: [] });
+						return this.client.handleFailedRequest(WorkspaceDiagnosticRequest.type, token, error, { items: [] });
 					}).finally(() => {
-						// Runs on success, cancellation, request failure, and a convertReport throw.
+						// Runs on success, cancellation, and request failure.
 						disposable.dispose();
 					});
 				};
@@ -1045,10 +1050,10 @@ class DiagnosticFeatureProviderImpl implements DiagnosticProviderShape {
 					}
 				}
 
-				// Moving cells changes the order of the notebook without changing the text
-				// or the URIs of the cells. Cell order can change the diagnostics of other
-				// cells when the server reports inter file dependencies.
-				if (options.interFileDependencies && event.cells?.structure !== undefined) {
+				// Text edits and cell order changes can affect other cells when the server
+				// reports inter file dependencies. Refresh them together instead of waiting
+				// for the background scheduler's per-document delay.
+				if (options.interFileDependencies && (textEvents.length > 0 || event.cells?.structure !== undefined)) {
 					for (const cell of event.notebook.getCells()) {
 						// Cells pulled above for this event do not need a second pull.
 						if (matchesCell(cell) && !pulledUris.has(cell.document.uri.toString())) {

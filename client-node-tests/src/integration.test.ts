@@ -897,6 +897,32 @@ suite('Client integration', () => {
 		assert.ok(middlewareCalled);
 	});
 
+	test('Document Formatting passes through additional formatting options', async () => {
+		const provider = client.getFeature(lsclient.DocumentFormattingRequest.method).getProvider(document);
+		isDefined(provider);
+		const result = await provider.provideDocumentFormattingEdits(document, {
+			tabSize: 4,
+			insertSpaces: false,
+			trimTrailingWhitespace: true,
+			customSetting: 'customValue'
+		}, tokenSource.token);
+		isArray(result, vscode.TextEdit);
+		const params = await client.sendRequest(
+			new lsclient.ProtocolRequestType<any, any, never, any, any>('testing/lastFormattingRequest'),
+			{},
+			tokenSource.token
+		);
+		assert.deepStrictEqual(params, {
+			textDocument: { uri: document.uri.toString() },
+			options: {
+				tabSize: 4,
+				insertSpaces: false,
+				trimTrailingWhitespace: true,
+				customSetting: 'customValue'
+			}
+		});
+	});
+
 	test('Document Range Formatting', async () => {
 		const provider = client.getFeature(lsclient.DocumentRangeFormattingRequest.method).getProvider(document);
 		isDefined(provider);
@@ -1682,7 +1708,7 @@ suite('Client integration', () => {
 	 * settled. Only registrations made synchronously by this call are counted, so
 	 * the client's background workspace pull doesn't interfere.
 	 */
-	async function workspacePullProgressHandlers(token: vscode.CancellationToken, expectRejection?: RegExp): Promise<{ registered: (string | number)[]; active: (string | number)[] }> {
+	async function workspacePullProgressHandlers(token: vscode.CancellationToken): Promise<{ registered: (string | number)[]; active: (string | number)[] }> {
 		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
 		isDefined(provider);
 		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
@@ -1698,11 +1724,7 @@ suite('Client integration', () => {
 		} finally {
 			onProgress.restore();
 		}
-		if (expectRejection !== undefined) {
-			await assert.rejects(pull, expectRejection);
-		} else {
-			await pull;
-		}
+		await pull;
 		return { registered, active: registered.filter(item => progressHandlers.has(item)) };
 	}
 
@@ -1753,7 +1775,7 @@ suite('Client integration', () => {
 		});
 		let handlers: { registered: (string | number)[]; active: (string | number)[] };
 		try {
-			handlers = await workspacePullProgressHandlers(source.token, /conversion failed/);
+			handlers = await workspacePullProgressHandlers(source.token);
 		} finally {
 			stub.restore();
 			source.dispose();
@@ -1761,6 +1783,88 @@ suite('Client integration', () => {
 		assert.strictEqual(handlers.registered.length, 1, 'expected one progress handler to be registered');
 		assert.strictEqual(handlers.active.length, 0, 'expected the progress handler to be disposed');
 	});
+
+	test('Workspace diagnostic pull skips a report that fails to convert and keeps the rest', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		isDefined(provider.diagnostics.provideWorkspaceDiagnostics);
+		const source = new vscode.CancellationTokenSource();
+		const sendRequest = client.sendRequest.bind(client) as (...args: any[]) => Promise<any>;
+		// Append a report whose empty message makes VS Code's Diagnostic constructor throw.
+		const stub = sinon.stub(client, 'sendRequest').callsFake(async (...args: any[]) => {
+			const result = await sendRequest(...args);
+			if (args[2] === source.token) {
+				result.items.push({ kind: 'full', uri: 'file:///bad.txt', items: [{ range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } }, message: '' }] });
+			}
+			return result;
+		});
+		const errorLog = sinon.stub(client, 'error');
+		const chunks: (vsdiag.WorkspaceDiagnosticReportPartialResult | null)[] = [];
+		try {
+			await provider.diagnostics.provideWorkspaceDiagnostics([], source.token, (chunk) => chunks.push(chunk));
+		} finally {
+			stub.restore();
+			errorLog.restore();
+			source.dispose();
+		}
+		assert.strictEqual(chunks.length, 1, 'expected the final report to be delivered');
+		const items = chunks[0]?.items ?? [];
+		assert.strictEqual(items.length, 1, 'expected the valid report to be kept');
+		assert.notStrictEqual(items[0].uri.toString(), 'file:///bad.txt', 'expected the bad report to be skipped');
+		assert.ok(errorLog.calledOnceWithExactly('Converting workspace diagnostics failed.', sinon.match.any, false), 'expected the conversion failure to be logged without a notification');
+	});
+
+	test('Workspace diagnostic pull keeps retrying after non-consecutive failures', async () => {
+		const provider = client.getFeature(lsclient.DocumentDiagnosticRequest.method)?.getProvider(document);
+		isDefined(provider);
+		// The suite server's identifier disables the background workspace pull, so drive it directly.
+		const requestor = (provider as any).diagnosticRequestor as { pullWorkspace(): void };
+		const runtime = lsclient.RAL();
+		const scheduled: (() => void)[] = [];
+		// Capture the 2s workspace pull reschedules instead of waiting for them.
+		lsclient.RAL.install({
+			...runtime,
+			timer: {
+				...runtime.timer,
+				setTimeout: (callback, milliseconds, ...args) => {
+					if (milliseconds === 2000) {
+						scheduled.push(() => callback(...args));
+						return lsclient.Disposable.create(() => {});
+					}
+					return runtime.timer.setTimeout(callback, milliseconds, ...args);
+				}
+			}
+		});
+		let fail = false;
+		(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = (resultIds, token, reporter, next) => {
+			if (fail) {
+				throw new Error('transient failure');
+			}
+			return next(resultIds, token, reporter);
+		};
+		const errorLog = sinon.stub(client, 'error');
+		try {
+			// Alternate failure and success for 12 pulls: 6 failures, never more than one in a row.
+			for (let pull = 0; pull < 12; pull++) {
+				fail = pull % 2 === 0;
+				if (pull === 0) {
+					requestor.pullWorkspace();
+				} else {
+					scheduled.shift()!();
+				}
+				const deadline = Date.now() + 2000;
+				while (scheduled.length === 0 && Date.now() < deadline) {
+					await waitForNextTurn();
+				}
+				assert.strictEqual(scheduled.length, 1, `expected a workspace pull to be rescheduled after pull ${pull + 1}`);
+			}
+			assert.strictEqual(errorLog.callCount, 6);
+		} finally {
+			errorLog.restore();
+			lsclient.RAL.install(runtime);
+			(middleware as DiagnosticProviderMiddleware).provideWorkspaceDiagnostics = undefined;
+		}
+	}).timeout(10000);
 
 	test('Document diagnostic pull after quick reopen', async () => {
 		await vscode.window.showTextDocument(document);
@@ -2340,6 +2444,75 @@ suite('Full notebook tests', () => {
 		await revertAllDirty();
 	}).timeout(5000);
 
+	test('Notebook document: text changes refresh dependent cells without waiting for background pulls', async(): Promise<void> => {
+		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', new vscode.NotebookData([
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'value = 1', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'other = 2', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'value + other', 'python'),
+			new vscode.NotebookCellData(vscode.NotebookCellKind.Code, 'const unrelated = 1;', 'javascript')
+		]));
+		const cellUris = new Set(notebook.getCells().map(cell => cell.document.uri.toString()));
+		const expected = notebook.getCells().slice(0, 3).map(cell => cell.document.uri.toString());
+		const opened = new Set<string>();
+		const pulled: string[] = [];
+		let observingChanges = false;
+		client.middleware.provideDiagnostics = async (document, previousResultId, token, next) => {
+			const uri = document instanceof vscode.Uri ? document.toString() : document.uri.toString();
+			if (observingChanges && cellUris.has(uri)) {
+				pulled.push(uri);
+			}
+			const result = await next(document, previousResultId, token);
+			if (!observingChanges && cellUris.has(uri)) {
+				opened.add(uri);
+			}
+			return result;
+		};
+
+		const runtime = lsclient.RAL();
+		// Hold background pulls so the assertion does not depend on machine speed.
+		lsclient.RAL.install({
+			...runtime,
+			timer: {
+				...runtime.timer,
+				setTimeout: (callback, milliseconds, ...args) => milliseconds === 500
+					? lsclient.Disposable.create(() => {})
+					: runtime.timer.setTimeout(callback, milliseconds, ...args)
+			}
+		});
+		let listener: vscode.Disposable | undefined;
+		let notificationTimeout: ReturnType<typeof setTimeout> | undefined;
+		try {
+			await vscode.window.showNotebookDocument(notebook);
+			const deadline = Date.now() + 3000;
+			while (opened.size < expected.length && Date.now() < deadline) {
+				await waitForNextTurn();
+			}
+			assert.deepStrictEqual([...opened].sort(), [...expected].sort());
+			await waitForNextTurn();
+			observingChanges = true;
+			const changed = new Promise<void>((resolve, reject) => {
+				notificationTimeout = setTimeout(() => reject(new Error('No notebook text change notification was sent')), 3000);
+				listener = client.getFeature(lsclient.NotebookDocumentSyncRegistrationType.method).onChangeNotificationSent(event => {
+					if (event.notebook === notebook && event.cells?.textContent?.length) {
+						resolve();
+					}
+				});
+			});
+			const edit = new vscode.WorkspaceEdit();
+			edit.insert(notebook.cellAt(0).document.uri, new vscode.Position(0, 0), '# changed\n');
+			assert.strictEqual(await vscode.workspace.applyEdit(edit), true);
+			await changed;
+			await waitForNextTurn();
+			assert.deepStrictEqual(pulled.sort(), [...expected].sort(), 'Pull each matching cell once, including unchanged dependent cells');
+		} finally {
+			clearTimeout(notificationTimeout);
+			listener?.dispose();
+			lsclient.RAL.install(runtime);
+			client.middleware.provideDiagnostics = undefined;
+			await revertAllDirty();
+		}
+	}).timeout(8000);
+
 	test('Notebook document: reordering cells pulls diagnostics', async(): Promise<void> => {
 		const notebook = await vscode.workspace.openNotebookDocument('jupyter-notebook', createNotebookData());
 		await vscode.window.showNotebookDocument(notebook);
@@ -2556,6 +2729,205 @@ suite('Server tests', () => {
 			await client.dispose();
 			client.diagnostics?.dispose();
 			outputChannel.dispose();
+		}
+	}).timeout(10000);
+
+	function createRetryClient(server: string, initializationFailedHandler?: lsclient.InitializationFailedHandler): lsclient.LanguageClient {
+		// The client owns its output channel: it logs the server's exit after start() and
+		// stop() settle, and recreates a channel it already disposed on stop.
+		return new lsclient.LanguageClient('initialization-retry', 'Initialization retry', {
+			module: path.join(__dirname, './servers', server),
+			transport: lsclient.TransportKind.ipc,
+		}, {
+			initializationFailedHandler,
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed: () => ({ action: lsclient.CloseAction.DoNotRestart, handled: true }),
+			}
+		});
+	}
+
+	async function withUnhandledRejections(body: (unhandled: unknown[]) => Promise<void>): Promise<void> {
+		const unhandled: unknown[] = [];
+		const onUnhandled = (reason: unknown) => unhandled.push(reason);
+		process.on('unhandledRejection', onUnhandled);
+		try {
+			await body(unhandled);
+		} finally {
+			process.off('unhandledRejection', onUnhandled);
+		}
+	}
+
+	test('Start resolves once a retried initialization succeeds', async () => {
+		const handler = sinon.stub().returns(true);
+		const client = createRetryClient('retryInitializeServer.js', handler);
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await client.start();
+				assert.strictEqual(handler.callCount, 1);
+				assert.strictEqual(client.state, lsclient.State.Running);
+				assert.strictEqual(client.isRunning(), true);
+				// A second start shares the settled start promise.
+				await client.start();
+				await client.stop();
+				assert.strictEqual(client.state, lsclient.State.Stopped);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start rejects when a retried initialization fails again', async () => {
+		const handler = sinon.stub();
+		handler.onFirstCall().returns(true);
+		handler.returns(false);
+		// The server fails the retry with a distinct error, so the final error is observable.
+		const client = createRetryClient('retryThenFailInitializeServer.js', handler);
+		const stopped = new Promise<void>(resolve => {
+			const listener = client.onDidChangeState(event => {
+				if (event.newState === lsclient.State.Stopped) {
+					listener.dispose();
+					resolve();
+				}
+			});
+		});
+		const stop = sinon.spy(client, 'stop');
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Initialization failed after retry/);
+				assert.strictEqual(handler.callCount, 2);
+				assert.match(String(handler.secondCall.args[0]), /Initialization failed after retry/);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				assert.strictEqual(stop.callCount, 1);
+				await stopped;
+				assert.notStrictEqual(client.state, lsclient.State.Running);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			stop.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start waits for the retry choice of a retryable initialization error', async () => {
+		const client = createRetryClient('retryInitializeServer.js');
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage').resolves({ title: 'Retry', id: 'retry' } as any);
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await client.start();
+				assert.deepStrictEqual(showErrorMessage.getCalls().map(call => call.args), [['Initialization refused', { title: 'Retry', id: 'retry' }]]);
+				assert.strictEqual(client.state, lsclient.State.Running);
+				await client.stop();
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			showErrorMessage.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start rejects when the retry choice of a retryable initialization error is dismissed', async () => {
+		const client = createRetryClient('retryInitializeServer.js');
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+		const stopped = new Promise<void>(resolve => {
+			const listener = client.onDidChangeState(event => {
+				if (event.newState === lsclient.State.Stopped) {
+					listener.dispose();
+					resolve();
+				}
+			});
+		});
+		const stop = sinon.spy(client, 'stop');
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Initialization refused/);
+				// The retry choice is offered once; the failed start is then reported as well.
+				assert.deepStrictEqual(showErrorMessage.firstCall.args, ['Initialization refused', { title: 'Retry', id: 'retry' }]);
+				assert.strictEqual(showErrorMessage.getCalls().filter(call => call.args[0] === 'Initialization refused').length, 1);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				assert.strictEqual(stop.callCount, 1);
+				await stopped;
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			stop.restore();
+			showErrorMessage.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start rejects with the final error when the retry chosen for an initialization error fails', async () => {
+		const client = createRetryClient('retryThenFailInitializeServer.js');
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage');
+		showErrorMessage.withArgs('Initialization refused').resolves({ title: 'Retry', id: 'retry' } as any);
+		showErrorMessage.resolves(undefined);
+		const stopped = new Promise<void>(resolve => {
+			const listener = client.onDidChangeState(event => {
+				if (event.newState === lsclient.State.Stopped) {
+					listener.dispose();
+					resolve();
+				}
+			});
+		});
+		const stop = sinon.spy(client, 'stop');
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Initialization failed after retry/);
+				// Retry is offered for the first error only; the final error can't be retried.
+				assert.deepStrictEqual(showErrorMessage.withArgs('Initialization refused').getCalls().map(call => call.args), [['Initialization refused', { title: 'Retry', id: 'retry' }]]);
+				assert.strictEqual(showErrorMessage.withArgs('Initialization failed after retry', sinon.match.object).callCount, 0);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				// Only the failed retry stops the client, which terminates the server process.
+				assert.strictEqual(stop.callCount, 1);
+				await stopped;
+				assert.strictEqual(stop.callCount, 1);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			stop.restore();
+			showErrorMessage.restore();
+			await client.dispose();
+			client.diagnostics?.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start rejects when the connection closes while the retry choice is shown', async () => {
+		const client = createRetryClient('exitOnInitializeRetryServer.js');
+		// Keep the retry choice open until the test answers it.
+		let answer!: (item: vscode.MessageItem | undefined) => void;
+		const choice = new Promise<vscode.MessageItem | undefined>(resolve => answer = resolve);
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage');
+		showErrorMessage.withArgs('Initialization refused').returns(choice as any);
+		showErrorMessage.resolves(undefined);
+		const initialize = sinon.spy(client as any, 'initialize');
+		// The client must not stop after the close: the close handling already did. A failed
+		// start can't be stopped either, so the stub also keeps dispose() from rejecting.
+		const stop = sinon.stub(client, 'stop').resolves();
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Connection to server got closed before initialization was retried/);
+				assert.strictEqual(showErrorMessage.withArgs('Initialization refused').callCount, 1);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				// Answering the stale choice afterwards changes nothing.
+				answer({ title: 'Retry', id: 'retry' } as vscode.MessageItem);
+				await new Promise(resolve => setTimeout(resolve, 100));
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				assert.strictEqual(stop.callCount, 0);
+				assert.strictEqual(initialize.callCount, 1);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			answer(undefined);
+			initialize.restore();
+			showErrorMessage.restore();
+			await client.dispose();
+			stop.restore();
+			client.diagnostics?.dispose();
 		}
 	}).timeout(10000);
 

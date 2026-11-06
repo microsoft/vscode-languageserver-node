@@ -36,9 +36,9 @@ export class Delayer<T> {
 			}).then(() => {
 				this.completionPromise = undefined;
 				this.onSuccess = undefined;
-				const result = this.task!();
+				const task = this.task!;
 				this.task = undefined;
-				return result;
+				return task();
 			});
 		}
 
@@ -57,11 +57,11 @@ export class Delayer<T> {
 			return undefined;
 		}
 		this.cancelTimeout();
-		const result: T = this.task!();
+		const task = this.task!;
 		this.completionPromise = undefined;
 		this.onSuccess = undefined;
 		this.task = undefined;
-		return result;
+		return task();
 	}
 
 	public isTriggered(): boolean {

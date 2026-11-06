@@ -42,7 +42,7 @@
 		"clean": "rimraf lib && rimraf dist",
 		"lint": "eslint src",
 		"test": "npm run test:node && npm run test:browser",
-		"test:node": "node ../node_modules/mocha/bin/_mocha",
+		"test:node": "node ../node_modules/mocha/bin/mocha.js",
 		"test:browser": "npm run esbuild:test && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/protocol/src/browser/test/",
 		"esbuild:test": "cd ../types && npm run compile && cd ../protocol && node ./src/browser/test/esbuild.mjs",
 		"compile:metaModelTool": "cd ../tools && npm run compile && cd ../protocol",

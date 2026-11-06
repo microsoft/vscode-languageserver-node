@@ -1783,3 +1783,17 @@ suite('Code Converter', () => {
 		strictEqual(result.selectedCompletionInfo.text, item.selectedCompletionInfo!.text);
 	});
 });
+
+suite('Delayer', () => {
+
+	test('A task can trigger the delayer again', async () => {
+		const delayer = new async.Delayer<void>(0);
+		let retriggered = false;
+		let retry: Promise<void> | undefined;
+		await delayer.trigger(async () => {
+			retry = delayer.trigger(async () => { retriggered = true; });
+		});
+		await retry;
+		ok(retriggered);
+	});
+});
