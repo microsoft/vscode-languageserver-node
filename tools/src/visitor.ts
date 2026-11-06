@@ -758,6 +758,9 @@ export default class Visitor {
 				if (keyTypeNode === undefined) {
 					return undefined;
 				}
+				if (declaration.type === undefined) {
+					return undefined;
+				}
 				const key = this.getTypeInfo(keyTypeNode);
 				const value = this.getTypeInfo(declaration.type);
 				if (key === undefined || value === undefined) {
