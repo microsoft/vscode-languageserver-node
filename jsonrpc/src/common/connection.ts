@@ -867,6 +867,9 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					return written ?? Promise.resolve();
 				}
 				written = messageWriter.write(outgoing);
+				// The rejection is reported once the hook settles. Until then the
+				// hook may not be listening, which would be an unhandled rejection.
+				written.catch(() => undefined);
 				return written;
 			};
 			try {
