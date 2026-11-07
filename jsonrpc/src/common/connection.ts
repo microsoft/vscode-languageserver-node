@@ -474,13 +474,57 @@ export namespace CancellationStrategy {
 }
 
 export interface MessageStrategy {
-	handleMessage(message: Message, next: (message: Message) => NotificationResult): NotificationResult;
+	/**
+	 * Handles a received message before it is dispatched. Not called if
+	 * `handleIncomingMessage` is provided.
+	 *
+	 * @deprecated Use `handleIncomingMessage` instead.
+	 *
+	 * @param message The received message.
+	 * @param next Dispatches the message.
+	 */
+	handleMessage?(message: Message, next: (message: Message) => NotificationResult): NotificationResult;
+
+	/**
+	 * Handles a received message before it is dispatched. If provided, it is
+	 * used instead of `handleMessage`. Unlike `handleMessage`, it also gets the
+	 * messages that skip the message queue: responses when `maxParallelism` is
+	 * set, and `$/cancelRequest` notifications as soon as they are read.
+	 *
+	 * You must call `next` for `$/cancelRequest`, or the request is not
+	 * canceled.
+	 *
+	 * @param message The received message.
+	 * @param next Dispatches the message.
+	 */
+	handleIncomingMessage?(message: Message, next: (message: Message) => NotificationResult): NotificationResult;
+
+	/**
+	 * Handles a message before it is written, for example to add a property
+	 * like a trace context to it. Messages are passed one at a time in send
+	 * order: the next one is passed when the promise returned for the previous
+	 * one settles.
+	 *
+	 * Properties added at the top level of a message reach the writer
+	 * unchanged. `Message` does not declare them, so the object passed to
+	 * `next` has to be cast to `Message`.
+	 *
+	 * You must call `next` exactly once before the returned promise settles.
+	 * If it is not called, the message is not written and sending it fails: a
+	 * request is rejected with `ErrorCodes.MessageWriteError` and the promise
+	 * of a notification is rejected. Any other call to `next` logs a warning
+	 * and writes nothing.
+	 *
+	 * @param message The message to send.
+	 * @param next Writes the message. Pass it the message to write.
+	 */
+	handleOutgoingMessage?(message: Message, next: (message: Message) => Promise<void>): Promise<void>;
 }
 
 export namespace MessageStrategy {
 	export function is(value: any): value is MessageStrategy {
 		const candidate: MessageStrategy = value;
-		return candidate && Is.func(candidate.handleMessage);
+		return candidate && (Is.func(candidate.handleMessage) || Is.func(candidate.handleIncomingMessage) || Is.func(candidate.handleOutgoingMessage));
 	}
 }
 
@@ -708,7 +752,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			} else {
 				// If we have limited parallelism we resolve responses to avoid
 				// dead locks.
-				handleResponse(message);
+				handleUnqueuedMessage(message, handleMessage);
 			}
 		} else {
 			queue.set(createNotificationQueueKey(), message);
@@ -735,7 +779,11 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 			try {
 				inFlight++;
 				const messageStrategy = options?.messageStrategy;
-				if (MessageStrategy.is(messageStrategy)) {
+				const handleIncoming = incomingHook();
+				if (handleIncoming !== undefined) {
+					// A queued cancellation already went through the hook when it was read.
+					result = isCancelNotification(message) ? handleMessage(message) : handleIncoming(message, handleMessage);
+				} else if (messageStrategy !== undefined && Is.func(messageStrategy.handleMessage)) {
 					result = messageStrategy.handleMessage(message, handleMessage);
 				} else {
 					result = handleMessage(message);
@@ -775,11 +823,90 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		}
 	}
 
+	function incomingHook(): MessageStrategy['handleIncomingMessage'] {
+		const messageStrategy = options?.messageStrategy;
+		if (messageStrategy === undefined || !Is.func(messageStrategy.handleIncomingMessage)) {
+			return undefined;
+		}
+		return (message, next) => messageStrategy.handleIncomingMessage!(message, next);
+	}
+
+	// Messages that skip the queue go through `handleIncomingMessage`.
+	// `handleMessage` keeps getting queued messages only. Errors are logged,
+	// since the reader can call us from an event handler.
+	function handleUnqueuedMessage(message: Message, handle: (message: Message) => NotificationResult): void {
+		const handleIncoming = incomingHook();
+		const logError = (error: any) => logger.error(`Processing message failed: ${error}`);
+		try {
+			const result = handleIncoming !== undefined ? handleIncoming(message, handle) : handle(message);
+			if (result instanceof Promise) {
+				result.catch(logError);
+			}
+		} catch (error) {
+			logError(error);
+		}
+	}
+
+	let lastOutgoingMessage: Promise<void> = Promise.resolve();
+	function writeMessage(message: Message): Promise<void> {
+		const messageStrategy = options?.messageStrategy;
+		if (messageStrategy === undefined || !Is.func(messageStrategy.handleOutgoingMessage)) {
+			return messageWriter.write(message);
+		}
+		// Pass one message at a time to the hook. Otherwise a hook that awaits
+		// before calling next lets a later message reach the writer first.
+		const result = lastOutgoingMessage.then(async () => {
+			if (isDisposed()) {
+				throw new ConnectionError(ConnectionErrors.Disposed, 'Connection is disposed.');
+			}
+			let written: Promise<void> | undefined;
+			let settled = false;
+			const next = (outgoing: Message): Promise<void> => {
+				if (written !== undefined || settled) {
+					logger.warn(`handleOutgoingMessage must call next exactly once before it settles.`);
+					return written ?? Promise.resolve();
+				}
+				written = messageWriter.write(outgoing);
+				// The rejection is reported once the hook settles. Until then the
+				// hook may not be listening, which would be an unhandled rejection.
+				written.catch(() => undefined);
+				return written;
+			};
+			try {
+				await messageStrategy.handleOutgoingMessage!(message, next);
+			} finally {
+				settled = true;
+			}
+			if (written === undefined) {
+				throw new Error(`handleOutgoingMessage did not call next, so the message was not written.`);
+			}
+			// A hook may not return the promise of next, so a failed write has to
+			// be reported here or the request would wait forever.
+			await written;
+		});
+		lastOutgoingMessage = result.catch(() => undefined);
+		return result;
+	}
+
 	const callback: DataCallback = (message) => {
+		// The hook gets cancellations as soon as they are read and can drop them,
+		// so nothing is canceled or remembered before it calls next.
+		if (isCancelNotification(message) && incomingHook() !== undefined) {
+			handleUnqueuedMessage(message, receiveMessage);
+		} else {
+			receiveMessage(message);
+		}
+	};
+
+	function isCancelNotification(message: Message): message is NotificationMessage {
+		return Message.isNotification(message) && message.method === CancelNotification.type.method;
+	}
+
+	function receiveMessage(message: Message): void {
 		try {
 			// We have received a cancellation message. Check if the message is still in the queue
 			// and cancel it if allowed to do so.
-			if (Message.isNotification(message) && message.method === CancelNotification.type.method) {
+			if (isCancelNotification(message)) {
 				const cancelId = (message.params as CancelParams).id;
 				const key = createRequestQueueKey(cancelId);
 				const toCancel = messageQueue.get(key);
@@ -791,7 +918,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 						requestTokens.delete(cancelId);
 						response.id = toCancel.id;
 						traceSendingResponse(response, message.method, Date.now());
-						messageWriter.write(response).catch(() => logger.error(`Sending response for canceled message failed.`));
+						writeMessage(response).catch(() => logger.error(`Sending response for canceled message failed.`));
 						return;
 					}
 				}
@@ -811,7 +938,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		} finally {
 			triggerMessageQueue();
 		}
-	};
+	}
 
 	async function handleRequest(requestMessage: RequestMessage): Promise<void> {
 		if (isDisposed()) {
@@ -831,7 +958,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				message.result = resultOrError === undefined ? null : resultOrError;
 			}
 			traceSendingResponse(message, method, startTime);
-			return messageWriter.write(message);
+			return writeMessage(message);
 		}
 		function replyError(error: ResponseError<any>, method: string, startTime: number): Promise<void> {
 			const message: ResponseMessage = {
@@ -840,7 +967,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				error: error.toJson()
 			};
 			traceSendingResponse(message, method, startTime);
-			return messageWriter.write(message);
+			return writeMessage(message);
 		}
 		traceReceivedRequest(requestMessage);
 
@@ -1313,7 +1440,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				params: messageParams
 			};
 			traceSendingNotification(notificationMessage);
-			return messageWriter.write(notificationMessage).catch((error) => {
+			return writeMessage(notificationMessage).catch((error) => {
 				logger.error(`Sending notification failed.`);
 				throw error;
 			});
@@ -1460,7 +1587,7 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				const responsePromise: ResponsePromise | null = { method: method, timerStart: Date.now(), resolve: resolveWithCleanup, reject: rejectWithCleanup };
 				try {
 					responsePromises.set(id, responsePromise);
-					await messageWriter.write(requestMessage);
+					await writeMessage(requestMessage);
 					if (tokenWasCancelled) {
 						sendCancellation(connection, id);
 					}

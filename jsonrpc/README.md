@@ -50,6 +50,28 @@ connection.onNotification(notification, (param: string) => {
 connection.listen();
 ```
 
+Both sides can pass a `messageStrategy` in the connection options to work with the messages of the connection. `handleOutgoingMessage` gets every message before it is written, and `handleIncomingMessage` gets every received message before it is dispatched. Outgoing messages are passed one at a time in send order, so a `handleOutgoingMessage` that awaits before calling `next` delays the messages after it instead of reordering them. For example, to send a trace context along with each message and restore it while the other side handles the message (`getTraceparent` and `runWithTraceparent` stand for your own tracing code):
+
+```ts
+let connection = rpc.createMessageConnection(reader, writer, undefined, {
+	messageStrategy: {
+		handleOutgoingMessage(message, next) {
+			return next({ ...message, traceparent: getTraceparent() } as rpc.Message);
+		},
+		handleIncomingMessage(message, next) {
+			const traceparent = (message as { traceparent?: string }).traceparent;
+			return runWithTraceparent(traceparent, () => next(message));
+		}
+	}
+});
+```
+
+A `handleIncomingMessage` hook must call `next` for `$/cancelRequest`, or the request is not canceled.
+
+A `handleOutgoingMessage` hook must call `next` exactly once before its promise settles. If it does not call `next`, the message is not written and sending it fails: a request is rejected with `ErrorCodes.MessageWriteError` and the promise of a notification is rejected. Any other call to `next` logs a warning and writes nothing.
+
+Properties added at the top level of a message reach the writer unchanged. `Message` does not declare them, which is why the example casts the object passed to `next`.
+
 # History
 
 For the history please see the [main repository](https://github.com/Microsoft/vscode-languageserver-node/blob/master/README.md)
