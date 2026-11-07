@@ -8,6 +8,26 @@ import * as assert from 'assert';
 import { LinkedMap, Touch, LRUCache } from '../linkedMap';
 
 suite('Linked Map', () => {
+	for (const map of [new LinkedMap<string, unknown>(), new LRUCache<string, unknown>(3)]) {
+		test(`${map.constructor.name} delete reports key presence for falsy values`, () => {
+			for (const value of [0, -0, false, '', null, undefined, NaN, 'value']) {
+				map.clear();
+				map.set('first', 'first');
+				map.set('key', value);
+				map.set('last', 'last');
+
+				assert.strictEqual(map.delete('missing'), false);
+				assert.strictEqual(map.size, 3);
+				assert.strictEqual(map.delete('key'), true, `delete should return true for ${String(value)}`);
+				assert.strictEqual(map.has('key'), false);
+				assert.strictEqual(map.size, 2);
+				assert.deepStrictEqual([...map.keys()], ['first', 'last']);
+				assert.deepStrictEqual([...map.values()], ['first', 'last']);
+				assert.strictEqual(map.delete('key'), false);
+			}
+		});
+	}
+
 	test('Simple', () => {
 		const map = new LinkedMap<string, string>();
 		map.set('ak', 'av');

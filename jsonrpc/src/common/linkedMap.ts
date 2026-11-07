@@ -118,7 +118,9 @@ export class LinkedMap<K, V> {
 	}
 
 	public delete(key: K): boolean {
-		return !!this.remove(key);
+		const existed = this._map.has(key);
+		this.remove(key);
+		return existed;
 	}
 
 	public remove(key: K): V | undefined {
