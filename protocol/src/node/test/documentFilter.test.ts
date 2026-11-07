@@ -10,7 +10,6 @@ import {
 	DiagnosticServerCancellationData, DocumentSelector, NotebookCellTextDocumentFilter, NotebookDocumentFilter,
 	RelativePattern, TextDocumentFilter, TextDocumentRegistrationOptions, WorkDoneProgressOptions
 } from '../main';
-import { DocumentSelector, NotebookCellTextDocumentFilter, NotebookDocumentFilter, RelativePattern, TextDocumentFilter, TextDocumentRegistrationOptions } from '../main';
 
 suite('Document filter type guards', () => {
 
