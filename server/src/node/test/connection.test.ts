@@ -10,7 +10,7 @@ import { Duplex } from 'stream';
 import {
 	InitializeParams, InitializeRequest, InitializeResult, createConnection, DidChangeConfigurationNotification,
 	DidChangeConfigurationParams, Connection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress,
-	LocationLink, WorkDoneProgressReporter
+	LocationLink, WorkDoneProgressReporter, NotificationType0
 } from '../main';
 
 class TestStream extends Duplex {
@@ -82,6 +82,16 @@ suite('Connection Tests', () => {
 			settings: {}
 		};
 		void clientConnection.sendNotification(DidChangeConfigurationNotification.type, param);
+	});
+
+	test('Ensure notification without parameters is sent without parameters', (done) => {
+		const type = new NotificationType0('test/notification0');
+		serverConnection.onNotification(type, (...args: any[]) => {
+			assert.strictEqual(args.length, 0, 'No parameters are transferred');
+			done();
+		});
+
+		void clientConnection.sendNotification(type);
 	});
 
 	test('Ensure work done converted', (done) => {
