@@ -90,6 +90,30 @@ const msgpackDecoder: FunctionContentTypeDecoder = {
 };
 
 suite('Messages', () => {
+	for (const failingWrite of [1, 2]) {
+		test(`Reports rejected ${failingWrite === 1 ? 'header' : 'body'} writes with message and error count`, async () => {
+			let writes = 0;
+			const error = new Error('Write failed');
+			const writable = new Writable({
+				write(_chunk, _encoding, callback) {
+					writes++;
+					callback(writes === failingWrite ? error : undefined);
+				}
+			});
+			const writer = new StreamMessageWriter(writable);
+			const errors: [Error, Message | undefined, number | undefined][] = [];
+			writer.onError((event) => errors.push(event));
+			const request: RequestMessage = { jsonrpc: '2.0', id: 1, method: 'example' };
+			try {
+				await assert.rejects(writer.write(request), (actual) => actual === error);
+				assert.ok(errors.some(([actual, message, count]) => actual === error && message === request && count === 1));
+			} finally {
+				writer.dispose();
+				writable.destroy();
+			}
+		});
+	}
+
 	test('Writing', async () => {
 		const writable = new TestWritable();
 		const writer = new StreamMessageWriter(writable, 'ascii');
