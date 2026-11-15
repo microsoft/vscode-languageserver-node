@@ -155,7 +155,7 @@ export class WriteableStreamMessageWriter extends AbstractMessageWriter implemen
 	private async doWrite(msg: Message, headers: string[], data: Uint8Array): Promise<void> {
 		try {
 			await this.writable.write(headers.join(''), 'ascii');
-			return this.writable.write(data);
+			return await this.writable.write(data);
 		} catch (error) {
 			this.handleError(error, msg);
 			return Promise.reject(error);
