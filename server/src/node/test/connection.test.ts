@@ -10,11 +10,14 @@ import { Duplex } from 'stream';
 import {
 	InitializeParams, InitializeRequest, InitializeResult, createConnection, DidChangeConfigurationNotification,
 	DidChangeConfigurationParams, Connection, DeclarationRequest, DeclarationParams, ProgressToken, WorkDoneProgress,
-	LocationLink, WorkDoneProgressReporter
+	LocationLink, WorkDoneProgressReporter, NotificationType0
 } from '../main';
 
 class TestStream extends Duplex {
+	public readonly writes: string[] = [];
+
 	_write(chunk: string, _encoding: string, done: () => void) {
+		this.writes.push(chunk);
 		this.emit('data', chunk);
 		done();
 	}
@@ -40,10 +43,12 @@ class ForwardingStream extends Duplex {
 suite('Connection Tests', () => {
 	let serverConnection: Connection;
 	let clientConnection: Connection;
+	let clientOutput: TestStream;
 
 	setup(() => {
 		const up = new TestStream();
 		const down = new TestStream();
+		clientOutput = up;
 		serverConnection = createConnection(up, down);
 		clientConnection = createConnection(down, up);
 		serverConnection.listen();
@@ -82,6 +87,15 @@ suite('Connection Tests', () => {
 			settings: {}
 		};
 		void clientConnection.sendNotification(DidChangeConfigurationNotification.type, param);
+	});
+
+	test('Ensure notifications without parameters omit params', async () => {
+		const notification = new NotificationType0('test/ping');
+		await clientConnection.sendNotification(notification);
+
+		const message = clientOutput.writes.join('');
+		assert.ok(message.includes('"method":"test/ping"'), 'Notification was sent');
+		assert.ok(!message.includes('"params"'), 'Notification does not contain parameters');
 	});
 
 	test('Ensure work done converted', (done) => {
