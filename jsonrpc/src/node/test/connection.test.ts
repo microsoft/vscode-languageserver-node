@@ -393,6 +393,45 @@ suite('Connection', () => {
 		});
 	});
 
+	for (const trace of [Trace.Verbose, Trace.Compact]) {
+		for (const value of [false, 0, '', null]) {
+			for (const isError of [false, true]) {
+				test(`Trace ${Trace.toString(trace)} includes ${isError ? 'error data' : 'result'} ${JSON.stringify(value)}`, async () => {
+					const type = new RequestType<string, boolean | number | string | null, boolean | number | string | null>('test/traceResponse');
+					const duplexStream1 = new TestDuplex('ds1');
+					const duplexStream2 = new TestDuplex('ds2');
+					const server = hostConnection.createMessageConnection(duplexStream2, duplexStream1, hostConnection.NullLogger);
+					const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+					const logs: { message: string; data: string | undefined }[] = [];
+					const tracer: Tracer = { log: (message: string, data?: string) => logs.push({ message, data }) };
+					await server.trace(trace, tracer);
+					await client.trace(trace, tracer);
+					server.onRequest(type, () => isError ? new ResponseError(ErrorCodes.InvalidParams, 'Boom', value) : value);
+					server.listen();
+					client.listen();
+					try {
+						if (isError) {
+							await assert.rejects(client.sendRequest(type, 'foo'), (error: ResponseError<unknown>) => error.data === value);
+						} else {
+							assert.strictEqual(await client.sendRequest(type, 'foo'), value);
+						}
+						for (const direction of ['Sending', 'Received']) {
+							const log = logs.find(entry => entry.message.startsWith(`${direction} response`));
+							assert.ok(log, `Expected a ${direction} response trace`);
+							const expected = value === null
+								? (isError ? undefined : 'No result returned.')
+								: `${isError ? 'Error data' : 'Result'}: ${JSON.stringify(value)}`;
+							assert.strictEqual(log.data, expected);
+						}
+					} finally {
+						client.dispose();
+						server.dispose();
+					}
+				});
+			}
+		}
+	}
+
 	test('Receives undefined param as null', (done) => {
 		const type = new RequestType<string | null, string, void>('test/handleSingleRequest');
 		const duplexStream1 = new TestDuplex('ds1');

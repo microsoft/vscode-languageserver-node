@@ -1088,10 +1088,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
 			if (trace === Trace.Verbose || trace === Trace.Compact) {
-				if (message.error && message.error.data) {
+				if (message.error && message.error.data !== undefined && message.error.data !== null) {
 					data = `Error data: ${stringifyTrace(message.error.data)}`;
 				} else {
-					if (message.result) {
+					if (message.result !== undefined && message.result !== null) {
 						data = `Result: ${stringifyTrace(message.result)}`;
 					} else if (message.error === undefined) {
 						data = 'No result returned.';
@@ -1149,10 +1149,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		if (traceFormat === TraceFormat.Text) {
 			let data: string | undefined = undefined;
 			if (trace === Trace.Verbose || trace === Trace.Compact) {
-				if (message.error && message.error.data) {
+				if (message.error && message.error.data !== undefined && message.error.data !== null) {
 					data = `Error data: ${stringifyTrace(message.error.data)}`;
 				} else {
-					if (message.result) {
+					if (message.result !== undefined && message.result !== null) {
 						data = `Result: ${stringifyTrace(message.result)}`;
 					} else if (message.error === undefined) {
 						data = 'No result returned.';
