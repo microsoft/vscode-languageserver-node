@@ -11,13 +11,19 @@ suite('Bun runtime support (issue #1321)', () => {
 
 	test('isBunRuntime detects bun binaries', () => {
 		strictEqual(isBunRuntime('bun'), true);
-		strictEqual(isBunRuntime('bunx'), true);
+		strictEqual(isBunRuntime('bun.exe'), true);
 		strictEqual(isBunRuntime('/usr/local/bin/bun'), true);
 		strictEqual(isBunRuntime('/opt/homebrew/bin/bun'), true);
 		strictEqual(isBunRuntime('BUN'), true);
 	});
 
 	test('isBunRuntime rejects non-bun runtimes', () => {
+		// bunx is Bun's package-binary runner, not a runtime: `bunx run <module>`
+		// would execute a package binary named "run" instead of the server module.
+		strictEqual(isBunRuntime('bunx'), false);
+		strictEqual(isBunRuntime('/usr/local/bin/bunx'), false);
+		strictEqual(isBunRuntime('bunx.exe'), false);
+		strictEqual(isBunRuntime('bunker'), false);
 		strictEqual(isBunRuntime('node'), false);
 		strictEqual(isBunRuntime('/usr/bin/node'), false);
 		strictEqual(isBunRuntime('node.exe'), false);

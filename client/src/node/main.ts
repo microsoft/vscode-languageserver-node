@@ -93,7 +93,7 @@ export interface NodeModule {
 	/**
 	 * The runtime used to execute the server module. Defaults to `node`.
 	 * Any executable can be used, e.g. `deno` or `bun`. When the runtime is
-	 * Bun (binary name starts with `bun`), the module is launched via
+	 * Bun (binary name is `bun` or `bun.exe`), the module is launched via
 	 * `bun run <module>` so that `args` are forwarded to the script instead
 	 * of being parsed as Bun flags, and `options.execArgv` is ignored. The
 	 * IPC transport (`--node-ipc`) is not supported under Bun; use
@@ -104,13 +104,18 @@ export interface NodeModule {
 }
 
 /**
- * Whether the given runtime binary is Bun (e.g. `bun`, `bunx`,
+ * Whether the given runtime binary is Bun (e.g. `bun`, `bun.exe`,
  * `/usr/local/bin/bun`). Bun runs JavaScript/TypeScript directly, but
  * unlike Node it needs `bun run <module>` so that the remaining arguments
  * are forwarded to the script instead of being parsed as Bun flags.
+ *
+ * Note that `bunx` (Bun's package-binary runner) is deliberately NOT
+ * treated as a Bun runtime: `bunx run <module>` would try to execute a
+ * package binary named `run` instead of the server module.
  */
 export function isBunRuntime(runtime: string): boolean {
-	return path.basename(runtime).toLowerCase().startsWith('bun');
+	const name = path.basename(runtime).toLowerCase();
+	return name === 'bun' || name === 'bun.exe';
 }
 
 /**
