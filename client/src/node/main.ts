@@ -90,8 +90,55 @@ export interface NodeModule {
 	module: string;
 	transport?: Transport;
 	args?: string[];
+	/**
+	 * The runtime used to execute the server module. Defaults to `node`.
+	 * Any executable can be used, e.g. `deno` or `bun`. When the runtime is
+	 * Bun (binary name starts with `bun`), the module is launched via
+	 * `bun run <module>` so that `args` are forwarded to the script instead
+	 * of being parsed as Bun flags, and `options.execArgv` is ignored. The
+	 * IPC transport (`--node-ipc`) is not supported under Bun; use
+	 * `stdio`, `pipe` or `socket` instead.
+	 */
 	runtime?: string;
 	options?: ForkOptions;
+}
+
+/**
+ * Whether the given runtime binary is Bun (e.g. `bun`, `bunx`,
+ * `/usr/local/bin/bun`). Bun runs JavaScript/TypeScript directly, but
+ * unlike Node it needs `bun run <module>` so that the remaining arguments
+ * are forwarded to the script instead of being parsed as Bun flags.
+ */
+export function isBunRuntime(runtime: string): boolean {
+	return path.basename(runtime).toLowerCase().startsWith('bun');
+}
+
+/**
+ * Build the argument vector used to spawn a language server module with the
+ * given runtime. For Node this is `[...execArgv, module, ...args,
+ * ...transportFlags, --clientProcessId=<pid>]`; for Bun it is
+ * `['run', module, ...args, ...transportFlags, --clientProcessId=<pid>]`
+ * (execArgv is dropped because Bun has no Node-style exec flags).
+ */
+export function buildRuntimeArgs(
+	runtime: string,
+	node: NodeModule,
+	transportFlags: string[],
+	clientPid: number,
+): string[] {
+	const args: string[] = [];
+	if (isBunRuntime(runtime)) {
+		args.push('run');
+	} else if (node.options?.execArgv) {
+		node.options.execArgv.forEach(element => args.push(element));
+	}
+	args.push(node.module);
+	if (node.args) {
+		node.args.forEach(element => args.push(element));
+	}
+	transportFlags.forEach(flag => args.push(flag));
+	args.push(`--clientProcessId=${clientPid.toString()}`);
+	return args;
 }
 
 namespace NodeModule {
@@ -372,31 +419,30 @@ export class LanguageClient extends BaseLanguageClient {
 				const node = json;
 				const transport = node.transport || TransportKind.stdio;
 				if (node.runtime) {
-					const args: string[] = [];
 					const options: ForkOptions = node.options ?? Object.create(null);
-					if (options.execArgv) {
-						options.execArgv.forEach(element => args.push(element));
-					}
-					args.push(node.module);
-					if (node.args) {
-						node.args.forEach(element => args.push(element));
-					}
 					const execOptions: cp.SpawnOptionsWithoutStdio = Object.create(null);
 					execOptions.cwd = serverWorkingDir;
 					execOptions.env = getEnvironment(options.env, false);
 					const runtime = this._getRuntimePath(node.runtime, serverWorkingDir);
+					const bun = isBunRuntime(runtime);
 					let pipeName: string | undefined = undefined;
+					const transportFlags: string[] = [];
 					if (transport === TransportKind.ipc) {
+						if (bun) {
+							return Promise.reject(new Error(
+								`The Bun runtime ('${runtime}') does not support the IPC transport (--node-ipc). Use 'stdio', 'pipe' or 'socket' instead.`,
+							));
+						}
 						// exec options not correctly typed in lib
 						execOptions.stdio = <any>[null, null, null, 'ipc'];
-						args.push('--node-ipc');
+						transportFlags.push('--node-ipc');
 					} else if (transport === TransportKind.stdio) {
-						args.push('--stdio');
+						transportFlags.push('--stdio');
 					} else if (transport === TransportKind.pipe) {
 						pipeName = generateRandomPipeName();
-						args.push(`--pipe=${pipeName}`);
+						transportFlags.push(`--pipe=${pipeName}`);
 					}
-					args.push(`--clientProcessId=${process.pid.toString()}`);
+					const args = buildRuntimeArgs(runtime, node, transportFlags, process.pid);
 					if (transport === TransportKind.ipc || transport === TransportKind.stdio) {
 						const serverProcess = cp.spawn(runtime, args, execOptions);
 						if (!serverProcess || !serverProcess.pid) {
