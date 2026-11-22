@@ -5,7 +5,12 @@
 'use strict';
 
 import { deepStrictEqual, rejects, strictEqual } from 'assert';
-import * as cp from 'child_process';
+// CommonJS import assignment (not `import * as cp`): with module:node16 the
+// namespace import is emitted as a wrapper with getter-only bindings, so
+// assigning `.spawn` on it throws a TypeError. `import x = require(...)` binds
+// the real `child_process` module object, which the client's own require()
+// returns as well, so patching it here intercepts the client's spawn calls.
+import childProcess = require('child_process');
 import { isBunRuntime, buildRuntimeArgs, LanguageClient, TransportKind } from 'vscode-languageclient/node';
 
 suite('Bun runtime support (issue #1321)', () => {
@@ -67,10 +72,10 @@ suite('Bun runtime support (issue #1321)', () => {
 		}, {});
 		// Intercept child_process.spawn (same module singleton the client uses)
 		// to prove the early rejection happens before any child process starts.
-		const childProcess = cp as unknown as { spawn: (...args: unknown[]) => unknown };
-		const originalSpawn = childProcess.spawn;
+		const cp = childProcess as unknown as { spawn: (...args: unknown[]) => unknown };
+		const originalSpawn = cp.spawn;
 		let spawnCalls = 0;
-		childProcess.spawn = function (this: unknown, ...args: unknown[]) {
+		cp.spawn = function (this: unknown, ...args: unknown[]) {
 			spawnCalls++;
 			return (originalSpawn as (...a: unknown[]) => unknown).apply(childProcess, args);
 		};
@@ -81,7 +86,7 @@ suite('Bun runtime support (issue #1321)', () => {
 				'start() must reject with the Bun IPC error',
 			);
 		} finally {
-			childProcess.spawn = originalSpawn;
+			cp.spawn = originalSpawn;
 			await client.stop().catch(() => undefined);
 		}
 		strictEqual(spawnCalls, 0, 'no child process may be spawned for Bun + IPC');
