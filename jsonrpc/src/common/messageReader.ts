@@ -226,9 +226,13 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 						this.fireError(new Error(`Header must provide a Content-Length property.\n${JSON.stringify(Object.fromEntries(headers))}`));
 						return;
 					}
-					const length = parseInt(contentLength);
+					const length = parseInt(contentLength, 10);
 					if (isNaN(length)) {
 						this.fireError(new Error(`Content-Length value must be a number. Got ${contentLength}`));
+						return;
+					}
+					if (!/^\d+$/.test(contentLength) || !Number.isSafeInteger(length)) {
+						this.fireError(new Error(`Content-Length value must be a non-negative safe integer. Got ${contentLength}`));
 						return;
 					}
 					this.nextMessageLength = length;
