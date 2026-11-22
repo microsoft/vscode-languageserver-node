@@ -4,8 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 
-import { deepStrictEqual, strictEqual } from 'assert';
-import { isBunRuntime, buildRuntimeArgs } from 'vscode-languageclient/node';
+import { deepStrictEqual, rejects, strictEqual } from 'assert';
+import * as cp from 'child_process';
+import { isBunRuntime, buildRuntimeArgs, LanguageClient, TransportKind } from 'vscode-languageclient/node';
 
 suite('Bun runtime support (issue #1321)', () => {
 
@@ -56,5 +57,33 @@ suite('Bun runtime support (issue #1321)', () => {
 		deepStrictEqual(
 			buildRuntimeArgs('node', { module: 'server.js' }, ['--stdio'], 1),
 			['server.js', '--stdio', '--clientProcessId=1']);
+	});
+
+	test('Bun runtime with IPC transport is rejected client-side without spawning a child', async () => {
+		const client = new LanguageClient('bun-ipc-rejection', 'Bun IPC Rejection', {
+			module: '/nonexistent/server.js',
+			runtime: 'bun',
+			transport: TransportKind.ipc,
+		}, {});
+		// Intercept child_process.spawn (same module singleton the client uses)
+		// to prove the early rejection happens before any child process starts.
+		const childProcess = cp as unknown as { spawn: (...args: unknown[]) => unknown };
+		const originalSpawn = childProcess.spawn;
+		let spawnCalls = 0;
+		childProcess.spawn = function (this: unknown, ...args: unknown[]) {
+			spawnCalls++;
+			return (originalSpawn as (...a: unknown[]) => unknown).apply(childProcess, args);
+		};
+		try {
+			await rejects(
+				client.start(),
+				/does not support the IPC transport \(--node-ipc\)/,
+				'start() must reject with the Bun IPC error',
+			);
+		} finally {
+			childProcess.spawn = originalSpawn;
+			await client.stop().catch(() => undefined);
+		}
+		strictEqual(spawnCalls, 0, 'no child process may be spawned for Bun + IPC');
 	});
 });
