@@ -58,22 +58,15 @@ export class Semaphore<T = void> {
 			throw new Error(`Too many thunks active`);
 		}
 		try {
-			const result = next.thunk();
-			if (result instanceof Promise) {
-				result.then((value) => {
-					this._active--;
-					next.resolve(value);
-					this.runNext();
-				}, (err) => {
-					this._active--;
-					next.reject(err);
-					this.runNext();
-				});
-			} else {
+			Promise.resolve(next.thunk()).then((value) => {
 				this._active--;
-				next.resolve(result);
+				next.resolve(value);
 				this.runNext();
-			}
+			}, (err) => {
+				this._active--;
+				next.reject(err);
+				this.runNext();
+			});
 		} catch (err) {
 			this._active--;
 			next.reject(err);

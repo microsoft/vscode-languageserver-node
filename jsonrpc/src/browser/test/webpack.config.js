@@ -25,7 +25,10 @@ module.exports = [{
 		extensions: ['.js']
 	},
 	entry: {
-		extension: '../../../lib/browser/test/test.js',
+		extension: [
+			'../../../lib/common/test/semaphore.test.js',
+			'../../../lib/browser/test/test.js'
+		],
 	},
 	devtool: 'source-map',
 	output: {
