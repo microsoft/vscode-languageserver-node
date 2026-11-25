@@ -9,11 +9,10 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeActionRequest, CodeActionOptions, CodeActionRegistrationOptions, CodeActionParams, CodeActionResolveRequest, CodeActionKind,
+	RAL, ClientCapabilities, CancellationToken, ServerCapabilities, DocumentSelector, CodeActionRequest, CodeActionOptions, CodeActionRegistrationOptions, CodeActionParams, CodeActionResolveRequest, CodeActionKind,
 	CodeActionTag
 } from 'vscode-languageserver-protocol';
 
-import * as UUID from './utils/uuid';
 
 import { TextDocumentLanguageFeature, FeatureClient, ensure } from './features';
 
@@ -74,7 +73,7 @@ export class CodeActionFeature extends TextDocumentLanguageFeature<boolean | Cod
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: RAL().crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: CodeActionRegistrationOptions): [Disposable, CodeActionProvider] {

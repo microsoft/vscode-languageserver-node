@@ -37,6 +37,48 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the repository map, focused build a
 
 ## History
 
+## 3.18.6 Protocol, 10.0.1 JSON-RPC, 11.0.1 Client and 11.0.1 Server.
+
+[Fixed issues](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aissue%20is%3Aclosed%20reason%3Acompleted%20milestone%3A%223.18.6%22%20sort%3Aupdated-desc) | [Merged pull requests](https://github.com/microsoft/vscode-languageserver-node/pulls?q=is%3Apr%20is%3Amerged%20milestone%3A%223.18.6%22%20sort%3Aupdated-desc)
+
+### Compatibility
+
+- No protocol requests, notifications, or responses changed. The protocol package is a patch release with updated JSON-RPC and types dependencies.
+- Client: when initialization is retried through `initializationFailedHandler` or the Retry message of an `InitializeError`, `start()` now resolves or rejects with the outcome of the last attempt. For a retryable `InitializeError` without a handler, `start()` stays pending until the user answers the Retry message.
+- Client: document formatting requests now forward additional formatting options provided by VS Code to the server.
+- Type guards in the types and protocol packages now return `false` for `null`, `undefined`, and other non-object values instead of throwing.
+- Text document 1.0.16 is unchanged.
+
+### Bug fixes and improvements
+
+- Client: dispose workspace diagnostic progress handlers on all paths, skip workspace diagnostic reports that fail to convert, report the correct failed request, and reset the error counter after a successful workspace pull.
+- Client: refresh dependent notebook cell diagnostics after text changes and cancel pending change deliveries when the client stops.
+- JSON-RPC 10.0.1: `LinkedMap.delete` and `LRUCache.delete` now return `true` for existing falsy values.
+- Protocol 3.18.6: `NotebookDocumentFilter.is` accepts relative patterns.
+- Server: only track server-created work done progress reporters and ignore failed progress sends.
+- Types 3.18.6: keep existing change annotations when `WorkspaceChange` wraps a `WorkspaceEdit`.
+
+## 3.18.5 Protocol, 10.0.0 JSON-RPC, 11.0.0 Client and 11.0.0 Server.
+
+[Fixed issues](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aissue%20is%3Aclosed%20reason%3Acompleted%20milestone%3A%223.18.5%22%20sort%3Aupdated-desc) | [Merged pull requests](https://github.com/microsoft/vscode-languageserver-node/pulls?q=is%3Apr%20is%3Amerged%20milestone%3A%223.18.5%22%20sort%3Aupdated-desc)
+
+### Compatibility
+
+- JSON-RPC now requires Node.js 14.17.0 or newer.
+- The exported `PipeTransport` and `SocketTransport` interfaces now require a `close()` method to release listeners when a server fails before connecting. The built-in transport factories provide this method. These interfaces are also re-exported by the client and server Node.js entry points.
+- UUID generation is centralized in the JSON-RPC runtime abstraction layer. `RAL` is implemented by the npm module; external implementations are not supported.
+- No protocol requests, notifications, or responses changed. The protocol package remains a patch release with updated JSON-RPC and types dependencies.
+
+### Bug fixes and improvements
+
+- Client: fix startup and shutdown failures, connection-close races, and cleanup when a server process exits before connecting.
+- Client: preserve document-open notification ordering, dispose duplicate file-watcher registrations, and avoid relying on `Promise.prototype.finally` during startup and shutdown.
+- Client: allow diagnostic pulls to recover after failures and refresh notebook diagnostics after cell reordering.
+- JSON-RPC: release parallel dispatch slots after rejected messages, fire missing IPC writer and port reader close events, and correct buffer slicing.
+- Server: remove deleted notebook cells from the cell map and avoid Windows command-spawning deprecation warnings.
+- Types 3.18.5: correct the `ColorPresentation.is` and `FoldingRange.is` type guards.
+- Text document 1.0.16: correct line offsets when incremental edits form CRLF across edit boundaries.
+
 ## 3.18.4 Protocol, 9.0.3 JSON-RPC, 10.1.2 Client and 10.1.2 Server.
 
 [Bug fixes and small improvements](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aclosed%20milestone%3A%223.18.4%22)

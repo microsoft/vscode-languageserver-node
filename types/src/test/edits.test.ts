@@ -5,7 +5,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { TextDocument, TextEdit, Position, Range } from '../main';
+import { TextDocument, TextEdit, Position, Range, WorkspaceChange, WorkspaceEdit, AnnotatedTextEdit, ChangeAnnotation } from '../main';
 
 const applyEdits = TextDocument.applyEdits;
 
@@ -38,6 +38,30 @@ suite('Edits', () => {
 	test('multiline', function (): any {
 		const input = TextDocument.create('foo://bar/f', 'html', 0, '0\n1\n2\n3\n4');
 		assert.equal(applyEdits(input, [TextEdit.replace(Range.create(Position.create(2, 0), Position.create(3, 0)), 'Hello'), TextEdit.insert(Position.create(1, 1), 'World')]), '0\n1World\nHello3\n4');
+	});
+
+});
+
+suite('WorkspaceChange', () => {
+
+	test('keeps change annotations of an existing edit', function (): any {
+		const workspaceEdit: WorkspaceEdit = {
+			documentChanges: [{ textDocument: { uri: 'file:///abc.txt', version: 1 }, edits: [AnnotatedTextEdit.insert(Position.create(0, 0), 'insert', 'a1')] }],
+			changeAnnotations: { a1: ChangeAnnotation.create('label', true) }
+		};
+		const workspaceChange = new WorkspaceChange(workspaceEdit);
+		assert.deepStrictEqual(workspaceChange.edit.changeAnnotations, { a1: ChangeAnnotation.create('label', true) });
+	});
+
+	test('does not reuse ids of existing change annotations', function (): any {
+		const first = new WorkspaceChange();
+		first.getTextEditChange({ uri: 'file:///abc.txt', version: 1 }).insert(Position.create(0, 0), 'first', ChangeAnnotation.create('first'));
+		const second = new WorkspaceChange(first.edit);
+		const id = second.getTextEditChange({ uri: 'file:///xyz.txt', version: 1 }).insert(Position.create(0, 0), 'second', ChangeAnnotation.create('second'));
+		const annotations = second.edit.changeAnnotations!;
+		assert.notStrictEqual(id, '1');
+		assert.strictEqual(annotations['1'].label, 'first');
+		assert.strictEqual(annotations[id].label, 'second');
 	});
 
 });

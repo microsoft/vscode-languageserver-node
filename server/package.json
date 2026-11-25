@@ -1,9 +1,10 @@
 {
 	"name": "vscode-languageserver",
 	"description": "Language server implementation for node",
-	"version": "10.1.2",
+	"version": "11.0.1",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
+	"homepage": "https://github.com/microsoft/vscode-languageserver-node/tree/main/server",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
@@ -30,10 +31,10 @@
 		"installServerIntoExtension": "./bin/installServerIntoExtension"
 	},
 	"devDependencies": {
-		"vscode-languageserver-textdocument": "1.0.15"
+		"vscode-languageserver-textdocument": "1.0.16"
 	},
 	"dependencies": {
-		"vscode-languageserver-protocol": "3.18.4"
+		"vscode-languageserver-protocol": "3.18.6"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run all:publish",
@@ -42,7 +43,7 @@
 		"watch": "tsc -b ./tsconfig.watch.json -w",
 		"clean": "rimraf lib",
 		"lint": "eslint src",
-		"test": "node ../node_modules/mocha/bin/_mocha",
+		"test": "node ../node_modules/mocha/bin/mocha.js",
 		"all": "npm run clean && npm run compile && npm run lint && npm test",
 		"compile:publish": "tsc -b ./tsconfig.publish.json",
 		"all:publish": "git clean -xfd . && npm install && npm run compile:publish && npm run lint && npm test",

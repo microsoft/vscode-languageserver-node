@@ -52,7 +52,7 @@ export class IPCMessageWriter extends AbstractMessageWriter implements MessageWr
 		this.errorCount = 0;
 		const eventEmitter: NodeJS.EventEmitter = this.process;
 		eventEmitter.on('error', (error: any) => this.fireError(error));
-		eventEmitter.on('close', () => this.fireClose);
+		eventEmitter.on('close', () => this.fireClose());
 	}
 
 	public write(msg: Message): Promise<void> {
@@ -90,7 +90,7 @@ export class PortMessageReader extends AbstractMessageReader implements MessageR
 	public constructor(port: MessagePort | Worker) {
 		super();
 		this.onData = new Emitter<Message>;
-		port.on('close', () => this.fireClose);
+		port.on('close', () => this.fireClose());
 		port.on('error', (error) => this.fireError(error));
 		port.on('message', (message: Message) => {
 			this.onData.fire(message);

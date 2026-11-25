@@ -47,7 +47,7 @@ connection.onInitialize((_params: InitializeParams): any => {
 		diagnosticProvider: {
 			identifier: 'diagnostic-provider',
 			documentSelector: null,
-			interFileDependencies: false,
+			interFileDependencies: true,
 			workspaceDiagnostics: false
 		}
 	};

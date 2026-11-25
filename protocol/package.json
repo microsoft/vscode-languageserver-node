@@ -1,9 +1,10 @@
 {
 	"name": "vscode-languageserver-protocol",
 	"description": "VSCode Language Server Protocol implementation",
-	"version": "3.18.4",
+	"version": "3.18.6",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
+	"homepage": "https://github.com/microsoft/vscode-languageserver-node/tree/main/protocol",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
@@ -27,8 +28,8 @@
 		}
 	},
 	"dependencies": {
-		"vscode-jsonrpc": "9.0.3",
-		"vscode-languageserver-types": "3.18.4"
+		"vscode-jsonrpc": "10.0.1",
+		"vscode-languageserver-types": "3.18.6"
 	},
 	"scripts": {
 		"prepublishOnly": "npm run all:publish",
@@ -40,7 +41,7 @@
 		"clean": "rimraf lib && rimraf dist",
 		"lint": "eslint src",
 		"test": "npm run test:node && npm run test:browser",
-		"test:node": "node ../node_modules/mocha/bin/_mocha",
+		"test:node": "node ../node_modules/mocha/bin/mocha.js",
 		"test:browser": "npm run webpack:test:silent && node ../build/bin/runBrowserTests.js  http://127.0.0.1:8080/protocol/src/browser/test/",
 		"webpack:test": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --mode none --config ./src/browser/test/webpack.config.js",
 		"webpack:test:silent": "cd ../types && npm run compile:esm && cd ../protocol && node ../build/bin/webpack --no-stats --mode none --config ./src/browser/test/webpack.config.js",

@@ -339,6 +339,43 @@ suite('Text Document Full Updates', () => {
 });
 
 suite('Text Document Incremental Updates', () => {
+	test('Incremental edits that join CRLF across an edit boundary', () => {
+		const changes = [
+			{ original: 'a\rb', range: Ranges.create(1, 0, 1, 0), text: '\n' },
+			{ original: 'a\nb', range: Ranges.create(0, 1, 0, 1), text: '\r' },
+			{ original: 'a\rX\nb', range: Ranges.create(1, 0, 1, 1), text: '' }
+		];
+		const expected = newDocument('a\r\nb');
+
+		for (const change of changes) {
+			const document = newDocument(change.original);
+			TextDocument.update(document, [{ text: change.text, range: change.range }], 1);
+			assert.strictEqual(document.getText(), expected.getText());
+			assert.strictEqual(document.lineCount, expected.lineCount, change.original);
+			for (let offset = 0; offset <= document.getText().length; offset++) {
+				assert.deepStrictEqual(document.positionAt(offset), expected.positionAt(offset), change.original);
+			}
+			for (let line = 0; line < expected.lineCount; line++) {
+				assert.deepStrictEqual(document.getLineRange(line), expected.getLineRange(line), change.original);
+				assert.strictEqual(document.getEOLCharacters(line), expected.getEOLCharacters(line), change.original);
+				for (let character = 0; character <= 3; character++) {
+					assert.strictEqual(document.offsetAt(Positions.create(line, character)), expected.offsetAt(Positions.create(line, character)), change.original);
+				}
+			}
+		}
+
+		const batched = newDocument('a\rb');
+		TextDocument.update(batched, [
+			{ text: '\n', range: Ranges.create(1, 0, 1, 0) },
+			{ text: 'X', range: Ranges.create(1, 0, 1, 0) }
+		], 1);
+		const expectedBatch = newDocument('a\r\nXb');
+		assert.strictEqual(batched.getText(), expectedBatch.getText());
+		assert.strictEqual(batched.lineCount, expectedBatch.lineCount);
+		for (let offset = 0; offset <= batched.getText().length; offset++) {
+			assert.deepStrictEqual(batched.positionAt(offset), expectedBatch.positionAt(offset));
+		}
+	});
 
 	// assumes that only '\n' is used
 	function assertValidLineNumbers(doc: TextDocument) {

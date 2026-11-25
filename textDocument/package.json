@@ -1,9 +1,10 @@
 {
 	"name": "vscode-languageserver-textdocument",
 	"description": "A simple text document implementation for Node LSP servers",
-	"version": "1.0.15",
+	"version": "1.0.16",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
+	"homepage": "https://github.com/microsoft/vscode-languageserver-node/tree/main/textDocument",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Microsoft/vscode-languageserver-node.git",
@@ -29,7 +30,7 @@
 		"clean": "rimraf lib",
 		"watch": "tsc -b ./tsconfig.watch.json -w",
 		"lint": "eslint src",
-		"test": "node ../node_modules/mocha/bin/_mocha",
+		"test": "node ../node_modules/mocha/bin/mocha.js",
 		"all": "npm run clean && npm run compile && npm run lint && npm run test",
 		"compile:esm": "tsc -b ./tsconfig.esm.publish.json && node ../build/bin/fix-esm",
 		"compile:umd": "tsc -b ./tsconfig.umd.publish.json",

@@ -293,7 +293,7 @@ export class LanguageClient extends BaseLanguageClient {
 		}
 	}
 
-	protected createMessageTransports(_encoding: string): Promise<MessageTransports> {
+	protected async createMessageTransports(_encoding: string): Promise<MessageTransports> {
 
 		function getEnvironment(env: any, fork: boolean): any {
 			if (!env && !fork) {
@@ -369,7 +369,7 @@ export class LanguageClient extends BaseLanguageClient {
 		} else {
 			json = server as NodeModule | Executable;
 		}
-		return this._getServerWorkingDir(json.options).then(serverWorkingDir => {
+		const startServer = (serverWorkingDir: string | undefined): Promise<MessageTransports> => {
 			if (NodeModule.is(json) && json.module) {
 				const node = json;
 				const transport = node.transport || TransportKind.stdio;
@@ -543,7 +543,14 @@ export class LanguageClient extends BaseLanguageClient {
 				}
 			}
 			return Promise.reject<MessageTransports>(new Error(`Unsupported server configuration ` + JSON.stringify(server, null, 4)));
-		}).finally(() => {
+		};
+		// Don't chain with Promise.prototype.finally here. The promises above are
+		// created with the global Promise, which other code running in the same
+		// extension host can replace with an implementation that has no finally
+		// method (see #1653). await accepts any thenable.
+		try {
+			return await startServer(await this._getServerWorkingDir(json.options));
+		} finally {
 			if (this._serverProcess !== undefined) {
 				this._serverProcess.on('exit', (code, signal) => {
 					if (code === 0) {
@@ -556,7 +563,7 @@ export class LanguageClient extends BaseLanguageClient {
 					}
 				});
 			}
-		});
+		}
 	}
 
 	private _getRuntimePath(runtime: string, serverWorkingDirectory: string | undefined): string {

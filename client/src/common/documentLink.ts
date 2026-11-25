@@ -8,13 +8,12 @@ import {
 } from 'vscode';
 
 import {
-	ClientCapabilities, DocumentLinkOptions, DocumentLinkRegistrationOptions, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentSelector, ResponseError, ServerCapabilities} from 'vscode-languageserver-protocol';
+	RAL, ClientCapabilities, DocumentLinkOptions, DocumentLinkRegistrationOptions, DocumentLinkRequest, DocumentLinkResolveRequest, DocumentSelector, ResponseError, ServerCapabilities} from 'vscode-languageserver-protocol';
 
 import {
 	FeatureClient, ensure, TextDocumentLanguageFeature
 } from './features';
 
-import * as UUID from './utils/uuid';
 
 export interface ProvideDocumentLinksSignature {
 	(this: void, document: TextDocument, token: CancellationToken): ProviderResult<VDocumentLink[]>;
@@ -46,7 +45,7 @@ export class DocumentLinkFeature extends TextDocumentLanguageFeature<DocumentLin
 		if (!options) {
 			return;
 		}
-		this.register({ id: UUID.generateUuid(), registerOptions: options });
+		this.register({ id: RAL().crypto.randomUUID(), registerOptions: options });
 	}
 
 	protected registerLanguageProvider(options: DocumentLinkRegistrationOptions): [Disposable, DocumentLinkProvider] {
