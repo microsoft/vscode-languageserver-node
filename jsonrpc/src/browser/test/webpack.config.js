@@ -26,7 +26,8 @@ module.exports = [{
 	},
 	entry: {
 		extension: [
-			'../../../lib/common/test/responseError.test.js',
+			'../../../lib/common/test/cancellation.test.js',
+			'../../../lib/common/test/semaphore.test.js',
 			'../../../lib/browser/test/test.js'
 		],
 	},
