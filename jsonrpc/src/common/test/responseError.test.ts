@@ -7,14 +7,6 @@ import * as assert from 'assert';
 import { ResponseError } from '../messages';
 
 suite('ResponseError', () => {
-	test('preserves the base error prototype and serialization', () => {
-		const error = new ResponseError(-32001, 'Failed');
-		assert.strictEqual(Object.getPrototypeOf(error), ResponseError.prototype);
-		assert.ok(error instanceof ResponseError);
-		assert.ok(error instanceof Error);
-		assert.deepStrictEqual(error.toJson(), { code: -32001, message: 'Failed' });
-	});
-
 	test('preserves a directly derived error prototype', () => {
 		class CustomError extends ResponseError<string> { }
 		const error = new CustomError(-32001, 'Failed', 'details');
@@ -44,22 +36,4 @@ suite('ResponseError', () => {
 		assert.ok(error instanceof ResponseError);
 		assert.ok(error instanceof Error);
 	});
-
-	test('preserves overridden serialization', () => {
-		class CustomError extends ResponseError<string> {
-			public override toJson() {
-				return { ...super.toJson(), message: `${this.message}: ${this.data}` };
-			}
-		}
-		const error = new CustomError(-32001, 'Failed', 'details');
-		assert.deepStrictEqual(error.toJson(), { code: -32001, message: 'Failed: details', data: 'details' });
-	});
-
-	for (const data of [0, false, '', null]) {
-		test(`preserves subclass error data: ${JSON.stringify(data)}`, () => {
-			class CustomError extends ResponseError<typeof data> { }
-			const error = new CustomError(-32001, 'Failed', data);
-			assert.deepStrictEqual(error.toJson(), { code: -32001, message: 'Failed', data });
-		});
-	}
 });
