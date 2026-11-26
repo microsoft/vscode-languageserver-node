@@ -509,6 +509,10 @@ export interface MessageStrategy {
 	 * unchanged. `Message` does not declare them, so the object passed to
 	 * `next` has to be cast to `Message`.
 	 *
+	 * Messages sent before `end` is called are written before the writer is
+	 * ended. Messages not written yet when the connection is disposed are not
+	 * written, and sending them fails.
+	 *
 	 * You must call `next` exactly once before the returned promise settles.
 	 * If it is not called, the message is not written and sending it fails: a
 	 * request is rejected with `ErrorCodes.MessageWriteError` and the promise
@@ -866,7 +870,10 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 					logger.warn(`handleOutgoingMessage must call next exactly once before it settles.`);
 					return written ?? Promise.resolve();
 				}
-				written = messageWriter.write(outgoing);
+				// The connection can be disposed while the hook runs.
+				written = isDisposed()
+					? Promise.reject(new ConnectionError(ConnectionErrors.Disposed, 'Connection is disposed.'))
+					: messageWriter.write(outgoing);
 				// The rejection is reported once the hook settles. Until then the
 				// hook may not be listening, which would be an unhandled rejection.
 				written.catch(() => undefined);
@@ -1666,7 +1673,12 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 		onUnhandledNotification: unhandledNotificationEmitter.event,
 		onDispose: disposeEmitter.event,
 		end: () => {
-			messageWriter.end();
+			if (options?.messageStrategy !== undefined && Is.func(options.messageStrategy.handleOutgoingMessage)) {
+				// Messages sent before end may still be in handleOutgoingMessage.
+				lastOutgoingMessage.then(() => messageWriter.end()).catch((error) => logger.error(`Ending the writer failed: ${error}`));
+			} else {
+				messageWriter.end();
+			}
 		},
 		dispose: () => {
 			if (isDisposed()) {

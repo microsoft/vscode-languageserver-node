@@ -1200,6 +1200,72 @@ suite('Connection', () => {
 		assert.deepStrictEqual(handled, [first.method]);
 	});
 
+	test('Message strategy does not write a message when the connection is disposed while the hook runs', async () => {
+		const events: string[] = [];
+		class RecordingWriter extends hostConnection.AbstractMessageWriter implements hostConnection.MessageWriter {
+			public write(message: hostConnection.Message): Promise<void> {
+				events.push(`write ${(message as hostConnection.NotificationMessage).method}`);
+				return Promise.resolve();
+			}
+			public end(): void {
+				events.push('end');
+			}
+		}
+		const type = new NotificationType<number>('test/notification');
+		const duplexStream = new TestDuplex('ds1');
+
+		let release!: () => void;
+		const released = new Promise<void>((resolve) => release = resolve);
+		const client = hostConnection.createMessageConnection(new hostConnection.StreamMessageReader(duplexStream), new RecordingWriter(), hostConnection.NullLogger, {
+			messageStrategy: {
+				async handleOutgoingMessage(message, next) {
+					await released;
+					return next(message);
+				}
+			}
+		});
+		client.listen();
+
+		const sent = client.sendNotification(type, 1);
+		await new Promise(resolve => setTimeout(resolve, 0));
+		client.dispose();
+		release();
+
+		await assert.rejects(sent, (error: hostConnection.ConnectionError) => error.code === hostConnection.ConnectionErrors.Disposed);
+		assert.deepStrictEqual(events, []);
+	});
+
+	test('Message strategy writes messages sent before end before ending the writer', async () => {
+		const events: string[] = [];
+		class RecordingWriter extends hostConnection.AbstractMessageWriter implements hostConnection.MessageWriter {
+			public write(message: hostConnection.Message): Promise<void> {
+				events.push(`write ${(message as hostConnection.NotificationMessage).method}`);
+				return Promise.resolve();
+			}
+			public end(): void {
+				events.push('end');
+			}
+		}
+		const type = new NotificationType<number>('test/notification');
+		const duplexStream = new TestDuplex('ds1');
+
+		const client = hostConnection.createMessageConnection(new hostConnection.StreamMessageReader(duplexStream), new RecordingWriter(), hostConnection.NullLogger, {
+			messageStrategy: {
+				async handleOutgoingMessage(message, next) {
+					await new Promise(resolve => setTimeout(resolve, 10));
+					return next(message);
+				}
+			}
+		});
+		client.listen();
+
+		const sent = client.sendNotification(type, 1);
+		client.end();
+		await sent;
+		await new Promise(resolve => setTimeout(resolve, 0));
+		assert.deepStrictEqual(events, [`write ${type.method}`, 'end']);
+	});
+
 	test('Message strategy handles responses that skip the queue', async () => {
 		const type = new RequestType<number, number, void>('test/handleSingleRequest');
 		const duplexStream1 = new TestDuplex('ds1');
