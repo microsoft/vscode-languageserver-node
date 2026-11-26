@@ -879,17 +879,28 @@ export function createMessageConnection(messageReader: MessageReader, messageWri
 				written.catch(() => undefined);
 				return written;
 			};
+			let hookError: { error: unknown } | undefined;
 			try {
 				await messageStrategy.handleOutgoingMessage!(message, next);
+			} catch (error) {
+				hookError = { error };
 			} finally {
 				settled = true;
 			}
 			if (written === undefined) {
+				if (hookError !== undefined) {
+					throw hookError.error;
+				}
 				throw new Error(`handleOutgoingMessage did not call next, so the message was not written.`);
 			}
 			// A hook may not return the promise of next, so a failed write has to
 			// be reported here or the request would wait forever.
 			await written;
+			// The message was written. Failing here would make handleRequest send
+			// a second response for the same request, so the hook error is logged.
+			if (hookError !== undefined) {
+				logger.error(`handleOutgoingMessage failed after the message was written: ${hookError.error}`);
+			}
 		});
 		lastOutgoingMessage = result.catch(() => undefined);
 		return result;

@@ -1062,39 +1062,47 @@ suite('Connection', () => {
 		await assert.rejects(client.sendRequest(type), (error: ResponseError<void>) => error.code === ErrorCodes.MessageWriteError);
 	});
 
-	test('Message strategy does not leave a failed write unhandled while the hook runs', async () => {
-		class FailingWriter extends hostConnection.AbstractMessageWriter implements hostConnection.MessageWriter {
-			public write(): Promise<void> {
-				return Promise.reject(new Error('write failed'));
-			}
-			public end(): void {
-			}
-		}
-		const type = new RequestType0<void, void>('test/request');
-		const duplexStream = new TestDuplex('ds1');
-
-		const unhandled: unknown[] = [];
-		const listeners = process.listeners('unhandledRejection');
-		process.removeAllListeners('unhandledRejection');
-		process.on('unhandledRejection', (reason) => unhandled.push(reason));
-		try {
-			const client = hostConnection.createMessageConnection(new hostConnection.StreamMessageReader(duplexStream), new FailingWriter(), hostConnection.NullLogger, {
-				messageStrategy: {
-					async handleOutgoingMessage(message, next) {
-						void next(message);
-						await new Promise(resolve => setTimeout(resolve, 10));
-					}
+	const failingHooks: { name: string; hook: (message: hostConnection.Message, next: (message: hostConnection.Message) => Promise<void>) => Promise<void> }[] = [
+		{ name: 'returns next', hook: (message, next) => next(message) },
+		{ name: 'awaits next', hook: async (message, next) => { await next(message); } },
+		{ name: 'does not return next', hook: async (message, next) => { void next(message); await new Promise(resolve => setTimeout(resolve, 10)); } },
+		{ name: 'throws after next', hook: async (message, next) => { void next(message); await new Promise(resolve => setTimeout(resolve, 10)); throw new Error('hook failed'); } },
+	];
+	for (const { name, hook } of failingHooks) {
+		test(`Message strategy does not leave a failed write unhandled when the hook ${name}`, async () => {
+			class FailingWriter extends hostConnection.AbstractMessageWriter implements hostConnection.MessageWriter {
+				public write(): Promise<void> {
+					return Promise.reject(new Error('write failed'));
 				}
-			});
-			client.listen();
+				public end(): void {
+				}
+			}
+			const request = new RequestType0<void, void>('test/request');
+			const notification = new NotificationType<number>('test/notification');
+			const duplexStream = new TestDuplex('ds1');
 
-			await assert.rejects(client.sendRequest(type), (error: ResponseError<void>) => error.code === ErrorCodes.MessageWriteError);
-			assert.deepStrictEqual(unhandled, []);
-		} finally {
+			const unhandled: unknown[] = [];
+			const listeners = process.listeners('unhandledRejection');
 			process.removeAllListeners('unhandledRejection');
-			listeners.forEach(listener => process.on('unhandledRejection', listener));
-		}
-	});
+			process.on('unhandledRejection', (reason) => unhandled.push(reason));
+			try {
+				const client = hostConnection.createMessageConnection(new hostConnection.StreamMessageReader(duplexStream), new FailingWriter(), hostConnection.NullLogger, {
+					messageStrategy: { handleOutgoingMessage: hook }
+				});
+				client.listen();
+
+				await assert.rejects(client.sendRequest(request), (error: ResponseError<void>) => error.code === ErrorCodes.MessageWriteError);
+				await assert.rejects(client.sendNotification(notification, 1));
+				client.end();
+				// Unhandled rejections are reported after the microtask queue drains.
+				await new Promise(resolve => setTimeout(resolve, 20));
+				assert.deepStrictEqual(unhandled, []);
+			} finally {
+				process.removeAllListeners('unhandledRejection');
+				listeners.forEach(listener => process.on('unhandledRejection', listener));
+			}
+		});
+	}
 
 	test('Message strategy writes a message once when handleOutgoingMessage calls next twice', async () => {
 		const first = new NotificationType<number>('test/first');
@@ -1233,6 +1241,44 @@ suite('Connection', () => {
 
 		await assert.rejects(sent, (error: hostConnection.ConnectionError) => error.code === hostConnection.ConnectionErrors.Disposed);
 		assert.deepStrictEqual(events, []);
+	});
+
+	test('Message strategy sends one response when handleOutgoingMessage throws after the response is written', async () => {
+		const type = new RequestType<number, number, void>('test/request');
+		const duplexStream1 = new TestDuplex('ds1');
+		const duplexStream2 = new TestDuplex('ds2');
+
+		const written: hostConnection.Message[] = [];
+		const streamWriter = new hostConnection.StreamMessageWriter(duplexStream1);
+		class RecordingWriter extends hostConnection.AbstractMessageWriter implements hostConnection.MessageWriter {
+			public write(message: hostConnection.Message): Promise<void> {
+				written.push(message);
+				return streamWriter.write(message);
+			}
+			public end(): void {
+			}
+		}
+		const errors: string[] = [];
+		const logger: hostConnection.Logger = { ...hostConnection.NullLogger, error: (message) => errors.push(message) };
+		const server = hostConnection.createMessageConnection(new hostConnection.StreamMessageReader(duplexStream2), new RecordingWriter(), logger, {
+			messageStrategy: {
+				async handleOutgoingMessage(message, next) {
+					await next(message);
+					throw new Error('cleanup failed');
+				}
+			}
+		});
+		server.onRequest(type, (param) => param + 1);
+		server.listen();
+
+		const client = hostConnection.createMessageConnection(duplexStream1, duplexStream2, hostConnection.NullLogger);
+		client.listen();
+
+		assert.strictEqual(await client.sendRequest(type, 1), 2);
+		await new Promise(resolve => setTimeout(resolve, 10));
+		assert.deepStrictEqual(written, [{ jsonrpc: '2.0', id: 0, result: 2 }]);
+		assert.strictEqual(errors.length, 1);
+		assert.ok(errors[0].includes('cleanup failed'));
 	});
 
 	test('Message strategy writes messages sent before end before ending the writer', async () => {
