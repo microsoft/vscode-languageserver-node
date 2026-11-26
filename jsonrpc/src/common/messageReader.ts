@@ -178,6 +178,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 	private partialMessageTimer: Disposable | undefined;
 	private _partialMessageTimeout: number;
 	private readSemaphore: Semaphore<void>;
+	private isDisposed: boolean;
 
 	public constructor(readable: RAL.ReadableStream, options?: RAL.MessageBufferEncoding | MessageReaderOptions) {
 		super();
@@ -188,6 +189,13 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 		this.nextMessageLength = -1;
 		this.messageToken = 0;
 		this.readSemaphore = new Semaphore(1);
+		this.isDisposed = false;
+	}
+
+	public dispose(): void {
+		this.isDisposed = true;
+		this.clearPartialMessageTimer();
+		super.dispose();
 	}
 
 	public set partialMessageTimeout(timeout: number) {
@@ -269,7 +277,7 @@ export class ReadableStreamMessageReader extends AbstractMessageReader {
 
 	private setPartialMessageTimer(): void {
 		this.clearPartialMessageTimer();
-		if (this._partialMessageTimeout <= 0) {
+		if (this.isDisposed || this._partialMessageTimeout <= 0) {
 			return;
 		}
 		this.partialMessageTimer = RAL().timer.setTimeout((token, timeout) => {

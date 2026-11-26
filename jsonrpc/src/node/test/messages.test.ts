@@ -11,6 +11,7 @@ import { Message, RequestMessage } from '../../common/messages';
 import { ContentEncoder, ContentDecoder, Encodings, FunctionContentTypeEncoder, FunctionContentTypeDecoder  } from '../../common/encoding';
 import { StreamMessageWriter, StreamMessageReader } from '../../node/main';
 import RIL from '../ril';
+import RAL from '../../common/ral';
 
 import { Writable, Readable } from 'stream';
 import { inherits } from 'util';
@@ -90,6 +91,43 @@ const msgpackDecoder: FunctionContentTypeDecoder = {
 };
 
 suite('Messages', () => {
+	for (const disposeInCallback of [false, true]) {
+		test(`Disposing a reader cancels partial message timers${disposeInCallback ? ' from the timeout callback' : ''}`, () => {
+			const runtime = RAL();
+			const timers: { fire(): void; disposed: boolean }[] = [];
+			RAL.install({
+				...runtime,
+				timer: {
+					...runtime.timer,
+					setTimeout(callback, _milliseconds, ...args) {
+						const timer = { disposed: false, fire: () => { timer.disposed = true; callback(...args); } };
+						timers.push(timer);
+						return { dispose: () => { timer.disposed = true; } };
+					}
+				}
+			});
+			const readable = new Readable({ read() {} });
+			const reader = new StreamMessageReader(readable);
+			reader.onPartialMessage(() => reader.dispose());
+			const listener = reader.listen(() => assert.fail('A partial message must not be delivered.'));
+			try {
+				readable.emit('data', Buffer.from('Content-Length: 43\r\n\r\n{'));
+				assert.strictEqual(timers.length, 1);
+				if (disposeInCallback) {
+					timers[0].fire();
+				} else {
+					reader.dispose();
+				}
+				assert.strictEqual(timers.filter(timer => !timer.disposed).length, 0, 'No timeout should remain scheduled after disposal.');
+			} finally {
+				reader.dispose();
+				listener.dispose();
+				readable.destroy();
+				RAL.install(runtime);
+			}
+		});
+	}
+
 	test('Writing', async () => {
 		const writable = new TestWritable();
 		const writer = new StreamMessageWriter(writable, 'ascii');
