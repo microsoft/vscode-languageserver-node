@@ -3126,6 +3126,224 @@ suite('Server tests', () => {
 	});
 });
 
+suite('Asynchronous initialize params', () => {
+	type ReceivedParams = { initializationOptions: any; processId: number | null; fillOrder?: string[] };
+	type FillOrderParams = lsclient.InitializeParams & { fillOrder?: string[] };
+
+	const serverModule = path.join(__dirname, './servers/initializeParamsServer.js');
+
+	function createClient(clientOptions: lsclient.LanguageClientOptions = {}): lsclient.LanguageClient {
+		return new lsclient.LanguageClient('initialize-params', 'Initialize params', {
+			module: serverModule,
+			transport: lsclient.TransportKind.ipc,
+		}, {
+			...clientOptions,
+			errorHandler: {
+				error: () => ({ action: lsclient.ErrorAction.Continue }),
+				closed: () => ({ action: lsclient.CloseAction.DoNotRestart, handled: true }),
+			}
+		});
+	}
+
+	function delay(ms: number): Promise<void> {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	function receivedParams(client: lsclient.LanguageClient): Promise<ReceivedParams> {
+		return client.sendRequest<ReceivedParams>('initializeParams');
+	}
+
+	class FillFeature implements lsclient.StaticFeature {
+		public calls = 0;
+		constructor(private readonly fill: (params: FillOrderParams) => void | Promise<void>) {
+		}
+		getState(): lsclient.FeatureState {
+			return { kind: 'static' };
+		}
+		fillInitializeParams(params: lsclient.InitializeParams): void | Promise<void> {
+			this.calls++;
+			return this.fill(params);
+		}
+		fillClientCapabilities(): void {
+		}
+		initialize(): void {
+		}
+		clear(): void {
+		}
+	}
+
+	function pushFillOrder(params: FillOrderParams, name: string): void {
+		(params.fillOrder ??= []).push(name);
+	}
+
+	// A start that fails before the initialize request leaves the server process running.
+	// Kill it and wait until the client noticed that the connection closed.
+	async function killServer(client: lsclient.LanguageClient): Promise<void> {
+		const stopped = new Promise<void>(resolve => {
+			const listener = client.onDidChangeState(event => {
+				if (event.newState === lsclient.State.Stopped) {
+					listener.dispose();
+					resolve();
+				}
+			});
+		});
+		client.serverProcess?.kill();
+		await stopped;
+	}
+
+	async function withUnhandledRejections(body: (unhandled: unknown[]) => Promise<void>): Promise<void> {
+		const unhandled: unknown[] = [];
+		const onUnhandled = (reason: unknown) => unhandled.push(reason);
+		process.on('unhandledRejection', onUnhandled);
+		try {
+			await body(unhandled);
+		} finally {
+			process.off('unhandledRejection', onUnhandled);
+		}
+	}
+
+	test('Sends the initialization options returned by an async function', async () => {
+		const client = createClient({
+			initializationOptions: async () => {
+				await delay(20);
+				return { mode: 'async' };
+			}
+		});
+		try {
+			await client.start();
+			const received = await receivedParams(client);
+			assert.deepStrictEqual(received.initializationOptions, { mode: 'async' });
+			await client.stop();
+		} finally {
+			await client.dispose();
+		}
+	}).timeout(10000);
+
+	test('Sends the initialization options returned by a sync function or given as a value', async () => {
+		for (const initializationOptions of [() => ({ mode: 'sync' }), { mode: 'sync' }]) {
+			const client = createClient({ initializationOptions });
+			try {
+				await client.start();
+				const received = await receivedParams(client);
+				assert.deepStrictEqual(received.initializationOptions, { mode: 'sync' });
+				await client.stop();
+			} finally {
+				await client.dispose();
+			}
+		}
+	}).timeout(10000);
+
+	test('Computes the initialization options again on restart', async () => {
+		let count = 0;
+		const client = createClient({
+			initializationOptions: async () => {
+				await delay(10);
+				return { count: ++count };
+			}
+		});
+		try {
+			await client.start();
+			assert.deepStrictEqual((await receivedParams(client)).initializationOptions, { count: 1 });
+			await client.stop();
+			await client.start();
+			assert.deepStrictEqual((await receivedParams(client)).initializationOptions, { count: 2 });
+			await client.stop();
+		} finally {
+			await client.dispose();
+		}
+	}).timeout(10000);
+
+	test('Waits for features that fill the initialize params asynchronously', async () => {
+		const client = createClient();
+		const asyncFeature = new FillFeature(async (params) => {
+			await delay(50);
+			pushFillOrder(params, 'async');
+		});
+		let processIdSeenBySyncFeature: number | null | undefined;
+		const syncFeature = new FillFeature((params) => {
+			pushFillOrder(params, 'sync');
+			processIdSeenBySyncFeature = params.processId;
+		});
+		client.registerFeatures([asyncFeature, syncFeature]);
+		try {
+			await client.start();
+			const received = await receivedParams(client);
+			// Features are called in registration order, so the sync feature runs after
+			// the async feature finished.
+			assert.deepStrictEqual(received.fillOrder, ['async', 'sync']);
+			// The Node client still fills in its process id, after all features ran.
+			assert.strictEqual(processIdSeenBySyncFeature, null);
+			assert.strictEqual(received.processId, process.pid);
+			await client.stop();
+		} finally {
+			await client.dispose();
+		}
+	}).timeout(10000);
+
+	test('Fills the initialize params synchronously if no feature returns a promise', () => {
+		class TestLanguageClient extends lsclient.LanguageClient {
+			public fill(params: lsclient.InitializeParams): void | Promise<void> {
+				return this.fillInitializeParams(params);
+			}
+		}
+		const client = new TestLanguageClient('initialize-params', 'Initialize params', { module: serverModule, transport: lsclient.TransportKind.ipc }, {});
+		client.registerFeature(new FillFeature((params) => pushFillOrder(params, 'sync')));
+		const params = { processId: null, rootUri: null, capabilities: {} } as FillOrderParams;
+		const result = client.fill(params);
+		assert.strictEqual(result, undefined);
+		assert.deepStrictEqual(params.fillOrder, ['sync']);
+		assert.strictEqual(params.processId, process.pid);
+	});
+
+	test('Start fails if the initialization options function rejects', async () => {
+		const client = createClient({
+			initializationOptions: async () => {
+				await delay(10);
+				throw new Error('Computing initialization options failed');
+			}
+		});
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Computing initialization options failed/);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				assert.strictEqual(showErrorMessage.callCount, 1);
+				assert.match(String(showErrorMessage.firstCall.args[0]), /couldn't create connection to server/);
+				await killServer(client);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			showErrorMessage.restore();
+			await client.dispose();
+		}
+	}).timeout(10000);
+
+	test('Start fails if a feature rejects while filling the initialize params', async () => {
+		const client = createClient();
+		const failingFeature = new FillFeature(async () => {
+			await delay(10);
+			throw new Error('Filling initialize params failed');
+		});
+		const laterFeature = new FillFeature((params) => pushFillOrder(params, 'later'));
+		client.registerFeatures([failingFeature, laterFeature]);
+		const showErrorMessage = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+		try {
+			await withUnhandledRejections(async (unhandled) => {
+				await assert.rejects(client.start(), /Filling initialize params failed/);
+				assert.strictEqual(client.state, lsclient.State.StartFailed);
+				assert.strictEqual(failingFeature.calls, 1);
+				// Features after the failing one are not called.
+				assert.strictEqual(laterFeature.calls, 0);
+				await killServer(client);
+				assert.deepStrictEqual(unhandled, []);
+			});
+		} finally {
+			showErrorMessage.restore();
+			await client.dispose();
+		}
+	}).timeout(10000);
+});
+
 suite('Server activation', () => {
 
 	const uri: vscode.Uri = vscode.Uri.parse('lsptests://localhost/test.bat');
