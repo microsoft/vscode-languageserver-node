@@ -3,7 +3,6 @@
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 
-import * as url from 'url';
 import * as path from 'path';
 import * as fs from 'fs';
 import { spawnSync, fork, ChildProcess, SpawnSyncOptionsWithStringEncoding } from 'child_process';
@@ -13,11 +12,28 @@ import { spawnSync, fork, ChildProcess, SpawnSyncOptionsWithStringEncoding } fro
  * complete implementation of handling VS Code URIs.
  */
 export function uriToFilePath(uri: string): string | undefined {
-	const parsed = url.parse(uri);
-	if (parsed.protocol !== 'file:' || !parsed.path) {
+	// Trim the characters url.parse trimmed (C0 controls, space, U+00A0,
+	// U+FEFF) and convert backslashes, as url.parse and URL both do. URL
+	// itself does not trim U+00A0 or U+FEFF, so normalize before parsing.
+	const normalized = uri.replace(/^[\u0000-\u0020\u00a0\ufeff]+|[\u0000-\u0020\u00a0\ufeff]+$/g, '').replace(/\\/g, '/');
+	let parsed: URL;
+	try {
+		parsed = new URL(normalized);
+	} catch {
 		return undefined;
 	}
-	const segments = parsed.path.split('/');
+	if (parsed.protocol !== 'file:') {
+		return undefined;
+	}
+	// URL.pathname resolves '..' before percent-decoding. Use the raw path so
+	// segments are decoded before path.normalize, as url.parse did.
+	const match = /^file:(?:\/\/([^/?#]*))?([^?#]*)/i.exec(normalized);
+	// An authority with no path (e.g. file://localhost) implies the root path.
+	const rawPath = match?.[2] || (match?.[1] ? '/' : undefined);
+	if (!rawPath) {
+		return undefined;
+	}
+	const segments = rawPath.split('/');
 	for (let i = 0, len = segments.length; i < len; i++) {
 		segments[i] = decodeURIComponent(segments[i]);
 	}
