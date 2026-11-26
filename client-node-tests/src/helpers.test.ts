@@ -13,6 +13,27 @@ import {
 } from 'vscode-languageclient';
 
 import { matchGlobPattern } from 'vscode-languageclient/$test/common/utils/globPattern';
+import { toBase64Fallback } from 'vscode-languageclient/$test/common/fileSystem';
+
+suite('Base64 fallback', () => {
+	test('matches Buffer for all padding lengths', () => {
+		for (let length = 0; length <= 16; length++) {
+			const bytes = new Uint8Array(length);
+			for (let i = 0; i < length; i++) {
+				bytes[i] = (i * 73 + 29) & 0xff;
+			}
+			strictEqual(toBase64Fallback(bytes), Buffer.from(bytes).toString('base64'));
+		}
+	});
+
+	test('encodes full byte range', () => {
+		const bytes = new Uint8Array(256);
+		for (let i = 0; i < 256; i++) {
+			bytes[i] = i;
+		}
+		strictEqual(toBase64Fallback(bytes), Buffer.from(bytes).toString('base64'));
+	});
+});
 
 suite('Protocol Helper Tests', () => {
 	function rangeEqual(actual: Range, expected: Range) {

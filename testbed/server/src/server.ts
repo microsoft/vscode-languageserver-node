@@ -18,7 +18,7 @@ import {
 	SemanticTokensClientCapabilities, SemanticTokensLegend, SemanticTokensBuilder, SemanticTokensRegistrationType,
 	SemanticTokensRegistrationOptions, ProtocolNotificationType, ChangeAnnotation, WorkspaceChange, CompletionItemKind, DiagnosticSeverity,
 	DocumentDiagnosticReportKind, WorkspaceDiagnosticReport, NotebookDocuments, CompletionList, DidChangeConfigurationNotification,
-	NotificationType
+	NotificationType, FileFlags
 } from 'vscode-languageserver/node';
 
 import {
@@ -717,6 +717,44 @@ connection.onNotification(refreshNotification, async (uri) => {
 	await connection.workspace.textDocumentContent.refresh(uri);
 });
 
+const readFileRequest = new NotificationType<string>('testbed/readFile');
+connection.onNotification(readFileRequest, async (uri) => {
+	const fileName = uri.split('/').pop();
+	const textContent = await connection.workspace.fs.readFile('text', uri);
+	const binaryContent = await connection.workspace.fs.readFile('binary', uri);
+	if (textContent === null || binaryContent === null) {
+		connection.window.showInformationMessage(`Read file '${fileName}' failed`);
+	} else {
+		const base64Content = binaryContent.content.length > 100 ? binaryContent.content.substring(0, 97) + '...' : binaryContent.content;
+		connection.window.showInformationMessage(`Read file '${fileName}' with content length ${textContent.content.length} and base64 content ${base64Content}`);
+	}
+});
+
+const readDirectoryRequest = new NotificationType<string>('testbed/readDirectory');
+connection.onNotification(readDirectoryRequest, async (uri) => {
+	const dirName = uri.split('/').pop();
+	const directoryContent = await connection.workspace.fs.readDirectory(uri);
+	if (directoryContent === null) {
+		connection.window.showInformationMessage(`Read directory '${dirName}' failed`);
+	} else {
+		connection.window.showInformationMessage(`Read directory '${dirName}' with ${directoryContent.length} entries`);
+	}
+});
+
+const statRequest = new NotificationType<string>('testbed/stat');
+connection.onNotification(statRequest, async (uri) => {
+	const fileName = uri.split('/').pop();
+	const fileStat = await connection.workspace.fs.stat(uri);
+	if (fileStat === null) {
+		connection.window.showInformationMessage(`File stat ${fileName} failed`);
+	} else {
+		let type = fileStat.type;
+		if (fileStat.flags & FileFlags.symbolicLink) {
+			type += ' (symlink)';
+		}
+		connection.window.showInformationMessage(`File stat '${fileName}' with type '${type}' and size ${fileStat.size}`);
+	}
+});
 
 const notebooks = new NotebookDocuments(TextDocument);
 notebooks.onDidOpen(() => {
