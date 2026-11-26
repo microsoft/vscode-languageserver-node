@@ -1226,6 +1226,18 @@ suite('Client integration', () => {
 	});
 
 	suite('File Operations', () => {
+		test('Reject empty and comment glob patterns', () => {
+			const feature = client.getFeature(lsclient.DidCreateFilesNotification.method);
+			isDefined(feature);
+
+			for (const glob of ['', '#comment']) {
+				assert.throws(() => feature.register({
+					id: 'invalid-glob-pattern',
+					registerOptions: { filters: [{ pattern: { glob } }] }
+				}), { message: `Invalid pattern ${glob}!` });
+			}
+		});
+
 		const referenceFileUri = vscode.Uri.parse('/dummy-edit');
 		function ensureReferenceEdit(edits: vscode.WorkspaceEdit, type: string, expectedLines: string[]) {
 			// Ensure the edits are as expected.

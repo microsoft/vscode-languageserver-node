@@ -205,6 +205,19 @@ suite('Protocol Helper Tests', () => {
 		strictEqual(annotation.description, 'description');
 	});
 
+	test('Glob Pattern', () => {
+		const resource = Uri.file('/folder/nested/file.ts');
+		ok(matchGlobPattern('**/*.{ts,js}', resource));
+		ok(!matchGlobPattern('**/*.txt', resource));
+		ok(matchGlobPattern('!**/*.txt', resource));
+		ok(!matchGlobPattern('!**/*.ts', resource));
+	});
+
+	test('Empty and comment glob patterns', () => {
+		ok(!matchGlobPattern('', Uri.parse('untitled:')));
+		ok(!matchGlobPattern('#comment', Uri.file('/folder/file.ts')));
+	});
+
 	test('Relative Pattern', () => {
 		if (process.platform === 'win32') {
 			const pattern: RelativePattern = { baseUri: Uri.file('C:\\folder1\\folder2').toString(), pattern: '**/*.txt' };
