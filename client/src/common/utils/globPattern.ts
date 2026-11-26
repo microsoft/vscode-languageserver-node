@@ -21,7 +21,7 @@ export function matchGlobPattern(pattern: GlobPattern, resource: Uri): boolean {
 		}
 	}
 	const matcher = new minimatch.Minimatch(miniMatchPattern, { noext: true });
-	if (!matcher.makeRe()) {
+	if (matcher.set.length === 0) {
 		return false;
 	}
 	return matcher.match(resource.fsPath);

@@ -111,7 +111,7 @@ abstract class FileOperationFeature<I, E extends Event<I>> implements DynamicFea
 		}
 		const minimatchFilter = data.registerOptions.filters.map((filter) => {
 			const matcher = new minimatch.Minimatch(filter.pattern.glob, FileOperationFeature.asMinimatchOptions(filter.pattern.options));
-			if (!matcher.makeRe()) {
+			if (matcher.set.length === 0) {
 				throw new Error(`Invalid pattern ${filter.pattern.glob}!`);
 			}
 			return { scheme: filter.scheme, matcher, kind: filter.pattern.matches };
