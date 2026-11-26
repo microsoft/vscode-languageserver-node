@@ -1188,7 +1188,7 @@ export namespace WorkDoneProgressOptions {
 	}
 	export function hasWorkDoneProgress(value: any): value is { workDoneProgress: boolean } {
 		const candidate = value as WorkDoneProgressOptions;
-		return candidate && Is.boolean(candidate.workDoneProgress);
+		return Is.objectLiteral(candidate) && Is.boolean(candidate.workDoneProgress);
 	}
 }
 

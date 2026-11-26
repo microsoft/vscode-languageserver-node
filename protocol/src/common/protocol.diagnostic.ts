@@ -109,7 +109,7 @@ export type DiagnosticServerCancellationData = {
 export namespace DiagnosticServerCancellationData {
 	export function is(value: any): value is DiagnosticServerCancellationData {
 		const candidate = value as DiagnosticServerCancellationData;
-		return candidate && Is.boolean(candidate.retriggerRequest);
+		return Is.objectLiteral(candidate) && Is.boolean(candidate.retriggerRequest);
 	}
 }
 
