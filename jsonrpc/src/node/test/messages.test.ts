@@ -323,6 +323,53 @@ suite('Messages', () => {
 		}
 	});
 
+	for (const contentLength of ['43junk', '43.0', '0x2b', '+43', '43e0', '9007199254740992', '-1', '-43']) {
+		test(`Reject malformed Content-Length ${contentLength}`, async () => {
+			const readable = new Readable({ read() {} });
+			const reader = new StreamMessageReader(readable);
+			reader.partialMessageTimeout = 0;
+			const errors: Error[] = [];
+			const messages: Message[] = [];
+			reader.onError(error => errors.push(error));
+			const listener = reader.listen(message => messages.push(message));
+			try {
+				readable.emit('data', Buffer.from(`Content-Length: ${contentLength}\r\n\r\n{"jsonrpc":"2.0","id":1,"method":"example"}`));
+				await new Promise<void>(resolve => setImmediate(resolve));
+				assert.strictEqual(errors.length, 1, 'Expected an invalid length error.');
+				assert.match(errors[0].message, /Content-Length/);
+				assert.strictEqual(messages.length, 0, 'A malformed length must not deliver a message.');
+			} finally {
+				listener.dispose();
+				reader.dispose();
+				readable.destroy();
+			}
+		});
+	}
+
+	for (const contentLength of ['43', '00043', ' 43 ']) {
+		test(`Read decimal Content-Length ${JSON.stringify(contentLength)} in chunks`, async () => {
+			const readable = new Readable({ read() {} });
+			const reader = new StreamMessageReader(readable);
+			reader.partialMessageTimeout = 0;
+			const messages: Message[] = [];
+			const errors: Error[] = [];
+			reader.onError(error => errors.push(error));
+			const listener = reader.listen(message => messages.push(message));
+			try {
+				readable.emit('data', Buffer.from(`Content-Length: ${contentLength}\r\n\r\n`));
+				readable.emit('data', Buffer.from('{"jsonrpc":"2.0",'));
+				readable.emit('data', Buffer.from('"id":1,"method":"example"}'));
+				await new Promise<void>(resolve => setImmediate(resolve));
+				assert.deepStrictEqual(errors, []);
+				assert.deepStrictEqual(messages, [{ jsonrpc: '2.0', id: 1, method: 'example' }]);
+			} finally {
+				listener.dispose();
+				reader.dispose();
+				readable.destroy();
+			}
+		});
+	}
+
 	test('Read without Content-Length', (done) => {
 		const readable = new Readable();
 		const reader = new StreamMessageReader(readable);
