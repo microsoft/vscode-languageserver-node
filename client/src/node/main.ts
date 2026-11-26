@@ -284,11 +284,18 @@ export class LanguageClient extends BaseLanguageClient {
 		return super.handleConnectionClosed();
 	}
 
-	protected fillInitializeParams(params: InitializeParams): void {
-		super.fillInitializeParams(params);
-		if (params.processId === null) {
-			params.processId = process.pid;
+	protected fillInitializeParams(params: InitializeParams): void | Promise<void> {
+		const fillProcessId = () => {
+			if (params.processId === null) {
+				params.processId = process.pid;
+			}
+		};
+		const result = super.fillInitializeParams(params);
+		// Fill in the process id after all features ran, as for synchronous features.
+		if (Is.thenable(result)) {
+			return Is.asPromise(result).then(fillProcessId);
 		}
+		fillProcessId();
 	}
 
 	protected async createMessageTransports(_encoding: string): Promise<MessageTransports> {

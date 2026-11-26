@@ -365,7 +365,13 @@ export type LanguageClientOptions = {
 	 * to 'utf8' if omitted.
 	 */
 	stdioEncoding?: string;
-	initializationOptions?: any | (() => any);
+	/**
+	 * The initialization options sent to the server in the `initialize` request.
+	 * If a function is provided it is called each time the client initializes the
+	 * server. The function can return a promise to compute the options asynchronously.
+	 * If the function throws or the promise rejects, the client fails to start.
+	 */
+	initializationOptions?: any | (() => any | Promise<any>);
 	initializationFailedHandler?: InitializationFailedHandler;
 	progressOnInitialization?: boolean;
 	errorHandler?: ErrorHandler;
@@ -408,7 +414,7 @@ type ResolvedClientOptions = {
 	outputChannelName: string;
 	revealOutputChannelOn: RevealOutputChannelOn;
 	stdioEncoding: string;
-	initializationOptions?: any | (() => any);
+	initializationOptions?: any | (() => any | Promise<any>);
 	initializationFailedHandler?: InitializationFailedHandler;
 	progressOnInitialization: boolean;
 	errorHandler: ErrorHandler;
@@ -1464,11 +1470,11 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 			rootPath: rootPath ? rootPath : null,
 			rootUri: rootPath ? this._c2p.asUri(Uri.file(rootPath)) : null,
 			capabilities: this.computeClientCapabilities(),
-			initializationOptions: Is.func(initOption) ? initOption() : initOption,
+			initializationOptions: Is.func(initOption) ? await initOption() : initOption,
 			trace: Trace.toString(this._trace),
 			workspaceFolders: workspaceFolders
 		};
-		this.fillInitializeParams(initParams);
+		await this.fillInitializeParams(initParams);
 		if (this._clientOptions.progressOnInitialization) {
 			const token: ProgressToken = RAL().crypto.randomUUID();
 			const part: ProgressPart = new ProgressPart(connection, token);
@@ -2128,12 +2134,31 @@ export abstract class BaseLanguageClient implements FeatureClient<Middleware, La
 		this.registerFeatures(ProposedFeatures.createAll(this));
 	}
 
-	protected fillInitializeParams(params: InitializeParams): void {
+	/**
+	 * Fills the initialize params using the registered features. Features are called
+	 * in registration order. If a feature returns a promise, the remaining features
+	 * are called after it resolves and a promise is returned. Otherwise the params are
+	 * filled synchronously.
+	 *
+	 * @param params The initialize params to fill.
+	 */
+	protected fillInitializeParams(params: InitializeParams): void | Promise<void> {
+		let pending: Promise<void> | undefined;
 		for (const feature of this._features) {
-			if (Is.func(feature.fillInitializeParams)) {
-				feature.fillInitializeParams(params);
+			const fill = feature.fillInitializeParams;
+			if (!Is.func(fill)) {
+				continue;
+			}
+			if (pending !== undefined) {
+				pending = pending.then(() => fill.call(feature, params));
+			} else {
+				const result = fill.call(feature, params);
+				if (Is.thenable(result)) {
+					pending = Is.asPromise(result);
+				}
 			}
 		}
+		return pending;
 	}
 
 	private computeClientCapabilities(): ClientCapabilities {

@@ -113,11 +113,13 @@ export type FeatureState = {
  */
 export interface StaticFeature {
 	/**
-	 * Called to fill the initialize params.
+	 * Called to fill the initialize params. If a promise is returned the
+	 * client waits for it before it fills the params using the next feature
+	 * and sends the `initialize` request.
 	 *
 	 * @params the initialize params.
 	 */
-	fillInitializeParams?: (params: InitializeParams) => void;
+	fillInitializeParams?: (params: InitializeParams) => void | Promise<void>;
 
 	/**
 	 * Called to fill in the client capabilities this feature implements.
@@ -177,11 +179,13 @@ export namespace StaticFeature {
 export interface DynamicFeature<RO> {
 
 	/**
-	 * Called to fill the initialize params.
+	 * Called to fill the initialize params. If a promise is returned the
+	 * client waits for it before it fills the params using the next feature
+	 * and sends the `initialize` request.
 	 *
 	 * @params the initialize params.
 	 */
-	fillInitializeParams?: (params: InitializeParams) => void;
+	fillInitializeParams?: (params: InitializeParams) => void | Promise<void>;
 
 	/**
 	 * Called to fill in the client capabilities this feature implements.
