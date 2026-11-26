@@ -37,6 +37,22 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the repository map, focused build a
 
 ## History
 
+## 3.18.7 Protocol, 10.0.2 JSON-RPC, 12.0.0 Client and 11.0.2 Server.
+
+[Fixed issues](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aissue%20is%3Aclosed%20reason%3Acompleted%20milestone%3A%223.18.7%22%20sort%3Aupdated-desc) | [Merged pull requests](https://github.com/microsoft/vscode-languageserver-node/pulls?q=is%3Apr%20is%3Amerged%20milestone%3A%223.18.7%22%20sort%3Aupdated-desc)
+
+### Compatibility
+
+- Client: minimatch 11 declares support for Node.js 20 or 22 and newer, unlike minimatch 10, which also declared Node.js 18 support. The client continues to require VS Code 1.91.0 or newer.
+- No protocol requests, notifications, or responses changed. The protocol and server patch releases update their dependency pins.
+- Types 3.18.6 and text document 1.0.16 are unchanged.
+
+### Bug fixes and improvements
+
+- JSON-RPC: make repeated cancellation safe, including when a token was cancelled or disposed before it was read.
+- JSON-RPC: keep semaphore slots occupied until thenables resolve or reject.
+- Client: handle glob patterns with minimatch 11 and reject empty or comment patterns for file operations.
+
 ## 3.18.6 Protocol, 10.0.1 JSON-RPC, 11.0.1 Client and 11.0.1 Server.
 
 [Fixed issues](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aissue%20is%3Aclosed%20reason%3Acompleted%20milestone%3A%223.18.6%22%20sort%3Aupdated-desc) | [Merged pull requests](https://github.com/microsoft/vscode-languageserver-node/pulls?q=is%3Apr%20is%3Amerged%20milestone%3A%223.18.6%22%20sort%3Aupdated-desc)
