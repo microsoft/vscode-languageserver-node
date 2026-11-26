@@ -83,7 +83,7 @@ Run these scripts from the package directory, or use `npm --prefix <package>` fr
 For exactly one test file, bypass the package's default Mocha `spec` list with `--no-config`; simply appending a file can also run configured suites. After compiling the server, this example runs from the `server` directory (Windows path syntax):
 
 ```powershell
-node ..\node_modules\mocha\bin\_mocha --no-config --ui tdd lib\node\test\connection.test.js
+node ..\node_modules\mocha\bin\mocha.js --no-config --ui tdd lib\node\test\connection.test.js
 ```
 
 Use `/` separators for the equivalent command in a POSIX shell. An optional `--grep "<pattern>"` narrows that file further.

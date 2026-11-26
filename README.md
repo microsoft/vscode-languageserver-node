@@ -43,6 +43,27 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the repository map, focused build a
 
 - JSON-RPC: `handleMessage` is now optional on `MessageStrategy` and deprecated in favor of `handleIncomingMessage`. Code that calls `strategy.handleMessage(...)` directly needs a check for `undefined` when `strictNullChecks` is on.
 
+## 3.18.6 Protocol, 10.0.1 JSON-RPC, 11.0.1 Client and 11.0.1 Server.
+
+[Fixed issues](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aissue%20is%3Aclosed%20reason%3Acompleted%20milestone%3A%223.18.6%22%20sort%3Aupdated-desc) | [Merged pull requests](https://github.com/microsoft/vscode-languageserver-node/pulls?q=is%3Apr%20is%3Amerged%20milestone%3A%223.18.6%22%20sort%3Aupdated-desc)
+
+### Compatibility
+
+- No protocol requests, notifications, or responses changed. The protocol package is a patch release with updated JSON-RPC and types dependencies.
+- Client: when initialization is retried through `initializationFailedHandler` or the Retry message of an `InitializeError`, `start()` now resolves or rejects with the outcome of the last attempt. For a retryable `InitializeError` without a handler, `start()` stays pending until the user answers the Retry message.
+- Client: document formatting requests now forward additional formatting options provided by VS Code to the server.
+- Type guards in the types and protocol packages now return `false` for `null`, `undefined`, and other non-object values instead of throwing.
+- Text document 1.0.16 is unchanged.
+
+### Bug fixes and improvements
+
+- Client: dispose workspace diagnostic progress handlers on all paths, skip workspace diagnostic reports that fail to convert, report the correct failed request, and reset the error counter after a successful workspace pull.
+- Client: refresh dependent notebook cell diagnostics after text changes and cancel pending change deliveries when the client stops.
+- JSON-RPC 10.0.1: `LinkedMap.delete` and `LRUCache.delete` now return `true` for existing falsy values.
+- Protocol 3.18.6: `NotebookDocumentFilter.is` accepts relative patterns.
+- Server: only track server-created work done progress reporters and ignore failed progress sends.
+- Types 3.18.6: keep existing change annotations when `WorkspaceChange` wraps a `WorkspaceEdit`.
+
 ## 3.18.5 Protocol, 10.0.0 JSON-RPC, 11.0.0 Client and 11.0.0 Server.
 
 [Fixed issues](https://github.com/microsoft/vscode-languageserver-node/issues?q=is%3Aissue%20is%3Aclosed%20reason%3Acompleted%20milestone%3A%223.18.5%22%20sort%3Aupdated-desc) | [Merged pull requests](https://github.com/microsoft/vscode-languageserver-node/pulls?q=is%3Apr%20is%3Amerged%20milestone%3A%223.18.5%22%20sort%3Aupdated-desc)
