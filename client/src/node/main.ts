@@ -236,6 +236,7 @@ export class LanguageClient extends BaseLanguageClient {
 	}
 
 	public async restart(): Promise<void> {
+		const outputChannelVisible = this.isOutputChannelVisible();
 		await this.stop();
 		// We are in debug mode. Wait a little before we restart
 		// so that the debug port can be freed. We can safely ignore
@@ -247,6 +248,7 @@ export class LanguageClient extends BaseLanguageClient {
 		} else {
 			await this.start();
 		}
+		this.restoreOutputChannelVisibility(outputChannelVisible);
 	}
 
 	protected shutdown(mode: ShutdownMode, timeout: number = 2000): Promise<void> {
