@@ -11,6 +11,9 @@ trigger:
       - main
 pr: none
 
+variables:
+  isOfficialBranch: ${{ or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')) }}
+
 resources:
   repositories:
     - repository: templates
@@ -61,6 +64,7 @@ extends:
   parameters:
     npmPackages:
       - name: tsconfigGen
+        skipAPIScan: ${{ ne(variables.isOfficialBranch, 'true') }}
         generateNotice: true
         testPlatforms:
           - name: Linux
@@ -87,6 +91,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/tsconfig-gen
 
       - name: textDocument
+        skipAPIScan: ${{ ne(variables.isOfficialBranch, 'true') }}
         dependsOn: tsconfigGen
         testPlatforms:
           - name: Linux
@@ -113,6 +118,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/textDocument
 
       - name: types
+        skipAPIScan: ${{ ne(variables.isOfficialBranch, 'true') }}
         dependsOn: textDocument
         testPlatforms:
           - name: Linux
@@ -139,6 +145,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/types
 
       - name: jsonrpc
+        skipAPIScan: ${{ ne(variables.isOfficialBranch, 'true') }}
         dependsOn: types
         testPlatforms:
           - name: Linux
@@ -165,6 +172,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/jsonrpc
 
       - name: protocol
+        skipAPIScan: ${{ ne(variables.isOfficialBranch, 'true') }}
         dependsOn: jsonrpc
         testPlatforms:
           - name: Linux
@@ -191,6 +199,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/protocol
 
       - name: server
+        skipAPIScan: ${{ ne(variables.isOfficialBranch, 'true') }}
         dependsOn: protocol
         testPlatforms:
           - name: Linux
@@ -217,6 +226,7 @@ extends:
         workingDirectory: $(Build.SourcesDirectory)/server
 
       - name: client
+        skipAPIScan: ${{ ne(variables.isOfficialBranch, 'true') }}
         dependsOn: server
         testPlatforms:
           - name: Linux
