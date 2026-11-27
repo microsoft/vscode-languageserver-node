@@ -1511,7 +1511,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 
 		sendNotification: (type: string | MessageSignature, param?: any): Promise<void> => {
 			const method = Is.string(type) ? type : type.method;
-			return connection.sendNotification(method, param);
+			return param === undefined ? connection.sendNotification(method) : connection.sendNotification(method, param);
 		},
 		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => (connection as any).onNotification(type, handler),
 
