@@ -26,7 +26,6 @@
 		"playwright": "^1.65.1",
 		"rimraf": "^6.1.3",
 		"shelljs": "^0.10.0",
-		"shx": "^0.4.0",
 		"source-map-support": "^0.5.21",
 		"ts-json-schema-generator": "^2.9.0",
 		"typescript": "^6.0.3",
