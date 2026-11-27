@@ -1509,10 +1509,7 @@ export function createConnection<PConsole = _, PTracer = _, PTelemetry = _, PCli
 		sendRequest: <R>(type: string | MessageSignature, ...params: any[]): Promise<R> => connection.sendRequest(Is.string(type) ? type : type.method, ...params),
 		onRequest: <R, E>(type: string | MessageSignature | StarRequestHandler, handler?: GenericRequestHandler<R, E>): Disposable => (connection as any).onRequest(type, handler),
 
-		sendNotification: (type: string | MessageSignature, param?: any): Promise<void> => {
-			const method = Is.string(type) ? type : type.method;
-			return connection.sendNotification(method, param);
-		},
+		sendNotification: (type: string | MessageSignature, ...params: [any?]): Promise<void> => connection.sendNotification(Is.string(type) ? type : type.method, ...params),
 		onNotification: (type: string | MessageSignature | StarNotificationHandler, handler?: GenericNotificationHandler): Disposable => (connection as any).onNotification(type, handler),
 
 		onProgress: connection.onProgress,
