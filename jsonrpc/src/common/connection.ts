@@ -333,7 +333,6 @@ export class ConnectionError extends Error {
 	constructor(code: ConnectionErrors, message: string) {
 		super(message);
 		this.code = code;
-		Object.setPrototypeOf(this, ConnectionError.prototype);
 	}
 }
 

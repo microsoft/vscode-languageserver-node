@@ -129,7 +129,6 @@ export class ResponseError<D = void> extends Error {
 		super(message);
 		this.code = is.number(code) ? code : ErrorCodes.UnknownErrorCode;
 		this.data = data;
-		Object.setPrototypeOf(this, ResponseError.prototype);
 	}
 
 	public toJson(): ResponseErrorLiteral<D> {
